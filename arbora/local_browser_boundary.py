@@ -8,7 +8,7 @@ from typing import Any
 from arbora.client.browser_boundary import (
     LOCAL_BROWSER_PATH,
     LocalBrowserBoundary,
-    _issue_local_browser_boundary,
+    issue_local_browser_boundary,
 )
 from arbora.local_browser_channel import LocalBrowserChannelOwner
 from arbora.security import anonymous
@@ -36,7 +36,7 @@ def local_browser_boundary(owner: LocalBrowserChannelOwner) -> LocalBrowserBound
         async with asyncio.timeout(1):
             await send({"type": "websocket.close", "code": 4403})
 
-    return _issue_local_browser_boundary(handler)
+    return issue_local_browser_boundary(handler)
 
 
 async def _serve(owner: Any, scope: Any, receive: Any, send: Any) -> None:

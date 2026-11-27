@@ -42,7 +42,7 @@ def mux(monkeypatch: pytest.MonkeyPatch) -> _FakeMux:
     }
     monkeypatch.setattr(mcp_delegation, "run_on_served_multiplexer", run_on_served)
     monkeypatch.setattr(mcp_delegation, "require_fleet_capability", lambda kind: None)
-    monkeypatch.setattr(mcp_delegation, "_provider_tools", lambda host: host_tools)
+    monkeypatch.setattr(mcp_delegation, "provider_tools", lambda host: host_tools)
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": object()})
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"graph_registered": object()})
     return fake

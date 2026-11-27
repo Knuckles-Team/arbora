@@ -49,7 +49,7 @@ def fail_at(phase, monkeypatch):
     elif phase == "readback":
         eg.decode_get_current_plan = lambda _: None
     elif phase == "reauthorization":
-        admit = task_plan_runtime._admit
+        admit = task_plan_runtime.admit
         calls = []
 
         async def reauthorize(host, caller, operation):
@@ -58,7 +58,7 @@ def fail_at(phase, monkeypatch):
                 raise PermissionError("revoked")
             return await admit(host, caller, operation)
 
-        monkeypatch.setattr(task_plan_runtime, "_admit", reauthorize)
+        monkeypatch.setattr(task_plan_runtime, "admit", reauthorize)
 
 
 @pytest.mark.asyncio

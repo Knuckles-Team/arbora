@@ -72,7 +72,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Any:
     state = {"session": _session("acme", "alice", frozenset({"kg:read"}))}
     import arbora.security.session as session_module
 
-    monkeypatch.setattr(registry_api, "_get_catalog_engine", lambda: object())
+    monkeypatch.setattr(registry_api, "get_catalog_engine", lambda: object())
     monkeypatch.setattr(registry_api, "_require_sql_exec", lambda _e: _sql)
     monkeypatch.setattr(session_module, "resolve_session", lambda: state["session"])
     app = FastAPI()

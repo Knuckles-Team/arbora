@@ -232,12 +232,12 @@ async def handle_self_sessions_list(
 
 
 def _session_rows(blob: Any) -> list[tuple[str, Mapping[str, Any]]]:
-    from arbora.api.ops.workstreams import _props
+    from arbora.api.ops.workstreams import workstream_props
 
     rows: list[tuple[str, Mapping[str, Any]]] = []
     for row in blob or ():
         if isinstance(row, (list, tuple)) and len(row) == 2:
-            props = _props(row[1])
+            props = workstream_props(row[1])
             if props is not None:
                 rows.append((str(row[0]), props))
     return rows

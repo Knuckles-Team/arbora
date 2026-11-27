@@ -134,9 +134,9 @@ def render_sandbox(
     both run in the explicit no-auth mode, and every listener is loopback. A
     non-loopback bind refuses before anything is rendered.
     """
-    from arbora.identity.sandbox_principal import _is_loopback
+    from arbora.identity.sandbox_principal import is_loopback_host
 
-    if not _is_loopback(bind_host):
+    if not is_loopback_host(bind_host):
         raise SandboxPrincipalRefusal(
             "SANDBOX_PRINCIPAL_NOT_LOOPBACK",
             "the sandbox listener must be a literal loopback address",

@@ -82,7 +82,7 @@ def _contracts() -> tuple[Any, Any]:
     return au, eg
 
 
-async def _admit(host: Any, caller: Any, op_id: str) -> Any:
+async def admit(host: Any, caller: Any, op_id: str) -> Any:
     op = host.services.registry.get(op_id)
     if op is None:
         raise OperationRefused("UPGRADE_REQUIRED", {"operation": op_id})
@@ -97,8 +97,8 @@ async def _publish(
 ) -> Any:
     publish = "eg.coordination.PublishCurrentPlan"
     read = "eg.coordination.GetCurrentPlan"
-    op = await _admit(host, caller, publish)
-    await _admit(host, caller, read)
+    op = await admit(host, caller, publish)
+    await admit(host, caller, read)
     now = int(time.time() * 1000)
     lease_expires_at_ms = owner.claim.get("lease_expires_at_ms")
     if type(lease_expires_at_ms) is not int or lease_expires_at_ms <= now:
@@ -143,7 +143,7 @@ async def _publish(
                 context.client, {"run_id": owner.run_id, "tenant": caller.tenant}, graph
             )
         )
-        await _admit(host, caller, publish)
+        await admit(host, caller, publish)
         snapshot["revision"] = _publication_revision(
             existing, owner.run_id, snapshot["task_plan"]
         )
@@ -152,8 +152,8 @@ async def _publish(
                 context.client, {"request": payload}, graph
             )
         )
-        await _admit(host, caller, publish)
-        await _admit(host, caller, read)
+        await admit(host, caller, publish)
+        await admit(host, caller, read)
         if receipt.run_id != owner.run_id or receipt.revision != snapshot["revision"]:
             raise OperationRefused("INVALID_TASK_PLAN_RECEIPT")
         stored = eg.decode_get_current_plan(
@@ -161,7 +161,7 @@ async def _publish(
                 context.client, {"run_id": owner.run_id, "tenant": caller.tenant}, graph
             )
         )
-        await _admit(host, caller, read)
+        await admit(host, caller, read)
         return _verified_readback(stored, owner.run_id, snapshot["task_plan"], receipt)
 
 
@@ -255,7 +255,7 @@ async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
     if config is None:
         raise OperationRefused("UNAVAILABLE", {"capability": "task_plan"})
     caller = caller_from_session(owner.session, credential_kind="session")
-    await _admit(host, caller, "agents.run")
+    await admit(host, caller, "agents.run")
     requests, tokens = _planning_limits(config, base.budget)
     started = time.monotonic()
     timeout = min(config.timeout_seconds, base.budget.timeout_seconds)
@@ -304,7 +304,7 @@ async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
             }
             canonical = await _publish(host, caller, owner, plan, bounded_proposal, eg)
             current_native_run(request)
-            await _admit(host, caller, "agents.run")
+            await admit(host, caller, "agents.run")
         budget = replace(
             base.budget,
             request_limit=requests,

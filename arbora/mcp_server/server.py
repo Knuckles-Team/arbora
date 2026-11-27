@@ -36,10 +36,10 @@ def _changeset_seams(invocation: Any) -> Any:
     if invocation is None or send is None:
         return None
     from arbora.agent_host.changeset_seams import production_changeset_seams
-    from arbora.agent_host.host_port_composition import _run_of, run_principal_call
+    from arbora.agent_host.host_port_composition import run_of, run_principal_call
 
     return production_changeset_seams(
-        run_principal_call(invocation.services), send, _run_of
+        run_principal_call(invocation.services), send, run_of
     )
 
 

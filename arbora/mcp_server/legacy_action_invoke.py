@@ -78,7 +78,7 @@ async def invoke_legacy_action(
     The pipeline's envelope, success or refusal, is the text returned.
     """
     from arbora.api.invoke.steps import surface_caller_admitted
-    from arbora.api.mcp.verbs import _invoke_and_render
+    from arbora.api.mcp.verbs import invoke_and_render
     from arbora.mcp_server import runtime
 
     resolved = require_served_action(action, tool)
@@ -103,7 +103,7 @@ async def invoke_legacy_action(
             message=f"Mapped operation {resolved.operation!r} is not registered",
             details={"action": action, "operation": resolved.operation},
         )
-    envelope = await _invoke_and_render(
+    envelope = await invoke_and_render(
         projection,
         caller,
         resolved.operation,

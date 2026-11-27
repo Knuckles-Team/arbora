@@ -399,7 +399,7 @@ async def _receipted_publish_context(
 
     from arbora.api.contracts import PolicyDisposition, PolicyReceipt
     from arbora.api.contracts.provisioning import opaque_principal
-    from arbora.mcp_server.decide_wiring import _mutation_context
+    from arbora.mcp_server.decide_wiring import mutation_context
 
     request = action_for(verify())
     digest = request.digest()
@@ -418,7 +418,7 @@ async def _receipted_publish_context(
         and decision.request.digest() == digest
     ):
         raise PermissionError("publication has no exact effect-authorizing receipt")
-    context = _mutation_context(verified, purpose_id)
+    context = mutation_context(verified, purpose_id)
     # AgentComponent validates the caller-shaped mutation context before EG's
     # admitted-context binder replaces its policy and process-owner fields.
     # Use the same canonical opaque principal derivation as connector-pack

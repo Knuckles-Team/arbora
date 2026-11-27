@@ -74,9 +74,7 @@ def _decode_outcome(stored: Any) -> OpResult | OpError | None:
     return None
 
 
-def _request_context(
-    claims: Mapping[str, Any], client: Any, key: str
-) -> dict[str, Any]:
+def request_context(claims: Mapping[str, Any], client: Any, key: str) -> dict[str, Any]:
     """The WorkItem's typed request context, from the admitted service provenance."""
     now_ms = int(time.time() * 1000)
     graph = getattr(client, "graph_name", None) or getattr(client, "_graph_name", "")
@@ -146,7 +144,7 @@ class EgEffectJournal:
         return await client.work_items.submit(
             {
                 "schema_version": "1",
-                "context": _request_context(claims, client, key),
+                "context": request_context(claims, client, key),
                 "work_item_id": item_id,
                 "idempotency_key": f"arbora-effect:{_sha256(key)}",
                 "command_digest": _sha256(binding),

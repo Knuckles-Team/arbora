@@ -210,8 +210,8 @@ class _ToolsPayload(TypedDict):
 
 
 # Bound on how many pages of one fleet-catalog ``kind`` this route will drain
-# via registry_api's own keyset-paginated ``_authorized_page`` (100 rows per
-# page, see ``registry_api._MAX_LIMIT``) before giving up on that section for
+# via registry_api's own keyset-paginated ``authorized_page`` (100 rows per
+# page, see ``registry_api.MAX_LIMIT``) before giving up on that section for
 # this request. Mirrors the same defensive drain-cap idea
 # ``overstory.api_extensions._read_fleet_catalog`` already applies to the
 # identical read path (its own comment there measured ~9 pages to drain 841
@@ -229,7 +229,7 @@ def _read_catalog_kind_sync(
     already reuses in-process for ``/api/enhanced/tools`` (see that
     function's docstring). This never re-derives tenant scoping, redaction,
     or SQL construction; it is a thin synchronous drain loop on top of
-    ``_authorized_page``.
+    ``authorized_page``.
 
     Synchronous and blocking (a unix-socket engine RPC per page) by design:
     the caller, :func:`_build_tools_payload_sync`, already runs entirely
@@ -237,48 +237,48 @@ def _read_catalog_kind_sync(
     :func:`get_tools_endpoint` — calling registry_api's own ASYNC wrapper
     (``_offload_catalog_call``, which itself does ``asyncio.to_thread``)
     from here would require a running event loop that this thread does not
-    have. Calling the sync ``_authorized_page``/``_authorized_count``
+    have. Calling the sync ``authorized_page``/``_authorized_count``
     directly is therefore both correct and simpler here.
 
-    Raises whatever ``_require_catalog_authority``/``_authorized_page``
+    Raises whatever ``require_catalog_authority``/``authorized_page``
     raise (``PermissionError``, ``registry_api.CatalogUnavailable``, or any
     other exception the engine surfaces) — the caller is responsible for
     catching this per-section and recording ``section_status``, matching
     every other section's independent-degrade contract in this function.
     """
     from arbora.gateway.registry_api import (
-        _KIND_SPECS,
-        _MAX_LIMIT,
-        _authorized_page,
-        _get_catalog_engine,
-        _require_catalog_authority,
-        _row_key,
+        KIND_SPECS,
+        MAX_LIMIT,
+        authorized_page,
+        get_catalog_engine,
+        require_catalog_authority,
+        row_key,
     )
 
-    tenant, principal, grant_digests = _require_catalog_authority(
+    tenant, principal, grant_digests = require_catalog_authority(
         require_discovery_binding=require_discovery_binding
     )
-    engine = _get_catalog_engine()
-    spec = _KIND_SPECS[kind]
+    engine = get_catalog_engine()
+    spec = KIND_SPECS[kind]
     rows: list[dict[str, Any]] = []
     after: tuple[str, str] | None = None
     for _page_num in range(_TOOLS_CATALOG_DRAIN_MAX_PAGES):
-        page = _authorized_page(
+        page = authorized_page(
             kind,
             tenant=tenant,
             principal=principal,
             grant_digests=grant_digests,
             query="",
             after=after,
-            limit=_MAX_LIMIT,
+            limit=MAX_LIMIT,
             engine=engine,
         )
         if not page:
             break
         rows.extend(page)
-        if len(page) < _MAX_LIMIT:
+        if len(page) < MAX_LIMIT:
             break
-        after = _row_key(spec, page[-1])
+        after = row_key(spec, page[-1])
     return rows
 
 

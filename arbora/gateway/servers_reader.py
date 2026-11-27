@@ -83,10 +83,10 @@ class FleetCatalogServersReader:
                 principal=principal,
                 grant_digests=(),
             )
-        spec = api._KIND_SPECS["servers"]
-        engine = api._get_catalog_engine()
+        spec = api.KIND_SPECS["servers"]
+        engine = api.get_catalog_engine()
         rows = await api._offload_catalog_call(
-            api._authorized_page,
+            api.authorized_page,
             "servers",
             tenant=tenant,
             principal=principal,

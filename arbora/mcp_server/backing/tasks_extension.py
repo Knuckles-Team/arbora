@@ -110,8 +110,8 @@ else:
         )
 
         # Stand-ins for the `mcp_types` symbols. `RequestParams`/`Result` are only
-        # ever used as pydantic base classes for the private `_GetTaskParams` /
-        # `_GetTaskResult` shapes below, so a BaseModel keeps those class
+        # ever used as pydantic base classes for the private `GetTaskParams` /
+        # `GetTaskResult` shapes below, so a BaseModel keeps those class
         # definitions valid; the constants only need a value that never matches.
         from pydantic import BaseModel as _CompatBaseModel
 
@@ -174,7 +174,7 @@ _TASK_DELEGATION_CHANNEL_ENV = "ARBORA_MCP_TASK_CHANNEL_SECRET"
 _TASK_METHOD_VERSIONS = frozenset(MODERN_PROTOCOL_VERSIONS)
 
 
-def _channel_proof(secret: str, token: str) -> str:
+def channel_proof(secret: str, token: str) -> str:
     """Bind one task proof to the private per-child-generation channel."""
 
     return hmac.new(
@@ -234,7 +234,7 @@ def _delegation_binding(
     ).hexdigest()
 
 
-def _mint_delegation_token(
+def mint_delegation_token(
     method: str,
     params: Mapping[str, Any],
     *,
@@ -435,7 +435,7 @@ def _orchestrator_work_item_id(task_id: str) -> str:
     return f"workitem:orchestrator:{task_id}"
 
 
-class _GetTaskParams(RequestParams):
+class GetTaskParams(RequestParams):
     model_config = ConfigDict(populate_by_name=True)
 
     task_id: str = Field(alias="taskId", max_length=_MAX_TASK_ID_BYTES)
@@ -446,10 +446,10 @@ class _GetTaskParams(RequestParams):
         return _validate_task_id(value)
 
 
-_CancelTaskParams = _GetTaskParams
+CancelTaskParams = GetTaskParams
 
 
-class _UpdateTaskParams(RequestParams):
+class UpdateTaskParams(RequestParams):
     model_config = ConfigDict(populate_by_name=True)
 
     task_id: str = Field(alias="taskId", max_length=_MAX_TASK_ID_BYTES)
@@ -469,7 +469,7 @@ class _UpdateTaskParams(RequestParams):
         return value
 
 
-class _GetTaskResult(Result):
+class GetTaskResult(Result):
     """``GetTaskResult`` (SEP-2663): flat task fields plus exactly one of
     ``result``/``error``/``input_requests`` depending on ``status``."""
 
@@ -494,7 +494,7 @@ class _GetTaskResult(Result):
     )
 
 
-class _AckResult(Result):
+class AckResult(Result):
     """Acknowledgement shape for ``tasks/update``/``tasks/cancel``."""
 
     model_config = ConfigDict(populate_by_name=True)
@@ -595,19 +595,19 @@ class WorkItemTasksExtension(ServerExtension):
         return [
             MethodBinding(
                 method="tasks/get",
-                params_type=_GetTaskParams,
+                params_type=GetTaskParams,
                 handler=self._handle_get,
                 protocol_versions=_TASK_METHOD_VERSIONS,
             ),
             MethodBinding(
                 method="tasks/update",
-                params_type=_UpdateTaskParams,
+                params_type=UpdateTaskParams,
                 handler=self._handle_update,
                 protocol_versions=_TASK_METHOD_VERSIONS,
             ),
             MethodBinding(
                 method="tasks/cancel",
-                params_type=_CancelTaskParams,
+                params_type=CancelTaskParams,
                 handler=self._handle_cancel,
                 protocol_versions=_TASK_METHOD_VERSIONS,
             ),
@@ -1114,7 +1114,7 @@ class WorkItemTasksExtension(ServerExtension):
         ).strip()
         if channel_secret:
             if not isinstance(channel, str) or not hmac.compare_digest(
-                channel, _channel_proof(channel_secret, token)
+                channel, channel_proof(channel_secret, token)
             ):
                 raise mcp_protocol_exception(-32001, "Invalid delegated task proof")
         elif channel is not None:
@@ -1240,8 +1240,8 @@ class WorkItemTasksExtension(ServerExtension):
         return getattr(engine, "_work_item_engine", engine)
 
     async def _handle_get(
-        self, ctx: ServerRequestContext[Any, Any], params: _GetTaskParams
-    ) -> _GetTaskResult:
+        self, ctx: ServerRequestContext[Any, Any], params: GetTaskParams
+    ) -> GetTaskResult:
         self._require_tasks_capability(ctx)
         route = self._route_from_params(params)
         session = self._authorized_request_session(
@@ -1252,8 +1252,8 @@ class WorkItemTasksExtension(ServerExtension):
         return self._project(params.task_id, session=session, route=route)
 
     async def _handle_cancel(
-        self, ctx: ServerRequestContext[Any, Any], params: _GetTaskParams
-    ) -> _AckResult:
+        self, ctx: ServerRequestContext[Any, Any], params: GetTaskParams
+    ) -> AckResult:
         self._require_tasks_capability(ctx)
         route = self._route_from_params(params)
         session = self._authorized_request_session(
@@ -1281,8 +1281,8 @@ class WorkItemTasksExtension(ServerExtension):
         return item_id
 
     async def _handle_update(
-        self, ctx: ServerRequestContext[Any, Any], params: _UpdateTaskParams
-    ) -> _AckResult:
+        self, ctx: ServerRequestContext[Any, Any], params: UpdateTaskParams
+    ) -> AckResult:
         self._require_tasks_capability(ctx)
         route = self._route_from_params(params)
         session = self._authorized_request_session(
@@ -1302,7 +1302,7 @@ class WorkItemTasksExtension(ServerExtension):
         *,
         session: Any | None = None,
         route: Mapping[str, Any] | None = None,
-    ) -> _GetTaskResult:
+    ) -> GetTaskResult:
         item_id = _orchestrator_work_item_id(task_id)
         item = work_items.get_work_item(self._engine(), item_id)
         if item is None:
@@ -1317,7 +1317,7 @@ class WorkItemTasksExtension(ServerExtension):
             else None
         )
         status = self._map_work_item_status(raw_status, pending)
-        result = _GetTaskResult(
+        result = GetTaskResult(
             task_id=task_id,
             status=status,
             created_at=_iso_timestamp(item.get("created_at")),
@@ -1357,7 +1357,7 @@ class WorkItemTasksExtension(ServerExtension):
 
     def _apply_task_status_payload(
         self,
-        result: _GetTaskResult,
+        result: GetTaskResult,
         status: str,
         task_id: str,
         item: Mapping[str, Any],
@@ -1377,7 +1377,7 @@ class WorkItemTasksExtension(ServerExtension):
         *,
         session: Any,
         route: Mapping[str, Any] | None,
-    ) -> _AckResult:
+    ) -> AckResult:
         raw_status = str(item.get("status") or "").lower()
         if raw_status in _WORKING_RAW_STATUSES:
             status = "working"
@@ -1389,7 +1389,7 @@ class WorkItemTasksExtension(ServerExtension):
             status = "cancelled"
         else:
             raise mcp_protocol_exception(-32603, "Unknown WorkItem status")
-        return _AckResult(
+        return AckResult(
             task_id=task_id,
             status=status,
             created_at=_iso_timestamp(item.get("created_at")),

@@ -46,7 +46,7 @@ class SandboxPrincipal:
         )
 
 
-def _is_loopback(host: str) -> bool:
+def is_loopback_host(host: str) -> bool:
     try:
         return ipaddress.ip_address(host).is_loopback
     except ValueError:
@@ -69,7 +69,7 @@ def mint_sandbox_principals(
             "SANDBOX_PRINCIPAL_OUTSIDE_PROFILE",
             "a sandbox principal exists only in the sandbox profile",
         )
-    if not _is_loopback(bind_host):
+    if not is_loopback_host(bind_host):
         raise SandboxPrincipalRefusal(
             "SANDBOX_PRINCIPAL_NOT_LOOPBACK",
             "the sandbox listener must be a literal loopback address",

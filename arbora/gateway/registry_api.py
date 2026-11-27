@@ -55,7 +55,7 @@ def _sql_literal(value: str) -> str:
     return "'" + rendered.replace("'", "''") + "'"
 
 
-_MAX_LIMIT = 100
+MAX_LIMIT = 100
 _DEFAULT_LIMIT = 50
 _MAX_QUERY_BYTES = 128
 _MAX_CATALOG_ROWS = 10_000
@@ -282,7 +282,7 @@ class _KindSpec:
 # (`GET /tools` / `/api/enhanced/tools`) until a real ingester exists for
 # skill-graphs and the `skills` table grows `domain`/`tags` columns.
 #
-_KIND_SPECS: dict[str, _KindSpec] = {
+KIND_SPECS: dict[str, _KindSpec] = {
     "servers": _KindSpec(
         "mcp_servers",
         ("id", "tenant_id", "name", "transport", "url", "enabled"),
@@ -417,7 +417,7 @@ class CatalogUnavailable(RuntimeError):
     """Raised when the authoritative engine catalog cannot be read."""
 
 
-def _get_catalog_engine() -> Any:
+def get_catalog_engine() -> Any:
     """Resolve the existing engine singleton; no reader-owned store exists."""
 
     from arbora.mcp_server.runtime import _get_engine
@@ -431,7 +431,7 @@ async def _offload_catalog_call(
     """Run one blocking catalog SQL call off the ASGI event loop, bounded by
     ``_CATALOG_READ_TIMEOUT_S``.
 
-    ``_authorized_count``/``_authorized_page``/``_authorized_item`` each make
+    ``_authorized_count``/``authorized_page``/``_authorized_item`` each make
     a synchronous unix-socket engine RPC. Calling one of them directly from
     an ``async def`` route handler blocks the single gateway event loop for
     the RPC's full duration: one slow registry read then stalls *every*
@@ -461,7 +461,7 @@ def _resolve_current_discovery_grants(actor: Any) -> tuple[str, ...]:
     )
 
 
-def _require_catalog_authority(
+def require_catalog_authority(
     *, require_discovery_binding: bool
 ) -> tuple[str, str, tuple[str, ...]]:
     """Require verified session/scope and return tenant, principal, grants."""
@@ -508,7 +508,7 @@ def _parse_multi_kind_request(
     request: Request,
 ) -> tuple[list[str], int, str, dict[str, str], bool]:
     """Parse the bounded multi-kind controls: ``kinds`` (required,
-    comma-separated, validated against ``_KIND_SPECS``), a ``limit``/``q``
+    comma-separated, validated against ``KIND_SPECS``), a ``limit``/``q``
     shared across every requested kind (same bounds as the single-kind
     route), one cursor PER kind via ``cursor_<kind>`` query parameters (e.g.
     ``?kinds=tools,skills&cursor_tools=...&cursor_skills=...`` — never a
@@ -531,13 +531,13 @@ def _parse_multi_kind_request(
 
 def _parse_registry_kinds(raw_kinds: str) -> list[str]:
     """Validate and dedupe the comma-separated ``kinds`` parameter against
-    ``_KIND_SPECS``."""
+    ``KIND_SPECS``."""
     kinds: list[str] = []
     for token in raw_kinds.split(","):
         kind = token.strip()
         if not kind:
             continue
-        if kind not in _KIND_SPECS:
+        if kind not in KIND_SPECS:
             raise HTTPException(
                 status_code=422, detail=f"unknown registry kind: {kind}"
             )
@@ -555,7 +555,7 @@ def _parse_registry_limit(raw_limit: str) -> int:
         limit = int(raw_limit)
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=422, detail="invalid registry limit") from exc
-    if not 1 <= limit <= _MAX_LIMIT:
+    if not 1 <= limit <= MAX_LIMIT:
         raise HTTPException(status_code=422, detail="registry limit is out of bounds")
     return limit
 
@@ -741,7 +741,7 @@ def _url_safe_to_disclose(parsed: Any) -> bool:
 def _normalize_row(kind: str, row: Mapping[str, Any]) -> dict[str, Any]:
     """Shape a catalog row without exposing tenant/principal or raw secrets."""
 
-    fields = _KIND_SPECS[kind].model.model_fields
+    fields = KIND_SPECS[kind].model.model_fields
     result = {field: row[field] for field in fields if field in row}
     if kind == "servers":
         result["url"] = _safe_url(result.get("url"))
@@ -833,7 +833,7 @@ def _catalog_service_session() -> Any:
     fully-admitted actor gets ``table not found`` on the identical query.
 
     This module's own ``tenant_id``/principal predicate (:func:`_build_where`,
-    built from the REAL calling actor via :func:`_require_catalog_authority`)
+    built from the REAL calling actor via :func:`require_catalog_authority`)
     is already the entire authorization boundary for this store — the engine
     enforces no RLS of its own on a plain user table (see
     ``fleet_catalog_tables`` module docstring: "gated only on authentication
@@ -969,7 +969,7 @@ def _build_where(
 def _keyset_predicate(spec: _KindSpec, after: tuple[str, str]) -> str:
     """The keyset-pagination predicate for rows strictly after ``after``.
 
-    Mirrors the ``(casefold(name), id)`` ordering :func:`_row_key` already
+    Mirrors the ``(casefold(name), id)`` ordering :func:`row_key` already
     encodes into the cursor. ``LOWER()`` is SQL's nearest portable
     equivalent to Python's ``str.casefold()`` — not byte-identical on every
     Unicode edge case, but the two agree on the ASCII identifiers this
@@ -1082,7 +1082,7 @@ def _authorized_count(
     asking the engine at all (BUG-CX-118).
     """
 
-    spec = _KIND_SPECS[kind]
+    spec = KIND_SPECS[kind]
     sql_exec = _require_sql_exec(engine)
     where = _build_where(
         spec,
@@ -1158,7 +1158,7 @@ def _reconciled_total(total: int, page_rows: list[dict[str, Any]]) -> int:
     return total
 
 
-def _authorized_page(
+def authorized_page(
     kind: str,
     *,
     tenant: str,
@@ -1173,7 +1173,7 @@ def _authorized_page(
     into SQL, so a page of N rows transfers N rows over the wire, never the
     whole table."""
 
-    spec = _KIND_SPECS[kind]
+    spec = KIND_SPECS[kind]
     sql_exec = _require_sql_exec(engine)
     where = _build_where(
         spec,
@@ -1187,9 +1187,9 @@ def _authorized_page(
     # Fetch one extra row to detect "there is a next page" without a second
     # round trip. `_MAX_CATALOG_ROWS` remains a defence-in-depth ceiling on
     # the fetch itself (unreachable in practice since `_parse_request` already
-    # bounds `limit` to `_MAX_LIMIT`) so a pathological request still cannot
+    # bounds `limit` to `MAX_LIMIT`) so a pathological request still cannot
     # pull the whole table even if that bound were ever raised.
-    fetch = min(min(limit, _MAX_LIMIT) + 1, _MAX_CATALOG_ROWS + 1)
+    fetch = min(min(limit, MAX_LIMIT) + 1, _MAX_CATALOG_ROWS + 1)
     columns = ", ".join(spec.columns)
     statement = (
         f"SELECT {columns} FROM {spec.table} WHERE {where} "  # nosec B608 - static spec table/columns; values are _sql_literal-escaped
@@ -1224,7 +1224,7 @@ def _authorized_item(
     """Read at most one row by id, with the id predicate pushed into SQL
     rather than fetching the authorized set and filtering it in Python."""
 
-    spec = _KIND_SPECS[kind]
+    spec = KIND_SPECS[kind]
     sql_exec = _require_sql_exec(engine)
     where = _build_where(
         spec, tenant=tenant, principal=principal, grant_digests=grant_digests, query=""
@@ -1251,7 +1251,7 @@ def _authorized_item(
     return rows[0]
 
 
-def _row_key(spec: _KindSpec, row: Mapping[str, Any]) -> tuple[str, str]:
+def row_key(spec: _KindSpec, row: Mapping[str, Any]) -> tuple[str, str]:
     return (
         str(row.get(spec.name_column) or "").casefold(),
         str(row.get("id") or ""),
@@ -1261,8 +1261,8 @@ def _row_key(spec: _KindSpec, row: Mapping[str, Any]) -> tuple[str, str]:
 def _kind_catalog_authority(kind: str) -> tuple[str, str, tuple[str, ...]]:
     """Resolve the caller's catalog authority for ``kind`` or answer 403."""
     try:
-        return _require_catalog_authority(
-            require_discovery_binding=_KIND_SPECS[kind].principal_column is not None
+        return require_catalog_authority(
+            require_discovery_binding=KIND_SPECS[kind].principal_column is not None
         )
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail="registry access denied") from exc
@@ -1295,7 +1295,7 @@ def _next_page_cursor(
     return _cursor_token(
         kind=kind,
         query=query,
-        after=_row_key(spec, page_rows[-1]),
+        after=row_key(spec, page_rows[-1]),
         tenant=tenant,
         principal=principal,
         grant_digests=grant_digests,
@@ -1326,14 +1326,14 @@ async def _list_kind(
             principal=principal,
             grant_digests=grant_digests,
         )
-    spec = _KIND_SPECS[kind]
-    engine = _get_catalog_engine()
+    spec = KIND_SPECS[kind]
+    engine = get_catalog_engine()
     try:
         # The page is read FIRST so its scope-validated length can supply the
         # total whenever it is the complete result set — the engine's
         # unvalidatable COUNT is then never issued at all (BUG-CX-118).
         rows = await _offload_catalog_call(
-            _authorized_page,
+            authorized_page,
             kind,
             tenant=tenant,
             principal=principal,
@@ -1464,7 +1464,7 @@ async def _get_kind(
             principal=principal,
             grant_digests=grant_digests,
             item_id=item_id,
-            engine=_get_catalog_engine(),
+            engine=get_catalog_engine(),
         )
     except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
         return _catalog_unavailable(kind, exc)
@@ -1554,7 +1554,7 @@ def _iter_toggleable_items(
 async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
     """``GET /api/registry?kinds=a,b,c[&limit=][&q=][&cursor_<kind>=][&include=toggle]``.
 
-    Reuses ``_authorized_page``/``_authorized_count``/``_build_where`` — the
+    Reuses ``authorized_page``/``_authorized_count``/``_build_where`` — the
     EXACT same predicate the single-kind ``GET /api/registry/{kind}`` route
     uses — via the same ``_offload_catalog_call`` off-loop wrapper, so there
     is exactly one predicate implementation for both surfaces (no forked
@@ -1578,10 +1578,10 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
 
     kinds, limit, query, cursors, include_toggle = _parse_multi_kind_request(request)
     require_discovery_binding = any(
-        _KIND_SPECS[kind].principal_column is not None for kind in kinds
+        KIND_SPECS[kind].principal_column is not None for kind in kinds
     )
     try:
-        tenant, principal, grant_digests = _require_catalog_authority(
+        tenant, principal, grant_digests = require_catalog_authority(
             require_discovery_binding=require_discovery_binding
         )
     except PermissionError as exc:
@@ -1607,15 +1607,15 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
             else None
         )
 
-    engine = _get_catalog_engine()
+    engine = get_catalog_engine()
 
     async def _read_one(kind: str) -> tuple[str, RegistryKindResult]:
-        spec = _KIND_SPECS[kind]
+        spec = KIND_SPECS[kind]
         try:
             # Page first, then a count only if the page is not the whole
             # result set — same BUG-CX-118 reasoning as the single-kind route.
             rows = await _offload_catalog_call(
-                _authorized_page,
+                authorized_page,
                 kind,
                 tenant=tenant,
                 principal=principal,
@@ -1713,7 +1713,7 @@ registry_router.add_api_route(
 )
 
 
-for _kind, _spec in _KIND_SPECS.items():
+for _kind, _spec in KIND_SPECS.items():
     _model = _spec.model
     _page_response_model, _item_response_model = _RESPONSE_MODELS[_kind]
     _list_handler = (

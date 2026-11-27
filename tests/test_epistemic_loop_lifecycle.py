@@ -5,7 +5,7 @@ import contextlib
 from typing import Any
 
 from arbora.epistemic import EpistemicClientPool
-from arbora.mcp_server.served_engine import _run_blocking
+from arbora.mcp_server.served_engine import run_blocking
 from tests.test_epistemic_adapter import Client, context
 
 
@@ -45,7 +45,7 @@ def test_temporary_loop_closes_transport_without_displacing_serving_reader() -> 
 
         try:
             for _ in range(3):
-                assert _run_blocking(request) == "reply"
+                assert run_blocking(request) == "reply"
                 assert clients[-1].closed
                 assert clients[-1].reader.done()
                 assert await pool.connected_client(caller, "graph") is serving
@@ -80,9 +80,9 @@ def test_failed_and_cancelled_requests_close_before_loop_exit() -> None:
     import pytest
 
     with pytest.raises(ValueError, match="request refused"):
-        _run_blocking(failed)
+        run_blocking(failed)
     with pytest.raises(asyncio.CancelledError):
-        _run_blocking(cancelled)
+        run_blocking(cancelled)
     assert all(client.closed and client.reader.done() for client in clients)
     assert all(client.close_count == 1 for client in clients)
     assert pool.graph_count == 0
@@ -157,7 +157,7 @@ def test_temporary_scope_reuses_client_but_refuses_cross_tenant() -> None:
         with pytest.raises(TenantGraphBindingError):
             await pool.connected_client(replace(caller, tenant="other"), "graph")
 
-    _run_blocking(request)
+    run_blocking(request)
     assert len(clients) == 1
     assert clients[0].closed and clients[0].reader.done()
     assert pool.graph_count == 0
@@ -186,7 +186,7 @@ def test_cleanup_reports_failure_after_closing_remaining_clients() -> None:
         await pool.connected_client(context("graph:read"), "second")
 
     with pytest.raises(ExceptionGroup, match="temporary client cleanup failed"):
-        _run_blocking(request)
+        run_blocking(request)
     assert all(client.closed and client.reader.done() for client in clients)
 
 

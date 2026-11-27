@@ -27,7 +27,7 @@ def _reason(exc: Exception) -> str:
     return str(getattr(exc, "message", "") or exc)
 
 
-def _mutation_context(session: Any, purpose_id: str) -> dict[str, Any]:
+def mutation_context(session: Any, purpose_id: str) -> dict[str, Any]:
     """A best-effort ``AgentLibraryMutationContext`` for one assembly step.
 
     EG's admitted-context step replaces the policy fields with its own
@@ -59,7 +59,7 @@ def _commit_context(session: Any) -> Callable[[Mapping[str, Any]], Any]:
     """The assembler's ``commit_context`` provider, bound to ``session``."""
 
     async def provider(_record: Mapping[str, Any]) -> Mapping[str, Any]:
-        return _mutation_context(session, "agent_library.assembly_commit")
+        return mutation_context(session, "agent_library.assembly_commit")
 
     return provider
 
@@ -68,7 +68,7 @@ def _publish_context(session: Any) -> Callable[[Mapping[str, Any]], Any]:
     """The assembler's ``publish_context`` provider, bound to ``session``."""
 
     async def provider(_graph: Mapping[str, Any]) -> Mapping[str, Any]:
-        return _mutation_context(session, "agent_library.assembly_publish")
+        return mutation_context(session, "agent_library.assembly_publish")
 
     return provider
 

@@ -39,7 +39,9 @@ MAX_BODY_BYTES = 1_048_576
 MAX_KEY_LENGTH = 256
 
 
-def _error(code: str, *, digest: str, op: str, request_id: str = "") -> JSONResponse:
+def error_response(
+    code: str, *, digest: str, op: str, request_id: str = ""
+) -> JSONResponse:
     from arbora.api.errors import ArboraErrorCode, ArboraRefusal, to_envelope
 
     status, envelope = to_envelope(
@@ -143,7 +145,7 @@ def make_endpoint(
         try:
             params = await _params(request, generic=generic)
         except (ValueError, TypeError):
-            return _error("INVALID_ARGUMENT", digest=digest, op=op.id)
+            return error_response("INVALID_ARGUMENT", digest=digest, op=op.id)
         key = request.headers.get("idempotency-key")
         if key is None and derive_key is not None:
             # A protocol client that cannot send the header (an OTLP exporter)
@@ -151,16 +153,16 @@ def make_endpoint(
             key = derive_key(params)
         plan_ref = request.headers.get("arbora-plan-ref")
         if _invalid_header(key) or _invalid_header(plan_ref):
-            return _error("INVALID_ARGUMENT", digest=digest, op=op.id)
+            return error_response("INVALID_ARGUMENT", digest=digest, op=op.id)
         if operation_authority is not None:
             from arbora.identity.engine import IdentityUnavailable
 
             try:
                 await operation_authority.before_invocation(request, caller)
             except HTTPAuthenticationError:
-                return _error("UNAUTHENTICATED", digest=digest, op=op.id)
+                return error_response("UNAUTHENTICATED", digest=digest, op=op.id)
             except IdentityUnavailable:
-                return _error("UNAVAILABLE", digest=digest, op=op.id)
+                return error_response("UNAVAILABLE", digest=digest, op=op.id)
         with caller_session_scope(caller):
             outcome = await invoke(
                 op.id,
@@ -187,11 +189,13 @@ def make_endpoint(
                 else:
                     caller = await authenticate(request)
             except HTTPAuthenticationError:
-                return _error(
+                return error_response(
                     "UNAUTHENTICATED", digest=services.registry.digest, op=op.id
                 )
             except IdentityUnavailable:
-                return _error("UNAVAILABLE", digest=services.registry.digest, op=op.id)
+                return error_response(
+                    "UNAVAILABLE", digest=services.registry.digest, op=op.id
+                )
             # Never reinterpret an invocation failure as pre-dispatch refusal.
             return await invoke_for_caller(request, caller)
 

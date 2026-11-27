@@ -559,7 +559,9 @@ async def _await_projection(
         await asyncio.sleep(_PROJECTION_POLL_SECS)
 
 
-async def _reproject(client: Any, *, tenant_id: str, graph: str, connector: str) -> Any:
+async def reproject_connector(
+    client: Any, *, tenant_id: str, graph: str, connector: str
+) -> Any:
     context = shell_context(tenant_id, f"connector-pack:{connector}:reproject")
     return await client._send(
         "ConnectorPack",
@@ -602,7 +604,9 @@ async def _project_and_attach(
         client, tenant_id=tenant_id, graph=graph, connector=connector
     )
     if state != "applied":
-        await _reproject(client, tenant_id=tenant_id, graph=graph, connector=connector)
+        await reproject_connector(
+            client, tenant_id=tenant_id, graph=graph, connector=connector
+        )
         state = await _await_projection(
             client, tenant_id=tenant_id, graph=graph, connector=connector
         )

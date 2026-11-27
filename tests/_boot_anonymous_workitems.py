@@ -11,7 +11,7 @@ from medulla import MedullaClient
 
 from arbora.api.invoke.steps import OpResult
 from arbora.core.settings import load_config
-from arbora.mcp_server.effect_journal import EgEffectJournal, _request_context
+from arbora.mcp_server.effect_journal import EgEffectJournal, request_context
 from arbora.security.anonymous import session, session_context, validate_startup
 
 
@@ -40,7 +40,7 @@ async def main():
         assert conflict.state == "conflict", conflict
         base = {
             "schema_version": "1",
-            "context": _request_context(claims, client, key),
+            "context": request_context(claims, client, key),
             "work_item_id": "provenance-" + uuid.uuid4().hex,
             "idempotency_key": "provenance-" + uuid.uuid4().hex,
             "command_digest": "a" * 64,

@@ -568,9 +568,9 @@ class FleetOnboarding:
         )
 
     async def reproject(self, connector: str) -> None:
-        from arbora.deployment.semantic_provisioning import _reproject
+        from arbora.deployment.semantic_provisioning import reproject_connector
 
-        await _reproject(
+        await reproject_connector(
             self.tenant_client,
             tenant_id=self._tenant(),
             graph=str(self.session.graph),

@@ -636,7 +636,7 @@ async def _submit_run(context: Any, params: Mapping[str, Any]) -> str:
 
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
     from arbora.api.invoke.steps import claim_values
-    from arbora.mcp_server.effect_journal import _request_context
+    from arbora.mcp_server.effect_journal import request_context
 
     try:
         require_methods("SubmitWorkItem")
@@ -661,7 +661,7 @@ async def _submit_run(context: Any, params: Mapping[str, Any]) -> str:
         {
             "request": {
                 "schema_version": "1",
-                "context": _request_context(claims, _Graph(), key),
+                "context": request_context(claims, _Graph(), key),
                 "idempotency_key": key,
                 "command_digest": digest,
                 "kind": _WORK_ITEM_KIND,

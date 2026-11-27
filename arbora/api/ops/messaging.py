@@ -245,7 +245,7 @@ def _inbox_topic(tenant: str, session_id: str) -> str:
 async def _session_props(context: Any, session_id: str) -> Mapping[str, Any] | None:
     """The ``ClientSession`` node of the caller's tenant, or ``None``."""
     from arbora.api.ops.engine_calls import decode, engine_send
-    from arbora.api.ops.workstreams import _props
+    from arbora.api.ops.workstreams import workstream_props as props
     from arbora.identity.client_session import session_node_id
 
     node = session_node_id(str(context.caller.tenant), session_id)
@@ -254,7 +254,7 @@ async def _session_props(context: Any, session_id: str) -> Mapping[str, Any] | N
     )
     for row in rows or ():
         if isinstance(row, (list, tuple)) and len(row) == 2 and row[0] == node:
-            return _props(row[1])
+            return props(row[1])
     return None
 
 

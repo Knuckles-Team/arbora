@@ -137,12 +137,12 @@ def _typed_request_context(
             raise NativeWorkItemRequired("native WorkItem context graph mismatch")
         return dict(claims)  # already EG's typed context
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
-    from arbora.mcp_server.effect_journal import _request_context
+    from arbora.mcp_server.effect_journal import request_context
 
     class _Graph:
         graph_name = graph if graph is not None else CONTROL_GRAPH
 
-    return _request_context(
+    return request_context(
         _authority_context(claims, session),
         _Graph(),
         key,

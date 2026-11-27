@@ -88,7 +88,7 @@ class _NativeRunScope:
     active: bool = True
 
 
-_NATIVE_RUN: ContextVar[_NativeRunScope | None] = ContextVar(
+NATIVE_RUN: ContextVar[_NativeRunScope | None] = ContextVar(
     "arbora_native_run", default=None
 )
 
@@ -295,18 +295,18 @@ def native_run_scope(
             tool_subset,
         )
     )
-    token = _NATIVE_RUN.set(scope)
+    token = NATIVE_RUN.set(scope)
     try:
         yield
     finally:
         # Context copies in child tasks share revocation, not an everlasting fence.
         scope.active = False
-        _NATIVE_RUN.reset(token)
+        NATIVE_RUN.reset(token)
 
 
 def current_native_run(request: Any) -> NativeRunContext | None:
     """Read the exact trusted binding; never recover authority from metadata."""
-    scope = _NATIVE_RUN.get()
+    scope = NATIVE_RUN.get()
     if scope is None:
         return None
     if not scope.active:
