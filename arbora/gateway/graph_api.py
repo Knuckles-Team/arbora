@@ -137,9 +137,7 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
     # outermost) — the server-minted ActorContext is already in scope when
     # the bucket key (tenant → actor → client IP) is resolved. Disabled by
     # default (GATEWAY_RATE_LIMIT=0); /metrics and health paths are exempt.
-    from arbora.core.settings import runtime_config as config
-
-    if config.gateway_rate_limit > 0:
+    if host.config.gateway_rate_limit > 0:
         from arbora.gateway.rate_limit import GatewayRateLimitMiddleware
 
         app.add_middleware(GatewayRateLimitMiddleware)
@@ -166,7 +164,7 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
     # the overstory backend mount through here, so both get the same
     # instrumentation. With prometheus_client absent (optional ``metrics``
     # extra) everything degrades to a no-op.
-    if config.gateway_metrics:
+    if host.config.gateway_metrics:
         from arbora.observability.gateway_metrics import (
             GatewayMetricsMiddleware,
             metrics_endpoint,

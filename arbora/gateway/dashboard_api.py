@@ -70,7 +70,6 @@ def _dashboard_capabilities(request: Request) -> set[str] | None:
     if not claims or claims.get("auth_type") == "api_key":
         return None
     try:
-        from arbora.core.settings import runtime_config as config
         from arbora.security.identity import (
             base_capabilities,
             normalize_identity,
@@ -78,7 +77,8 @@ def _dashboard_capabilities(request: Request) -> set[str] | None:
 
         return set(
             base_capabilities(
-                normalize_identity(claims), config.identity_group_capability_map
+                normalize_identity(claims),
+                request.app.state.host.config.identity_group_capability_map,
             )
         )
     except Exception:
