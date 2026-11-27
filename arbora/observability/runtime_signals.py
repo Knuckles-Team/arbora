@@ -209,7 +209,7 @@ def record_runtime_signal(
     try:
         signal = _build_signal(kind, subject, detail, severity)
         buffer.append(signal)
-    except Exception:  # noqa: BLE001 — a signal must never affect the caller's hot path
+    except Exception:  # a signal must never affect the caller's hot path
         with contextlib.suppress(Exception):
             logger.debug("record_runtime_signal dropped a signal (kind=%s)", kind)
 
