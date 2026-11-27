@@ -17,6 +17,7 @@ from typing import Any, Literal
 from pydantic import Field, ValidationError
 
 from arbora.api.errors import EngineRefusal
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import OpSpec
@@ -56,6 +57,15 @@ class GraphRecoverParams(_common.Params):
     cursor: str | None = Field(default=None, min_length=1, max_length=2048)
 
 
+class GraphSubscribeParams(_common.Params):
+    cursor: str | None = Field(default=None, min_length=1, max_length=2048)
+    limit: int | None = Field(default=None, ge=1, le=5000)
+
+
+class GraphChangesResult(_common.Params):
+    value: dict[str, Any]
+
+
 class GraphRecoverResult(_common.Params):
     state: Literal["continue", "recover"]
     cursor: str
@@ -93,6 +103,81 @@ async def handle_graph_snapshot_recover(
     }
 
 
+GRAPH_CHANGES_PATH = "/ws/graph/changes"
+
+
+def change_event_id(event: GraphChangeEvent) -> str:
+    """The id a client deduplicates by: the commit and the event's place in it."""
+    return f"{event.commit_id}:{event.event_ordinal}"
+
+
+async def handle_graph_changes_subscribe(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """One page of committed change events behind the cursor (ARBORA-OPS-R062.2).
+
+    Events are ids and positions, never node content; the engine binds the cursor to
+    the caller's authorization revision, so an ``AUTHORIZATION_CHANGED`` refusal is the
+    marker that makes the client recover and re-check what it may see. A cursor the
+    engine cannot continue answers ``STALE_CURSOR`` and names the engine's reason.
+    """
+    request = GraphSubscribeParams.model_validate(dict(params))
+    try:
+        require_methods("OpenGraphSnapshot", "ReadGraphChanges")
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from None
+    if request.cursor is None:
+        return {"value": await _head(context)}
+    return {"value": await _read(context, request.cursor, request.limit)}
+
+
+async def _head(context: Any) -> dict[str, Any]:
+    """No cursor yet: start at the engine's high-water mark, with no events."""
+    answer = await engine_send(context, "OpenGraphSnapshot", {})
+    head = answer.get("high_water_cursor") if isinstance(answer, Mapping) else None
+    if not isinstance(head, str) or not head:
+        raise unavailable("engine snapshot is missing or invalid")
+    return _page(head, [])
+
+
+async def _read(context: Any, cursor: str, limit: int | None) -> dict[str, Any]:
+    from arbora.core.settings import runtime_config
+
+    batch = min(limit or 5000, int(runtime_config.graph_changes_max_batch))
+    try:
+        answer = await engine_send(
+            context, "ReadGraphChanges", {"cursor": cursor, "limit": batch}
+        )
+    except EngineRefusal as refused:
+        if refused.code in RECOVERY_CODES:
+            raise OperationRefused("STALE_CURSOR", {"reason": refused.code}) from None
+        raise
+    return _page_of(answer, cursor)
+
+
+def _page(cursor: str, events: list[dict[str, Any]]) -> dict[str, Any]:
+    return {"cursor": cursor, "stream_path": GRAPH_CHANGES_PATH, "events": events}
+
+
+def _page_of(answer: Any, cursor: str) -> dict[str, Any]:
+    raw = answer.get("events") if isinstance(answer, Mapping) else None
+    if not isinstance(raw, list):
+        raise unavailable("engine change page is missing or invalid")
+    try:
+        events = [GraphChangeEvent.model_validate(item) for item in raw]
+    except ValidationError:
+        raise unavailable("engine change event is invalid") from None
+    ordered = sorted(events, key=lambda e: (e.commit_id, e.event_ordinal))
+    next_cursor = answer.get("cursor") if isinstance(answer, Mapping) else None
+    return _page(
+        next_cursor if isinstance(next_cursor, str) and next_cursor else cursor,
+        [
+            {"event_id": change_event_id(e), **e.model_dump(mode="json")}
+            for e in ordered
+        ],
+    )
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         _common.build_read_op(
@@ -104,6 +189,15 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.graph_changes.handle_graph_snapshot_recover",
             scope=READ_SCOPE,
         ),
+        _common.build_read_op(
+            op_id="graph.changes.subscribe",
+            summary="Read committed graph change events behind a cursor",
+            examples=("follow graph changes",),
+            params=GraphSubscribeParams,
+            result=GraphChangesResult,
+            handler="arbora.api.ops.graph_changes.handle_graph_changes_subscribe",
+            scope="graph:read",
+        ),
     )
 
 
@@ -114,7 +208,10 @@ __all__ = [
     "GraphChangeEvent",
     "GraphRecoverParams",
     "GraphRecoverResult",
+    "GraphChangesResult",
     "GraphSnapshotRecovery",
+    "GraphSubscribeParams",
+    "handle_graph_changes_subscribe",
     "handle_graph_snapshot_recover",
     "operations",
     "specs",

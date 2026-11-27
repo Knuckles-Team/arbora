@@ -18,8 +18,8 @@ from pydantic import Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import bound_service, build_write_op
 from arbora.api.ops.meetings import (
-    MeetingSummaryCreateParams,
     MeetingSummaryResult,
+    MeetingSummaryRunParams,
     admit_provider,
     run_summary,
 )
@@ -27,7 +27,7 @@ from arbora.api.registry import OpSpec, Verb
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 
-class MeetingSummarizeParams(MeetingSummaryCreateParams):
+class MeetingSummarizeParams(MeetingSummaryRunParams):
     #: The receipt the caller holds; it must be the engine's current seal.
     finalization_digest: str = Field(min_length=1, max_length=256)
     execution_class: str = Field(default="hosted", pattern=r"^(hosted|local)$")

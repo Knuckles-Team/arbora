@@ -84,6 +84,8 @@ class ArboraErrorCode(StrEnum):
     HISTORY_REVISION_CONFLICT = "HISTORY_REVISION_CONFLICT"
     # A paging cursor the source moved past; the caller restarts the listing.
     STALE_CURSOR = "STALE_CURSOR"
+    # A summary named a transcript revision that is no longer the current one.
+    STALE_REVISION = "STALE_REVISION"
     # Approval refusals (ARBORA-OPS-R918.3).
     SELF_APPROVAL = "SELF_APPROVAL"
     ALREADY_DECIDED = "ALREADY_DECIDED"
@@ -244,6 +246,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CLIENT_SESSION_MISSING: 403,
     ArboraErrorCode.ARTIFACT_STALE: 409,
     ArboraErrorCode.STALE_CURSOR: 409,
+    ArboraErrorCode.STALE_REVISION: 409,
     ArboraErrorCode.IDEMPOTENCY_CONFLICT: 409,
     ArboraErrorCode.CHILD_TARGET_TERMINAL: 409,
     ArboraErrorCode.CHILD_REVISION_STALE: 409,
@@ -870,6 +873,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CLIENT_SESSION_MISSING: -32003,
     ArboraErrorCode.ARTIFACT_STALE: -32009,
     ArboraErrorCode.STALE_CURSOR: -32009,
+    ArboraErrorCode.STALE_REVISION: -32009,
     ArboraErrorCode.IDEMPOTENCY_CONFLICT: -32009,
     ArboraErrorCode.CHILD_TARGET_TERMINAL: -32009,
     ArboraErrorCode.CHILD_REVISION_STALE: -32009,

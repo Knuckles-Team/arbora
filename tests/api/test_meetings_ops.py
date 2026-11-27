@@ -8,7 +8,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import meetings
 from arbora.api.registry import Effect
 from tests.api._meeting_fakes import (
-    PARAMS,
+    REQUEST,
     Admission,
     Summarizer,
     install_engine,
@@ -17,13 +17,8 @@ from tests.api._meeting_fakes import (
 
 ALLOWED = {"allowed": True, "policy_revision": "p1", "admission_id": "a1"}
 _OP = meetings.operations()[0]
-_FULL = {
-    **PARAMS,
-    "max_tokens": 10,
-    "max_spans": 2,
-    "max_segment_bytes": 100,
-    "max_attempts": 2,
-}
+_FULL = REQUEST
+_EXPECTED = {"PROVIDER_UNAVAILABLE": "PROVIDER_UNAVAILABLE"}
 
 
 @pytest.mark.spec("ARBORA-OPS-R884")
@@ -36,6 +31,7 @@ async def test_summary_create_admits_context_and_commit(
     result = await meetings.handle_summary_create(context, _FULL, _OP)
     assert calls == ["MeetingSummaryContext", "MeetingSummaryCommit"]
     assert result["value"]["attempts"] == 2 and summarizer.calls == 2
+    assert result["value"]["provenance"]["provider"] == "prov"
     assert result["value"]["summary_id"].startswith("sum-")
     assert _OP.effect is Effect.WRITE
     assert meetings.NATIVE_IDEMPOTENCY["meetings.summary.create"].startswith("medulla:")
@@ -54,5 +50,5 @@ async def test_summary_create_admits_context_and_commit(
         denied = meeting_context(Admission({"allowed": False, "code": code}))
         with pytest.raises(OperationRefused) as refused:
             await meetings.handle_summary_create(denied, _FULL, _OP)
-        assert refused.value.code == code
+        assert refused.value.code == _EXPECTED.get(code, "POLICY_DENIED")
     assert calls == []
