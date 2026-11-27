@@ -221,7 +221,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T174 ARBORA-OPS-R848.3 Serve the `source.diff` read.
 - [ ] T175 ARBORA-OPS-R849 Apply the server-side landing policy with fast and full gate phases.
 - [x] T176 ARBORA-OPS-R850 Stream the virtual checkout endpoint, recursively and resumably.
-- [ ] T177 ARBORA-OPS-R851 Serve the git smart-HTTP read bridge over EG trees.
+- [x] T177 ARBORA-OPS-R851 Serve the git smart-HTTP read bridge over EG trees.
 
 - [ ] T178 ARBORA-OPS-R848.4 Graph-native symbol edits.
 - [ ] T179 ARBORA-OPS-R852 Harness optimize, promote and rollback operations (rollup).

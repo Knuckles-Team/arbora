@@ -152,6 +152,13 @@ class ArboraConfig(BaseModel):
         alias="BOOKMARKS_MAX_EXPORT_ROWS",
         description="Most rows one bookmark export may carry (ARBORA-OPS-R066.3). A request above it is refused LOAD_CAP_EXCEEDED before any engine read.",
     )
+    git_bridge_max_pack_bytes: int = Field(
+        default=2_147_483_648,
+        ge=1_048_576,
+        le=17_179_869_184,
+        alias="GIT_BRIDGE_MAX_PACK_BYTES",
+        description="Most bytes one git smart-HTTP fetch may stream (ARBORA-OPS-R851). An export whose receipt reports more is refused LOAD_CAP_EXCEEDED before any byte is sent.",
+    )
     viewport_max_bytes: int = Field(
         default=1_048_576,
         ge=4_096,

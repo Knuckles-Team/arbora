@@ -17,6 +17,7 @@ from arbora.api.registry import Invoke
 from .auth import HTTPAuthenticationError
 from .bundles import mount_bundle_transfer
 from .checkout import make_checkout_endpoint
+from .git_bridge import mount_git_bridge
 from .lineage import mount_lineage_route
 from .openapi import document
 from .routes import _error, make_endpoint
@@ -303,6 +304,13 @@ def create_api_application(
     # and eg.graph.ApplyMutation through the same invoke chokepoint
     # (ARBORA-OPS-R857.1).
     mount_bundle_transfer(
+        app,
+        services=services,
+        authenticate=authenticate,
+        invoke=invoke,
+        is_console_request=auth.is_console_request,
+    )
+    mount_git_bridge(
         app,
         services=services,
         authenticate=authenticate,

@@ -190,7 +190,7 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | Source diff reads | `ARBORA-OPS-R848.3` | `tests/api/test_source_ops.py::test_source_diff_served`: `source.diff` returns the engine diff between two refs under the caller's path ACL. |
 | Landing policy | `ARBORA-OPS-R849` | `tests/api/test_source_writes.py::test_a_failing_gate_refuses_policy_denied_naming_the_gate`: a failing fast gate refuses before landing with zero effects. A post-landing failure records the engine bisect and revert decision. |
 | Virtual checkout | `ARBORA-OPS-R850` | `tests/api/test_source_checkout.py::test_checkout_stream_resumable`: directories stream before blobs. A resumed fetch continues from the last acknowledged entry. |
-| Git bridge | `ARBORA-OPS-R851` | `tests/api/test_source_git_bridge.py::test_smart_http_clone_and_fetch`: clone and fetch succeed over the smart-HTTP endpoint. Mirror sync is served by the repository-manager connector. |
+| Git bridge | `ARBORA-OPS-R851` | `tests/api/test_git_bridge_served.py::test_clone_fetch_and_denied_path_over_smart_http`: clone and fetch stream the engine's pack over the smart-HTTP endpoint, a denied path answers HTTP 403, and `tests/api/test_git_bridge_served.py::test_push_is_not_served_and_an_unknown_want_makes_no_export` proves `git-receive-pack` answers `push_not_served`. Mirror sync is served by the repository-manager connector. |
 
 ## Graph-driven development, context, governance and row-engine operations
 
