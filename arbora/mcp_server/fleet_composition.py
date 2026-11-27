@@ -219,12 +219,12 @@ def tool_ranker_for(engine_send: Any) -> Any:
     Tool search orders by the engine ranking once the pinned contract names the
     ``tool_relevance`` question; without a send or the question the catalog order stands.
     """
-    from arbora.fleet.tool_ranking import engine_tool_ranker
+    from arbora.fleet.tool_ranking import engine_tool_order
     from arbora.pin_lag.medulla import question_kind_served
 
     if engine_send is None or not question_kind_served("tool_relevance"):
         return None
-    return engine_tool_ranker(engine_send)
+    return engine_tool_order(engine_send)
 
 
 def bind_fleet_gateway(
