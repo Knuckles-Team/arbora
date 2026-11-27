@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from arbora.a2a.authority import A2AIdempotencyConflict
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.core.a2a_errors import A2AIdempotencyConflict
 from tests.api._child_admission_support import (
     DONE,
     LIVE,

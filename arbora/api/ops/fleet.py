@@ -414,8 +414,8 @@ async def handle_catalog_convergence(
     ARBORA-FLEET-R051.2.1: a read of ``FleetCatalogReader.generation_status``.
     A generation of another tenant is refused as ``TENANT_DENIED``.
     """
+    from arbora.api.domain.fleet.catalog_reader import generation_payload
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.fleet.health import generation_payload
 
     gateway = context.services.get("fleet_gateway")
     if gateway is None:

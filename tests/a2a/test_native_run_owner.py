@@ -191,8 +191,8 @@ def test_durable_reply_uses_native_run_not_public_work_item(payload_run):
 
 @pytest.mark.parametrize("code", ["IDEMPOTENCY_CONFLICT", "UPGRADE_REQUIRED"])
 def test_native_admission_conflict_translates_at_a2a_boundary(monkeypatch, code):
-    from arbora.a2a.authority import A2AIdempotencyConflict
     from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.core.a2a_errors import A2AIdempotencyConflict
 
     def refuse(*args, **kwargs):
         raise OperationRefused(code)

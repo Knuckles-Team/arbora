@@ -330,6 +330,7 @@ def build_invoke_services(
     audit_client_factory: ClientFactory,
     config: RuntimeConfig,
     gate_send: Any = None,
+    admission_sources: tuple[Any, Any] = (None, None),
     **changes: Any,
 ) -> InvokeServices:
     """Wire the real EG audit adapter (ARBORA-HOST-R024.1); no fake audit sink.
@@ -351,7 +352,10 @@ def build_invoke_services(
     # ARBORA-FLEET-R034.2: the admission limits come from config.json; an
     # invalid value stops the host start rather than weakening the gate.
     changes.setdefault(
-        "admission", _admission_gate_from_config(gate_send, changes.get("bindings"))
+        "admission",
+        _admission_gate_from_config(
+            gate_send, changes.get("bindings"), admission_sources
+        ),
     )
     return InvokeServices(
         registry=registry,
@@ -365,7 +369,11 @@ def build_invoke_services(
     )
 
 
-def _admission_gate_from_config(gate_send: Any = None, bindings: Any = None) -> Any:
+def _admission_gate_from_config(
+    gate_send: Any = None,
+    bindings: Any = None,
+    sources: tuple[Any, Any] = (None, None),
+) -> Any:
     from arbora.api.domain.fleet.admission import AdmissionGate
     from arbora.api.domain.fleet.admission_policy import AdmissionConfig
     from arbora.core.settings import platform_config_file, read_config_document
@@ -374,27 +382,13 @@ def _admission_gate_from_config(gate_send: Any = None, bindings: Any = None) -> 
     document = read_config_document(path) if path.is_file() else {}
     from arbora.api.domain.fleet.engine_admission import engine_port
 
-    grants, declarations = _admission_sources(bindings)
+    grants, declarations = sources
     return AdmissionGate(
         AdmissionConfig.from_document(document),
         port=engine_port(gate_send, bindings),
         grants=grants,
         declarations=declarations,
     )
-
-
-def _admission_sources(bindings: Any) -> tuple[Any, Any]:
-    """The catalog-backed ``(grants, declarations)``; ``(None, None)`` with no gateway.
-
-    Without a gateway a workflow binding fails closed (``no grant source``).
-    """
-    gateway = (bindings or {}).get("fleet_gateway")
-    if gateway is None:
-        return None, None
-    from arbora.fleet.admission_sources import CatalogAdmissionSources
-
-    sources = CatalogAdmissionSources(gateway)
-    return sources.grants, sources.declarations
 
 
 def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:

@@ -258,7 +258,7 @@ async def _provision_for_run(
         request = ProvisionRequest.model_validate(request)
 
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.fleet.provisioning import ProvisionRefused
+    from arbora.core.provision_errors import ProvisionRefused
     from arbora.pin_lag.unavailable import PinLagUnavailable
 
     if request.tenant != str(context.caller.tenant):
@@ -364,8 +364,8 @@ async def handle_agent(
             if not context.idempotency_key:
                 raise ValueError("Idempotency-Key is required")
             authority = service.authority
-            from arbora.a2a.authority import A2AIdempotencyConflict
             from arbora.api.invoke.pipeline import OperationRefused
+            from arbora.core.a2a_errors import A2AIdempotencyConflict
 
             try:
                 if op.id == "agents.tasks.message":

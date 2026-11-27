@@ -1384,6 +1384,7 @@ def compose_served_invocation(
         policy_gate=PolicyGate(policy_mode),
         audit_client_factory=audit_client,
         config=config,
+        admission_sources=_admission_sources(bindings),
         **changes,
     )
     _bind_late_doors(services, step_invoke, (bindings or {}).get("finance_paper_door"))
@@ -1817,3 +1818,17 @@ def _promotion_ci_tool() -> dict[str, str] | None:
     server = str(read_env("ARBORA_PROMOTION_CI_SERVER") or "").strip()
     tool = str(read_env("ARBORA_PROMOTION_CI_TOOL") or "").strip()
     return {"server": server, "tool": tool} if server and tool else None
+
+
+def _admission_sources(bindings: Any) -> tuple[Any, Any]:
+    """The catalog-backed ``(grants, declarations)``; ``(None, None)`` with no gateway.
+
+    Without a gateway a workflow binding fails closed (``no grant source``).
+    """
+    gateway = (bindings or {}).get("fleet_gateway")
+    if gateway is None:
+        return None, None
+    from arbora.fleet.admission_sources import CatalogAdmissionSources
+
+    sources = CatalogAdmissionSources(gateway)
+    return sources.grants, sources.declarations

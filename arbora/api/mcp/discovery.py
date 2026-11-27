@@ -267,7 +267,7 @@ async def _fleet_catalog(
         raise OperationRefused("UNAVAILABLE", not_ready_detail())
     server = str((params or {}).get("server") or "")[:128]
     include_tools = bool((params or {}).get("include_tools", True))
-    from arbora.fleet.multiplexer_ops import FleetServerNotFound
+    from arbora.core.fleet_errors import FleetServerNotFound
 
     try:
         catalog = await fleet_catalog(

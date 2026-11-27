@@ -27,12 +27,12 @@ from arbora.api.domain.a2a.tool_action_admission import (
     ConfirmRefusal,
 )
 from arbora.api.http.auth import HTTPAuthenticationError
+from arbora.core.a2a_errors import A2AIdempotencyConflict
 from arbora.modality.models import ModalityRefused
 from arbora.security.key_cache import JwksCache
 
 from .authority import (
     A2AContextUnavailable,
-    A2AIdempotencyConflict,
     A2AStreamingUnavailable,
     A2ATaskNotCancelable,
     A2ATransitionHistoryUnavailable,
