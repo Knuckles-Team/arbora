@@ -256,7 +256,9 @@ class HostRanking(MedullaRanking):
 
 
 def schemas_published(
-    feature_schema: Callable[[str], Mapping[str, Any]], tenant: Callable[[], str]
+    feature_schema: Callable[[str], Mapping[str, Any]],
+    tenant: Callable[[], str],
+    rank_schema: Callable[[str, str], Mapping[str, Any] | None] | None = None,
 ) -> Callable[[], bool]:
     """Whether the tenant's pin is a ranking question's ``decide.schema.<id>``.
 
@@ -265,16 +267,47 @@ def schemas_published(
     """
 
     def published() -> bool:
-        try:
-            schema = dict(feature_schema(tenant()))
-        except Exception:  # noqa: BLE001 - an unreadable pin is an unpublished one
-            return False
-        return any(
-            schema.get("component_id") == f"decide.schema.{q}"
-            for q in sorted(QUESTION_IDS)
+        return _rank_pinned(rank_schema, tenant()) or _tenant_pin_ranks(
+            feature_schema, tenant()
         )
 
     return published
+
+
+def _question_schema(
+    tenant: str,
+    question_id: str,
+    feature_schema: Callable[[str], Mapping[str, Any]],
+    rank_schema: Callable[[str, str], Mapping[str, Any] | None] | None,
+) -> dict[str, Any]:
+    """The published per-question pin; else the tenant pin (another question's until
+    the engine's rank schemas are published, so the ask answers the floor)."""
+    published = rank_schema(tenant, question_id) if rank_schema else None
+    return dict(published or feature_schema(tenant))
+
+
+def _rank_pinned(
+    rank_schema: Callable[[str, str], Mapping[str, Any] | None] | None, tenant: str
+) -> bool:
+    """Whether any ranking question has a published per-question pin."""
+    if rank_schema is None:
+        return False
+    return any(rank_schema(tenant, q) for q in sorted(QUESTION_IDS))
+
+
+def _tenant_pin_ranks(
+    feature_schema: Callable[[str], Mapping[str, Any]], tenant: str
+) -> bool:
+    try:
+        return _pin_names_a_question(dict(feature_schema(tenant)))
+    except Exception:  # noqa: BLE001 - an unreadable pin is an unpublished one
+        return False
+
+
+def _pin_names_a_question(schema: Mapping[str, Any]) -> bool:
+    return any(
+        schema.get("component_id") == f"decide.schema.{q}" for q in sorted(QUESTION_IDS)
+    )
 
 
 def ranking_probe(port: MedullaRanking) -> Callable[[Any], dict[str, Any]]:
@@ -318,6 +351,7 @@ def engine_ask(
     tenant: Callable[[], str],
     feature_schema: Callable[[str], Mapping[str, Any]],
     principal: Callable[[], str],
+    rank_schema: Callable[[str, str], Mapping[str, Any] | None] | None = None,
 ) -> Ask:
     """``Ask`` over the engine ``Decide`` method with a ``RankCatalog`` candidate set.
 
@@ -335,7 +369,7 @@ def engine_ask(
         if question_id not in QUESTION_IDS:
             raise LookupError(f"{question_id} is not a published ranking question")
         who = tenant()
-        schema = dict(feature_schema(who))
+        schema = _question_schema(who, question_id, feature_schema, rank_schema)
         if schema.get("component_id") != f"decide.schema.{question_id}":
             raise LookupError("no feature schema is pinned for this ranking question")
         options = [

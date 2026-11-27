@@ -301,6 +301,79 @@ def published_pin(pins: TaskPlanSchemaPins | None, tenant: str) -> dict[str, Any
     return pin
 
 
+RANK_EXPORT_NAME = "CATALOG_RANK_FEATURE_SCHEMAS"
+
+
+def catalog_rank_pins(
+    *, modules: Sequence[str] = EXPORT_MODULES, stat: Any = None
+) -> dict[str, TaskPlanSchemaPins]:
+    """One pin publisher per ranking question, from the engine's exported schemas.
+
+    PIN-LAG: the pinned engine release exports no ``CATALOG_RANK_FEATURE_SCHEMAS``
+    (``MEDULLA-DECISION-ENGINE-R829.4``); with none installed the result is empty,
+    nothing is published and ``find`` answers the floor. An entry whose body does not
+    hash to its own digest is refused and logged. Delete the lag with the re-pin.
+    """
+    exports: Mapping[str, Mapping[str, Any]] = {}
+    for name in modules:
+        try:
+            module = importlib.import_module(name)
+        except ImportError:
+            continue
+        found = getattr(module, RANK_EXPORT_NAME, None)
+        if found is not None:
+            exports = found
+            break
+    pins: dict[str, TaskPlanSchemaPins] = {}
+    for question_id, entry in exports.items():
+        try:
+            digest, _attributes = (stat or _stat()).encode_body(entry["body"])
+            if digest != entry["content_digest"] and (
+                "sha256:" + digest != entry["content_digest"]
+            ):
+                raise ValueError("body does not match its digest")
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.error("rank schema for %s not bound: %s", question_id, exc)
+            continue
+        from importlib.metadata import version
+
+        pins[question_id] = TaskPlanSchemaPins(
+            {
+                "component_id": entry["component_id"],
+                "kind": entry["kind"],
+                "engine_version": version("medulla"),
+                "available": True,
+                "schema_version": entry["schema_version"],
+                "content_digest": entry["content_digest"],
+                "body": entry["body"],
+            }
+        )
+    return pins
+
+
+def rank_pin(
+    pins: Mapping[str, TaskPlanSchemaPins] | None, tenant: str, question_id: str
+) -> dict[str, Any] | None:
+    """The tenant's published pin of one ranking question, or ``None`` (read-only)."""
+    pin = (pins or {}).get(question_id)
+    return None if pin is None else pin.pin_for(tenant)
+
+
+async def publish_all(
+    pins: TaskPlanSchemaPins | None,
+    rank_pins: Mapping[str, TaskPlanSchemaPins],
+    publish: Publish,
+    tenants: Sequence[str],
+) -> dict[str, bool]:
+    """Publish the ranking schemas and the task-plan schema, once per tenant each."""
+    done: dict[str, bool] = {}
+    for rank in rank_pins.values():
+        done.update(await publish_at_startup(rank, publish, tenants))
+    if pins is not None:
+        done.update(await publish_at_startup(pins, publish, tenants))
+    return done
+
+
 def startup_pins() -> TaskPlanSchemaPins | None:
     """Build and verify the pin from the installed engine at start-up.
 
