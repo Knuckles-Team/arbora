@@ -1161,7 +1161,7 @@ def _require_candidate(candidate: CapabilityCandidate | None) -> CapabilityCandi
 
 def _approval_key(op_id: str) -> str:
     """Opaque key binding an approval to session, authority partition and op."""
-    from arbora.fleet.multiplexer import ambient_session_key
+    from arbora.fleet.session_keys import ambient_session_key
 
     payload = json.dumps(
         [ambient_session_key(), _outcome_scope_ref(), op_id], separators=(",", ":")

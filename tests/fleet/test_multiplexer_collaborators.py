@@ -14,6 +14,7 @@ from typing import Any
 
 from arbora.fleet.child_transport import ChildTransport
 from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.proxied_calls import ProxiedCalls
 from arbora.fleet.task_forwarding import TaskForwarding
 
 
@@ -43,7 +44,34 @@ def _build_task_forwarding() -> TaskForwarding:
     )
 
 
-BUILDERS = {"transport": _build_child_transport, "tasks": _build_task_forwarding}
+def _build_proxied_calls() -> ProxiedCalls:
+    return ProxiedCalls(
+        child_policy_admitted_tools={},
+        child_runtime_policies={},
+        child_schema_refresh_errors={},
+        child_schema_revisions={},
+        fleet=SimpleNamespace(),
+        host_mcp=lambda: None,
+        children={},
+        credential_authority=lambda: None,
+        workflow_bindings=SimpleNamespace(),
+        catalog=lambda: None,
+        catalog_epoch=lambda: 0,
+        aggregated_tools=lambda: {},
+        tool_to_server=lambda: {},
+        admit_runtime_policy_tools=_no_publish,
+        open_one_session=_no_publish,
+        load_catalog=_no_publish,
+        notify_pending_tools_changed=_no_publish,
+        tool_dispatchable=_no_publish,
+    )
+
+
+BUILDERS = {
+    "transport": _build_child_transport,
+    "tasks": _build_task_forwarding,
+    "calls": _build_proxied_calls,
+}
 
 
 def test_each_collaborator_is_built_without_a_multiplexer() -> None:

@@ -19,6 +19,7 @@ from arbora.api.domain.fleet.admission_models import (
 )
 from arbora.api.registry import Surface
 from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.proxied_calls import ProxiedCalls
 from arbora.fleet.workflow_binding import WorkflowBindings
 from tests.fleet._certified_support import (
     World,
@@ -228,13 +229,15 @@ def test_revoked_grant_stops_later_calls() -> None:
         WorkflowAdmission(("atom", "composed"), ("crm.read",), h("workflow"), "g1"),
         lambda: revision["value"],
     )
+    calls = SimpleNamespace(workflow_bindings=bindings)
+    calls._workflow_refusal = MethodType(ProxiedCalls._workflow_refusal, calls)
     mux = SimpleNamespace(
+        calls=calls,
         workflow_bindings=bindings,
         _global_visible={"crm.read", "other"},
         _local_gated=set(),
     )
-    for name in ("_workflow_refusal", "_catalog_dispatchable"):
-        setattr(mux, name, MethodType(getattr(MCPMultiplexer, name), mux))
+    mux._catalog_dispatchable = MethodType(MCPMultiplexer._catalog_dispatchable, mux)
     dispatch = lambda name: MCPMultiplexer.tool_dispatchable(  # noqa: E731
         mux, name, session_key="session"
     )
