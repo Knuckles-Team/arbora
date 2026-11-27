@@ -194,7 +194,7 @@ class FleetFinanceChangePort:
         change: Mapping[str, Any],
         key: str | None,
     ) -> Mapping[str, Any]:
-        from arbora.api.ops.finance import ORDERS_TOOL, _venue
+        from arbora.api.ops.finance import ORDERS_TOOL, venue_call
 
         if kind != "order" or change.get("action") != "cancel":
             # The venue publishes a cancel tool only; an amend or position change has none.
@@ -208,7 +208,7 @@ class FleetFinanceChangePort:
         if bound != change["account_id"]:
             # A foreign account answers exactly like an absent order.
             raise OperationRefused("NOT_FOUND")
-        answer = await _venue(
+        answer = await venue_call(
             context, ORDERS_TOOL, {"action": "cancel", "order_id": change["order_id"]}
         )
         return {"state": "applied", "venue": dict(answer)}

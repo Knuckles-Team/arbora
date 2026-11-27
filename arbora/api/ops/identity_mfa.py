@@ -29,9 +29,9 @@ from arbora.identity.mfa_ceremonies import RECOVERY_CODE_LENGTH, challenge_id_of
 from arbora.identity.session_credential import session_credential
 from arbora.identity.webauthn import (
     WebauthnRefused,
-    _cbor_item,
     b64url_decode,
     b64url_encode,
+    cbor_item,
     cose_key,
 )
 
@@ -255,7 +255,7 @@ def _parsed_attestation(
     if client.get("origin") != origin:
         raise WebauthnRefused("WEBAUTHN_ORIGIN_MISMATCH")
     attested = b64url_decode(body["attestation_object"])
-    item, _end = _cbor_item(attested, 0)
+    item, _end = cbor_item(attested, 0)
     if not isinstance(item, dict) or item.get("fmt") != "none":
         raise WebauthnRefused("WEBAUTHN_ATTESTATION_INVALID")
     return _credential_of(item.get("authData"), rp_id)
@@ -272,7 +272,7 @@ def _credential_of(auth_data: Any, rp_id: str) -> tuple[str, str]:
     size = int.from_bytes(auth_data[at : at + 2], "big")
     identifier = auth_data[at + 2 : at + 2 + size]
     start = at + 2 + size
-    _key, end = _cbor_item(auth_data, start)
+    _key, end = cbor_item(auth_data, start)
     cose = b64url_encode(auth_data[start:end])
     if cose_key(cose).get(3) != _ES256 or not identifier:
         raise WebauthnRefused("WEBAUTHN_ATTESTATION_INVALID")

@@ -460,9 +460,9 @@ def _hardened_jwt_verifier(**kwargs: Any) -> Any:
         async def _fetch_jwks(self) -> dict[str, Any]:
             if not self.jwks_uri:
                 raise ValueError("JWKS URI is not configured")
-            from arbora.security.auth import _fetch_jwks
+            from arbora.security.auth import fetch_jwks
 
-            document = await _fetch_jwks(owned_keys, str(self.jwks_uri))
+            document = await fetch_jwks(owned_keys, str(self.jwks_uri))
             return dict(document)
 
         async def verify_token(self, token: str) -> Any:

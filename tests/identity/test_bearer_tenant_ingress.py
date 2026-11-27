@@ -67,7 +67,7 @@ class Host:
             self.handler_calls += 1  # reached only after the token checks passed
             return SimpleNamespace(token=token)
 
-        monkeypatch.setattr("arbora.security.auth._fetch_jwks", fetch)
+        monkeypatch.setattr("arbora.security.auth.fetch_jwks", fetch)
         monkeypatch.setattr("time.time", lambda: NOW)
         monkeypatch.setattr(
             "arbora.security.request_identity.verify_local_bearer_token",

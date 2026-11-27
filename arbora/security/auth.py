@@ -85,7 +85,51 @@ def parse_bearer_authorization(authorization: list[bytes]) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-async def _fetch_jwks(keys: JwksCache, jwks_uri: str) -> Any:
+def _require_jwks_uri(jwks_uri: str) -> None:
+    """Refuse a JWKS endpoint that is not an absolute, credential-free HTTPS URL."""
+    parsed = urlsplit(jwks_uri)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise RuntimeError("AUTH_JWT_JWKS_URI must be an absolute HTTP(S) URL")
+    if parsed.username or parsed.password or parsed.fragment:
+        raise RuntimeError("AUTH_JWT_JWKS_URI cannot contain credentials or a fragment")
+    if parsed.scheme != "https" and parsed.hostname.lower() not in {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+    }:
+        raise RuntimeError("JWKS transport requires HTTPS outside loopback")
+
+
+async def _download_jwks(jwks_uri: str) -> Any:
+    """The parsed JWKS document, read under the response size bound."""
+    from arbora.security.oidc_discovery import oidc_async_http_client
+
+    async with oidc_async_http_client(timeout=10) as client:
+        body = bytearray()
+        async with client.stream("GET", jwks_uri) as response:
+            response.raise_for_status()
+            async for chunk in response.aiter_bytes():
+                body.extend(chunk)
+                if len(body) > _JWKS_MAX_BYTES:
+                    raise RuntimeError(
+                        "JWKS response exceeds the configured safety bound"
+                    )
+    return json.loads(body)
+
+
+def _checked_jwks(document: Any) -> dict[str, Any]:
+    """The document when it is a key set of one to a hundred keys, else a refusal."""
+    entries = document.get("keys") if isinstance(document, dict) else None
+    if (
+        not isinstance(entries, list)
+        or not 1 <= len(entries) <= 100
+        or not all(isinstance(entry, dict) for entry in entries)
+    ):
+        raise RuntimeError("JWKS response has an invalid shape")
+    return document
+
+
+async def fetch_jwks(keys: JwksCache, jwks_uri: str) -> Any:
     """Fetch and cache JSON Web Key Set from a remote URI.
 
     Args:
@@ -100,43 +144,12 @@ async def _fetch_jwks(keys: JwksCache, jwks_uri: str) -> Any:
     cached = keys.get(jwks_uri, now)
     if cached is not None:
         return cached
-
-    parsed = urlsplit(jwks_uri)
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-        raise RuntimeError("AUTH_JWT_JWKS_URI must be an absolute HTTP(S) URL")
-    if parsed.username or parsed.password or parsed.fragment:
-        raise RuntimeError("AUTH_JWT_JWKS_URI cannot contain credentials or a fragment")
-    if parsed.scheme != "https" and parsed.hostname.lower() not in {
-        "localhost",
-        "127.0.0.1",
-        "::1",
-    }:
-        raise RuntimeError("JWKS transport requires HTTPS outside loopback")
-
+    _require_jwks_uri(jwks_uri)
     try:
-        from arbora.security.oidc_discovery import oidc_async_http_client
-
-        async with oidc_async_http_client(timeout=10) as client:
-            body = bytearray()
-            async with client.stream("GET", jwks_uri) as response:
-                response.raise_for_status()
-                async for chunk in response.aiter_bytes():
-                    body.extend(chunk)
-                    if len(body) > _JWKS_MAX_BYTES:
-                        raise RuntimeError(
-                            "JWKS response exceeds the configured safety bound"
-                        )
-            document = json.loads(body)
-            keys = document.get("keys") if isinstance(document, dict) else None
-            if (
-                not isinstance(keys, list)
-                or not 1 <= len(keys) <= 100
-                or not all(isinstance(key, dict) for key in keys)
-            ):
-                raise RuntimeError("JWKS response has an invalid shape")
-            keys.put(jwks_uri, document, now)
-            logger.debug("JWKS refreshed (%d keys)", len(document["keys"]))
-            return document
+        document = _checked_jwks(await _download_jwks(jwks_uri))
+        keys.put(jwks_uri, document, now)
+        logger.debug("JWKS refreshed (%d keys)", len(document["keys"]))
+        return document
     except Exception:
         # Endpoint details and response bodies can contain deployment-specific
         # identifiers. Keep logs stable and fail closed once a cache entry expires.
@@ -264,7 +277,7 @@ async def authenticate_header_values(
         return None
 
     if token is not None:
-        jwks = await _fetch_jwks(keys, config.auth_jwt_jwks_uri)
+        jwks = await fetch_jwks(keys, config.auth_jwt_jwks_uri)
         try:
             claims = _decode_jwt(
                 token,

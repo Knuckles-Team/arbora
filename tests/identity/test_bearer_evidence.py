@@ -33,7 +33,7 @@ def test_audit_event_fields_and_no_token_text(monkeypatch: pytest.MonkeyPatch) -
     async def fetch(_keys: JwksCache, _uri: str) -> dict:
         return JWKS
 
-    monkeypatch.setattr("arbora.security.auth._fetch_jwks", fetch)
+    monkeypatch.setattr("arbora.security.auth.fetch_jwks", fetch)
     events: list[dict[str, str]] = []
     good, bad = mint(), mint(aud="other")
     asyncio.run(

@@ -161,7 +161,9 @@ class FinanceReply(Params):
     value: dict[str, Any]
 
 
-async def _venue(context: Any, tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
+async def venue_call(
+    context: Any, tool: str, arguments: dict[str, Any]
+) -> dict[str, Any]:
     reply = await invoke_registered(
         context,
         "fleet.call",
@@ -186,7 +188,7 @@ async def handle_positions_list(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """The open positions of one owned account."""
-    answer = await _venue(context, PORTFOLIO_TOOL, {"action": "positions"})
+    answer = await venue_call(context, PORTFOLIO_TOOL, {"action": "positions"})
     return {"value": {"account_id": params["account_id"], **answer}}
 
 
@@ -204,7 +206,7 @@ async def handle_orders_paper_submit(
         "order_type": params.get("order_type", "market"),
         "limit_price": params.get("limit_price", 0.0),
     }
-    answer = await _venue(context, ORDERS_TOOL, arguments)
+    answer = await venue_call(context, ORDERS_TOOL, arguments)
     return {"value": {"account_id": params["account_id"], **answer}}
 
 

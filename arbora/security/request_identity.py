@@ -1008,7 +1008,7 @@ async def actor_from_bearer_token(
 
     config = security_settings()
 
-    from .auth import _decode_jwt, _fetch_jwks
+    from .auth import _decode_jwt, fetch_jwks
 
     if not isinstance(token, str) or not token or len(token.encode("utf-8")) > 16_384:
         raise RuntimeError("Bearer token is invalid")
@@ -1018,7 +1018,7 @@ async def actor_from_bearer_token(
         )
     if not str(config.auth_jwt_audience or "").strip():
         raise RuntimeError("Cannot validate Bearer token: audience is not configured")
-    jwks = await _fetch_jwks(keys, config.auth_jwt_jwks_uri)
+    jwks = await fetch_jwks(keys, config.auth_jwt_jwks_uri)
     claims = _decode_jwt(
         token,
         jwks,
@@ -1068,7 +1068,7 @@ async def verify_local_bearer_token(
         HTTP_401_UNAUTHORIZED,
         TokenValidationError,
         _decode_jwt,
-        _fetch_jwks,
+        fetch_jwks,
     )
 
     if not isinstance(token, str) or not token or len(token.encode("utf-8")) > 16_384:
@@ -1078,7 +1078,7 @@ async def verify_local_bearer_token(
     if not config.auth_jwt_jwks_uri or not issuer or not audience:
         raise PermissionError("Verified local bearer issuer is not configured")
     try:
-        jwks = await _fetch_jwks(keys, config.auth_jwt_jwks_uri)
+        jwks = await fetch_jwks(keys, config.auth_jwt_jwks_uri)
         claims = _decode_jwt(token, jwks, issuer=issuer, audience=audience)
     except TokenValidationError as exc:
         if exc.status_code == HTTP_401_UNAUTHORIZED:
