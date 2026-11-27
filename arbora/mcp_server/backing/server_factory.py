@@ -279,6 +279,7 @@ def _apply_request_overrides(
         logger.warning(
             "Rejected MCP visibility filter (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         return (
             enabled_tools,
@@ -1123,6 +1124,7 @@ def _enforce_delegation_requirements(args: argparse.Namespace) -> None:
         logger.error(
             "Failed to fetch OIDC configuration (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         sys.exit(1)
 
@@ -1215,6 +1217,7 @@ def _configure_static_auth(args: argparse.Namespace) -> Any:
         logger.error(
             "Error: static authentication token reference is unavailable or invalid (%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         sys.exit(1)
 
@@ -1560,10 +1563,11 @@ def _resolve_jwt_public_key_pem(args: argparse.Namespace) -> str | None:
         try:
             with open(args.token_public_key) as f:
                 return f.read()
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             logger.error(
                 "Failed to read public key file (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             sys.exit(1)
     elif args.token_public_key:
@@ -1587,7 +1591,7 @@ def _resolve_jwt_secret_or_key(
         if not isinstance(public_key, str) or len(public_key.encode()) < 32:
             raise ValueError("weak secret")
     except Exception:
-        logger.error("Error: HMAC JWT secret reference is unavailable")
+        logger.error("Error: HMAC JWT secret reference is unavailable", exc_info=True)
         sys.exit(1)
     return public_key
 
@@ -1679,6 +1683,7 @@ def _configure_multi_realm_jwt(
         logger.error(
             "Failed to initialize multi-realm JWTVerifier (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         sys.exit(1)
 
@@ -1707,6 +1712,7 @@ def _configure_single_realm_jwt(
         logger.error(
             "Failed to initialize JWTVerifier (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         sys.exit(1)
 
@@ -1781,7 +1787,7 @@ def _rate_limit_client_id(context: Any) -> str:
 
     try:
         token = get_access_token()
-    except Exception:
+    except (RuntimeError, LookupError):
         token = None
     if token is None:
         return "anonymous"
@@ -1895,6 +1901,7 @@ def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
         logger.error(
             "Failed to load Eunomia middleware (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         sys.exit(1)
 
@@ -2307,6 +2314,7 @@ def _resolve_metrics_token() -> str | None:
             return None
         return metrics_token
     except Exception:
+        logger.warning("metrics token reference unresolved", exc_info=True)
         return None
 
 
@@ -2413,10 +2421,11 @@ def _register_operational_routes(
                 {"status": "ok"}, headers={"Cache-Control": "no-store"}
             )
 
-    except Exception as _route_exc:  # pragma: no cover - defensive
+    except Exception as _route_exc:
         logger.warning(
             "Could not register metrics and health routes (exception_type=%s)",
             type(_route_exc).__name__,
+            exc_info=True,
         )
 
 
@@ -2634,6 +2643,7 @@ def create_mcp_server(
         logger.warning(
             "Could not register dynamic visibility transform (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
 
     return args, mcp, middlewares

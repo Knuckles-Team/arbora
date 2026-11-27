@@ -53,6 +53,7 @@ import logging
 import uuid
 from typing import Any
 
+import httpx
 from pydantic import Field
 
 from arbora.api.errors import not_served
@@ -1276,9 +1277,15 @@ def _prometheus_http_query(
             resp = client.get(f"{base_url}{path}", params=params)
             resp.raise_for_status()
             payload = resp.json()
-    except Exception as e:  # fallback failures are "no data", never raised
+    except (
+        httpx.HTTPError,
+        OSError,
+        ValueError,
+    ) as e:  # fallback failures are "no data", never raised
         logger.debug(
-            "graph_promql: Prometheus HTTP fallback query failed: %s", type(e).__name__
+            "graph_promql: Prometheus HTTP fallback query failed: %s",
+            type(e).__name__,
+            exc_info=True,
         )
         return None
     if not isinstance(payload, dict) or payload.get("status") != "success":

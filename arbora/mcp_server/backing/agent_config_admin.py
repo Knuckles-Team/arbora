@@ -380,6 +380,7 @@ def _record_provenance(
             "recorded (error=%s); the change is live and unlogged in the KG",
             env_key,
             type(exc).__name__,
+            exc_info=True,
         )
         return None
 
@@ -412,6 +413,7 @@ def _gate(
             "config.set policy gate unavailable for %s; refusing (error=%s)",
             env_key,
             type(exc).__name__,
+            exc_info=True,
         )
         return False, {
             "decision": "denied",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from collections.abc import Callable
 from typing import Any
@@ -14,6 +15,8 @@ from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_text
+
+logger = logging.getLogger(__name__)
 
 
 def register_governance_tools(
@@ -244,6 +247,7 @@ def _execute_governance_action(
     except PermissionError:
         raise
     except Exception as exc:
+        logger.warning("governance action failed", exc_info=True)
         return public_error_text(exc)
 
 

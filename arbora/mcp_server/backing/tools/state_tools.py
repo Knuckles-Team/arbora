@@ -199,6 +199,7 @@ def register_state_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
                 return error_json
             return _format_tool_response(resp)
         except Exception as e:
+            logger.warning("operation failed", exc_info=True)
             return public_error_json(e)
 
     tools["graph_sessions"] = graph_sessions

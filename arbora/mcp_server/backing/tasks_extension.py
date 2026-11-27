@@ -795,6 +795,7 @@ class WorkItemTasksExtension(ServerExtension):
             logger.warning(
                 "tasks_extension: failed to resolve verified request identity (%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             raise PermissionError("Verified graph authority is required") from None
 
@@ -826,7 +827,7 @@ class WorkItemTasksExtension(ServerExtension):
             from fastmcp.server.dependencies import get_access_token
 
             token = get_access_token()
-        except Exception:
+        except (ImportError, RuntimeError, LookupError):
             token = None
         claims = getattr(token, "claims", None) if token is not None else None
         if not isinstance(claims, Mapping) or not claims:
@@ -924,6 +925,7 @@ class WorkItemTasksExtension(ServerExtension):
                 token, identity, config
             )
         except Exception:
+            logger.warning("delegator authority resolution failed", exc_info=True)
             raise mcp_protocol_exception(
                 -32001,
                 "Authenticated multiplexer service authority is required",
@@ -1145,6 +1147,7 @@ class WorkItemTasksExtension(ServerExtension):
                 operation=method,
             )
         except Exception:
+            logger.warning("delegated task proof rejected", exc_info=True)
             raise mcp_protocol_exception(
                 -32001, "Invalid or expired delegated task proof"
             ) from None

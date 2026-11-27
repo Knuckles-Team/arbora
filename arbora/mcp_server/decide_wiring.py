@@ -112,7 +112,7 @@ def _capability_search(eg_client: Any, session: Any) -> Callable[[Sequence[str]]
         try:
             result = await _search_agent_cards(eg_client, session)
         except Exception as exc:
-            logger.warning("capability search unavailable: %s", exc)
+            logger.warning("capability search unavailable: %s", exc, exc_info=True)
             return []
         rows = getattr(result, "components", None)
         if rows is None:
@@ -174,7 +174,9 @@ def _install_workflow_lookup(
     try:
         _workflow_lookup(lambda: client_for_session(session), session)
     except Exception as exc:
-        logger.warning("workflow lookup install skipped: %s", _reason(exc))
+        logger.warning(
+            "workflow lookup install skipped: %s", _reason(exc), exc_info=True
+        )
         return False
     return True
 
@@ -237,7 +239,9 @@ def install_decide_consumers(
     try:
         eg_client = client_for_session(session) if session is not None else None
     except Exception as exc:
-        logger.warning("decide consumers skipped: no engine client: %s", exc)
+        logger.warning(
+            "decide consumers skipped: no engine client: %s", exc, exc_info=True
+        )
         return installed
     if eg_client is None:
         logger.info("decide consumers skipped: no engine client or session")
@@ -246,23 +250,27 @@ def install_decide_consumers(
         assembler = _install_assembler(eg_client, session, engine, run)
         installed["assembler"] = True
     except Exception as exc:
-        logger.warning("assembler install skipped: %s", _reason(exc))
+        logger.warning("assembler install skipped: %s", _reason(exc), exc_info=True)
     if assembler is not None:
         try:
             _install_topology(assembler, run)
             installed["topology"] = True
         except Exception as exc:
-            logger.warning("topology asker install skipped: %s", _reason(exc))
+            logger.warning(
+                "topology asker install skipped: %s", _reason(exc), exc_info=True
+            )
         try:
             _install_planner(assembler, run, eg_client, session, engine)
             installed["task_planner"] = True
         except Exception as exc:
-            logger.warning("task planner install skipped: %s", _reason(exc))
+            logger.warning(
+                "task planner install skipped: %s", _reason(exc), exc_info=True
+            )
     installed["workflow_lookup"] = _install_workflow_lookup(client_for_session, session)
     try:
         installed["cross_source"] = _install_cross_source(eg_client)
     except Exception as exc:
-        logger.warning("cross-source install skipped: %s", _reason(exc))
+        logger.warning("cross-source install skipped: %s", _reason(exc), exc_info=True)
     return installed
 
 
