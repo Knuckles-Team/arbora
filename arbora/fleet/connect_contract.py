@@ -115,7 +115,10 @@ def _body_bytes(body: Any) -> bytes:
 
 
 _MANIFEST_URI = "connector://resources"
-_SEED_URI = "connector://seed"
+#: A seed travels as ``SeedPart`` pack entries, one per closed key
+#: (MEDULLA-TYPED-PACKS-R104.3); there is no separate seed body.
+SEED_URI_PREFIX = "seed://"
+SEED_PART_KEYS = ("identity", "catalog", "references")
 
 
 def contract_from_pack(
@@ -123,20 +126,32 @@ def contract_from_pack(
 ) -> ConnectContract:
     """The contract of one captured pack: manifest, ontology bodies and seed."""
     manifest: bytes = b""
-    seed: bytes | None = None
+    seed_parts: dict[str, bytes] = {}
     ontologies: dict[str, bytes] = {}
     for entry in pack.archive.entries:
         uri = str(getattr(entry, "uri", "") or "")
         body = _body_bytes(getattr(entry, "body", b""))
         if uri == _MANIFEST_URI:
             manifest = body
-        elif uri == _SEED_URI:
-            seed = body
+        elif uri.startswith(SEED_URI_PREFIX):
+            seed_parts[uri.removeprefix(SEED_URI_PREFIX)] = body
         elif uri.startswith("ontology:"):
             ontologies[uri] = body
     return build_connect_contract(
-        connector, manifest, ontologies, seed, observed_at_ms=observed_at_ms
+        connector,
+        manifest,
+        ontologies,
+        _seed_of_parts(seed_parts),
+        observed_at_ms=observed_at_ms,
     )
+
+
+def _seed_of_parts(parts: Mapping[str, bytes]) -> bytes | None:
+    """One stable seed value over the part digests in key order; ``None`` without parts."""
+    if not parts:
+        return None
+    ordered = sorted(parts, key=lambda key: (key not in SEED_PART_KEYS, key))
+    return "".join(f"{key}:{digest_of(parts[key])}\n" for key in ordered).encode()
 
 
 #: The engine codes that mark a connector ``contract_rejected``.
@@ -163,7 +178,11 @@ def check_resource_sizes(pack: Any, max_bytes: int | None = None) -> None:
         max_bytes = int(read_field("contract_resource_max_bytes"))
     for entry in pack.archive.entries:
         uri = str(getattr(entry, "uri", "") or "")
-        if uri == _MANIFEST_URI or uri == _SEED_URI or uri.startswith("ontology:"):
+        if (
+            uri == _MANIFEST_URI
+            or uri.startswith(SEED_URI_PREFIX)
+            or uri.startswith("ontology:")
+        ):
             body = getattr(entry, "body", b"")
             # A captured pack holds each body as a ``PackSection`` locator.
             length = getattr(body, "length", None)

@@ -294,19 +294,16 @@ def require_delegated_identity() -> None:
         raise PinLagUnavailable(f"scope {DELEGATE_SCOPE}")
 
 
-def require_pack_import_seed() -> None:
-    """Return once the pack import carries a seed (ARBORA-FLEET-R054), else name the gap.
+def require_seed_parts() -> None:
+    """Return once the engine imports seed parts and receipts them (ARBORA-FLEET-R054).
 
-    Two pieces must exist: the engine request field ``ConnectorPackImportRequest.seed``
-    and the SDK sink's ``seed`` argument. Either missing refuses ``UNAVAILABLE``.
+    PIN-LAG: the seed travels as ``PackEntryKind.SEED_PART`` entries of the pack
+    index (MEDULLA-TYPED-PACKS-R104.3), and the import receipt carries
+    ``seed.content_digest``. A release without either refuses ``UNAVAILABLE``
+    naming it, so a seeded pack is never imported with its seed dropped.
     """
-    require_model_field("ConnectorPackImportRequest", "seed")
-    import inspect
-
-    from scion_sdk.sinks.medulla import MedullaSink
-
-    if "seed" not in inspect.signature(MedullaSink.import_pack).parameters:
-        raise PinLagUnavailable("MedullaSink.import_pack.seed")
+    require_enum_member("PackEntryKind", "seed_part")
+    require_model_field("PackImportReceipt", "seed")
 
 
 #: The request fields an engine component search needs to page one server's tools

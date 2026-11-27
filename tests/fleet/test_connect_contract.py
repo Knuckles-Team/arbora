@@ -113,7 +113,7 @@ def contract_pack(seed: bytes | None = b"seed-v1", manifest: bytes = b"m1"):
     if seed is not None:
         entries.append(
             types.SimpleNamespace(
-                kind="resource", name="n", uri="connector://seed", body=seed
+                kind="resource", name="n", uri="seed://identity", body=seed
             )
         )
     return types.SimpleNamespace(
@@ -248,7 +248,7 @@ def test_section_length_bounds_the_resource() -> None:
     section = types.SimpleNamespace(offset=0, length=5000, sha256="0" * 64)
     pack = types.SimpleNamespace(
         archive=types.SimpleNamespace(
-            entries=(types.SimpleNamespace(uri="connector://seed", body=section),)
+            entries=(types.SimpleNamespace(uri="seed://identity", body=section),)
         )
     )
     with pytest.raises(ContractRefused):
@@ -256,28 +256,174 @@ def test_section_length_bounds_the_resource() -> None:
     check_resource_sizes(pack, 8192)
 
 
-def test_seed_body_refuses_unavailable_while_the_pin_lacks_the_seed_path() -> None:
-    """A seeded pack is never imported with its seed dropped (ARBORA-FLEET-R054 pin-lag)."""
-    import asyncio
-
-    from arbora.deployment.semantic_provisioning import import_attested_pack
-    from arbora.pin_lag.medulla import PinLagUnavailable, require_pack_import_seed
-
-    try:
-        require_pack_import_seed()
-    except PinLagUnavailable as lag:
-        with pytest.raises(PinLagUnavailable) as caught:
-            asyncio.run(
-                import_attested_pack(
-                    object(),
-                    object(),
-                    client=object(),
-                    commons=object(),
-                    pack=object(),
-                    action_policies=object(),
-                    seed_body={"nodes": []},
-                )
+def _seeded_pack() -> types.SimpleNamespace:
+    entries = [
+        types.SimpleNamespace(
+            kind="resource", name="n", uri="connector://resources", body=b"m1"
+        ),
+        *(
+            types.SimpleNamespace(
+                kind="seed_part", name=key, uri=f"seed://{key}", body=b"<s> <p> <o> .\n"
             )
-        assert str(caught.value) == str(lag)
-    else:  # pragma: no cover - the re-pin carries the path; bind R054 then
-        pytest.skip("seed path served; add the recorded-engine seed test")
+            for key in ("identity", "catalog", "references")
+        ),
+    ]
+    return types.SimpleNamespace(
+        connector="crm", archive=types.SimpleNamespace(entries=tuple(entries))
+    )
+
+
+def _install_pack_shapes(monkeypatch: pytest.MonkeyPatch, *, main: bool) -> None:
+    """Structural doubles of ``PackEntryKind`` and ``PackImportReceipt``: pinned or ``main``."""
+    import enum
+
+    from medulla.generated import models
+    from pydantic import BaseModel
+
+    members = {"tool": "tool", "resource": "resource"}
+    if main:
+        members["seed_part"] = "seed_part"
+    kind = enum.Enum("PackEntryKind", members, type=str)
+
+    class Receipt(BaseModel):
+        connector: str
+
+    class MainReceipt(Receipt):
+        seed: Any | None = None
+
+    monkeypatch.setattr(models, "PackEntryKind", kind, raising=False)
+    monkeypatch.setattr(
+        models, "PackImportReceipt", MainReceipt if main else Receipt, raising=False
+    )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R054")
+@pytest.mark.asyncio
+async def test_seed_parts_refuse_unavailable_on_the_pinned_release(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A pack with seed parts is never imported with its seed dropped (pin-lag)."""
+    from arbora.deployment.semantic_provisioning import import_attested_pack
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_seed_parts
+
+    _install_pack_shapes(monkeypatch, main=False)
+    with pytest.raises(PinLagUnavailable, match="PackEntryKind.seed_part"):
+        require_seed_parts()
+    with pytest.raises(PinLagUnavailable, match="seed_part"):
+        await import_attested_pack(
+            object(),
+            object(),
+            client=object(),
+            commons=object(),
+            pack=_seeded_pack(),
+            action_policies=object(),
+        )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R054")
+@pytest.mark.asyncio
+async def test_seed_parts_reach_pack_import_on_the_main_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The whole pack, seed parts included, goes to the engine; its seed digest is read back."""
+    import contextlib
+
+    import scion_sdk.sinks.medulla as sink_module
+
+    import arbora.api.contracts as contracts
+    from arbora.deployment.semantic_provisioning import (
+        SemanticProvisioningError,
+        import_attested_pack,
+        seed_content_digest,
+        seed_part_entries,
+    )
+
+    _install_pack_shapes(monkeypatch, main=True)
+    sent: list[Any] = []
+    refusal: list[str] = []
+
+    class Sink:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        async def import_pack(self, pack: Any, **kwargs: Any) -> Any:
+            sent.append((pack, kwargs))
+            if refusal:
+                return types.SimpleNamespace(
+                    result="rejected",
+                    violations=[
+                        types.SimpleNamespace(
+                            code=types.SimpleNamespace(value=refusal[0]),
+                            uri="seed://catalog",
+                            detail="triple",
+                        )
+                    ],
+                )
+            return types.SimpleNamespace(
+                result="imported",
+                receipt=types.SimpleNamespace(
+                    seed=types.SimpleNamespace(content_digest="d" * 64)
+                ),
+            )
+
+    async def attested(*args: Any, **kwargs: Any) -> str:
+        return "binding"
+
+    async def owner(*args: Any, **kwargs: Any) -> str:
+        return "owner"
+
+    monkeypatch.setattr(sink_module, "MedullaSink", Sink)
+    monkeypatch.setattr(contracts, "pack_import_authority", lambda *a, **k: object())
+    monkeypatch.setattr(semantic_provisioning, "attest_self_served_catalog", attested)
+    monkeypatch.setattr(semantic_provisioning, "_owner_principal", owner)
+    monkeypatch.setattr(
+        semantic_provisioning, "session_context", lambda session: {"tenant": "t"}
+    )
+    session = types.SimpleNamespace(graph="g", with_graph=lambda graph: session)
+    pack = _seeded_pack()
+    assert [str(e.uri) for e in seed_part_entries(pack)] == [
+        "seed://identity",
+        "seed://catalog",
+        "seed://references",
+    ]
+
+    def run() -> Any:
+        return import_attested_pack(
+            object(),
+            session,
+            client=types.SimpleNamespace(),
+            commons=object(),
+            pack=pack,
+            action_policies=object(),
+            bind_graph=lambda graph: contextlib.nullcontext(),
+        )
+
+    result = await run()
+    assert sent[0][0] is pack and "seed" not in sent[0][1]
+    assert seed_content_digest(result) == "d" * 64
+    for code in (
+        "SEED_TOO_LARGE",
+        "SEED_BULK_DATA",
+        "SEED_SHACL_VIOLATION",
+        "SEED_DIGEST_MISMATCH",
+    ):
+        refusal[:] = [code]
+        with pytest.raises(SemanticProvisioningError, match=code):
+            await run()
+
+
+@pytest.mark.spec("ARBORA-FLEET-R054")
+@pytest.mark.asyncio
+async def test_onboarding_records_the_engine_seed_digest(monkeypatch) -> None:
+    """The contract surface carries the engine's ``seed.content_digest`` from the receipt."""
+    result = types.SimpleNamespace(
+        result="imported",
+        receipt=types.SimpleNamespace(
+            seed=types.SimpleNamespace(content_digest="e" * 64)
+        ),
+    )
+    onboarding, _ = make_onboarding([_seeded_pack()], monkeypatch, result=result)
+    await onboarding.onboard(ENDPOINT, auth=None)
+    contract = onboarding.surfaces["crm"]["contract"]
+    assert contract["seed"] == "present"
+    assert contract["seed_content_digest"] == "e" * 64

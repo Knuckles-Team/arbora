@@ -428,6 +428,26 @@ def _rejection(result: Any, connector: str) -> SemanticProvisioningError | None:
     )
 
 
+def seed_part_entries(pack: Any) -> tuple[Any, ...]:
+    """The pack's seed entries: ``seed://`` URIs or the engine ``seed_part`` kind."""
+    from arbora.fleet.connect_contract import SEED_URI_PREFIX
+
+    return tuple(
+        entry
+        for entry in pack.archive.entries
+        if str(getattr(entry, "uri", "") or "").startswith(SEED_URI_PREFIX)
+        or str(getattr(getattr(entry, "kind", ""), "value", getattr(entry, "kind", "")))
+        == "seed_part"
+    )
+
+
+def seed_content_digest(result: Any) -> str:
+    """The engine's seed content digest from one import result; empty without a seed."""
+    receipt = getattr(result, "receipt", None)
+    seed = getattr(receipt, "seed", None)
+    return str(getattr(seed, "content_digest", "") or "")
+
+
 async def import_attested_pack(
     engine: Any,
     session: Any,
@@ -438,14 +458,14 @@ async def import_attested_pack(
     action_policies: ActionPolicies,
     bind_graph: GraphBinder = bind_session_graph,
     allow_mass_withdrawal: bool = False,
-    seed_body: Any | None = None,
 ) -> Any:
     """Attest ``pack``'s catalog with EG, then import it under EG's binding.
 
-    A captured ``seed_body`` is handed to the import untouched (ARBORA-FLEET-R054);
-    the engine's ``SEED_*`` refusals propagate unchanged. Until the pinned engine
-    request and the SDK sink carry the seed, a pack with a seed refuses
-    ``UNAVAILABLE`` naming the missing piece rather than dropping it.
+    The seed travels as ``SeedPart`` entries of the pack index and the pack goes
+    to the engine whole (ARBORA-FLEET-R054); there is no seed argument. The
+    engine's ``SEED_*`` refusals propagate unchanged. Until the pinned engine
+    carries ``SEED_PART`` entries and the seed receipt, a pack with seed entries
+    refuses ``UNAVAILABLE`` naming the missing piece rather than dropping it.
 
     The caller owns projection and schema attachment. A rejected import
     raises :class:`SemanticProvisioningError` with every EG violation.
@@ -457,10 +477,10 @@ async def import_attested_pack(
     from scion_sdk.sinks.medulla import MedullaSink
 
     from arbora.api.contracts import pack_import_authority
-    from arbora.pin_lag.medulla import require_pack_import_seed
+    from arbora.pin_lag.medulla import require_seed_parts
 
-    if seed_body is not None:
-        require_pack_import_seed()
+    if seed_part_entries(pack):
+        require_seed_parts()
     tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)
     binding = await attest_self_served_catalog(
@@ -487,9 +507,8 @@ async def import_attested_pack(
             ),
         )
         try:
-            extra = {} if seed_body is None else {"seed": seed_body}
             result = await sink.import_pack(
-                pack, allow_mass_withdrawal=allow_mass_withdrawal, **extra
+                pack, allow_mass_withdrawal=allow_mass_withdrawal
             )
         except ValueError as exc:
             # pydantic's ValidationError is a ValueError: the generated client
