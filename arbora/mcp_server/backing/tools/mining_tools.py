@@ -856,5 +856,5 @@ def register_mining_tools(
         ],
         excluded_names=frozenset({"graph_mine", "graph_mine_deep"}),
         include_excluded=include_unserved_mining,
-        route_registry=runtime.ACTION_TOOL_ROUTES,
+        route_registry=tools.bind_route,
     )

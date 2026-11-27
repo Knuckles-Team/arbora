@@ -16,6 +16,7 @@ from types import MappingProxyType
 from typing import Any
 
 from arbora.api.errors import ArboraErrorCode, ArboraRefusal
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.mcp_server.legacy_action_mapping import (
     ResolvedAction,
     require_served_action,
@@ -71,7 +72,11 @@ def _idempotency_key(spec: Any, caller: Any) -> str | None:
 
 
 async def invoke_legacy_action(
-    action: str, arguments: Mapping[str, Any], *, tool: str | None = None
+    action: str,
+    arguments: Mapping[str, Any],
+    *,
+    tools: ToolTable,
+    tool: str | None = None,
 ) -> str:
     """Resolve ``action`` and run it through ``invoke`` as the verified caller.
 
@@ -82,10 +87,9 @@ async def invoke_legacy_action(
     """
     from arbora.api.invoke.steps import surface_caller_admitted
     from arbora.api.mcp.verbs import invoke_and_render
-    from arbora.mcp_server import runtime
 
     resolved = require_served_action(action, tool)
-    projection = runtime.SERVED_PROJECTION
+    projection = tools.projection
     if projection is None:
         raise ArboraRefusal(
             code=ArboraErrorCode.UNAVAILABLE,

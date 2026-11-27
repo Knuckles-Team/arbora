@@ -13,7 +13,6 @@ from pydantic import Field
 from arbora.access.approval import ApprovalDecisions
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_text
 
@@ -153,7 +152,7 @@ def register_governance_tools(
         )
 
     tools["graph_governance"] = graph_governance
-    runtime.ACTION_TOOL_ROUTES["graph_governance"] = "/graph/governance"
+    tools.bind_route("graph_governance", "/graph/governance")
 
 
 def _execute_governance_action(

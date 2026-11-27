@@ -11,7 +11,6 @@ from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
@@ -59,7 +58,7 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
             mcp, service=service, tool_table=table, keys=JwksCache(RuntimeConfig())
         )
         assert table["graph_a2a"] is mcp.tools["graph_a2a"]
-        assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
+        assert table.routes["graph_a2a"] == "/graph/a2a"
         assert set(mcp.routes) == {
             ("/.well-known/agent-card.json", ("GET",)),
             # The card next to the endpoint it names: the TUI reads it there to

@@ -73,7 +73,9 @@ def record(outcome="succeeded", counts=COUNTS):
 
 def project(value, item=None):
     item = item or value["work_item"]
-    task = WorkItemA2AAuthority._project(item, task_id=("work-item:" + "a" * 64))
+    task = WorkItemA2AAuthority.project_item(
+        item, task_id=("work-item:" + "a" * 64), artifacts=None
+    )
     return project_run_usage(
         value,
         session=SimpleNamespace(tenant="tenant"),
@@ -91,8 +93,8 @@ def test_restart_projection_keeps_exact_snapshot(outcome, counts):
     assert project(value)["counts"] == counts
     if outcome == "failed":
         assert (
-            WorkItemA2AAuthority._project(
-                value["work_item"], task_id=("work-item:" + "a" * 64)
+            WorkItemA2AAuthority.project_item(
+                value["work_item"], task_id=("work-item:" + "a" * 64), artifacts=None
             ).artifacts
             is None
         )
@@ -135,7 +137,6 @@ def test_foreign_receipt_refuses(path):
 @pytest.mark.parametrize("counts", [COUNTS, {}])
 async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     from arbora import work_items
-    from arbora.a2a.authority import remember_task_output, task_output_artifacts
     from tests.a2a.test_failed_usage import failure
 
     authority = WorkItemA2AAuthority(
@@ -147,7 +148,7 @@ async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     result = AgentExecutionResult(run_id="run", output="answer", usage=counts)
     execute = AsyncMock(return_value=result)
     if failed:
-        remember_task_output("task", "stale answer")
+        authority.outputs.remember("task", "stale answer")
         execute.side_effect = failure(usage=counts)
     monkeypatch.setattr(authority, "_execute_claimed_run", execute)
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: CLAIM)
@@ -171,7 +172,7 @@ async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     assert commits[0]["outcome"] == ("failed" if failed else "succeeded")
     if failed:
         assert commits[0]["result_ref"] is None
-        assert task_output_artifacts("task") is None
+        assert authority.outputs.artifacts("task") is None
 
 
 def test_native_commit_port_sends_snapshot_without_addition(monkeypatch):
@@ -215,7 +216,9 @@ async def test_get_run_uses_owner_graph_and_caller_tenant():
     )
     value = record()
     item = value["work_item"]
-    task = WorkItemA2AAuthority._project(item, task_id=item["work_item_id"])
+    task = WorkItemA2AAuthority.project_item(
+        item, task_id=item["work_item_id"], artifacts=None
+    )
     result = await read_run_usage(
         engine,
         session=SimpleNamespace(tenant="tenant"),

@@ -11,7 +11,6 @@ from pydantic import Field
 
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json
 
@@ -192,7 +191,7 @@ def register_uql_tools(
     tools["nl_query"] = nl_query
 
     # CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
-    runtime.ACTION_TOOL_ROUTES["nl_query"] = "/graph/nl-query"
+    tools.bind_route("nl_query", "/graph/nl-query")
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quinquies. ask_data — CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin DB-GPT-style data-analysis agent loop
@@ -249,7 +248,7 @@ def register_uql_tools(
     tools["ask_data"] = ask_data
 
     # CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
-    runtime.ACTION_TOOL_ROUTES["ask_data"] = "/graph/ask-data"
+    tools.bind_route("ask_data", "/graph/ask-data")
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-ter. graph_table — CONCEPT:MERISTEM-KG.ingest.mirror-inbound connector/ETL → native engine SQL tables

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 
@@ -26,7 +26,7 @@ def register_conditional_tools(
     *,
     excluded_names: frozenset[str],
     include_excluded: bool,
-    route_registry: dict[str, str] | None = None,
+    route_registry: Callable[[str, str], None] | None = None,
 ) -> None:
     """Register selected tools and optional REST routes in their authoritative maps."""
     for name, handler, route in entries:
@@ -34,4 +34,4 @@ def register_conditional_tools(
             continue
         tool_registry[name] = handler
         if route_registry is not None and route is not None:
-            route_registry[name] = route
+            route_registry(name, route)

@@ -10,7 +10,6 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.errors import not_served
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.engine_surface_types import (
     KvCheckpointIntelligenceRequest,
 )
@@ -608,6 +607,6 @@ def register_kv_cache_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_kv_checkpoint"] = graph_kv_checkpoint
 
-    runtime.ACTION_TOOL_ROUTES["graph_kv_checkpoint"] = "/graph/kv_checkpoint"
+    tools.bind_route("graph_kv_checkpoint", "/graph/kv_checkpoint")
 
-    runtime.ACTION_TOOL_ROUTES["graph_kvcache"] = "/graph/kvcache"
+    tools.bind_route("graph_kvcache", "/graph/kvcache")

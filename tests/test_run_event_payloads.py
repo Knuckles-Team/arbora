@@ -10,11 +10,7 @@ from typing import Any
 import pytest
 
 from arbora import agent_runs
-from arbora.a2a.authority import (
-    WorkItemA2AAuthority,
-    remember_task_output,
-    task_output_artifacts,
-)
+from arbora.a2a.authority import TaskOutputs, WorkItemA2AAuthority
 from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
@@ -88,8 +84,9 @@ def test_maximum_reply_roundtrips_without_mutating_event(
     artifacts = read(records)
     assert artifacts is not None
     assert artifacts[0].parts[0].text == output
-    remember_task_output(TASK, output)
-    cached_artifacts = task_output_artifacts(TASK)
+    outputs = TaskOutputs()
+    outputs.remember(TASK, output)
+    cached_artifacts = outputs.artifacts(TASK)
     assert cached_artifacts is not None
     assert cached_artifacts[0].parts[0].text == output
 
@@ -171,9 +168,10 @@ def test_larger_output_is_preserved_as_event_but_never_claimed_complete(
     event = terminal(output)
     emit(records, event)
     assert json.loads(records[0]["payload"]) == event
-    remember_task_output(TASK, "old reply")
-    remember_task_output(TASK, output)
-    assert task_output_artifacts(TASK) is None
+    outputs = TaskOutputs()
+    outputs.remember(TASK, "old reply")
+    outputs.remember(TASK, output)
+    assert outputs.artifacts(TASK) is None
     with pytest.raises(RuntimeError, match="reply is unavailable"):
         read(records)
 

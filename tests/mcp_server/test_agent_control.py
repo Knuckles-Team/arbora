@@ -35,16 +35,6 @@ class Mcp:
         return decorate
 
 
-@pytest.fixture(autouse=True)
-def restore_graph_rlm_registration():
-    prior_route = runtime.ACTION_TOOL_ROUTES.get("graph_rlm")
-    yield
-    if prior_route is None:
-        runtime.ACTION_TOOL_ROUTES.pop("graph_rlm", None)
-    else:
-        runtime.ACTION_TOOL_ROUTES["graph_rlm"] = prior_route
-
-
 def _verified_session() -> GraphSession:
     actor = ActorContext(
         actor_id="rlm-user",
@@ -85,28 +75,21 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
 
     table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     table.authority.bind_session(session)
-    prior_route = runtime.ACTION_TOOL_ROUTES.get("graph_rlm")
-    try:
-        register_graph_rlm(
-            mcp,
-            table,
-            client_for_session=lambda actual_session: (
-                client if actual_session is session else None
-            ),
-            origins=object(),
-            run_port=object(),
-            factory=factory,
-        )
-        request = GraphRlmRunRequest(task="inspect", input_text="state")
-        assert await mcp.tools["graph_rlm"](request) == ('{"action":"run","ok":true}')
-        assert calls == [request]
-        assert table["graph_rlm"] is mcp.tools["graph_rlm"]
-        assert runtime.ACTION_TOOL_ROUTES["graph_rlm"] == "/graph/rlm"
-    finally:
-        if prior_route is None:
-            runtime.ACTION_TOOL_ROUTES.pop("graph_rlm", None)
-        else:
-            runtime.ACTION_TOOL_ROUTES["graph_rlm"] = prior_route
+    register_graph_rlm(
+        mcp,
+        table,
+        client_for_session=lambda actual_session: (
+            client if actual_session is session else None
+        ),
+        origins=object(),
+        run_port=object(),
+        factory=factory,
+    )
+    request = GraphRlmRunRequest(task="inspect", input_text="state")
+    assert await mcp.tools["graph_rlm"](request) == ('{"action":"run","ok":true}')
+    assert calls == [request]
+    assert table["graph_rlm"] is mcp.tools["graph_rlm"]
+    assert table.routes["graph_rlm"] == "/graph/rlm"
 
 
 @pytest.mark.asyncio

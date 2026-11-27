@@ -139,6 +139,7 @@ def _services(port: Any | None, config: RuntimeConfig | None = None) -> Any:
         service_principal="service:arbora",
         bindings={
             "config": fresh_config(config),
+            "heartbeat_fence": presence_ops.HeartbeatFence(),
             **({} if port is None else {"city_state": port}),
         },
     )

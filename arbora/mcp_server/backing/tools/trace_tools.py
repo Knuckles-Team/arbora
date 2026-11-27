@@ -10,7 +10,6 @@ import httpx
 from pydantic import Field
 
 from arbora.core.environment import read_env
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.engine_surface_common import (
     _client,
     _decode_json_object,
@@ -234,7 +233,7 @@ def register_trace_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_promql"] = graph_promql
 
-    runtime.ACTION_TOOL_ROUTES["graph_promql"] = "/graph/promql"
+    tools.bind_route("graph_promql", "/graph/promql")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_traces — observability: distributed-trace search / fetch
@@ -302,7 +301,7 @@ def register_trace_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_traces"] = graph_traces
 
-    runtime.ACTION_TOOL_ROUTES["graph_traces"] = "/graph/traces"
+    tools.bind_route("graph_traces", "/graph/traces")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_logs — observability: log stream query (D-W6-ISO-2)
@@ -369,4 +368,4 @@ def register_trace_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_logs"] = graph_logs
 
-    runtime.ACTION_TOOL_ROUTES["graph_logs"] = "/graph/logs"
+    tools.bind_route("graph_logs", "/graph/logs")

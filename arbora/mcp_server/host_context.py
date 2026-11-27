@@ -49,6 +49,7 @@ __all__ = [
     "bind_a2a_decision",
     "bind_invocation_probes",
     "bind_ranking",
+    "bind_signed_ingress",
     "build_host_context",
     "compose_host_context",
     "compose_host_context_over",
@@ -181,6 +182,11 @@ def bind_a2a_decision(host: HostContext, invocation: Any) -> None:
     if send is None or schema is None or principal is None:
         return
     host.runs.decide.bind(send, feature_schema=schema, principal=principal)
+
+
+def bind_signed_ingress(host: HostContext, invocation: Any) -> None:
+    """Bind the served invocation's signed-ingress admitter into the host's slot."""
+    host.policy.ingress.bind(getattr(invocation, "signed_ingress", None))
 
 
 def bind_invocation_probes(host: HostContext, invocation: Any) -> None:

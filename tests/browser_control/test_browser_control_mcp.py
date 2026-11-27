@@ -12,7 +12,6 @@ from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseRe
 from arbora.browser_control import mcp as browser_control_mcp
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.process_authority import ProcessAuthority
 
@@ -55,7 +54,7 @@ async def test_browser_control_registers_one_mcp_rest_workflow_dispatch(
     try:
         browser_control_mcp.register_browser_control_tools(mcp, table, BrowserState())
         assert table["browser_control"] is tools["browser_control"]
-        assert runtime.ACTION_TOOL_ROUTES["browser_control"] == "/browser/control"
+        assert table.routes["browser_control"] == "/browser/control"
         raw = await tools["browser_control"](
             action="issue_lease",
             payload={

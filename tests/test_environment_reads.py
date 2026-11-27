@@ -117,7 +117,7 @@ def test_a_platform_family_declares_exactly_the_platforms_that_exist(
 
 @pytest.mark.spec("ARBORA-HOST-R010.2")
 def test_the_process_view_reads_declared_names_and_projects_writes(monkeypatch) -> None:
-    view = env.PROCESS_ENVIRONMENT
+    view = env.process_environment()
     monkeypatch.delenv("SSL_CERT_FILE", raising=False)
     assert view.get("SSL_CERT_FILE") is None
     view["SSL_CERT_FILE"] = "/trust/ca.pem"

@@ -899,6 +899,7 @@ def register_analysis_tools(
                     "depth": depth,
                     "target": target,
                 },
+                tools=tools,
             )
         except Exception as e:
             logger.warning("operation failed", exc_info=True)

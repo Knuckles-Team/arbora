@@ -31,9 +31,9 @@ from arbora.security.process_authority import ProcessAuthority
 def test_native_action_route_contract_serves_only_registered_tools() -> None:
     caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
-    assert set(runtime.ACTION_TOOL_ROUTES) == set(caches.tools)
-    assert runtime.ACTION_TOOL_ROUTES["browser_control"] == "/browser/control"
-    assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
+    assert set(caches.tools.routes) == set(caches.tools)
+    assert caches.tools.routes["browser_control"] == "/browser/control"
+    assert caches.tools.routes["graph_a2a"] == "/graph/a2a"
 
 
 def test_bootstrap_holds_no_injected_runtime_state() -> None:

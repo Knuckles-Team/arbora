@@ -15,6 +15,7 @@ from types import MappingProxyType
 from typing import Any
 
 from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.base_routes import BASE_ACTION_TOOL_ROUTES
 from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
@@ -36,7 +37,17 @@ class ToolTable(MutableMapping[str, Any]):
     full table from a partial one.
     """
 
-    __slots__ = ("_complete", "_lock", "_tools", "_verbs", "authority", "verbs")
+    __slots__ = (
+        "_complete",
+        "_lock",
+        "_projection",
+        "_routes",
+        "_tools",
+        "_verbs",
+        "authority",
+        "routes",
+        "verbs",
+    )
 
     def __init__(self, authority: ProcessAuthority) -> None:
         #: The process authority every dispatch through this table runs under
@@ -46,6 +57,11 @@ class ToolTable(MutableMapping[str, Any]):
         self._tools: dict[str, Any] = {}
         self._complete: frozenset[str] = frozenset()
         self._verbs: dict[str, Any] = {}
+        self._routes: dict[str, str] = dict(BASE_ACTION_TOOL_ROUTES)
+        self._projection: Any | None = None
+        #: The action-routed REST twin of each tool, a read-only view the registrars
+        #: fill through :meth:`bind_route`; the route mount reads it.
+        self.routes: Mapping[str, str] = MappingProxyType(self._routes)
         #: The served intent verbs (``find``, ``act``, ...) as in-process functions, a
         #: read-only view the serving composition fills through :meth:`bind_verb`. A
         #: run binds them as native tools; each call goes through the same
@@ -76,6 +92,22 @@ class ToolTable(MutableMapping[str, Any]):
         """Register one served intent verb under ``name``."""
         with self._lock:
             self._verbs[name] = function
+
+    def bind_route(self, name: str, path: str) -> None:
+        """Register the REST twin of tool ``name`` at ``path``."""
+        with self._lock:
+            self._routes[name] = path
+
+    def bind_projection(self, projection: Any) -> None:
+        """Make ``projection`` the served operation projection of this host."""
+        with self._lock:
+            self._projection = projection
+
+    @property
+    def projection(self) -> Any | None:
+        """The served operation projection, or ``None`` before it is composed."""
+        with self._lock:
+            return self._projection
 
     def mark_complete(self) -> None:
         """Record the current names as the full set of a finished build."""

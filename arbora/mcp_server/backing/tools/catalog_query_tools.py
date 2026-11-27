@@ -655,7 +655,7 @@ def register_catalog_query_tools(
 
     tools["graph_catalog"] = graph_catalog
 
-    runtime.ACTION_TOOL_ROUTES["graph_catalog"] = "/graph/catalog"
+    tools.bind_route("graph_catalog", "/graph/catalog")
 
     # ══════════════════════════════════════════════════════════════════
     # 1b. graph_context — CONCEPT:MERISTEM-ORCH.session.invoker-agent-handoff cross-process curated-context store

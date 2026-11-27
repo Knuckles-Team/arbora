@@ -125,17 +125,16 @@ def _serve(monkeypatch, *, authenticated: bool = True):
         invoke,
         windows=SubsystemWindows(),
     )
-    monkeypatch.setattr(runtime, "SERVED_PROJECTION", projection)
-    return runtime_double, audit
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
+    tools.bind_projection(projection)
+    return runtime_double, audit, tools
 
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.9")
 async def test_mapped_and_retired_actions_over_mcp(monkeypatch) -> None:
-    served, audit = _serve(monkeypatch)
+    served, audit, tools = _serve(monkeypatch)
     server = FastMCP("legacy-action-served")
-    write_ingest_tools.register_write_ingest_tools(
-        server, ToolTable(ProcessAuthority(config=RuntimeConfig())), lambda: None
-    )
+    write_ingest_tools.register_write_ingest_tools(server, tools, lambda: None)
     async with Client(server) as client:
         mapped = await client.call_tool(
             "graph_ingest",
@@ -178,12 +177,12 @@ async def test_mapped_and_retired_actions_over_mcp(monkeypatch) -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.9")
 async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) -> None:
-    served, audit = _serve(monkeypatch)
+    served, audit, tools = _serve(monkeypatch)
     server = FastMCP("legacy-analysis-served")
     core = AnalysisCore()
     analysis_tools.register_analysis_tools(
         server,
-        ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        tools,
         core,
         build_health_state(),
         config=RuntimeConfig(),
@@ -202,11 +201,9 @@ async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) ->
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.9")
 async def test_an_unverified_caller_reaches_no_operation(monkeypatch) -> None:
-    served, audit = _serve(monkeypatch, authenticated=False)
+    served, audit, tools = _serve(monkeypatch, authenticated=False)
     server = FastMCP("legacy-action-unauthenticated")
-    write_ingest_tools.register_write_ingest_tools(
-        server, ToolTable(ProcessAuthority(config=RuntimeConfig())), lambda: None
-    )
+    write_ingest_tools.register_write_ingest_tools(server, tools, lambda: None)
     async with Client(server) as client:
         refused = await client.call_tool(
             "graph_ingest", {"action": "corpus"}, raise_on_error=False
@@ -219,9 +216,9 @@ async def test_an_unverified_caller_reaches_no_operation(monkeypatch) -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.9")
 async def test_no_served_projection_refuses_unavailable(monkeypatch) -> None:
-    monkeypatch.setattr(runtime, "SERVED_PROJECTION", None)
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     with pytest.raises(ArboraRefusal) as refused:
-        await invoke_legacy_action("corpus", {})
+        await invoke_legacy_action("corpus", {}, tools=tools)
     assert refused.value.code == ArboraErrorCode.UNAVAILABLE
 
 

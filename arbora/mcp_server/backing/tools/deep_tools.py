@@ -294,7 +294,7 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_broker"] = graph_broker
 
-    runtime.ACTION_TOOL_ROUTES["graph_broker"] = "/graph/broker"
+    tools.bind_route("graph_broker", "/graph/broker")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_federated_search — search across registered external graphs
@@ -353,7 +353,7 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_federated_search"] = graph_federated_search
 
-    runtime.ACTION_TOOL_ROUTES["graph_federated_search"] = "/graph/federated-search"
+    tools.bind_route("graph_federated_search", "/graph/federated-search")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_gis — geospatial route / tile / geo-task ops
@@ -404,7 +404,7 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_gis"] = graph_gis
 
-    runtime.ACTION_TOOL_ROUTES["graph_gis"] = "/graph/gis"
+    tools.bind_route("graph_gis", "/graph/gis")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_memory — MEDULLA-318 memory / scene / trajectory engine ops
@@ -481,7 +481,7 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_memory"] = graph_memory
 
-    runtime.ACTION_TOOL_ROUTES["graph_memory"] = "/graph/memory"
+    tools.bind_route("graph_memory", "/graph/memory")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_learn — graph-learning / neuro-symbolic surface (CONCEPT:MEDULLA-KG.graphlearn.link-predictor)
@@ -564,7 +564,7 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     # REST twin path: POST {prefix}/graphlearn/fit (bespoke natural-body mount in
     # runtime → the SAME _execute_tool core as the MCP verb).
-    runtime.ACTION_TOOL_ROUTES["graph_learn"] = "/graphlearn/fit"
+    tools.bind_route("graph_learn", "/graphlearn/fit")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_pipeline — composable ML pipeline surface (CONCEPT:MEDULLA-KG.mining.ml-pipeline)
@@ -670,7 +670,7 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     # REST twin path: POST {prefix}/pipeline/train (natural-body mount in runtime →
     # the SAME _execute_tool core as the MCP verb).
-    runtime.ACTION_TOOL_ROUTES["graph_pipeline"] = "/pipeline/train"
+    tools.bind_route("graph_pipeline", "/pipeline/train")
 
     # ══════════════════════════════════════════════════════════════════
     # graph_fork — warm-fork / KV-cache fan-out (CONCEPT:MERISTEM-KG.coordination.warm-fork-fanout)
@@ -724,4 +724,4 @@ def register_deep_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_fork"] = graph_fork
 
-    runtime.ACTION_TOOL_ROUTES["graph_fork"] = "/graph/fork"
+    tools.bind_route("graph_fork", "/graph/fork")

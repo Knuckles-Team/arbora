@@ -55,6 +55,9 @@ class HostedInvocation:
     #: Readiness probes the composition built (name to probe); the host binds them
     #: into its health state.
     health_probes: Mapping[str, Callable[..., Any]] = field(default_factory=dict)
+    #: The signed code-host delivery admitter, or ``None`` when no source is declared;
+    #: the host binds it into its ingress slot.
+    signed_ingress: Any = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(

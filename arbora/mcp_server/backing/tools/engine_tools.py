@@ -61,7 +61,6 @@ from pydantic import Field
 from arbora.api.domain.mcp_server.backing import engine_routing
 from arbora.api.errors import not_served
 from arbora.core.engine_domains import discover_domains
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json
 
@@ -584,4 +583,4 @@ def register_engine_tools(mcp, tools: ToolTable) -> None:
             tags.append("admin")
         mcp.tool(name=tool_name, description=description, tags=tags)(fn)
         tools[tool_name] = fn
-        runtime.ACTION_TOOL_ROUTES[tool_name] = f"/engine/{domain}"
+        tools.bind_route(tool_name, f"/engine/{domain}")

@@ -74,13 +74,20 @@ class Catalog:
 def fleet(monkeypatch: pytest.MonkeyPatch) -> Fleet:
     fake = Fleet()
     monkeypatch.setattr(ecosystem, "invoke_registered", fake)
-    ecosystem._last_rows.clear()
+    global _ROWS
+    _ROWS = ecosystem.LastRows()
     return fake
+
+
+_ROWS = ecosystem.LastRows()
 
 
 def _ctx(tenant: str = "tenant:one") -> Any:
     base = context(tenant)
-    base.services = {"fleet_gateway": SimpleNamespace(catalog=Catalog())}
+    base.services = {
+        "fleet_gateway": SimpleNamespace(catalog=Catalog()),
+        "widget_rows": _ROWS,
+    }
     return base
 
 

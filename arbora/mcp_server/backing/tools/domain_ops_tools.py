@@ -9,7 +9,6 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_text
 
@@ -119,4 +118,4 @@ def register_domain_ops_tools(
             return public_error_text(exc)
 
     tools["graph_domain_ops"] = graph_domain_ops
-    runtime.ACTION_TOOL_ROUTES["graph_domain_ops"] = "/graph/domain-ops"
+    tools.bind_route("graph_domain_ops", "/graph/domain-ops")

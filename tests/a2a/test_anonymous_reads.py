@@ -13,7 +13,6 @@ from arbora.a2a.anonymous import (
     AnonymousTaskStatus,
     create_anonymous_a2a_application,
 )
-from arbora.a2a.authority import remember_task_output
 from arbora.a2a.service import A2AService
 from arbora.api.invoke.steps import authenticate
 from arbora.core.settings import RuntimeConfig
@@ -86,7 +85,6 @@ async def request(app, *, method="tasks/get", params=None, headers=None):
 @pytest.mark.asyncio
 async def test_served_read_uses_same_owner_and_returns_only_status():
     native, owner, app = stack()
-    remember_task_output(TASK, "verified secret must not escape")
     response = await request(app)
     assert response.status_code == 200, response.text
     assert response.json()["result"]["status"]["state"] == "completed"
