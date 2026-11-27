@@ -124,7 +124,7 @@ class CuratorScheduler:
                 epoch=epoch,
                 key=f"curation:{tenant}:{self._loop_id}:{epoch}",
             )
-        except Exception as exc:  # noqa: BLE001 - one tenant must not stop the rest
+        except Exception as exc:  # one tenant must not stop the rest
             code = _code(exc)
             logger.warning("curation tick failed for a tenant: %s", code)
             await self._curation.release(tenant, self._loop_id, epoch)
@@ -134,7 +134,7 @@ class CuratorScheduler:
     async def _claim(self, tenant: str) -> int | TickReport:
         try:
             epoch = await self._curation.claim(tenant, self._loop_id)
-        except Exception as exc:  # noqa: BLE001 - one tenant must not stop the rest
+        except Exception as exc:  # one tenant must not stop the rest
             code = _code(exc)
             logger.warning("curation claim failed for a tenant: %s", code)
             return TickReport(tenant, "failed", code=code)

@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import os
 import shutil
 import sys
@@ -368,7 +369,10 @@ def hook_command(args: argparse.Namespace) -> int:
             base_url=_endpoint(None, config),
             store=TokenStore(),
         )
-    except Exception:  # noqa: BLE001 - a hook always exits 0 and never blocks
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "a hook always exits 0 and never blocks", exc_info=True
+        )
         output = ""
     if output:
         print(output)

@@ -14,6 +14,7 @@ import asyncio
 import contextlib
 import contextvars
 import inspect
+import logging
 import threading
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
@@ -407,7 +408,10 @@ class EpistemicClientPool:
         with self._lock:
             try:
                 current = self._cached_client(context, target, clients, loop)
-            except Exception as exc:  # noqa: BLE001 - re-raised after closing the transport
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "re-raised after closing the transport", exc_info=True
+                )
                 refusal, surplus = exc, client
             else:
                 if current is not None:

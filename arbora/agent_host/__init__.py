@@ -240,7 +240,7 @@ def build_agent_host_app(
         query = _extract_text(message)
         try:
             result = run_executor(graph, graph_config, query)
-        except Exception as exc:  # noqa: BLE001 - A2A boundary is fail-closed
+        except Exception as exc:  # A2A boundary is fail-closed
             logger.warning(
                 "agent_host: execution failed (exception_type=%s)",
                 type(exc).__name__,

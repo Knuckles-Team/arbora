@@ -42,11 +42,11 @@ _LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 @lru_cache(maxsize=1)
 def _package_version() -> str:
-    try:
-        from importlib.metadata import version
+    from importlib.metadata import PackageNotFoundError, version
 
+    try:
         return version("arbora")
-    except Exception:  # noqa: BLE001 - a version lookup never breaks a client
+    except PackageNotFoundError:  # a version lookup never breaks a client
         return "0"
 
 

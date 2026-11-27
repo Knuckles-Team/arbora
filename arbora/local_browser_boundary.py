@@ -31,7 +31,7 @@ def local_browser_boundary(owner: LocalBrowserChannelOwner) -> LocalBrowserBound
 
             await _serve(owner, scope, receive, bounded_send)
             return
-        except Exception:  # noqa: BLE001 - no native/source details cross the socket
+        except Exception:  # no native/source details cross the socket
             _LOG.warning("Local browser channel refused; retirement may be unresolved")
         async with asyncio.timeout(1):
             await send({"type": "websocket.close", "code": 4403})

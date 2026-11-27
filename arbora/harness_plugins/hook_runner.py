@@ -10,6 +10,7 @@ refused credential prints a one-line ``AUTH_REQUIRED`` note instead.
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -154,7 +155,10 @@ def run(
         payload = response.json()
         value = (payload.get("result") or {}).get("value") or {}
         return output_form(point, profile, str(value.get("context") or ""))
-    except Exception:  # noqa: BLE001 - a hook never blocks the harness
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "a hook never blocks the harness", exc_info=True
+        )
         return ""
 
 

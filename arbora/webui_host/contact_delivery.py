@@ -112,7 +112,10 @@ class WebUIContactDelivery:
             context = prepare_contact(
                 request, fixed_destination=self._fixed_destination
             )
-        except Exception as exc:  # noqa: BLE001 — authority/HMAC failure is unknown
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "authority/HMAC failure is unknown", exc_info=True
+            )
             preparation_error = exc
             context = None
         if context is None:
@@ -122,7 +125,10 @@ class WebUIContactDelivery:
             admission = await self._sync_runner(
                 lambda: self._admit(self._engine, context)
             )
-        except Exception as exc:  # noqa: BLE001 — graph ambiguity is unknown
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "graph ambiguity is unknown", exc_info=True
+            )
             return _result(error=exc)
         if admission.result is not None:
             return admission.result
@@ -133,7 +139,10 @@ class WebUIContactDelivery:
                 outcome = await self._send_created(
                     self._engine, request, context, admission.claim
                 )
-            except Exception as exc:  # noqa: BLE001 — provider/commit ambiguity
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "provider/commit ambiguity", exc_info=True
+                )
                 outcome = _result(error=exc)
         return outcome
 

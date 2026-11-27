@@ -14,6 +14,7 @@ module owns only the plan model and the proposal dedupe record.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
@@ -225,7 +226,10 @@ async def run_dca_due(
         proposal = await evaluate_dca(send, plan)
         if plan.mode == "paper":
             await host.submit_paper(plan, proposal)
-    except Exception as error:  # noqa: BLE001 - every failure is reported as a missed occurrence
+    except Exception as error:
+        logging.getLogger(__name__).debug(
+            "every failure is reported as a missed occurrence", exc_info=True
+        )
         await host.missed(plan, occurrence, type(error).__name__)
         return "missed"
     await complete_receipt(engine, plan.tenant_id, "dca_proposal", key)

@@ -154,7 +154,7 @@ class TokenStore:
         if ring is not None:
             try:
                 ring.delete_password(KEYRING_SERVICE, harness)
-            except Exception:  # noqa: BLE001 - an absent entry is already deleted
+            except ring.errors.KeyringError:  # an absent entry is already deleted
                 return
         self._path(harness).unlink(missing_ok=True)
 

@@ -141,7 +141,7 @@ def register_host_log_routes(
             raise HTTPException(403, "workspace_denied") from None
         except (IdentityUnavailable, TimeoutError):
             raise HTTPException(503, "log_unavailable") from None
-        except Exception:  # noqa: BLE001 - owner failures must not expose log material
+        except Exception:  # owner failures must not expose log material
             raise HTTPException(503, "log_unavailable") from None
         try:
             return service.reference_binding(value, endpoint=endpoint)
@@ -167,7 +167,7 @@ def register_host_log_routes(
             raise HTTPException(403, "workspace_denied") from None
         except (IdentityUnavailable, TimeoutError):
             raise HTTPException(503, "log_unavailable") from None
-        except Exception:  # noqa: BLE001 - owner failures must not expose log material
+        except Exception:  # owner failures must not expose log material
             raise HTTPException(503, "log_unavailable") from None
         if body.version == 2:
             try:
