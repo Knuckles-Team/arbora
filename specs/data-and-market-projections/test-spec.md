@@ -124,7 +124,7 @@ Each active row has one planned or existing proving test. A test that does not y
 |---|---|
 | `ARBORA-DATA-MARKET-R001.1` | `tests/finance/test_receipts_served.py::test_receipt_claims_once_and_survives_a_new_port` |
 | `ARBORA-DATA-MARKET-R002` | `tests/finance/test_scheduler_served.py::test_dst_and_replay_run_each_occurrence_once` (planned) |
-| `ARBORA-DATA-MARKET-R004` | `tests/data_apps/test_admission_served.py::test_failed_admission_rolls_back_without_retiring_prior_connector` (planned) |
+| `ARBORA-DATA-MARKET-R004` | `tests/data_apps/test_admission_served.py::test_failed_admission_rolls_back_without_retiring_prior_connector` |
 | `ARBORA-DATA-MARKET-R005` | `tests/gateway/test_schema_context_served.py::test_each_intent_over_http_and_mcp_and_unsupported_source` |
 | `ARBORA-DATA-MARKET-R006` | `tests/finance/test_dca_served.py::test_replay_and_clock_drift_yield_one_proposal_and_missed_is_reported` (planned) |
 | `ARBORA-DATA-MARKET-R007.1` | `tests/api/test_order_confirmation.py::test_models_bind_exact_intent_and_exclude_proof` (planned) |

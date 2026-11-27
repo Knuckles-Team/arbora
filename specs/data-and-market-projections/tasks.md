@@ -21,7 +21,7 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T015 [P] [US3] ARBORA-DATA-MARKET-R003.13 Market compute port and sizing operations.
 - [x] T016 [P] [US3] ARBORA-DATA-MARKET-R003.14 Banking compute operations.
 - [x] T017 [P] [US3] ARBORA-DATA-MARKET-R003.15 Finance guide projection.
-- [ ] T018 [P] [US2] ARBORA-DATA-MARKET-R004 One-at-a-time application admission with rollback.
+- [x] T018 [P] [US2] ARBORA-DATA-MARKET-R004 One-at-a-time application admission with rollback.
 - [x] T019 [P] [US1] ARBORA-DATA-MARKET-R005 schema_context query surface for tables and ontology mappings.
 - [ ] T020 [P] [US3] ARBORA-DATA-MARKET-R006 Recurring DCA plans with deterministic, non-duplicating proposals.
 - [ ] T021 [P] [US3] ARBORA-DATA-MARKET-R007.1 Model.
