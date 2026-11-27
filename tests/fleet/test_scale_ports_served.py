@@ -27,6 +27,7 @@ from arbora.mcp_server.served_invocation import (
     _with_scale_ports,
 )
 from tests.api._loopback_engine import loopback  # noqa: F401
+from tests.fleet.scaling._scale_builder import declare_scale_builder
 from tests.fleet.scaling._work_item_engine import Session, engine
 from tests.fleet.scaling.test_engine_scale_policy import PRINCIPAL, SCHEMA, Engine
 from tests.fleet.scaling.test_scaling_authority_contract import INTENT as PLAN_INTENT
@@ -76,14 +77,13 @@ def graph(monkeypatch: pytest.MonkeyPatch) -> FakeGraph:
 @pytest.fixture
 def verdicts(monkeypatch: pytest.MonkeyPatch) -> Engine:
     """The engine's ``Decide`` answers (the question kind declared, as after the re-pin)."""
-    from arbora.fleet.scaling import engine_policy
 
     verdict = Engine()
 
     async def graph(context: Any) -> str:
         return "graph:t1"
 
-    monkeypatch.setattr(engine_policy, "require_question_kind", lambda kind: None)
+    declare_scale_builder(monkeypatch)
     monkeypatch.setattr("arbora.api.ops._engine.engine_send", verdict)
     monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
     return verdict
@@ -266,10 +266,9 @@ def test_reconcile_served_through_invoke_acts_only_on_the_engine_verdict(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from arbora.api.ops import _engine
-    from arbora.fleet.scaling import engine_policy
 
     monkeypatch.setattr(work_items, "_session", Session)
-    monkeypatch.setattr(engine_policy, "require_question_kind", lambda kind: None)
+    declare_scale_builder(monkeypatch)
     verdict = {"option": "allow"}
     loopback.serve_unreleased(
         _engine,

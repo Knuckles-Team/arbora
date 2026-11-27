@@ -15,16 +15,27 @@ from arbora.api.ops.meetings import (
 EVENT = {
     "schema_version": 1,
     "meeting_id": "m1",
-    "segment_id": "s1",
     "sequence": 4,
-    "correction_revision": 1,
-    "state": "final",
-    "start_ms": 1000,
-    "end_ms": 2500,
-    "text": "agreed",
-    "source_id": "mic-1",
-    "model_id": "speech-small",
+    "revision": 2,
+    "op": "correct",
+    "text_digest": "d" * 64,
+    "finalization_digest": None,
+    "segment_ids": [],
 }
+SUMMARY = {
+    "summary_id": "sum-1",
+    "stale": False,
+    "transcript_digest": "t" * 64,
+    "context_digest": "c" * 64,
+    "receipt_id": "r1",
+    "receipt_digest": "r" * 64,
+    "output_digest": "o" * 64,
+    "provider": "hos",
+    "model": "large",
+    "policy_revision": "p1",
+    "claims": [{"claim_id": "k1", "text": "decided", "citations": []}],
+}
+SENDERS = ("ingestion", "send_meeting_transcript_read")
 
 
 @pytest.mark.spec("ARBORA-OPS-R065.1")
@@ -41,26 +52,21 @@ def test_models_round_trip_vectors() -> None:
             "meeting_id": "m1",
             "transcript_revision": 9,
             "provider_id": "p1",
-            "context_revision": "ctx-3",
+            "context_revision": 3,
         },
-        SummaryResult: {
-            "schema_version": 1,
-            "summary_id": "sum-1",
-            "text": "decided",
-            "provenance": {"provider": "p1", "model": "m"},
-            "state": "complete",
-        },
+        SummaryResult: {"summary": SUMMARY},
     }
     for model, vector in models.items():
         assert model.model_validate(vector).model_dump() == vector
-    for state in ("partial", "final", "finalized"):
-        assert TranscriptEvent.model_validate({**EVENT, "state": state}).state == state
+    assert SummaryResult.model_validate({"summary": None}).summary is None
+    for op in ("append", "correct", "delete_segment", "finalize", None):
+        assert TranscriptEvent.model_validate({**EVENT, "op": op}).op == op
 
 
 @pytest.mark.spec("ARBORA-OPS-R065.1")
 def test_closed_values_and_extra_fields_are_refused() -> None:
     with pytest.raises(ValidationError):
-        TranscriptEvent.model_validate({**EVENT, "state": "draft"})
+        TranscriptEvent.model_validate({**EVENT, "op": "rewrite"})
     with pytest.raises(ValidationError):
         TranscriptEvent.model_validate({**EVENT, "extra": 1})
     with pytest.raises(ValidationError):
@@ -99,42 +105,40 @@ ALLOWED = {"allowed": True, "policy_revision": "p1", "admission_id": "a1"}
 
 def segment(sequence: int, **changes: Any) -> dict[str, Any]:
     return {
-        "segment_id": f"s{sequence}",
         "sequence": sequence,
-        "correction_revision": 0,
-        "state": "final",
-        "start_ms": sequence * 1000,
-        "end_ms": sequence * 1000 + 900,
-        "text": f"words {sequence}",
-        "source_id": "mic-1",
-        "model_id": "speech-small",
+        "revision": sequence,
+        "op": "append",
+        "text_digest": f"{sequence:064x}",
         **changes,
     }
 
 
 def transcript_engine(monkeypatch, events, *, last=None, digest=None):
-    """The w18 ``MeetingTranscriptRead`` as a structural engine double."""
+    """The built ``MeetingTranscriptRead`` as a structural engine double."""
     engine = EngineDouble(monkeypatch)
     state = {"events": events, "last": last, "digest": digest}
 
     def read(params):
-        after = params["after_seq"]
-        rows = [e for e in state["events"] if e["sequence"] > after]
+        asked = params["request"]
+        rows = [e for e in state["events"] if e["sequence"] > asked["after_seq"]]
         newest = max((e["sequence"] for e in state["events"]), default=0)
         return {
-            "events": rows[: params["limit"]],
+            "meeting_id": asked["meeting_id"],
+            "events": rows[: asked["limit"]],
             "last_sequence": state["last"] if state["last"] is not None else newest,
+            "transcript_revision": newest,
+            "context_revision": 0,
             "finalization_digest": state["digest"],
         }
 
-    engine.serve("MeetingTranscriptRead", read)
+    engine.serve("MeetingTranscriptRead", read, sender=SENDERS)
     engine.install(meetings)
     return engine, state
 
 
 async def subscribe(cursor=0, **changes):
     params = {"meeting_id": "m1", "cursor": cursor, **changes}
-    ctx = context(scopes=frozenset({"meetings:read"}))
+    ctx = context(scopes=frozenset({"source:read"}))
     return (
         await meetings.handle_transcript_subscribe(
             ctx, params, OPS["meetings.transcript.subscribe"]
@@ -145,27 +149,40 @@ async def subscribe(cursor=0, **changes):
 @pytest.mark.spec("ARBORA-OPS-R065.2")
 async def test_corrections_gaps_and_finalization_are_ordered(monkeypatch) -> None:
     events = [
-        segment(2, state="partial"),
+        segment(2, op="correct"),
         segment(1),
-        segment(3, correction_revision=1, segment_id="s2"),
+        segment(3, revision=1),
         segment(5),
     ]
-    _, state = transcript_engine(monkeypatch, events)
+    engine, state = transcript_engine(monkeypatch, events)
     page = await subscribe()
     # Order by sequence; the hole at 4 is a gap, distinct from unavailable.
     assert [e["sequence"] for e in page["events"]] == [1, 2, 3]
-    assert page["events"][2]["correction_revision"] == 1
     assert page["gap"] == {"after": 3, "missing": 4}
     assert page["finalized"] is False and page["cursor"] == 3
     assert page["stream_path"] == "/ws/meetings/m1/transcript"
-    # `finalized` never appears while a sequence is missing or no seal exists.
-    state["events"] = [segment(1, state="finalized"), segment(3)]
-    assert [e["state"] for e in (await subscribe())["events"]] == []
-    state["events"] = [segment(n, state="finalized") for n in (1, 2, 3, 4, 5)]
+    # The engine request is the built shape: one `request` body, limit within 500.
+    ((method, sent, _), *_) = engine.sent
+    assert method == "MeetingTranscriptRead"
+    assert sent == {"request": {"meeting_id": "m1", "after_seq": 0, "limit": 100}}
+    # The sealing event never appears while a sequence is missing or no seal exists.
+    seal = {"op": "finalize", "finalization_digest": "seal"}
+    state["events"] = [segment(1, **seal), segment(3)]
+    assert [e["sequence"] for e in (await subscribe())["events"]] == []
+    state["events"] = [segment(n) for n in (1, 2, 3, 4)] + [segment(5, **seal)]
     state["digest"] = "seal"
     done = await subscribe(cursor=3)
     assert [e["sequence"] for e in done["events"]] == [4, 5]
     assert done["gap"] is None and done["finalized"] is True
+
+
+def _assert_source_read_scopes() -> None:
+    for op_id in (
+        "meetings.transcript.subscribe",
+        "meetings.summary.get",
+        "meetings.providers.list",
+    ):
+        assert OPS[op_id].scopes == {"source:read"}
 
 
 @pytest.mark.spec("ARBORA-OPS-R065.2")
@@ -176,19 +193,26 @@ async def test_stale_cursor_and_scope_and_pinned_engine_refuse(monkeypatch) -> N
     with pytest.raises(OperationRefused) as stale:
         await subscribe(cursor=9)
     assert stale.value.code == "STALE_CURSOR"
-    assert OPS["meetings.transcript.subscribe"].scopes == {"meetings:read"}
-    # The pinned release lacks the w18 method: UNAVAILABLE naming it, no stand-in.
-    import medulla.generated as generated
+    # The engine's existing read scope serves meetings; no `meetings:read` exists.
+    _assert_source_read_scopes()
+    # The pinned release lacks the generated sender: UNAVAILABLE naming it, no stand-in.
+    import medulla.generated.ingestion as ingestion
 
-    monkeypatch.setattr(
-        generated,
-        "METHOD_IDS",
-        frozenset(generated.METHOD_IDS) - {"MeetingTranscriptRead"},
-    )
+    monkeypatch.delattr(ingestion, "send_meeting_transcript_read")
     with pytest.raises(OperationRefused) as pinned:
         await subscribe()
     assert pinned.value.code == "UNAVAILABLE"
-    assert pinned.value.details["missing"] == "MeetingTranscriptRead"
+    assert pinned.value.details["missing"] == "ingestion.send_meeting_transcript_read"
+
+
+@pytest.mark.spec("ARBORA-OPS-R065.2")
+async def test_a_limit_past_the_engine_ceiling_is_refused_before_any_send(
+    monkeypatch,
+) -> None:
+    engine, _ = transcript_engine(monkeypatch, [segment(1)])
+    with pytest.raises(ValidationError):
+        await subscribe(limit=501)
+    assert engine.sent == []
 
 
 @pytest.mark.spec("ARBORA-OPS-R065.2")
@@ -197,7 +221,9 @@ async def test_invalid_engine_transcript_is_unavailable_not_repaired(
 ) -> None:
     engine = EngineDouble(monkeypatch)
     engine.serve(
-        "MeetingTranscriptRead", lambda p: {"events": [{"text": 1}], "last_sequence": 0}
+        "MeetingTranscriptRead",
+        lambda p: {"events": [{"text": 1}], "last_sequence": 0},
+        sender=SENDERS,
     )
     engine.install(meetings)
     with pytest.raises(OperationRefused) as bad:
@@ -232,7 +258,7 @@ async def test_each_local_and_hosted_route_records_provenance(monkeypatch) -> No
         assert made["value"]["provenance"] == {
             "provider": choice["provider_id"],
             "model": choice["model_id"],
-            "context_revision": "ctx-3",
+            "context_revision": "3",
             "transcript_revision": "9",
         }
     assert calls == ["MeetingSummaryContext", "MeetingSummaryCommit"] * 2
@@ -244,32 +270,41 @@ async def test_summary_get_reads_the_stored_result_and_refuses_when_pinned(
     monkeypatch,
 ) -> None:
     engine = EngineDouble(monkeypatch)
-    stored = {
-        "schema_version": 1,
-        "summary_id": "sum-1",
-        "text": "decided",
-        "provenance": {"provider": "hos", "model": "large"},
-        "state": "complete",
-    }
-    engine.serve("MeetingSummaryGet", lambda params: stored)
+    stored = {"summary": SUMMARY}
+    engine.serve(
+        "MeetingSummaryGet",
+        lambda params: stored,
+        sender=("ingestion", "send_meeting_summary_get"),
+    )
     engine.install(meetings)
-    ctx = context(scopes=frozenset({"meetings:read"}))
+    ctx = context(scopes=frozenset({"source:read"}))
     op = OPS["meetings.summary.get"]
     got = await meetings.handle_summary_get(ctx, {"meeting_id": "m1"}, op)
     assert got["value"] == stored
-    assert engine.sent == [("MeetingSummaryGet", {"meeting_id": "m1"}, False)]
-    engine.handlers["MeetingSummaryGet"] = lambda params: {"summary_id": ""}
+    assert engine.sent == [
+        ("MeetingSummaryGet", {"request": {"meeting_id": "m1"}}, False)
+    ]
+    # An unknown or unseen meeting answers `null`, the same as an absent one.
+    engine.handlers["MeetingSummaryGet"] = lambda params: {"summary": None}
+    empty = await meetings.handle_summary_get(
+        ctx, {"meeting_id": "m1", "summary_id": "sum-9"}, op
+    )
+    assert empty["value"] == {"summary": None}
+    assert engine.sent[-1][1] == {
+        "request": {"meeting_id": "m1", "summary_id": "sum-9"}
+    }
+    engine.handlers["MeetingSummaryGet"] = lambda params: {
+        "summary": {"summary_id": ""}
+    }
     with pytest.raises(OperationRefused) as bad:
         await meetings.handle_summary_get(ctx, {"meeting_id": "m1"}, op)
     assert bad.value.code == "UNAVAILABLE"
-    import medulla.generated as generated
+    import medulla.generated.ingestion as ingestion
 
-    monkeypatch.setattr(
-        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) - {"MeetingSummaryGet"}
-    )
+    monkeypatch.delattr(ingestion, "send_meeting_summary_get")
     with pytest.raises(OperationRefused) as pinned:
         await meetings.handle_summary_get(ctx, {"meeting_id": "m1"}, op)
-    assert pinned.value.details["missing"] == "MeetingSummaryGet"
+    assert pinned.value.details["missing"] == "ingestion.send_meeting_summary_get"
 
 
 @pytest.mark.spec("ARBORA-OPS-R065.4")
@@ -289,7 +324,7 @@ async def test_denied_egress_and_stale_revision_make_zero_provider_calls(
         assert denied.value.details == {"reason": code}
     for stale in (
         {"transcript_revision": 10},
-        {"context_revision": "ctx-9"},
+        {"context_revision": 9},
     ):
         ctx = meeting_context(Admission(ALLOWED), summarizer=summarizer)
         with pytest.raises(OperationRefused) as refused:
@@ -321,7 +356,7 @@ def stream_app(monkeypatch, ops, steps):
     from arbora.gateway import stream_poll
     from arbora.gateway.meetings_ws import register_meeting_routes
 
-    ctx = context(scopes=frozenset({"meetings:read"}))
+    ctx = context(scopes=frozenset({"source:read"}))
     polls = []
 
     async def invoke_operation(op_id, params, *, request, idempotency_key=None):
@@ -348,13 +383,13 @@ def stream_app(monkeypatch, ops, steps):
 def test_ordered_corrections_finalization_and_provider_routes(monkeypatch) -> None:
     from starlette.testclient import TestClient
 
-    _, state = transcript_engine(monkeypatch, [segment(1, state="partial")])
+    _, state = transcript_engine(monkeypatch, [segment(1)])
 
     def correct():
-        state["events"] += [segment(2, correction_revision=1, segment_id="s1")]
+        state["events"] += [segment(2, op="correct", revision=1)]
 
     def finish():
-        state["events"] += [segment(3, state="finalized")]
+        state["events"] += [segment(3, op="finalize", finalization_digest="seal")]
         state["digest"] = "seal"
 
     app, polls = stream_app(monkeypatch, OPS, [correct, finish])
@@ -362,7 +397,7 @@ def test_ordered_corrections_finalization_and_provider_routes(monkeypatch) -> No
         frames = [socket.receive_json() for _ in range(3)]
     assert [f["events"][0]["sequence"] for f in frames] == [1, 2, 3]
     assert [f["finalized"] for f in frames] == [False, False, True]
-    assert frames[1]["events"][0]["correction_revision"] == 1
+    assert frames[1]["events"][0]["op"] == "correct"
     # The cursor moves forward only; each poll is the served operation again.
     assert [p[1]["cursor"] for p in polls] == [0, 1, 2]
     assert {p[0] for p in polls} == {"meetings.transcript.subscribe"}

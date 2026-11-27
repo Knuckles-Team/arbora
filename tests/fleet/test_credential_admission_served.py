@@ -45,14 +45,14 @@ async def test_a_refused_or_unbound_authority_never_reaches_the_child(
     install(monkeypatch)
     monkeypatch.setattr("arbora.security.session.current_session", _session)
     authority = CredentialAuthority(
-        _Grants(decision(allow=False, reason_code="revoked")),
+        _Grants(decision(allow=False, reason_code="RESOURCE_GRANT_MISSING")),
         _Receipts(),
         lambda: 1_000,
     )
-    with pytest.raises(CredentialRefusal) as revoked:
+    with pytest.raises(CredentialRefusal) as missing:
         async with credentialed_call(authority, "mail-agent", "send_mail", _CFG):
             raise AssertionError("child reached")
-    assert revoked.value.code == "revoked"
+    assert missing.value.code == "binding_mismatch"
     with pytest.raises(CredentialRefusal) as unbound:
         async with credentialed_call(None, "mail-agent", "send_mail", _CFG):
             raise AssertionError("child reached")

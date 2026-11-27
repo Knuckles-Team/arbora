@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from types import SimpleNamespace
 from typing import Any
 
@@ -19,34 +20,24 @@ REQUEST = {
     "meeting_id": "m-1",
     "transcript_revision": 2,
     "provider_id": "prov",
-    "context_revision": "seal-1",
+    "context_revision": 5,
 }
 EVENTS = [
+    {"sequence": 1, "revision": 1, "op": "append", "text_digest": "d" * 64},
     {
-        "meeting_id": "m-1",
-        "segment_id": "s1",
-        "sequence": 1,
-        "correction_revision": 0,
-        "state": "final",
-        "start_ms": 0,
-        "end_ms": 10,
-        "text": "helo",
-        "source_id": "mic",
-        "model_id": "sp",
-    },
-    {
-        "meeting_id": "m-1",
-        "segment_id": "s1",
         "sequence": 2,
-        "correction_revision": 1,
-        "state": "finalized",
-        "start_ms": 0,
-        "end_ms": 10,
-        "text": "hello",
-        "source_id": "mic",
-        "model_id": "sp",
+        "revision": 2,
+        "op": "finalize",
+        "text_digest": "e" * 64,
+        "finalization_digest": "seal-1",
+        "segment_ids": ["s1"],
     },
 ]
+SEGMENTS = [{"segment_id": "s1", "text": "hello"}]
+HELLO = hashlib.sha256(b"hello").hexdigest()
+SEALED = {"finalization_digest": "seal-1", "segment_digests": {"s1": HELLO}}
+UNSEALED = {"finalization_digest": None, "segment_digests": {}}
+SENDERS = ("ingestion", "send_meeting_transcript_read")
 
 
 class Gateway:
@@ -61,9 +52,12 @@ class Gateway:
                 "model_id": "mod",
             },
         )
+        text = SimpleNamespace(
+            id="source", name="get_transcript", server="audio", annotations={}
+        )
 
         async def with_capability(caller: Any, capability: str) -> tuple[Any, ...]:
-            return (item,)
+            return {"meeting_transcript": (text,)}.get(capability, (item,))
 
         self.catalog = SimpleNamespace(with_capability=with_capability)
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
@@ -73,7 +67,9 @@ class Gateway:
 
     async def call(self, caller: Any, server: str, tool: str, arguments: Any, **_: Any):
         self.calls.append((server, tool, arguments))
-        return {"claims": [], "receipt": {"receipt_id": "r1"}}
+        return {
+            "get_transcript": {"segments": SEGMENTS},
+        }.get(tool, {"claims": [], "receipt": {"receipt_id": "r1"}})
 
 
 def _wired(
@@ -82,11 +78,15 @@ def _wired(
     engine = EngineDouble(monkeypatch)
 
     def read(params: dict[str, Any]) -> dict[str, Any]:
-        page = [e for e in EVENTS if e["sequence"] > params["after_seq"]]
+        asked = params["request"]
+        page = [e for e in EVENTS if e["sequence"] > asked["after_seq"]]
         return {
-            "events": page[: params["limit"]],
+            "meeting_id": asked["meeting_id"],
+            "events": page[: asked["limit"]],
             "last_sequence": 2,
-            "finalization_digest": "seal-1" if sealed else "",
+            "transcript_revision": 2,
+            "context_revision": 5,
+            **(SEALED if sealed else UNSEALED),
         }
 
     def grant(params: dict[str, Any]) -> dict[str, Any]:
@@ -96,7 +96,7 @@ def _wired(
             "scope_ceiling": [],
         }
 
-    engine.serve("MeetingTranscriptRead", read)
+    engine.serve("MeetingTranscriptRead", read, sender=SENDERS)
     engine.serve("CheckResourceAccess", grant)
     engine.serve("MeetingSummaryContext", lambda p: {"context_digest": "c" * 64})
     engine.serve("MeetingSummaryCommit", lambda p: {"claim_count": 0})
@@ -117,6 +117,17 @@ def _op() -> Any:
     return next(o for o in meetings.operations() if o.id == "meetings.summary.create")
 
 
+def _assert_text_then_provider(engine: Any, gateway: Any) -> None:
+    """The engine holds digests, so the text came from the fleet tool, then the provider ran."""
+    (text_call, run_call) = gateway.calls
+    assert text_call[:2] == ("audio", "get_transcript")
+    assert text_call[2]["finalization_digest"] == "seal-1"
+    assert run_call[:2] == ("notes", "summarize")
+    assert run_call[2]["model"] == "mod"
+    asked = next(p for m, p, _ in engine.sent if m == "MeetingTranscriptRead")
+    assert set(asked) == {"request"} and asked["request"]["limit"] <= 500
+
+
 @pytest.mark.spec("ARBORA-OPS-R065.3")
 async def test_summary_create_is_reachable_with_production_bindings(
     monkeypatch: pytest.MonkeyPatch,
@@ -134,8 +145,7 @@ async def test_summary_create_is_reachable_with_production_bindings(
     context_request = next(p for m, p, _ in engine.sent if m == "MeetingSummaryContext")
     (segment,) = context_request["request"]["segments"]
     assert segment["text"] == "hello"
-    ((server, tool, arguments),) = gateway.calls
-    assert (server, tool, arguments["model"]) == ("notes", "summarize", "mod")
+    _assert_text_then_provider(engine, gateway)
 
 
 @pytest.mark.spec("ARBORA-OPS-R065.4")
@@ -161,6 +171,11 @@ async def test_production_ports_refuse_stale_unsealed_and_foreign_requests(
             context, {**REQUEST, "transcript_revision": 3}, _op()
         )
     assert stale.value.code == "STALE_REVISION"
+    with pytest.raises(OperationRefused) as stale_context:
+        await meetings.handle_summary_create(
+            context, {**REQUEST, "context_revision": 4}, _op()
+        )
+    assert stale_context.value.code == "STALE_REVISION"
     unsealed, _, _ = _wired(
         monkeypatch, allow=frozenset({"capture", "egress"}), sealed=False
     )
@@ -173,3 +188,18 @@ async def test_production_ports_refuse_stale_unsealed_and_foreign_requests(
         )
     assert foreign.value.code == "TENANT_DENIED"
     assert gateway.calls == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R065.4")
+async def test_a_segment_text_that_misses_the_engine_digest_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context, engine, gateway = _wired(
+        monkeypatch, allow=frozenset({"capture", "egress"})
+    )
+    monkeypatch.setitem(SEGMENTS[0], "text", "tampered")
+    with pytest.raises(OperationRefused) as refused:
+        await meetings.handle_summary_create(context, REQUEST, _op())
+    assert refused.value.code == "UNAVAILABLE"
+    assert "MeetingSummaryContext" not in [m for m, _, _ in engine.sent]
+    assert [call[1] for call in gateway.calls] == ["get_transcript"]

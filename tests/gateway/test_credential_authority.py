@@ -73,11 +73,20 @@ async def test_exact_grant_only_and_refusals_write_receipts(
         ("tenant:one", "client:one", "mailbox:1", "mcp", "send_mail")
     ]
     cases = (
-        (decision(allow=False, reason_code="revoked"), {}, "revoked"),
-        (decision(allow=False, reason_code="grant_expired"), {}, "grant_expired"),
+        (
+            decision(allow=False, reason_code="RESOURCE_GRANT_MISSING"),
+            {},
+            "binding_mismatch",
+        ),
+        (decision(allow=False, reason_code="GRANT_EXPIRED"), {}, "grant_expired"),
         (decision(expires_at_ms=1_000), {}, "grant_expired"),
         (decision(), {"scopes": ("admin",)}, "scope_denied"),
-        (decision(allow=False, reason_code="no_grant"), {}, "binding_mismatch"),
+        (
+            decision(allow=False, reason_code="RESOURCE_UNKNOWN"),
+            {},
+            "binding_mismatch",
+        ),
+        (decision(allow=False, reason_code="revoked"), {}, "authority_unavailable"),
     )
     for answer, ask, reason in cases:
         receipts.rows.clear()

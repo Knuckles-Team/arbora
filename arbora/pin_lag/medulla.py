@@ -29,6 +29,10 @@ Guards held here (delete each with the re-pin that carries it):
 - ``AuditList`` (ARBORA-OPS-R052.5): the operator-only audit chain read
   (:func:`operator_audit_missing`).
 - ``MethodSparqlParams.graph_media_type`` (R857.3): the graph body serialized by the engine.
+- ``ingestion.send_meeting_transcript_read`` and ``ingestion.send_meeting_summary_get``
+  (MEDULLA-MEDIA-VOCAB-R001.101.7) and ``decision_client.scale_intent_request``
+  (MEDULLA-DECISION-ENGINE-R833): generated senders and builders, checked by
+  :func:`require_symbol`.
 - ``IdentityOpWireLoginGrant`` and ``IdentityOpWireLoginRevoke`` (R858),
   ``JobKindProgramOptimize`` and ``LearningWriteMovePointer`` (R860): request shapes the
   pinned release lacks, checked by :func:`require_models`.
@@ -70,6 +74,7 @@ __all__ = [
     "require_model_field",
     "require_models",
     "require_question_kind",
+    "require_symbol",
     "send_main",
 ]
 
@@ -104,6 +109,22 @@ def require_methods(*names: str) -> None:
     for name in names:
         if name not in METHOD_IDS:
             raise PinLagUnavailable(name)
+
+
+def require_symbol(module: str, name: str) -> None:
+    """Return once the pinned engine package defines ``module.name``, else name ``tail.name``.
+
+    PIN-LAG: engine ``main`` ships generated senders and request builders the pinned
+    release lacks (``ingestion.send_meeting_transcript_read``,
+    ``decision_client.scale_intent_request``). The refusal names the module tail and the
+    symbol, so a guard names the exact piece the re-pin must carry.
+    """
+    try:
+        loaded = importlib.import_module(module)
+    except ImportError:
+        loaded = None
+    if not callable(getattr(loaded, name, None)):
+        raise PinLagUnavailable(f"{module.rsplit('.', 1)[-1]}.{name}")
 
 
 def question_kind_served(kind: str) -> bool:

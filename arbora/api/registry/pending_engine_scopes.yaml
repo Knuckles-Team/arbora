@@ -9,7 +9,6 @@ pending_engine_scopes:
   - knowledge:approve
   - knowledge:curate
   - knowledge:flag
-  - meetings:read
   - participant:read
   - participant:write
   - process:approve
@@ -20,4 +19,5 @@ pending_engine_scopes:
   - skills:author
   - skills:eval
   - skills:review
+  - source:read
   - webhook:manage

@@ -23,15 +23,30 @@ class EngineDouble:
         self.sent: list[tuple[str, dict[str, Any], bool]] = []
         self.tenant = ""
 
-    def serve(self, method: str, handler: Handler, *models: str) -> None:
+    def serve(
+        self,
+        method: str,
+        handler: Handler,
+        *models: str,
+        sender: tuple[str, str] | None = None,
+    ) -> None:
         import medulla.generated as generated
         from medulla.generated import models as generated_models
 
         self.handlers[method] = handler
         declared = frozenset(generated.METHOD_IDS) | frozenset(self.handlers)
         self.monkeypatch.setattr(generated, "METHOD_IDS", declared)
+        self._declare_sender(sender)
         for name in models:
             self.monkeypatch.setattr(generated_models, name, object, raising=False)
+
+    def _declare_sender(self, sender: tuple[str, str] | None) -> None:
+        """Declare a generated sender the pinned release lacks (``(module, name)``)."""
+        import importlib
+
+        for module_name, name in (sender,) if sender else ():
+            module = importlib.import_module(f"medulla.generated.{module_name}")
+            self.monkeypatch.setattr(module, name, lambda *a, **k: None, raising=False)
 
     def install(self, module: Any) -> None:
         async def send(

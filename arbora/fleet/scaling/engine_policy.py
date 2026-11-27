@@ -7,12 +7,13 @@ outcome. Arbora decides nothing here: it sends the intent as the verified caller
 running reconcile, checks that the sealed record answers exactly this request, and
 reports the verdict. An ``allow`` is the only way the actuator is reached; a refusal is
 a denied result that only a break-glass authorization passes. The question kind is
-engine ``main``, so a pinned release that does not declare it refuses ``UNAVAILABLE``.
+engine ``main``: the request is built by ``medulla.decision_client.scale_intent_request``
+(MEDULLA-DECISION-ENGINE-R833), so a pinned release without that builder refuses
+``UNAVAILABLE`` naming ``decision_client.scale_intent_request``.
 """
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
@@ -23,11 +24,28 @@ from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScalePolicyDecision,
     _derived_id,
 )
-from arbora.pin_lag.medulla import refusal, require_question_kind
+from arbora.pin_lag.medulla import refusal, require_symbol
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
-#: The engine question kind of a scale verdict.
+#: The engine question kind of a scale verdict and the builder that frames it.
 QUESTION_KIND = "scale_intent"
+REQUEST_BUILDER = ("medulla.decision_client", "scale_intent_request")
+#: The intent fields the engine reads (``ScaleIntentRecord``); the rest never leave arbora.
+WIRE_FIELDS = frozenset(
+    {
+        "intent_id",
+        "intent_revision",
+        "expected_unit_revision",
+        "desired_replicas",
+        "min_replicas",
+        "max_replicas",
+        "controller_mode",
+        "replica_writer_id",
+        "execution_key",
+        "fence",
+        "target",
+    }
+)
 ALLOW = "allow"
 REFUSE_PREFIX = "refuse:"
 MAX_REASON = 256
@@ -38,15 +56,10 @@ class EngineScalePolicy:
 
     async def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
         try:
-            require_question_kind(QUESTION_KIND)
+            require_symbol(*REQUEST_BUILDER)
         except PinLagUnavailable as missing:
             raise refusal(missing) from missing
-        from medulla.decision_client import (
-            DeclaredOption,
-            decide_request,
-            declared,
-            param,
-        )
+        from medulla.decision_client import scale_intent_request
 
         from arbora.api.invoke.bootstrap import caller_dispatch_graph
         from arbora.api.ops._engine import engine_send
@@ -59,19 +72,12 @@ class EngineScalePolicy:
 
         context = request_context()
         tenant = str(context.caller.tenant)
-        request = decide_request(
+        request = scale_intent_request(
             tenant,
-            (f"fleet.scale:{intent.execution_key}", QUESTION_KIND, "ordinary"),
-            declared([DeclaredOption("verdict")]),
+            f"fleet.scale:{intent.execution_key}",
+            await caller_dispatch_graph(context),
+            _wire_intent(intent),
             feature_schema_of(context, tenant),
-            params=[
-                param("graph", "text", await caller_dispatch_graph(context)),
-                param(
-                    "intent",
-                    "text",
-                    json.dumps(intent.model_dump(mode="json"), sort_keys=True),
-                ),
-            ],
         )
 
         async def send(method: str, params: dict[str, Any], *_tail: Any) -> Any:
@@ -80,6 +86,12 @@ class EngineScalePolicy:
         record = single_record(await send_decide(send, request, tenant))
         check_receipt(record, request, str(context.caller.principal))
         return _verdict(record, intent)
+
+
+def _wire_intent(intent: ScaleIntentRecord) -> dict[str, Any]:
+    """The intent as the engine's ``ScaleIntentRecord``: only the fields it reads."""
+    body = intent.model_dump(mode="json")
+    return {name: body[name] for name in sorted(WIRE_FIELDS)}
 
 
 def _verdict(record: Any, intent: ScaleIntentRecord) -> ScalePolicyDecision:
@@ -103,4 +115,4 @@ def _verdict(record: Any, intent: ScaleIntentRecord) -> ScalePolicyDecision:
     )
 
 
-__all__ = ["QUESTION_KIND", "EngineScalePolicy"]
+__all__ = ["QUESTION_KIND", "REQUEST_BUILDER", "WIRE_FIELDS", "EngineScalePolicy"]
