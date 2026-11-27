@@ -206,9 +206,7 @@ def test_graph_configure_registration_error_is_source_safe(
     def _fail(_name: str, _definition: str) -> None:
         raise RuntimeError(sensitive_detail)
 
-    monkeypatch.setattr(
-        _analysis_tools_analysis_mcp_config, "_register_mcp_server", _fail
-    )
+    monkeypatch.setattr(analysis_tools, "_register_mcp_server", _fail)
     result = fake.tools["graph_configure"](
         action="register_mcp",
         config_key="arbora",
@@ -237,9 +235,7 @@ def test_graph_configure_preserves_filesystem_policy_denial(
     def _deny(_name: str, _definition: str) -> None:
         raise PermissionError("synthetic private path")
 
-    monkeypatch.setattr(
-        _analysis_tools_analysis_mcp_config, "_register_mcp_server", _deny
-    )
+    monkeypatch.setattr(analysis_tools, "_register_mcp_server", _deny)
     with pytest.raises(PermissionError) as denied:
         fake.tools["graph_configure"](
             action="register_mcp",
