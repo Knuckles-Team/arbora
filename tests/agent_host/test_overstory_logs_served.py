@@ -86,3 +86,82 @@ def test_retention_gap_clears_protected_content(tmp_path: Path) -> None:
             assert denied.json() == {"detail": "workspace_denied"}
     finally:
         sink.close()
+
+
+def browser_headers(client, token: str, *, csrf: bool = True, origin: bool = True):
+    from arbora.identity.browser import SESSION_COOKIE, csrf_token_for
+
+    headers = {"Cookie": f"{SESSION_COOKIE}={token}"}
+    if origin:
+        headers["Origin"] = str(client.base_url).rstrip("/")
+    if csrf:
+        headers["X-CSRF-Token"] = csrf_token_for(token)
+    return headers
+
+
+@pytest.mark.spec("ARBORA-HOST-R009.8.2.2.2")
+def test_browser_session_reads_logs_with_csrf_and_loses_them_on_revocation(
+    tmp_path: Path,
+) -> None:
+    import secrets
+
+    owners = ControlledOwners()
+    token = secrets.token_urlsafe(32)
+    owners.states[token] = owners.states["a"]
+    sink = WorkspaceLogSink(str(tmp_path), "host-1", max_bytes=1024)
+    asyncio.run(sink.emit(tenant="tenant-a", request_id="r1", message="held-text"))
+    try:
+        with serve(access_for(sink, owners)) as client:
+            good = browser_headers(client, token)
+
+            # A session cookie with its CSRF proof and exact origin reads the log.
+            issued = client.post("/host/logs/reference", headers=good)
+            assert issued.status_code == 200, issued.text
+            ref = issued.json()["log_ref"]
+            read = client.post(
+                "/host/logs/read",
+                headers=good,
+                json={"version": 2, "log_ref": ref, "cursor": None, "limit": 128},
+            )
+            assert read.status_code == 200
+            assert [r["message"] for r in read.json()["records"]] == ["held-text"]
+
+            # A cookie without the CSRF proof, or without the exact origin, is
+            # refused on both routes and carries no log content.
+            for headers in (
+                browser_headers(client, token, csrf=False),
+                browser_headers(client, token, origin=False),
+                {**good, "Origin": "http://evil.example"},
+                {**good, "X-CSRF-Token": "x" * 43},
+            ):
+                for path, body in (
+                    ("/host/logs/reference", None),
+                    (
+                        "/host/logs/read",
+                        {"version": 2, "log_ref": ref, "cursor": None, "limit": 128},
+                    ),
+                ):
+                    refused = client.post(path, headers=headers, json=body)
+                    assert refused.status_code == 403
+                    assert refused.json() == {"detail": "workspace_denied"}
+
+            # A cookie together with a bearer is ambiguous and refused; the bearer
+            # alone keeps working for non-browser callers.
+            both = client.post(
+                "/host/logs/reference", headers={**good, "Authorization": "Bearer a"}
+            )
+            assert both.status_code == 403
+            assert reference(client)
+
+            # A revoked grant is refused for the browser session as for a bearer.
+            owners.allowed = False
+            denied = client.post(
+                "/host/logs/read",
+                headers=good,
+                json={"version": 2, "log_ref": ref, "cursor": None, "limit": 128},
+            )
+            assert denied.status_code == 403
+            assert denied.json() == {"detail": "workspace_denied"}
+            assert "held-text" not in denied.text
+    finally:
+        sink.close()
