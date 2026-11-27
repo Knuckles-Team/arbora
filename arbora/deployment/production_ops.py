@@ -29,6 +29,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.core.environment import inherited_environment, read_env
 from arbora.core.settings import ArboraConfig as AgentConfig
 from arbora.core.settings import platform_config_file
+from arbora.deployment.doctor_support import PROBE_FAULTS
 
 
 class ProductionOperationError(RuntimeError):
@@ -793,7 +794,7 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
             report = _run(args)
-    except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
+    except PROBE_FAULTS as exc:  # CLI returns one privacy-safe failure
         detail = refusal_detail(exc)
         if "error_code" not in detail:
             # A refusal shows its code and message (ARBORA-DEPLOY-R019.4); an

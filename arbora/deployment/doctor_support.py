@@ -4,6 +4,20 @@ from __future__ import annotations
 
 from typing import Any
 
+from arbora.api.errors import ArboraRefusal
+
+#: The faults a doctor probe converts into a typed result: configuration and
+#: transport failures and the served refusal. Anything else is a defect and
+#: propagates.
+PROBE_FAULTS = (
+    ImportError,
+    OSError,
+    ValueError,
+    LookupError,
+    RuntimeError,
+    ArboraRefusal,
+)
+
 # Status precedence (worst wins for the overall verdict).
 _RANK = {"ok": 0, "skip": 0, "warn": 1, "fail": 2, "error": 2}
 

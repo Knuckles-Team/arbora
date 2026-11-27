@@ -75,6 +75,7 @@ from pathlib import Path
 from typing import TypedDict
 
 from arbora.core.environment import read_env
+from arbora.deployment.doctor_support import PROBE_FAULTS
 
 logger = logging.getLogger("arbora.live_mount_guard")
 
@@ -250,7 +251,7 @@ def check_live_mount_status(
             resolved,
             source_roots=_configured_source_roots(),
         )
-    except Exception:  # noqa: BLE001 - this check must never break startup
+    except PROBE_FAULTS:  # this check must never break startup
         logger.debug("live-mount check could not introspect mount state", exc_info=True)
         return LiveMountStatus.NOT_APPLICABLE, {"reason": "mount state undeterminable"}
 

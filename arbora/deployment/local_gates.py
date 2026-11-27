@@ -15,6 +15,7 @@ so this module stays testable without a real cluster.
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable, Sequence
 from typing import Any
@@ -78,6 +79,9 @@ def validate_test_namespace(
         )
     try:
         probe()
-    except Exception as exc:  # noqa: BLE001 - surfaced as a failing gate, not raised
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surfaced as a failing gate, not raised", exc_info=True
+        )
         return GateReport(name=gate_name, green=False, detail=str(exc))
     return GateReport(name=gate_name, green=True, detail=f"namespace={namespace}")
