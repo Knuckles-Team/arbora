@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 
 from arbora.core.settings import RuntimeConfig
-from arbora.deployment.doctor import _check_auth
+from arbora.deployment.doctor_identity import _check_auth
 from arbora.mcp_server.runtime import SERVED_INSTRUCTIONS, _with_unsecured_banner
 from arbora.security import anonymous
 from tests.api.test_ops_admin_ops import _context, _FakeOpsAdminStore, ops_admin
