@@ -254,9 +254,13 @@ def _correlation_stamp() -> dict[str, str]:
             if actor.tenant_id:
                 stamp["tenant_id"] = actor.tenant_id
         except Exception as exc:
-            logger.warning("Fleet event identity context unavailable: %s", exc)
+            logger.warning(
+                "Fleet event identity context unavailable: %s", exc, exc_info=True
+            )
     except Exception as exc:
-        logger.warning("Fleet event correlation context unavailable: %s", exc)
+        logger.warning(
+            "Fleet event correlation context unavailable: %s", exc, exc_info=True
+        )
     return stamp
 
 
@@ -398,7 +402,9 @@ def _authenticate_request(request: Request, cfg: Any) -> JSONResponse | None:
     try:
         required = _resolve_webhook_secret(cfg)
     except Exception as exc:
-        logger.error("fleet-events webhook secret is unavailable: %s", exc)
+        logger.error(
+            "fleet-events webhook secret is unavailable: %s", exc, exc_info=True
+        )
         return JSONResponse(
             {"status": "error", "message": "webhook authentication unavailable"},
             status_code=503,
@@ -414,7 +420,9 @@ def _authenticate_request(request: Request, cfg: Any) -> JSONResponse | None:
             actor = current_actor()
             authenticated = actor.authenticated or admitted_actor(actor)
         except Exception as exc:
-            logger.warning("fleet-events identity context unavailable: %s", exc)
+            logger.warning(
+                "fleet-events identity context unavailable: %s", exc, exc_info=True
+            )
             authenticated = False
     if authenticated:
         return None
@@ -436,7 +444,7 @@ async def _read_payload(request: Request, cfg: Any) -> tuple[Any, JSONResponse |
                 )
         return json.loads(body), None
     except Exception as exc:
-        logger.warning("fleet-events JSON body rejected: %s", exc)
+        logger.warning("fleet-events JSON body rejected: %s", exc, exc_info=True)
         return None, JSONResponse(
             {"status": "error", "message": "body must be JSON"}, status_code=400
         )
@@ -446,7 +454,7 @@ def _available_engine(request: Request) -> Any:
     try:
         return _get_engine(request)
     except Exception as exc:
-        logger.warning("fleet-events engine unavailable: %s", exc)
+        logger.warning("fleet-events engine unavailable: %s", exc, exc_info=True)
         return None
 
 
@@ -454,12 +462,12 @@ def _accept_event(engine: Any, event: FleetEvent) -> dict[str, Any] | None:
     try:
         event_id = persist_event(engine, event)
     except Exception as exc:
-        logger.warning("fleet-events persist failed: %s", exc)
+        logger.warning("fleet-events persist failed: %s", exc, exc_info=True)
         return None
     try:
         job_id = enqueue_triage(engine, event_id, event)
     except Exception as exc:
-        logger.warning("fleet-events enqueue failed: %s", exc)
+        logger.warning("fleet-events enqueue failed: %s", exc, exc_info=True)
         job_id = None
     return {
         "event_id": event_id,

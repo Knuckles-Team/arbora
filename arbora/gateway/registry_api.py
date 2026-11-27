@@ -1655,7 +1655,9 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                 ),
             )
         except Exception as exc:  # explicit per-kind unavailable
-            logger.warning("registry %s unavailable (multi-kind): %s", kind, exc)
+            logger.warning(
+                "registry %s unavailable (multi-kind): %s", kind, exc, exc_info=True
+            )
             return kind, RegistryKindResult(
                 status="unavailable", reason="catalog_unavailable"
             )

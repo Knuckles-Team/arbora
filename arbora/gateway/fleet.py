@@ -86,6 +86,7 @@ async def _health_snapshot(gateway: GatewayState) -> Any:
     try:
         status = await source()
     except Exception as exc:  # an unreadable generation is reported, never hidden
+        logger.warning("gateway boundary failed", exc_info=True)
         return mark_dependency_failure(
             snapshot, "catalog_generation", "catalog generation read", exc
         )
@@ -252,6 +253,7 @@ def _topology_rows(
     except PermissionError:
         raise
     except Exception as exc:
+        logger.warning("gateway boundary failed", exc_info=True)
         failed = mark_dependency_failure(
             snapshot, "control_store", "control_store.topology_page", exc
         )
@@ -295,7 +297,7 @@ async def _set_fleet_status(request: Request, new_status: str) -> JSONResponse:
     """
     try:
         body = await request.json()
-    except Exception:
+    except ValueError:
         body = {}
 
     gateway = gateway_of(request)
@@ -393,7 +395,7 @@ async def fleet_approvals(request: Request) -> JSONResponse:
 
         pending = pending_approvals(gateway_of(request).application().engine())
     except Exception as exc:
-        logger.warning("Fleet approval source unavailable: %s", exc)
+        logger.warning("Fleet approval source unavailable: %s", exc, exc_info=True)
         note = "approval_source_unavailable"
     payload = {"status": "success", "pending": pending}
     if note:
@@ -406,7 +408,7 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
 
     try:
         body = await request.json()
-    except Exception:
+    except ValueError:
         body = {}
     job_id = body.get("job_id")
     decision = body.get("decision", "approved")
@@ -440,6 +442,7 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
                 {"status": "error", "message": type(exc).__name__}, status_code=400
             )
         except Exception as exc:
+            logger.warning("gateway boundary failed", exc_info=True)
             return JSONResponse(
                 public_error_payload(exc, logger=logger), status_code=500
             )
@@ -469,7 +472,7 @@ async def fleet_verify_action(request: Request) -> JSONResponse:
 
     try:
         body = await request.json()
-    except Exception:
+    except ValueError:
         body = {}
     kind = str(body.get("kind") or "")
     if not kind:

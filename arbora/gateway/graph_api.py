@@ -58,7 +58,7 @@ async def _sql_schema_endpoint(request: Request) -> JSONResponse:
     try:
         resolve_session(required_scope="kg:read")
     except Exception as exc:  # authz failures are 403, never 500
-        logger.info("sql-schema denied: %s", exc)
+        logger.info("sql-schema denied: %s", exc, exc_info=True)
         return JSONResponse(
             {
                 "status": "error",
