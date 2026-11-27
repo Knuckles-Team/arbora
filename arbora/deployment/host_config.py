@@ -16,8 +16,9 @@ is the typed model for the first slice of the migration (ARBORA-HOST-R010
 from __future__ import annotations
 
 import argparse
-import os
 from dataclasses import dataclass
+
+from arbora.core.environment import environment_view
 
 
 class InvalidHostConfigError(ValueError):
@@ -55,7 +56,7 @@ def load_hosting_deployment_settings(
 ) -> HostingDeploymentSettings:
     """Resolve hosting/deployment settings from Arbora's own environment
     variables only -- never from ``meristem.core.config`` internals."""
-    source = env if env is not None else os.environ
+    source = environment_view(env)
     return HostingDeploymentSettings(
         bind_host=source.get("ARBORA_BIND_HOST", "127.0.0.1"),
         bind_port=int(source.get("ARBORA_BIND_PORT", "8000")),

@@ -35,6 +35,7 @@ from scion_sdk.utilities import to_boolean
 
 if TYPE_CHECKING:
     from arbora.core.config_admin import HostingDeploymentSettings
+from arbora.core.environment import read_env, read_reference
 
 # Recognized deployment profiles (rungs of docs/guides/deployment-configurations.md).
 PROFILES = ("tiny", "single-node-prod", "enterprise")
@@ -866,11 +867,10 @@ def _config_doctor_load_live(
             "error_class": type(exc).__name__,
             "checks": [{"check": "schema", "ok": False}],
         }
-    from arbora.core.settings import setting
 
-    configured_profile = setting("DEPLOYMENT_PROFILE", "")
+    configured_profile = read_env("DEPLOYMENT_PROFILE", "")
     prof = profile or configured_profile
-    app_profile = str(setting("APP_PROFILE", cfg.app_profile) or "").strip().casefold()
+    app_profile = str(read_env("APP_PROFILE", cfg.app_profile) or "").strip().casefold()
     profile_source = (
         "argument"
         if profile
@@ -1252,9 +1252,7 @@ def _unresolved_secret_refs(cfg: Any, *, resolve: bool = True) -> list[str]:
     for reference in sorted(references):
         try:
             if reference.startswith("env://"):
-                from arbora.core.settings import setting
-
-                resolved = setting(reference.removeprefix("env://"))
+                resolved = read_reference(reference.removeprefix("env://"))
             else:
                 if client is None:
                     from arbora.security.secrets import (

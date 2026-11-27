@@ -824,8 +824,10 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "arbora.core.settings.setting",
-        lambda alias: direct_material if alias == "DIRECT_ALIAS" else None,
+        "arbora.deployment.doctor.read_reference",
+        lambda alias, default="": (
+            direct_material if alias == "DIRECT_ALIAS" else default
+        ),
     )
     monkeypatch.setattr(
         "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
@@ -857,7 +859,9 @@ def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
             mcp_fleet_secret_refs={"PRIVATE_ALIAS": private_reference}
         ),
     )
-    monkeypatch.setattr("arbora.core.settings.setting", lambda _alias: None)
+    monkeypatch.setattr(
+        "arbora.deployment.doctor.read_reference", lambda _alias, default="": default
+    )
     monkeypatch.setattr(
         "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(RuntimeError("private detail")),

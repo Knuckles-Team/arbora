@@ -6,6 +6,8 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
+from arbora.core.environment import read_env
+
 from .doctor_support import _result
 
 
@@ -133,13 +135,13 @@ def _otel_tls_verify_enabled(cfg: Any, langfuse_auth: bool) -> bool:
 
 def _check_observability() -> dict[str, Any]:
     from arbora.core.settings import ArboraConfig as AgentConfig
-    from arbora.core.settings import is_production_profile, setting
+    from arbora.core.settings import is_production_profile
 
     try:
         _require_observability_imports()
         cfg = AgentConfig()
         production = is_production_profile()
-        metrics = setting("GATEWAY_METRICS", False, cast=bool)
+        metrics = read_env("GATEWAY_METRICS", False)
         posture = _otel_transport_posture(cfg)
         data = _otel_data(cfg, posture, metrics)
         if not cfg.enable_otel and not production:
@@ -303,16 +305,15 @@ def _langfuse_inputs(cfg: Any) -> SimpleNamespace:
     ``langfuse_agent.auth`` reads for the standalone agent/MCP server -- is
     accepted too; see ``langfuse_credentials_configured()``.
     """
-    from arbora.core.settings import setting
     from arbora.observability.langfuse_trust import (
         langfuse_provider_contract_ready,
     )
 
     return SimpleNamespace(
         public_input=bool(cfg.langfuse_public_key_ref)
-        or bool(setting("LANGFUSE_PUBLIC_KEY", "")),
+        or bool(read_env("LANGFUSE_PUBLIC_KEY")),
         secret_input=bool(cfg.langfuse_secret_key_ref)
-        or bool(setting("LANGFUSE_SECRET_KEY", "")),
+        or bool(read_env("LANGFUSE_SECRET_KEY")),
         enabled=bool(
             cfg.langfuse_mcp_enabled
             or cfg.kg_failure_evolution

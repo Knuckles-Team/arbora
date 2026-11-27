@@ -37,7 +37,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.webui_host.package_layout_expectation import (
     EXPECTED_TOP_LEVEL_MODULES,
     OVERSTORY_DISTRIBUTION,
@@ -364,7 +364,7 @@ def _check_webui() -> dict[str, Any]:
 
 def _check_geniusbot() -> dict[str, Any]:
     """geniusbot is a PySide6/Qt desktop app — needs a display + Qt system libs."""
-    has_display = bool(setting("DISPLAY", "") or setting("WAYLAND_DISPLAY", ""))
+    has_display = bool(read_env("DISPLAY") or read_env("WAYLAND_DISPLAY"))
     # Best-effort probe for the Qt platform libs on Linux.
     libgl = None
     if sys.platform.startswith("linux"):
