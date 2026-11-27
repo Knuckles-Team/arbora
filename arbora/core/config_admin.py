@@ -15,8 +15,10 @@ test that enforces it.
 
 from __future__ import annotations
 
-import os
+from collections.abc import Mapping
 from dataclasses import dataclass
+
+from arbora.core.environment import environment_view
 
 _VALID_PROFILES = frozenset({"dev", "test", "prod"})
 
@@ -49,7 +51,7 @@ class HostingDeploymentSettings:
 
 
 def load_hosting_deployment_settings(
-    env: os._Environ[str] | dict[str, str] | None = None,
+    env: Mapping[str, str] | None = None,
 ) -> HostingDeploymentSettings:
     """Resolve hosting/deployment settings from the environment.
 
@@ -64,7 +66,7 @@ def load_hosting_deployment_settings(
             integer or the deploy profile is not one of ``dev``/``test``/
             ``prod``.
     """
-    source = env if env is not None else os.environ
+    source = environment_view(env)
 
     host = str(source.get("ARBORA_HOST", _DEFAULT_HOST))
 

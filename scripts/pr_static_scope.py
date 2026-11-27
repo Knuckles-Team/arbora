@@ -45,6 +45,7 @@ STATIC_SCAN_TESTS: tuple[str, ...] = (
     "tests/security/test_credential_lease_machine.py",
     "tests/test_component_registry_boundary_seeds.py",
     "tests/test_connector_pack_typed_publisher.py",
+    "tests/test_environment_reads.py",
     "tests/test_package_layout.py",
 )
 

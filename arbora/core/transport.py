@@ -9,7 +9,6 @@ TLS profiles resolve through :func:`scion_sdk.tls.resolve_tls_profile`.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Collection, Mapping
 from functools import lru_cache
 from pathlib import Path
@@ -21,6 +20,8 @@ from scion_sdk.http.egress import EgressOptions, check_egress_destination
 from scion_sdk.tls.resolve import (
     resolve_tls_profile as _sdk_resolve_tls_profile,
 )
+
+from arbora.core.environment import environment_view, read_env
 
 __all__ = [
     "advertised_self_hosts",
@@ -62,7 +63,6 @@ def is_loopback_url(url: str) -> bool:
 
 def advertised_self_hosts() -> set[str]:
     """The named hosts that address this process: ``MCP_ALLOWED_HOSTS`` and a concrete bind ``HOST``."""
-    from arbora.core.environment import read_env
 
     hosts = {
         token.strip().lower()
@@ -221,4 +221,4 @@ def tls_environment_from_config(
 ) -> dict[str, str]:
     """The TLS selectors a resolver reads: the process environment."""
     del config
-    return dict(os.environ if base_environ is None else base_environ)
+    return dict(environment_view(base_environ))

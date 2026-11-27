@@ -19,6 +19,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Literal, get_args, get_origin
 
+from arbora.core.environment import environment_view
 from arbora.core.environment_names import NAMES
 from arbora.core.settings import ArboraConfig, credential_shaped
 
@@ -657,9 +658,7 @@ def validate_startup(
     ``CONFIG_DEFAULT_INVALID``; an unavailable owner export is
     ``ENV_MANIFEST_UNAVAILABLE``.
     """
-    import os
-
-    env = os.environ if environ is None else environ
+    env = environment_view(environ)
     if manifest is None:
         own = HostEnvironmentManifest(
             SCHEMA_VERSION, ARBORA_COMPONENT, "", arbora_declarations()
@@ -691,7 +690,6 @@ def _validate_own_only(refusal: EnvironmentRefusal) -> HostStartupConfiguration:
     """Pin lag: an owner's export is not in the pinned release, so only Arbora's own
     declarations can be checked. The owners are named as unvalidated, never assumed."""
     import logging
-    import os
 
     own = HostEnvironmentManifest(
         SCHEMA_VERSION, ARBORA_COMPONENT, "", arbora_declarations()
@@ -700,7 +698,7 @@ def _validate_own_only(refusal: EnvironmentRefusal) -> HostStartupConfiguration:
         "environment manifest unavailable for %s; only arbora is validated",
         ", ".join(refusal.names),
     )
-    return validate_startup(os.environ, manifest=own)
+    return validate_startup(None, manifest=own)
 
 
 def enforce_startup() -> HostStartupConfiguration:

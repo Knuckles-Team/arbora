@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
-from scion_sdk.config import csv_values, setting
+from scion_sdk.config import csv_values
 
 from arbora.core.environment import (
     read_env,
@@ -44,7 +44,6 @@ __all__ = [
     "runtime_config",
     "save_config_item",
     "CONFIG_FIELDS",
-    "setting",
 ]
 
 CONFIG_DIR_SETTING = "ARBORA_CONFIG_DIR"

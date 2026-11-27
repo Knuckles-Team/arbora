@@ -74,20 +74,6 @@ def test_preferred_file_is_returned_when_present(home) -> None:
 
 
 @pytest.mark.parametrize(
-    ("raw", "default", "expected"),
-    [(None, 3, 3), ("7", 3, 7), ("bad", 3, 3), ("true", False, True)],
-)
-def test_setting_reads_environment_typed_by_default(
-    monkeypatch, raw, default, expected
-) -> None:
-    if raw is None:
-        monkeypatch.delenv("GOS_TEST_SETTING", raising=False)
-    else:
-        monkeypatch.setenv("GOS_TEST_SETTING", raw)
-    assert settings.setting("GOS_TEST_SETTING", default) == expected
-
-
-@pytest.mark.parametrize(
     ("alias", "text", "field", "expected"),
     [
         (
