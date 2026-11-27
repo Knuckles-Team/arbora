@@ -42,3 +42,15 @@ def test_profile_table_is_closed_and_complete() -> None:
 
     for harness in ("claude-code", "opencode"):
         assert profile(harness).callback in DEFAULT_NATIVE_REDIRECT_URIS
+
+
+@pytest.mark.spec("ARBORA-HOST-R008.6")
+def test_every_profile_has_a_matrix_entry() -> None:
+    from arbora.harness_plugins.profiles import TARGET_MATRIX
+
+    assert [row["harness"] for row in TARGET_MATRIX] == [p.id for p in PROFILES]
+    for row, prof in zip(TARGET_MATRIX, PROFILES, strict=True):
+        assert row["parser"] in {"json", "toml"}
+        assert row["mcp_entry_format"] and row["minimum_version"]
+        assert all(part.isdigit() for part in row["minimum_version"].split("."))
+        assert row["minimum_version"] == prof.minimum_version

@@ -252,10 +252,6 @@ Each row below has no test bound by a `spec` marker. `Existing` names a test in 
 | `ARBORA-HOST-R007.2.55` | `tests/mcp_server/test_browser_composition.py::test_packaged_console_injects_exact_identity_factory` | Existing, not yet bound |
 | `ARBORA-HOST-R007.2.68` | `tests/mcp_server/test_composition.py::test_webui_co_service_uses_arbora_host` | Existing, not yet bound |
 | `ARBORA-HOST-R007.2.70` | `tests/test_package_layout.py::test_no_retired_harness_import_remains` | Planned, not yet written |
-| `ARBORA-HOST-R008.2` | `tests/ecosystem/test_harness_install.py::test_detect_mixed_present_absent_malformed` | Planned, not yet written |
-| `ARBORA-HOST-R008.3` | `tests/ecosystem/test_harness_install.py::test_prepare_changes_parses_three_artifacts` | Planned, not yet written |
-| `ARBORA-HOST-R008.4` | `tests/ecosystem/test_harness_install.py::test_apply_preserves_unrelated_and_is_idempotent` | Planned, not yet written |
-| `ARBORA-HOST-R008.5` | `tests/deployment/test_harness_install_served.py::test_install_two_present_one_absent` | Planned, not yet written |
 | `ARBORA-HOST-R008.1006` | `tests/observability/test_correlation.py::test_inject_carries_one_correlation_id_and_the_identity` | Existing, not yet bound |
 | `ARBORA-HOST-R008.1006` | `tests/ecosystem/test_hook_installer.py::test_install_merges_existing_settings_and_uninstall_removes_the_hooks` | Existing, not yet bound |
 | `ARBORA-HOST-R008.1006` | `tests/ingest/test_source_catalog.py::test_catalogue_without_registry_lists_providers_as_unavailable` | Existing, not yet bound |

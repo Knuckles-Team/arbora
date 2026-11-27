@@ -67,6 +67,12 @@ class HarnessProfile:
     timeout_unit: str = "seconds"
     #: The OAuth client the bundle names (the native public client by default).
     client_id: str = NATIVE_CLIENT_ID
+    #: The oldest harness release the bundle is built for (ARBORA-HOST-R008.6).
+    minimum_version: str = "0.0.0"
+    #: The parser of the harness configuration file: ``json`` or ``toml``.
+    parser: str = "json"
+    #: The key holding the MCP server entries in that configuration file.
+    mcp_entry_format: str = "mcpServers"
 
     def event(self, point: Lifecycle) -> str | None:
         return dict(self.events).get(point)
@@ -99,6 +105,9 @@ PROFILES: tuple[HarnessProfile, ...] = (
         parts=_ALL,
         door_configs=(".claude.json", ".claude/settings.json"),
         skill_dirs=(".claude/skills",),
+        minimum_version="1.0.0",
+        parser="json",
+        mcp_entry_format="mcpServers",
     ),
     HarnessProfile(
         id="opencode",
@@ -118,6 +127,9 @@ PROFILES: tuple[HarnessProfile, ...] = (
         ),
         skill_dirs=(".config/opencode/skills", ".config/opencode/skill"),
         timeout_unit="milliseconds",
+        minimum_version="0.1.0",
+        parser="json",
+        mcp_entry_format="mcp",
     ),
     HarnessProfile(
         id="codex",
@@ -131,6 +143,9 @@ PROFILES: tuple[HarnessProfile, ...] = (
         parts=frozenset({Part.SKILLS, Part.HOOKS, Part.MCP}),
         door_configs=(".codex/config.toml",),
         skill_dirs=(".codex/skills", ".agents/skills"),
+        minimum_version="0.1.0",
+        parser="toml",
+        mcp_entry_format="mcp_servers",
     ),
     HarnessProfile(
         id="grok",
@@ -143,6 +158,9 @@ PROFILES: tuple[HarnessProfile, ...] = (
         ),
         door_configs=(".grok/settings.json", ".grok/mcp.json"),
         skill_dirs=(".grok/skills",),
+        minimum_version="0.1.0",
+        parser="json",
+        mcp_entry_format="mcpServers",
     ),
     HarnessProfile(
         id="hosted",
@@ -154,10 +172,24 @@ PROFILES: tuple[HarnessProfile, ...] = (
         door_configs=(),
         skill_dirs=(),
         client_id=HOSTED_CLIENT_ID,
+        minimum_version="0.0.0",
+        parser="json",
+        mcp_entry_format="mcpServers",
     ),
 )
 
 _BY_ID = {p.id: p for p in PROFILES}
+
+#: The harness target and version matrix, derived from the one profile table.
+TARGET_MATRIX: tuple[dict[str, str], ...] = tuple(
+    {
+        "harness": p.id,
+        "minimum_version": p.minimum_version,
+        "parser": p.parser,
+        "mcp_entry_format": p.mcp_entry_format,
+    }
+    for p in PROFILES
+)
 
 
 def profile(name: str) -> HarnessProfile:

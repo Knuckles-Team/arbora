@@ -396,6 +396,14 @@ def statusline_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def targets_command(args: argparse.Namespace) -> int:
+    """Print the harness target and version matrix (ARBORA-HOST-R008.6)."""
+    from arbora.harness_plugins.profiles import TARGET_MATRIX
+
+    print(json.dumps(list(TARGET_MATRIX), indent=2))
+    return 0
+
+
 def parser() -> argparse.ArgumentParser:
     top = argparse.ArgumentParser(
         prog="arbora plugin",
@@ -416,6 +424,7 @@ def parser() -> argparse.ArgumentParser:
         if name == "bundle":
             cmd.add_argument("--print-path", action="store_true")
             cmd.add_argument("--persona")
+    sub.add_parser("targets")
     remove = sub.add_parser("remove")
     remove.add_argument("--harness", required=True)
     login = sub.add_parser("login")
@@ -430,6 +439,7 @@ def parser() -> argparse.ArgumentParser:
 
 
 COMMANDS = {
+    "targets": targets_command,
     "bundle": bundle_command,
     "install": install_command,
     "status": status_command,
