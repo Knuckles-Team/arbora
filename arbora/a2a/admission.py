@@ -9,6 +9,7 @@ the answer is unavailable, stale, abstained or partial.
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any, Literal, Protocol, runtime_checkable
@@ -258,7 +259,10 @@ async def admit_tool_subset(
             tool_refs=request.tool_refs,
             **_lifetime(request),
         )
-    except Exception:  # noqa: BLE001 - an unanswered question admits nothing
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unanswered question admits nothing", exc_info=True
+        )
         return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:unavailable")
     if record.expires_at_ms is not None and clock() * 1000 >= record.expires_at_ms:
         return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:stale")
@@ -407,7 +411,10 @@ async def resolve_model_profile(
         record = single_record(await decide(request))
         check_receipt(record, request, principal)
         chosen = _chosen_profile(record)
-    except Exception:  # noqa: BLE001 - an unanswered question grants no profile
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unanswered question grants no profile", exc_info=True
+        )
         return ModelProfileUnavailable(reason="INVALID_DECISION")
     return ModelProfileDecision(
         profile=chosen,

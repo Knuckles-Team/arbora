@@ -616,7 +616,7 @@ class WorkItemA2AAuthority:
             )
             if isinstance(item, dict):
                 await asyncio.to_thread(self.push.enqueue, task_id, item)
-        except Exception:  # noqa: BLE001 - terminal state is already committed
+        except Exception:  # terminal state is already committed
             logging.getLogger(__name__).exception("a2a push enqueue failed")
 
     async def _publish_event(
@@ -932,7 +932,10 @@ class WorkItemA2AAuthority:
             remember_task_output(task_id, getattr(result, "output", None))
             output = getattr(result, "output", None)
             reply = output if isinstance(output, str) and output else None
-        except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "a failed run is a failed task", exc_info=True
+            )
             logging.getLogger(__name__).warning(
                 "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
             )
@@ -1040,7 +1043,7 @@ class WorkItemA2AAuthority:
                 error_ref=error_ref,
                 **completion_kwargs,
             )
-        except Exception as exc:  # noqa: BLE001 - the failed edge is the answer
+        except Exception as exc:  # the failed edge is the answer
             if outcome != "succeeded":
                 raise
             logging.getLogger(__name__).warning(

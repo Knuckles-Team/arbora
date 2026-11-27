@@ -110,7 +110,7 @@ class EgWorkItemFence:
             work_items.mark_effect_started(
                 self._engine, item_id, native, expected_revision=row["version"]
             )
-        except Exception as exc:  # noqa: BLE001 - an unmarked effect must not start
+        except Exception as exc:  # an unmarked effect must not start
             raise WorkItemLeaseLost("tool-task effect marker refused") from exc
 
     def commit(self, item_id: str, claim: str, *, succeeded: bool, ref: str) -> None:

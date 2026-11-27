@@ -116,7 +116,7 @@ async def reserve_then(
     """Reserve the audit entry before any engine call; a failure refuses first."""
     try:
         await reserve(entry)
-    except Exception:  # noqa: BLE001 - an unrecorded decision never proceeds
+    except Exception:  # an unrecorded decision never proceeds
         raise refusal("AUDIT_UNAVAILABLE") from None
 
 
@@ -159,7 +159,7 @@ class ToolActionAdmitter:
             )
         except ConfirmRefusal:
             raise
-        except Exception:  # noqa: BLE001 - an unreachable engine decides nothing
+        except Exception:  # an unreachable engine decides nothing
             raise ToolActionRefusal("ENGINE_UNAVAILABLE") from None
         if answer is None:
             approval = deny_without_verdict(request)

@@ -317,7 +317,10 @@ class PushDeliveryWorker:
                 resolve=self._resolve,
             )
             ok = await asyncio.to_thread(self._send, item_id, metadata, url)
-        except Exception:  # noqa: BLE001 - a failed delivery is retried, never raised
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "a failed delivery is retried, never raised", exc_info=True
+            )
             host, ok = urlsplit(url).hostname or "", False
         if ok:
             return await asyncio.to_thread(
@@ -421,6 +424,9 @@ class PushDeliveryService:
         while not should_stop():
             try:
                 await self.worker.run_once((self._session(),))
-            except Exception:  # noqa: BLE001 - the next poll retries
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "the next poll retries", exc_info=True
+                )
                 self._emit("a2a_push_poll_failed", {})
             await self._sleep(self._poll)

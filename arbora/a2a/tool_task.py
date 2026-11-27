@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, Self, runtime_checkable
@@ -250,7 +251,10 @@ def _execute(
         )
     except WorkItemLeaseLost:
         raise
-    except Exception:  # noqa: BLE001 - an exception after execution starts is uncertain
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an exception after execution starts is uncertain", exc_info=True
+        )
         return None
     return _bound(raw, carrier, request)
 

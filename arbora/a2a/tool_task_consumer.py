@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
@@ -257,7 +258,10 @@ class ToolTaskConsumer:
                 return ToolTaskRun(proven.outcome, proven.receipt_ref)
         except WorkItemLeaseLost:
             return ToolTaskRun("fenced")
-        except Exception:  # noqa: BLE001 - an unreadable outcome stays uncertain
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unreadable outcome stays uncertain", exc_info=True
+            )
             self._emit("tool_task_lookup_failed", {"job_id": carrier.job_id})
         self._announce_uncertain(carrier, item_id)
         return ToolTaskRun("indeterminate", EFFECT_UNCERTAIN)
@@ -299,7 +303,10 @@ class ToolTaskConsumer:
         while True:
             try:
                 await asyncio.to_thread(self._poll_once)
-            except Exception:  # noqa: BLE001 - the next poll retries
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "the next poll retries", exc_info=True
+                )
                 self._emit("tool_task_poll_failed", {})
             await self._sleep(self._poll)
 

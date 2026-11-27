@@ -133,7 +133,7 @@ class HeldItemAdmitter:
             )
         except ConfirmRefusal:
             raise
-        except Exception:  # noqa: BLE001 - an unreachable engine decides nothing
+        except Exception:  # an unreachable engine decides nothing
             raise HeldItemRefusal("ENGINE_UNAVAILABLE") from None
         if answer is None:
             raise HeldItemRefusal("POLICY_EVIDENCE_MISSING")

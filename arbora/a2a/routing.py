@@ -147,7 +147,7 @@ class OrchestratorA2ARouter:
             )
             record = single_record(await self._decide(request))
             check_receipt(record, request, self._principal())
-        except Exception:  # noqa: BLE001 - an unanswered route decision routes nothing
+        except Exception:  # an unanswered route decision routes nothing
             raise A2AAssemblyUnavailable(
                 "a2a route decision unavailable", "A2A_ROUTE_UNAVAILABLE"
             ) from None
