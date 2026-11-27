@@ -33,6 +33,7 @@ from typing import Any
 import httpx
 
 from arbora.core.environment import read_env
+from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +159,9 @@ class ArdFederationRelay:
         with ThreadPoolExecutor(
             max_workers=workers, thread_name_prefix="ard-fed"
         ) as ex:
-            return list(ex.map(lambda p: self._post(p["url"], body), peers))
+            return list(
+                ex.map(carry_errors(lambda p: self._post(p["url"], body)), peers)
+            )
 
     def _post(self, url: str, body: dict) -> list[dict]:
         try:

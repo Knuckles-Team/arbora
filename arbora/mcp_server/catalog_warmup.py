@@ -21,6 +21,7 @@ from collections.abc import Callable, Coroutine
 from typing import Any, Literal
 
 from arbora.mcp_server.host_caches import WarmupSlot
+from arbora.security.error_surface import carry_errors
 
 __all__ = ["CatalogWarmup", "start_catalog_warmup"]
 
@@ -128,7 +129,9 @@ class CatalogWarmup:
         self._set(status="stopped")
 
     def start(self) -> threading.Thread:
-        thread = threading.Thread(target=self.run, name="catalog-warmup", daemon=True)
+        thread = threading.Thread(
+            target=carry_errors(self.run), name="catalog-warmup", daemon=True
+        )
         thread.start()
         return thread
 

@@ -18,6 +18,8 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from typing import Any, Literal
 
+from arbora.security.error_surface import carry_errors
+
 SCHEMA_VERSION = "arbora.readiness.v1"
 
 State = Literal["ready", "degraded", "unavailable", "stale", "not_configured"]
@@ -43,7 +45,7 @@ def identity_check(session: Any = None) -> Check:
 
 
 def _run(probe: Probe, pool: ThreadPoolExecutor, deadline_s: float) -> Check:
-    future = pool.submit(probe)
+    future = pool.submit(carry_errors(probe))
     try:
         out = future.result(timeout=deadline_s)
     except FutureTimeout:

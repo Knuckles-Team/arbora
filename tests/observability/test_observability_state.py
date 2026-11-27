@@ -229,3 +229,58 @@ def test_two_instances_keep_separate_health_windows_and_buffers():
     assert second.errors.detail("correlation:a") is None
     assert second.telemetry.exporter(lambda: "built") == "built"
     assert first.metrics is not second.metrics
+
+
+def test_a_background_service_tick_reaches_the_error_surface_in_the_bound_store():
+    import threading
+
+    from arbora.mcp_server.background import BackgroundHost
+    from arbora.observability.state import Errors
+    from arbora.security.error_surface import public_error_payload
+
+    mine, refs, ticked = Errors(), [], threading.Event()
+
+    class Service:
+        async def run(self, should_stop) -> None:
+            refs.append(
+                public_error_payload(RuntimeError("tick"))["error"]["detail_ref"]
+            )
+            ticked.set()
+
+    host = BackgroundHost([Service()], mine)
+    host.start()
+    assert ticked.wait(5)
+    host.stop()
+    assert mine.detail(refs[0]) is not None
+
+
+def test_a_wrapped_thread_root_carries_the_store_and_a_bare_thread_refuses():
+    import threading
+
+    from arbora.observability.state import Errors
+    from arbora.security.error_surface import (
+        ErrorsNotBound,
+        bound_errors,
+        carry_errors,
+        public_error_payload,
+    )
+
+    outcomes: dict[str, object] = {}
+
+    def report(name: str) -> None:
+        try:
+            outcomes[name] = public_error_payload(RuntimeError("x"))["error"][
+                "detail_ref"
+            ]
+        except ErrorsNotBound as exc:
+            outcomes[name] = exc
+
+    mine = Errors()
+    with bound_errors(mine):
+        carried = threading.Thread(target=carry_errors(report), args=("carried",))
+        bare = threading.Thread(target=report, args=("bare",))
+        for thread in (carried, bare):
+            thread.start()
+            thread.join()
+    assert mine.detail(outcomes["carried"]) is not None
+    assert isinstance(outcomes["bare"], ErrorsNotBound)

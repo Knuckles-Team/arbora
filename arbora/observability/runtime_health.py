@@ -70,6 +70,7 @@ from typing import Any, NotRequired, TypedDict, cast
 from urllib.parse import urlsplit
 
 from arbora.observability.state import HealthState
+from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
 
@@ -448,7 +449,7 @@ class _FleetSupervisionCache:
             self._store(result)
 
         threading.Thread(
-            target=_run, name="au-fleet-supervision-refresh", daemon=True
+            target=carry_errors(_run), name="au-fleet-supervision-refresh", daemon=True
         ).start()
 
     def _get(self, compute: Callable[[], dict[str, Any]]) -> dict[str, Any]:
@@ -678,7 +679,7 @@ def _run_bounded(
     """
     bound = _CHECK_WALL_TIMEOUT_S if timeout is None else timeout
     started = time.monotonic()
-    future: Future = _EXECUTOR.submit(fn)
+    future: Future = _EXECUTOR.submit(carry_errors(fn))
     try:
         result = future.result(timeout=bound)
     except _FutureTimeoutError:
@@ -781,7 +782,9 @@ async def collect_health_async(health: HealthState) -> HealthReport:
     bounded per-check probe pool.
     """
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(_COLLECTOR_EXECUTOR, collect_health, health)
+    return await loop.run_in_executor(
+        _COLLECTOR_EXECUTOR, carry_errors(collect_health), health
+    )
 
 
 def is_overall_healthy(report: Mapping[str, Any]) -> bool:

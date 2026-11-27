@@ -9,6 +9,7 @@ from typing import Any
 
 from arbora.core.environment import read_env
 from arbora.deployment.doctor_support import PROBE_FAULTS
+from arbora.security.error_surface import carry_errors
 
 from .doctor_support import _result
 
@@ -207,7 +208,7 @@ def _run_async_doctor_probe(factory: Callable[[], Any]) -> Any:
     from concurrent.futures import ThreadPoolExecutor
 
     with ThreadPoolExecutor(max_workers=1, thread_name_prefix="doctor-probe") as pool:
-        return pool.submit(lambda: asyncio.run(factory())).result()
+        return pool.submit(carry_errors(lambda: asyncio.run(factory()))).result()
 
 
 def _langfuse_rows(payload: Any) -> list[dict[str, Any]]:

@@ -32,6 +32,7 @@ from typing import Any
 
 from arbora.harness_plugins.profiles import native_redirect_uris
 from arbora.observability.state import IdentityContract
+from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
 
@@ -747,7 +748,7 @@ class ClientContractSupervisor:
     def start(self, identity: IdentityContract) -> None:
         identity.reconciler.set(self.reconciler)
         self._thread = threading.Thread(
-            target=self._run, daemon=True, name="IdentityClientContract"
+            target=carry_errors(self._run), daemon=True, name="IdentityClientContract"
         )
         self._thread.start()
 

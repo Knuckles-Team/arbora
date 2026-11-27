@@ -34,6 +34,7 @@ from arbora.mcp_server.routes import mount_rest_routes
 from arbora.messaging.intake import configured_platforms, start_messaging_intake
 from arbora.messaging.memory_webhooks import start_memory_webhook_pump
 from arbora.observability.state import Telemetry
+from arbora.security.error_surface import carry_errors
 from arbora.webui_host import run_web_ui
 
 logger = logging.getLogger(__name__)
@@ -171,7 +172,7 @@ def probe_engine(
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
         try:
-            reply = worker.submit(ask).result()
+            reply = worker.submit(carry_errors(ask)).result()
         except (TimeoutError, OSError):
             return EngineProbe("absent")
         except Exception:  # an engine refusal is still an answer

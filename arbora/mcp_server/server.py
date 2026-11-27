@@ -666,7 +666,10 @@ def mcp_server(
             if invocation is not None and invocation.background_services:
                 from arbora.mcp_server.background import BackgroundHost
 
-                background_host = BackgroundHost(invocation.background_services)
+                background_host = BackgroundHost(
+                    invocation.background_services,
+                    host_context.observability.errors,
+                )
                 background_host.start()
 
             # Process-owned publications run here, under the process

@@ -52,6 +52,7 @@ from arbora.fleet.onboarding_machine import (
 from arbora.fleet.smoke_sweep import FleetSmokeService
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
+from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
 
@@ -1308,7 +1309,7 @@ class FleetOnboardingService:
 
     def start(self) -> threading.Thread:
         thread = threading.Thread(
-            target=self.run_forever, name="fleet-onboarding", daemon=True
+            target=carry_errors(self.run_forever), name="fleet-onboarding", daemon=True
         )
         thread.start()
         return thread
@@ -1489,7 +1490,7 @@ class HandshakeOnboarder:
                     else:
                         return  # the slow retry waits for the live lease
                 thread = threading.Thread(
-                    target=self._work,
+                    target=carry_errors(self._work),
                     args=(connector,),
                     name=f"handshake-onboard-{connector}",
                     daemon=True,

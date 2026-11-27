@@ -15,6 +15,9 @@ import time
 from collections.abc import Callable, Sequence
 from typing import Any, Protocol
 
+from arbora.observability.state import Errors
+from arbora.security.error_surface import bound_errors
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,8 +38,9 @@ class SystemClock:
 class BackgroundHost:
     """Run every service on one daemon thread until :meth:`stop`."""
 
-    def __init__(self, services: Sequence[BackgroundService]) -> None:
+    def __init__(self, services: Sequence[BackgroundService], errors: Errors) -> None:
         self._services = tuple(services)
+        self._errors = errors
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -65,6 +69,10 @@ class BackgroundHost:
             task.cancel()
 
     def _main(self) -> None:
+        with bound_errors(self._errors):
+            self._serve_loop()
+
+    def _serve_loop(self) -> None:
         loop = asyncio.new_event_loop()
         self._loop = loop
         self._ready.set()

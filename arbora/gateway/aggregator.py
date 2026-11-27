@@ -81,13 +81,13 @@ class Aggregator:
             return widget_data(await read(config.widget_type))
         except Exception as exc:
             logger.warning("gateway boundary failed", exc_info=True)
-            payload = public_error_payload(exc, logger=logger)
+            failure = public_error_payload(exc, logger=logger)["error"]
             return WidgetData(
                 status="error",
-                error=payload["message"],
+                error=failure["code"],
                 raw={
-                    "code": payload["code"],
-                    "correlation_id": payload["correlation_id"],
+                    "code": failure["code"],
+                    "correlation_id": failure["correlation_id"],
                 },
             )
 
