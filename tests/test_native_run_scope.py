@@ -1,3 +1,4 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Native A2A lease authority stays inside the host during AU execution."""
@@ -15,7 +16,6 @@ from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsBinding,
     HostPortsSlot,
 )
-from arbora.core.settings import runtime_config
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R001")
 SESSION = SimpleNamespace(
@@ -64,9 +64,9 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
     seen: list[Any] = []
     events: list[Any] = []
     commits: list[Any] = []
-    monkeypatch.setattr(runtime_config, "model_registry_path", None)
-    monkeypatch.setattr(runtime_config, "chat_models", [])
-    monkeypatch.setattr(agent_runs, "run_config", lambda: {"agent_model": "test"})
+    monkeypatch.setattr(
+        agent_runs, "run_config", lambda config: {"agent_model": "test"}
+    )
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: dict(CLAIM))
     monkeypatch.setattr(work_items, "get_work_item", lambda *a, **k: {})
     monkeypatch.setattr(
@@ -86,12 +86,15 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
         assert request.metadata == {"session": SESSION}
         assert request.task == "hello"
         seen.append(owner)
-        return agent_runs.decide_run(request)
+        return agent_runs.decide_run(request, config=RuntimeConfig())
 
     slot = HostPortsSlot()
     slot.bind(HostPortsBinding(HostPorts(decide=decide, events=events.append), None))
     result = await WorkItemA2AAuthority(
-        lambda: object(), origins=RunOriginRegistry(), ports=slot
+        lambda: object(),
+        origins=RunOriginRegistry(),
+        ports=slot,
+        config=RuntimeConfig(),
     )._run(
         object(),
         item_id="work",
@@ -219,6 +222,7 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
         task_plan_config=TaskPlanConfig({}, {}, 1, 2),
         hosted_invocation=object(),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     monkeypatch.setattr(
         authority, "_agent_executor", lambda: SimpleNamespace(execute_agent=execute)

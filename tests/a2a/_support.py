@@ -1,5 +1,7 @@
 from functools import partial
 
+from arbora.core.settings import RuntimeConfig
+
 """Shared A2A application fixtures using the real request-session authority."""
 
 from typing import Any
@@ -20,12 +22,14 @@ from tests.a2a.test_application import Authority, Router
 def authenticated_operation_app(services: InvokeServices) -> FastAPI:
     """Compose supplied operation services with the production bearer resolver."""
     return create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
-        authenticator=AmbientA2AAuthenticator(JwksCache()),
+        service=A2AService(
+            authority=Authority(), router=Router(), config=RuntimeConfig()
+        ),
+        authenticator=AmbientA2AAuthenticator(JwksCache(RuntimeConfig())),
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(
             session_for_request=partial(
-                verified_bearer_session_for_request, JwksCache()
+                verified_bearer_session_for_request, JwksCache(RuntimeConfig())
             ),
         ),
     )

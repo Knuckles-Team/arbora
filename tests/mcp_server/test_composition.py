@@ -22,13 +22,14 @@ from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
-from arbora.mcp_server.host_caches import HostCaches, ToolTable
+from arbora.mcp_server.host_caches import ToolTable, build_host_caches
 from arbora.mcp_server.server import _register_semantic_content
 from arbora.observability.state import Telemetry
+from arbora.security.process_authority import ProcessAuthority
 
 
 def test_native_action_route_contract_serves_only_registered_tools() -> None:
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     assert set(runtime.ACTION_TOOL_ROUTES) == set(caches.tools)
     assert runtime.ACTION_TOOL_ROUTES["browser_control"] == "/browser/control"
@@ -76,7 +77,7 @@ async def test_installed_gateway_port_dispatches_native_runtime(
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(RuntimeConfig()),
     )
 
     assert gateway.application() is application
@@ -106,7 +107,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
 
     policies = ActionPolicies()
     engine = object()
-    tools = ToolTable()
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     browser = BrowserState()
     telemetry = Telemetry()
     host = object()
@@ -168,7 +169,7 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
         session,
         engine,
         action_policies=ActionPolicies(),
-        tools=ToolTable(),
+        tools=ToolTable(ProcessAuthority(config=RuntimeConfig())),
         browser=BrowserState(),
         telemetry=Telemetry(),
         host=object(),
@@ -222,7 +223,7 @@ def test_gateway_adapter_satisfies_runtime_protocol() -> None:
             fleet=FleetState(),
             approvals=ApprovalDecisions(),
             engine_provider=lambda: None,
-            caches=HostCaches(),
+            caches=build_host_caches(RuntimeConfig()),
         ),
         GatewayApplicationPort,
     )
@@ -243,7 +244,7 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(RuntimeConfig()),
     )
     assert application.remote_oauth_grant_bindings(actor) is expected
 

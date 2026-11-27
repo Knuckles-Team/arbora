@@ -39,6 +39,7 @@ from arbora.api.contracts.agent_control_contracts import (
     AgentExecutionResult,
 )
 from arbora.core.environment import read_reference
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from arbora.security.session import GraphSession
 
@@ -357,17 +358,15 @@ def _chat_models_registry(raw: Any) -> dict[str, Any]:
     return {"default": next(iter(models)), "models": models}
 
 
-def _registry() -> dict[str, Any]:
+def _registry(config: RuntimeConfig) -> dict[str, Any]:
     """The model registry: ``MODEL_REGISTRY_PATH``, else ``CHAT_MODELS``, else ``{}``.
 
     Shape: ``{"default": "<model id>", "models": {"<model id>": {"base_url":
     ..., "model": ..., "api_key_env": ...}}}`` in JSON or YAML.
     """
-    from arbora.core.settings import runtime_config
-
-    path = str(runtime_config.model_registry_path or "").strip()
+    path = str(config.model_registry_path or "").strip()
     if not path:
-        return _chat_models_registry(getattr(runtime_config, "chat_models", None))
+        return _chat_models_registry(getattr(config, "chat_models", None))
     text = Path(path).expanduser().read_text(encoding="utf-8")
     if path.endswith((".yaml", ".yml")):
         import yaml
@@ -378,9 +377,9 @@ def _registry() -> dict[str, Any]:
     return document if isinstance(document, dict) else {}
 
 
-def run_config() -> dict[str, Any]:
+def run_config(config: RuntimeConfig) -> dict[str, Any]:
     """Harness config for one run: the registry's default model, when named."""
-    default = str(_registry().get("default") or "").strip()
+    default = str(_registry(config).get("default") or "").strip()
     return {"agent_model": default} if default else {}
 
 
@@ -390,7 +389,10 @@ def keep_plan(plan: Any, owner: Any) -> Any:
 
 
 def decide_run(
-    request: Any, *, shape_plan: Callable[[Any, Any], Any] = keep_plan
+    request: Any,
+    *,
+    config: RuntimeConfig,
+    shape_plan: Callable[[Any, Any], Any] = keep_plan,
 ) -> Any:
     """The run plan for ``request``.
 
@@ -402,7 +404,7 @@ def decide_run(
     from meristem.graph import default_run_plan
 
     owner = current_native_run(request)
-    plan = default_run_plan(request, run_config())
+    plan = default_run_plan(request, run_config(config))
     plan = shape_plan(plan, owner)
     if owner is not None and owner.hosted_invocation is not None:
         from arbora.api.domain.mcp_server.task_plan_runtime import admitted_run_plan
@@ -417,9 +419,9 @@ def decide_run(
     return plan
 
 
-def resolve_model(model_id: str) -> Any:
+def resolve_model(model_id: str, *, config: RuntimeConfig) -> Any:
     """The model for ``model_id``: a registry endpoint, else the id itself."""
-    entry = (_registry().get("models") or {}).get(model_id)
+    entry = (_registry(config).get("models") or {}).get(model_id)
     if not isinstance(entry, Mapping) or not entry.get("base_url"):
         return model_id
     from pydantic_ai.models.openai import OpenAIChatModel
@@ -665,8 +667,10 @@ class AgentRunPort:
         executor: Any = None,
         *,
         origins: RunOriginRegistry,
+        config: RuntimeConfig,
         ports: Any = None,
     ) -> None:
+        self._config = config
         self._origins = origins
         #: The host's ``HostPortsSlot``; read when the first run starts.
         self._ports = ports
@@ -681,7 +685,7 @@ class AgentRunPort:
             from meristem.graph import AgentRunExecutor
 
             ports = None if self._ports is None else self._ports.current()
-            self._built = AgentRunExecutor(run_config(), ports=ports)
+            self._built = AgentRunExecutor(run_config(self._config), ports=ports)
         return self._built
 
     async def execute_agent(
@@ -750,11 +754,11 @@ class AgentRunPort:
                 metadata={"session": session, **dict(metadata or {})},
                 ports=ports,
             )
-            plan = decide_run(run_request)
+            plan = decide_run(run_request, config=self._config)
             if not _tick_due(metadata, plan):
                 return
             task = asyncio.get_running_loop().create_task(
-                _drive_cycle_tick(run_request, plan, ownership)
+                _drive_cycle_tick(run_request, plan, ownership, self._config)
             )
         except Exception as exc:  # a tick never changes the run result
             logger.warning(
@@ -780,7 +784,9 @@ def _tick_due(metadata: Mapping[str, Any] | None, plan: Any) -> bool:
     return bool(slots >= (2 if minimum is None else minimum))
 
 
-async def _drive_cycle_tick(run_request: Any, plan: Any, ownership: Any) -> None:
+async def _drive_cycle_tick(
+    run_request: Any, plan: Any, ownership: Any, config: RuntimeConfig
+) -> None:
     """One tick under a copy of the run's trusted scope; failures log only."""
     from meristem.graph.harness_cycle import drive_cycle_tick
 
@@ -801,7 +807,7 @@ async def _drive_cycle_tick(run_request: Any, plan: Any, ownership: Any) -> None
                 plan,
                 task_class=run_request.agent_name or "agent",
                 graph=None,
-                config=run_config(),
+                config=run_config(config),
                 root=config_dir() / "harness",
                 mode="ask",
             )

@@ -21,6 +21,7 @@ from arbora.api.mcp.resources import operation_spec, registry_index
 from arbora.api.mcp.verbs import PARAMETERS, MCPProjection, dispatch_verb, make_verb
 from arbora.api.policy import PolicyGate, PolicyUnavailable
 from arbora.api.registry import Effect, Surface, Verb
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import SubsystemWindows
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R011")
@@ -137,7 +138,7 @@ def _projection(
 ) -> MCPProjection:
     return MCPProjection(
         registry,
-        object(),
+        SimpleNamespace(config=RuntimeConfig()),
         Resolver(),
         Caller,
         policy_gate or PolicyGate("none"),
@@ -164,6 +165,7 @@ def test_find_merges_only_authorized_registry_and_filtered_fleet_entries() -> No
             policy_gate=PolicyGate("none"),
             resolver=Resolver(),
             fleet_search=fleet,
+            budget_s=5.0,
             intent="things",
         )
     )
@@ -189,6 +191,7 @@ def test_real_resolver_keeps_distinct_fleet_items_when_merging_find() -> None:
             policy_gate=PolicyGate("none"),
             resolver=IntentResolver(),
             fleet_search=fleet,
+            budget_s=5.0,
             intent="search",
             scope_ref="verified-scope",
         )

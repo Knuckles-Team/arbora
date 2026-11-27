@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment import engine_lock
 from arbora.mcp_server import composition, served_engine
 from arbora.mcp_server.composition import (
@@ -49,18 +49,14 @@ def test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero(
     assert unreachable.value.code == "REUSE_UNREACHABLE"
 
     # Through the pool: the reuse mark makes a dead configured endpoint refuse at once.
-    # setattr would restore the frozen live value as a permanent override at
-    # teardown; setitem drops the key so later reads stay live.
-    monkeypatch.setitem(
-        runtime_config._overrides, "graph_service_endpoints", [dead.address]
-    )
+    monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", json.dumps([dead.address]))
     monkeypatch.setenv("ENGINE_REUSE", "true")
 
     def forbidden(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("a reused engine never starts a local replacement")
 
     monkeypatch.setattr(composition, "ensure_local_engine", forbidden)
-    handles = served_engine.EngineHandles()
+    handles = served_engine.EngineHandles(config=RuntimeConfig())
     try:
         with pytest.raises(EngineRefusal) as refused:
             handles.pool()

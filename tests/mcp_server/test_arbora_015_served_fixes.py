@@ -8,6 +8,9 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
+from arbora.security.process_authority import ProcessAuthority
+
 # ── fleet.call: probe-primed schema and annotations ──────────────────────────
 
 
@@ -243,7 +246,7 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
     async def legacy_act(action: str = "") -> str:
         raise AssertionError("legacy tool called")
 
-    table = ToolTable()
+    table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     table["act"] = legacy_act
     toolset = runtime.build_native_arbora_toolset(
         list(FLEET_TOOLS), table, toolset_id="run-a2a-1", emit=events.append
@@ -331,6 +334,7 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
         origins=RunOriginRegistry(),
         executor=_Executor(),
         clock=lambda: 1_700_000_000.0,
+        config=RuntimeConfig(),
     )
     task_id = "a2a-" + "a" * 64
 

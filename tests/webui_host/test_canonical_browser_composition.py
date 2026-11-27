@@ -70,12 +70,6 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
     monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
     monkeypatch.setenv("GATEWAY_RATE_LIMIT", "0.001" if transition == "rate" else "0")
     monkeypatch.setenv("GATEWAY_RATE_BURST", "1" if transition == "rate" else "0")
-    from arbora.core.settings import runtime_config
-
-    monkeypatch.setattr(
-        runtime_config, "gateway_rate_limit", 0.001 if transition == "rate" else 0
-    )
-    monkeypatch.setattr(runtime_config, "gateway_rate_burst", 1)
 
     async def scenario():
         backend = OwnersFixture()
@@ -376,7 +370,7 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
             limiter = operations.authenticator._rate_limiter
             assert limiter.rate == float(config.gateway_rate_limit) > 0
             assert limiter.burst == float(config.gateway_rate_burst) > 0
-            assert float(runtime_config.gateway_rate_limit) == 0
+            assert float(RuntimeConfig().gateway_rate_limit) == 0
         assert owner._requests == {}
 
     asyncio.run(scenario())

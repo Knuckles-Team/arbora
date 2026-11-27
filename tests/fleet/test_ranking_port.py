@@ -6,7 +6,8 @@ import pytest
 
 from arbora.api.domain.fleet.lexical_floor import LexicalFloor
 from arbora.api.domain.fleet.ranking import MedullaRanking, RankCandidate
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.host_caches import build_host_caches
 
 CATALOG = [
     RankCandidate("a", "media_list_all", "list media in the library"),
@@ -128,7 +129,9 @@ async def test_every_ranking_site_asks_the_port_and_falls_back_to_the_floor() ->
     await catalog.search(_Caller(), query="restart")
     IntentResolver(ranking=port).arrange("act", "restart", descriptors, scope_ref=None)
     order_operations(operations, "restart service", ranking=port)
-    intent_tools.resolve_intent(HostCaches(), None, "search the graph", ranking=port)
+    intent_tools.resolve_intent(
+        build_host_caches(RuntimeConfig()), None, "search the graph", ranking=port
+    )
 
     assert port.questions == [
         "catalog.catalog_item_rank",
@@ -141,4 +144,6 @@ async def test_every_ranking_site_asks_the_port_and_falls_back_to_the_floor() ->
     assert (await unbound.search(_Caller(), query="restart"))["items"]
     assert IntentResolver().arrange("act", "restart", descriptors, scope_ref=None)
     assert order_operations(operations, "restart service")
-    assert intent_tools.resolve_intent(HostCaches(), None, "search the graph")
+    assert intent_tools.resolve_intent(
+        build_host_caches(RuntimeConfig()), None, "search the graph"
+    )

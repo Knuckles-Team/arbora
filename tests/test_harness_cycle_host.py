@@ -26,6 +26,7 @@ from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsBinding,
     HostPortsSlot,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import harness_ports
 from arbora.mcp_server.host_context import build_host_context
 from arbora.run_origin import RunOriginRegistry
@@ -120,9 +121,12 @@ async def test_completed_run_drives_one_tick_and_probes_drive_none(
     session = _session()
     cycle = _Cycle()
     plans = {"run-1": _plan(3), "run-2": _plan(1), "run-3": _plan(4, 5)}
-    monkeypatch.setattr(agent_runs, "decide_run", lambda req: plans[req.run_id])
+    monkeypatch.setattr(agent_runs, "decide_run", lambda req, config: plans[req.run_id])
     port = agent_runs.AgentRunPort(
-        _Executor(), origins=RunOriginRegistry(), ports=_slot(cycle)
+        _Executor(),
+        origins=RunOriginRegistry(),
+        ports=_slot(cycle),
+        config=RuntimeConfig(),
     )
 
     first, ticks = await _run(port, session, "run-1")
@@ -175,7 +179,10 @@ async def test_completed_run_drives_one_tick_and_probes_drive_none(
     # A tick failure logs and leaves the finished run result unchanged.
     failing = _Cycle(error=RuntimeError("engine down"))
     port = agent_runs.AgentRunPort(
-        _Executor(), origins=RunOriginRegistry(), ports=_slot(failing)
+        _Executor(),
+        origins=RunOriginRegistry(),
+        ports=_slot(failing),
+        config=RuntimeConfig(),
     )
     with caplog.at_level(logging.WARNING, logger="arbora.agent_runs"):
         result, ticks = await _run(port, session, "run-1")

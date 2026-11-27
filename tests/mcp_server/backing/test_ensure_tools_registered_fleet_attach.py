@@ -19,10 +19,11 @@ from unittest.mock import ANY, patch
 import pytest
 
 from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import HostCaches, build_host_caches
 from arbora.security.process_authority import ProcessAuthority
 
 
@@ -32,7 +33,7 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
     """Same arguments the served process passes in ``server._attach_fleet_runtime``."""
     mcp = SimpleNamespace()
     fleet = FleetState()
-    authority = ProcessAuthority()
+    authority = ProcessAuthority(config=RuntimeConfig())
     with patch("arbora.fleet.multiplexer.attach_fleet_loader") as mock_attach:
         runtime._attach_headless_fleet_loader(mcp, fleet, authority)
 
@@ -73,7 +74,9 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
             side_effect=RuntimeError("no mcp_config.json found"),
         ),
     ):
-        runtime._attach_headless_fleet_loader(mcp, FleetState(), ProcessAuthority())
+        runtime._attach_headless_fleet_loader(
+            mcp, FleetState(), ProcessAuthority(config=RuntimeConfig())
+        )
 
     assert getattr(mcp, "_fleet_mux", None) is None
     reason = mcp._fleet_mux_unavailable_reason
@@ -106,14 +109,14 @@ def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp(
 ) -> None:
     """``ensure_tools_registered()`` now attaches a fleet loader to the exact
     ``mcp`` its headless ``_build_server(bootstrap=False)`` call returns."""
-    _assert_headless_build_attaches(HostCaches())
+    _assert_headless_build_attaches(build_host_caches(RuntimeConfig()))
 
 
 def test_ensure_tools_registered_skips_rebuilding_when_fully_registered(
     monkeypatch,
 ) -> None:
     """The idempotency guard short-circuits once a full build's names are present."""
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     caches.tools["find"] = object()
     caches.tools.mark_complete()
     with (
@@ -134,7 +137,7 @@ def test_ensure_tools_registered_rebuilds_a_partial_table(monkeypatch) -> None:
     gateway dispatching over a partial table (and made the suite order
     dependent).
     """
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     caches.tools["graph_a2a"] = object()
     _assert_headless_build_attaches(caches)
 

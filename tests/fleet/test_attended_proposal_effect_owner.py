@@ -155,7 +155,7 @@ def _composed_authority(
     client = EffectClient()
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,

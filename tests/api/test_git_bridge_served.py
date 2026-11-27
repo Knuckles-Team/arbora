@@ -13,7 +13,6 @@ from typing import Any
 
 import pytest
 
-from arbora.core.settings import runtime_config
 from tests.api import test_bundle_ops_served as base
 from tests.api.test_bundle_ops_served import _call
 
@@ -177,7 +176,7 @@ def test_a_pack_over_the_configured_cap_is_refused_before_any_byte(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     app, _engine = _served(monkeypatch)
-    monkeypatch.setattr(runtime_config, "git_bridge_max_pack_bytes", 1_048_576)
+    monkeypatch.setenv("GIT_BRIDGE_MAX_PACK_BYTES", str(1_048_576))
     answer = _call(
         app,
         "POST",

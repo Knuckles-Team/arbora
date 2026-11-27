@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.api.domain.mcp_server.backing import engine_routing
+from arbora.core.settings import RuntimeConfig
 from arbora.gateway import daemon
 from arbora.mcp_server import served_engine
 from arbora.mcp_server.backing.tools import engine_tools
@@ -21,8 +22,8 @@ def test_two_engine_handles_hold_separate_pools() -> None:
         built.append(pool)
         return pool
 
-    first = EngineHandles(factory)
-    second = EngineHandles(factory)
+    first = EngineHandles(factory, config=RuntimeConfig())
+    second = EngineHandles(factory, config=RuntimeConfig())
     assert first.pool() is first.pool()
     assert first.pool() is not second.pool()
     assert first.served() is first.served()

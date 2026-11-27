@@ -43,7 +43,7 @@ async def _native_server_tools(
     """List the registered native tools that ``_call_native_tool`` admits."""
     from arbora.mcp_server import runtime
 
-    require_fleet_capability("discover")
+    require_fleet_capability("discover", mux.fleet.config)
     host = mux._host_mcp
     if host is None:
         raise ToolError("Native Arbora tool surface is unavailable")
@@ -87,7 +87,7 @@ async def _call_native_tool(
     from arbora.mcp_server import runtime
     from arbora.security.session import current_session
 
-    require_fleet_capability("delegate")
+    require_fleet_capability("delegate", mux.fleet.config)
     assert_bounded_delegated_value(arguments)
     if current_session() is None:
         raise ToolError("Verified caller session required")

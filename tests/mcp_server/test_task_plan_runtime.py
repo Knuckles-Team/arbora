@@ -1,9 +1,11 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Invoked AU chain with a real model adapter and controlled EG transport."""
 
 import json
 from dataclasses import replace
+from functools import partial
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -37,8 +39,8 @@ PROPOSAL = fixtures.PROPOSAL
 def chain_ports(**extra):
     """The ``HostPorts`` the chain runs on: the run decision and the chain's model."""
     return HostPorts(
-        decide=agent_runs.decide_run,
-        models=lambda name: agent_runs.resolve_model(name),
+        decide=partial(agent_runs.decide_run, config=RuntimeConfig()),
+        models=lambda name: agent_runs.resolve_model(name, config=RuntimeConfig()),
         **extra,
     )
 
@@ -113,8 +115,10 @@ def chain(bridge, monkeypatch):
         )
 
     model = FunctionModel(model)
-    monkeypatch.setattr(agent_runs, "resolve_model", lambda name: model)
-    monkeypatch.setattr(agent_runs, "run_config", lambda: {"agent_model": "test"})
+    monkeypatch.setattr(agent_runs, "resolve_model", lambda name, config: model)
+    monkeypatch.setattr(
+        agent_runs, "run_config", lambda config: {"agent_model": "test"}
+    )
     state = {"snapshot": None, "published": []}
 
     async def publish(client, params, graph):
@@ -158,7 +162,9 @@ async def test_registered_provider_executes_only_durable_plan(chain):
         hosted_invocation=host,
     ):
         result = await agent_runs.AgentRunPort(
-            origins=RunOriginRegistry(), ports=chain_slot(events=events.append)
+            origins=RunOriginRegistry(),
+            ports=chain_slot(events=events.append),
+            config=RuntimeConfig(),
         ).execute_agent(
             AgentExecutionRequest(
                 agent_name="helper", task="actual user question", run_id="run"
@@ -239,6 +245,7 @@ async def test_native_plan_helper_wires_real_publication_and_owner_scopes(
                 run_settings=agent_runs,
                 plan_publication=current_plan_publication,
             ),
+            "config": host.services.config,
         },
         operation_services=host.services,
     )
@@ -350,7 +357,9 @@ async def test_exhausted_budget_does_not_call_model(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(Exception, match="BUDGET_EXHAUSTED"):
-            await agent_runs.decide_run(RunRequest(task="question", run_id="run"))
+            await agent_runs.decide_run(
+                RunRequest(task="question", run_id="run"), config=RuntimeConfig()
+            )
     assert not calls and not state["published"]
 
 
@@ -380,7 +389,7 @@ async def test_failed_publication_starts_no_dependency_task(chain, monkeypatch):
     ):
         with pytest.raises(RuntimeError, match="stale fence"):
             await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry(), ports=chain_slot()
+                origins=RunOriginRegistry(), ports=chain_slot(), config=RuntimeConfig()
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
@@ -417,7 +426,7 @@ async def test_readback_mismatch_starts_no_dependency_task(chain):
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
             await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry(), ports=chain_slot()
+                origins=RunOriginRegistry(), ports=chain_slot(), config=RuntimeConfig()
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
@@ -453,7 +462,7 @@ async def test_publication_receipt_for_another_run_is_refused(chain):
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
             await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry(), ports=chain_slot()
+                origins=RunOriginRegistry(), ports=chain_slot(), config=RuntimeConfig()
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
@@ -487,7 +496,7 @@ async def test_publication_receipt_for_another_revision_is_refused(chain):
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
             await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry(), ports=chain_slot()
+                origins=RunOriginRegistry(), ports=chain_slot(), config=RuntimeConfig()
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
@@ -511,7 +520,9 @@ async def test_planner_consumption_preserves_original_bounds(chain):
         owner_graph="owner-graph",
         hosted_invocation=host,
     ):
-        plan = await agent_runs.decide_run(RunRequest(task="question", run_id="run"))
+        plan = await agent_runs.decide_run(
+            RunRequest(task="question", run_id="run"), config=RuntimeConfig()
+        )
     assert plan.budget.request_limit == host.task_plan_config.request_limit
     assert plan.budget.total_tokens_limit == host.task_plan_config.total_tokens_limit
     assert plan.budget.timeout_seconds == host.task_plan_config.timeout_seconds
@@ -610,7 +621,7 @@ async def test_cancellation_revokes_scope_without_dispatching_children(chain, ph
         ):
             contexts.append(copy_context())
             return await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry(), ports=chain_slot()
+                origins=RunOriginRegistry(), ports=chain_slot(), config=RuntimeConfig()
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
 
+
+@pytest.mark.spec("ARBORA-HOST-R039.11")
 def test_two_runtime_configs_do_not_share_state():
     from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server.host_context import build_host_context

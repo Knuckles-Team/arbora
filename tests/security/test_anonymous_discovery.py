@@ -104,7 +104,9 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
     gate = PolicyGate("embedded", Decisions())
     services, runtime, *_ = setup_services(op, policy_gate=gate)
     auth = AmbientHTTPAuthenticator(
-        session_for_request=partial(verified_bearer_session_for_request, JwksCache())
+        session_for_request=partial(
+            verified_bearer_session_for_request, JwksCache(RuntimeConfig())
+        )
     )
     app = FastAPI()
     app.mount(
@@ -118,7 +120,8 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
         ),
     )
     transport = httpx.ASGITransport(
-        app=ActorIdentityMiddleware(app, JwksCache()), client=("127.0.0.1", 1234)
+        app=ActorIdentityMiddleware(app, JwksCache(RuntimeConfig())),
+        client=("127.0.0.1", 1234),
     )
     async with httpx.AsyncClient(
         transport=transport, base_url="http://127.0.0.1"

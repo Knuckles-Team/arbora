@@ -15,6 +15,7 @@ import contextlib
 import json
 import time
 from collections.abc import Iterator
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -34,11 +35,11 @@ from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsSlot,
 )
 from arbora.api.invoke.privacy import mask_persisted_arguments
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
@@ -173,9 +174,12 @@ def _actor() -> ActorContext:
 def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
-    monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
+    # The host composition root reads its own view from the environment; the
+    # fixture's units share one view built after these overrides are in place.
+    monkeypatch.setenv("MODEL_REGISTRY_PATH", str(registry))
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
     monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
+    config = RuntimeConfig()
     # The identity gate needs a configured verifier; the verification is faked.
     monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://identity.invalid/jwks")
 
@@ -195,23 +199,27 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     ports.bind(
         HostPortsBinding(
             HostPorts(
-                decide=agent_runs.decide_run,
-                models=agent_runs.resolve_model,
+                decide=partial(agent_runs.decide_run, config=config),
+                models=partial(agent_runs.resolve_model, config=config),
                 events=run_events(client),
             ),
             None,
         )
     )
-    process = request_identity.mint_graph_session(_actor(), RuntimeConfig())
+    process = request_identity.mint_graph_session(_actor(), config)
     a2a = A2AService(
         authority=WorkItemA2AAuthority(
-            lambda: client, origins=RunOriginRegistry(), ports=ports
+            lambda: client,
+            origins=RunOriginRegistry(),
+            ports=ports,
+            config=config,
         ),
         router=OrchestratorA2ARouter(lambda: client),
+        config=config,
     )
     invocation = compose_served_invocation(
-        config=RuntimeConfig(),
-        keys=JwksCache(),
+        config=config,
+        keys=JwksCache(config),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
@@ -226,7 +234,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: client,
-        caches=HostCaches(),
+        caches=build_host_caches(config),
     )
     from arbora.gateway.graph_api import register_graph_routes
 
@@ -238,7 +246,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(config),
     )
 
 

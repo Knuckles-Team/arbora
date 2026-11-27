@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
 from arbora.api.domain.a2a.media_refs import (
@@ -36,7 +36,7 @@ from arbora.api.domain.a2a.parts import (
     admit_image_capability,
     check_inline_threshold,
 )
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 
 from .admission import (
     ModelProfileDecision,
@@ -140,6 +140,8 @@ class A2AService:
     push: A2APushNotificationAuthority | None = None
     #: The verified caller a media reference is bound to.
     caller_owner: Callable[[], str] = _caller_owner
+    #: The host's runtime settings: media limits and the upload size.
+    config: RuntimeConfig = field(kw_only=True)
 
     async def send_message(
         self,
@@ -165,13 +167,13 @@ class A2AService:
                 idempotency_key,
             )
         profile: dict[str, ModelProfileDecision] = {}
-        limits = MediaLimits.from_config()
+        limits = MediaLimits.from_config(self.config)
         check_inline_threshold(parsed, limits)
         parsed = await resolve_media_refs(parsed, self.media_refs, self.caller_owner())
         admit_file_parts(parsed, limits)
         attachment_size = parsed.attachment_size()
         if attachment_size:
-            limit = runtime_config.max_upload_size
+            limit = self.config.max_upload_size
             if type(limit) is not int or limit < 1 or attachment_size > limit:
                 raise ValueError("attachments exceed configured upload size")
         if "arboraModelProfile" in parsed.metadata:
@@ -385,7 +387,7 @@ class A2AService:
             description=metadata.description,
             version=metadata.version,
             url=endpoint_url,
-            media=MediaLimits.from_config().card(),
+            media=MediaLimits.from_config(self.config).card(),
             skills=[
                 A2ASkill(
                     id="arbora-delegate",

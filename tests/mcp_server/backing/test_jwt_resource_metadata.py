@@ -20,6 +20,7 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
 
@@ -45,7 +46,7 @@ def test_public_base_url_unset_returns_bare_verifier() -> None:
     from fastmcp.server.auth import RemoteAuthProvider
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
-    verifier = _configure_jwt_auth(_args())
+    verifier = _configure_jwt_auth(_args(), RuntimeConfig())
     assert isinstance(verifier, JWTVerifier)
     assert not isinstance(verifier, RemoteAuthProvider)
     # TokenVerifier's default get_routes() publishes nothing (the root cause).
@@ -59,7 +60,7 @@ def test_public_base_url_unset_omitted_attr_returns_bare_verifier() -> None:
 
     args = _args()
     del args.public_base_url
-    verifier = _configure_jwt_auth(args)
+    verifier = _configure_jwt_auth(args, RuntimeConfig())
     assert isinstance(verifier, JWTVerifier)
 
 
@@ -67,7 +68,9 @@ def test_public_base_url_set_wraps_in_remote_auth_provider() -> None:
     """MCP_PUBLIC_BASE_URL set -> RemoteAuthProvider advertising RFC 9728."""
     from fastmcp.server.auth import RemoteAuthProvider
 
-    verifier = _configure_jwt_auth(_args(public_base_url="https://arbora.example"))
+    verifier = _configure_jwt_auth(
+        _args(public_base_url="https://arbora.example"), RuntimeConfig()
+    )
     assert isinstance(verifier, RemoteAuthProvider)
 
     routes = verifier.get_routes(mcp_path="/mcp")
@@ -86,7 +89,9 @@ def test_public_base_url_set_401_carries_resource_metadata() -> None:
     from mcp.server.auth.middleware.bearer_auth import RequireAuthMiddleware
     from mcp.server.auth.routes import build_resource_metadata_url
 
-    verifier = _configure_jwt_auth(_args(public_base_url="https://arbora.example"))
+    verifier = _configure_jwt_auth(
+        _args(public_base_url="https://arbora.example"), RuntimeConfig()
+    )
     verifier.get_routes(mcp_path="/mcp")  # binds mcp_path / resource url
     resource_url = verifier._get_resource_url("/mcp")
     assert resource_url is not None
@@ -132,7 +137,7 @@ def test_public_base_url_unset_401_has_no_resource_metadata() -> None:
     """Root-cause regression guard: with no public base URL, the resource URL
     (and therefore the metadata URL) resolves to None -- the exact bare-Bearer
     behavior this fix closes."""
-    verifier = _configure_jwt_auth(_args())
+    verifier = _configure_jwt_auth(_args(), RuntimeConfig())
     assert verifier._get_resource_url("/mcp") is None
 
 
@@ -148,7 +153,8 @@ def test_public_base_url_set_multi_realm_also_wraps() -> None:
             ),
             token_issuer="https://kc.test/realms/master,https://kc.test/realms/homelab",
             public_base_url="https://arbora.example",
-        )
+        ),
+        RuntimeConfig(),
     )
     assert isinstance(verifier, RemoteAuthProvider)
     assert hasattr(verifier.token_verifier, "_verifiers")
@@ -171,7 +177,8 @@ def test_public_base_url_unset_multi_realm_stays_plain() -> None:
                 "https://kc.test/realms/homelab/protocol/openid-connect/certs"
             ),
             token_issuer="https://kc.test/realms/master,https://kc.test/realms/homelab",
-        )
+        ),
+        RuntimeConfig(),
     )
     assert not isinstance(verifier, RemoteAuthProvider)
     assert hasattr(verifier, "_verifiers")
@@ -181,10 +188,12 @@ def test_invalid_public_base_url_exits_closed() -> None:
     """A malformed MCP_PUBLIC_BASE_URL fails closed (consistent with every other
     auth-URL policy check in this module), never silently ignored."""
     with pytest.raises(SystemExit):
-        _configure_jwt_auth(_args(public_base_url="not a url"))
+        _configure_jwt_auth(_args(public_base_url="not a url"), RuntimeConfig())
 
 
 def test_http_public_base_url_off_loopback_rejected() -> None:
     """Same HTTPS-outside-loopback policy as every sibling auth URL flag."""
     with pytest.raises(SystemExit):
-        _configure_jwt_auth(_args(public_base_url="http://arbora.example"))
+        _configure_jwt_auth(
+            _args(public_base_url="http://arbora.example"), RuntimeConfig()
+        )

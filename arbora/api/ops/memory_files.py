@@ -19,6 +19,7 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from arbora.api.ops._common import Params
+from arbora.core.settings import RuntimeConfig
 
 _DIGEST = r"^[0-9a-f]{64}$"
 
@@ -134,16 +135,18 @@ class MemoryMaterializer:
     ignores a late acknowledgment for an older generation.
     """
 
-    def __init__(self, root: str | os.PathLike[str] | None = None) -> None:
+    def __init__(
+        self, config: RuntimeConfig, root: str | os.PathLike[str] | None = None
+    ) -> None:
+        self._config = config
         self._root = root
         self._generation = 0
 
     def root(self) -> Path:
         """The configured directory, or a fail-closed refusal."""
         from arbora.api.invoke.pipeline import OperationRefused
-        from arbora.core.settings import runtime_config
 
-        configured = self._root or getattr(runtime_config, "memory_files_root", None)
+        configured = self._root or self._config.memory_files_root
         if not configured:
             raise OperationRefused(
                 "UNAVAILABLE", {"reason": "memory files root is not configured"}

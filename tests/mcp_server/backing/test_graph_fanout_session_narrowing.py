@@ -43,8 +43,10 @@ from __future__ import annotations
 import asyncio
 
 from arbora.api.domain.mcp_server.backing import engine_routing
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.security.process_authority import ProcessAuthority
 from arbora.security.session import (
     GraphSession,
     current_session,
@@ -58,7 +60,7 @@ def _register_query_tools():
     from arbora.mcp_server.backing.tools.query_tools import register_query_tools
     from arbora.mcp_server.host_caches import ToolTable
 
-    tools = ToolTable()
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     register_query_tools(FastMCP("test"), tools, lambda: None)
     return tools
 

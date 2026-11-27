@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+from types import SimpleNamespace
 
 import mcp.types
 import pytest
@@ -11,6 +12,7 @@ from fastmcp.exceptions import ToolError
 
 from arbora.api.errors import FleetRefusal
 from arbora.api.invoke import pipeline
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet import gateway_ops
 from arbora.fleet import multiplexer as mux_module
 from arbora.fleet.child_resilience import MCPError
@@ -84,6 +86,7 @@ def test_unknown_cause_stays_opaque_but_logs_leaf_class(caplog):
 
 async def test_unmountable_child_answers_unavailable_without_dispatch(monkeypatch):
     mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
+    mux._fleet = SimpleNamespace(config=RuntimeConfig())
     monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
     monkeypatch.setattr(type(mux), "load_catalog", lambda self: {})
 
@@ -173,6 +176,7 @@ async def test_caller_cancellation_is_not_classified(monkeypatch):
     import asyncio
 
     mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
+    mux._fleet = SimpleNamespace(config=RuntimeConfig())
     mux._catalog_epoch = 0
     monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
     monkeypatch.setattr(type(mux), "load_catalog", lambda self: {"s": {}})

@@ -24,7 +24,7 @@ def register_graph_query():
     from arbora.mcp_server.backing.tools.query_tools import register_query_tools
     from arbora.mcp_server.host_caches import ToolTable
 
-    tools = ToolTable()
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     register_query_tools(FastMCP("test"), tools, lambda: None)
     return tools["graph_query"]
 
@@ -43,3 +43,7 @@ class FakeStdioSession:
 
     async def initialize(self):
         return None
+
+
+from arbora.core.settings import RuntimeConfig
+from arbora.security.process_authority import ProcessAuthority

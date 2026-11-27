@@ -26,6 +26,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.server_factory import (
     UnsupportedAuthTypeError,
     _configure_auth,
@@ -52,11 +53,11 @@ def _run(coro):
 # _configure_auth: top-level dispatch
 # ---------------------------------------------------------------------------
 def test_none_auth_type_returns_none():
-    assert _configure_auth(_base_args(auth_type="none")) is None
+    assert _configure_auth(_base_args(auth_type="none"), RuntimeConfig()) is None
 
 
 def test_falsy_auth_type_returns_none():
-    assert _configure_auth(_base_args(auth_type="")) is None
+    assert _configure_auth(_base_args(auth_type=""), RuntimeConfig()) is None
 
 
 def test_delegation_without_oidc_proxy_exits(monkeypatch):
@@ -74,7 +75,7 @@ def test_delegation_without_oidc_proxy_exits(monkeypatch):
     )
     args = _base_args(auth_type="static", enable_delegation=True, audience="x")
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_delegation_without_audience_exits(monkeypatch):
@@ -92,7 +93,7 @@ def test_delegation_without_audience_exits(monkeypatch):
     )
     args = _base_args(auth_type="oidc-proxy", enable_delegation=True, audience=None)
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 # ---------------------------------------------------------------------------
@@ -101,7 +102,7 @@ def test_delegation_without_audience_exits(monkeypatch):
 def test_static_auth_missing_reference_exits():
     args = _base_args(auth_type="static", static_tokens_ref="")
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_static_auth_invalid_json_exits(monkeypatch):
@@ -110,7 +111,7 @@ def test_static_auth_invalid_json_exits(monkeypatch):
         auth_type="static", static_tokens_ref="env://CX_AU_05_STATIC_TOKENS"
     )
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_static_auth_token_too_short_exits(monkeypatch):
@@ -122,7 +123,7 @@ def test_static_auth_token_too_short_exits(monkeypatch):
         auth_type="static", static_tokens_ref="env://CX_AU_05_STATIC_TOKENS"
     )
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_static_auth_valid_token_accepts_and_rejects(monkeypatch):
@@ -134,7 +135,7 @@ def test_static_auth_valid_token_accepts_and_rejects(monkeypatch):
     args = _base_args(
         auth_type="static", static_tokens_ref="env://CX_AU_05_STATIC_TOKENS"
     )
-    verifier = _configure_auth(args)
+    verifier = _configure_auth(args, RuntimeConfig())
     assert verifier is not None
 
     accepted = _run(verifier.verify_token(good_token))
@@ -157,7 +158,7 @@ def test_static_auth_expired_token_rejected(monkeypatch):
     args = _base_args(
         auth_type="static", static_tokens_ref="env://CX_AU_05_STATIC_TOKENS"
     )
-    verifier = _configure_auth(args)
+    verifier = _configure_auth(args, RuntimeConfig())
     assert _run(verifier.verify_token(token)) is None
 
 
@@ -171,7 +172,7 @@ def test_invalid_redirect_uri_policy_exits():
         allowed_client_redirect_uris="not a url, also not a url",
     )
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 # ---------------------------------------------------------------------------
@@ -180,13 +181,13 @@ def test_invalid_redirect_uri_policy_exits():
 def test_oauth_proxy_missing_fields_exits():
     args = _base_args(auth_type="oauth-proxy")
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_oidc_proxy_missing_fields_exits():
     args = _base_args(auth_type="oidc-proxy")
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_oidc_proxy_missing_audience_exits():
@@ -200,13 +201,13 @@ def test_oidc_proxy_missing_audience_exits():
         audience=None,
     )
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_remote_oauth_missing_fields_exits():
     args = _base_args(auth_type="remote-oauth")
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_remote_oauth_too_many_auth_servers_exits():
@@ -220,7 +221,7 @@ def test_remote_oauth_too_many_auth_servers_exits():
         token_audience="aud",
     )
     with pytest.raises(SystemExit):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 def test_unknown_auth_type_refuses():
@@ -229,7 +230,7 @@ def test_unknown_auth_type_refuses():
     # server. It now refuses with a typed error naming the bad value.
     args = _base_args(auth_type="not-a-real-type")
     with pytest.raises(UnsupportedAuthTypeError, match="not-a-real-type"):
-        _configure_auth(args)
+        _configure_auth(args, RuntimeConfig())
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +249,7 @@ def test_jwt_oidc_discovery_fills_missing_jwks_uri(monkeypatch):
         token_public_key=None,
         token_secret_ref=None,
     )
-    verifier = _configure_jwt_auth(args)
+    verifier = _configure_jwt_auth(args, RuntimeConfig())
     assert verifier is not None
 
 
@@ -265,7 +266,7 @@ def test_jwt_missing_key_material_exits():
         token_audience="aud",
     )
     with pytest.raises(SystemExit):
-        _configure_jwt_auth(args)
+        _configure_jwt_auth(args, RuntimeConfig())
 
 
 def test_jwt_missing_issuer_or_audience_exits():
@@ -277,7 +278,7 @@ def test_jwt_missing_issuer_or_audience_exits():
         token_secret_ref=None,
     )
     with pytest.raises(SystemExit):
-        _configure_jwt_auth(args)
+        _configure_jwt_auth(args, RuntimeConfig())
 
 
 def test_jwt_invalid_audience_format_exits():
@@ -289,7 +290,7 @@ def test_jwt_invalid_audience_format_exits():
         token_secret_ref=None,
     )
     with pytest.raises(SystemExit):
-        _configure_jwt_auth(args)
+        _configure_jwt_auth(args, RuntimeConfig())
 
 
 def test_jwt_public_key_read_from_file(tmp_path):
@@ -304,7 +305,7 @@ def test_jwt_public_key_read_from_file(tmp_path):
         token_audience="aud",
         token_algorithm="RS256",
     )
-    verifier = _configure_jwt_auth(args)
+    verifier = _configure_jwt_auth(args, RuntimeConfig())
     assert verifier is not None
 
 
@@ -319,7 +320,7 @@ def test_jwt_hmac_secret_missing_ref_exits():
         token_algorithm="HS256",
     )
     with pytest.raises(SystemExit):
-        _configure_jwt_auth(args)
+        _configure_jwt_auth(args, RuntimeConfig())
 
 
 def test_jwt_hmac_secret_resolved(monkeypatch):
@@ -338,7 +339,7 @@ def test_jwt_hmac_secret_resolved(monkeypatch):
         token_audience="aud",
         token_algorithm="HS256",
     )
-    verifier = _configure_jwt_auth(args)
+    verifier = _configure_jwt_auth(args, RuntimeConfig())
     assert verifier is not None
 
 

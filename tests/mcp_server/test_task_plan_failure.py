@@ -10,6 +10,7 @@ from meristem.graph import RunPlanFailure, RunRequest, run
 
 from arbora import agent_runs
 from arbora.api.domain.mcp_server import task_plan_runtime
+from arbora.core.settings import RuntimeConfig
 from tests.mcp_server.test_task_plan_runtime import bridge as bridge
 from tests.mcp_server.test_task_plan_runtime import chain as chain
 from tests.mcp_server.test_task_plan_runtime import chain_ports
@@ -165,7 +166,7 @@ async def test_provider_failure_does_not_borrow_stale_owner_ledger(chain, monkey
         request = RunRequest(task="question", run_id="run")
         agent_runs.current_native_run(request).planning_usage.update(USAGE)
         with pytest.raises(RuntimeError) as caught:
-            await agent_runs.decide_run(request)
+            await agent_runs.decide_run(request, config=RuntimeConfig())
     assert caught.value is error
     assert not isinstance(caught.value, RunPlanFailure)
     assert not calls

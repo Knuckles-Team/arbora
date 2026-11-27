@@ -21,6 +21,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 from fastmcp.tools import Tool
 
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.multiplexer import (
     _LOCAL_SESSION_META_KEY,
     _fleet_required_capabilities,
@@ -876,9 +877,7 @@ async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
         "error": None,
         "probed_at": fixed_now,
     }
-    monkeypatch.setattr(
-        "arbora.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
-    )
+    mux._fleet.config.mcp_catalog_probe_ttl = 10.0
 
     # Inside the TTL: honestly fresh.
     monkeypatch.setattr(time, "time", lambda: fixed_now + 5.0)
@@ -910,9 +909,7 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
         "error": None,
         "probed_at": fixed_now,
     }
-    monkeypatch.setattr(
-        "arbora.core.settings.runtime_config.mcp_catalog_probe_ttl", 10.0
-    )
+    mux._fleet.config.mcp_catalog_probe_ttl = 10.0
 
     calls = 0
 
@@ -1037,8 +1034,6 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
 ):
     """A named domain is probed before unrelated fleet fan-out consumes the budget."""
 
-    from arbora.core.settings import runtime_config as agent_config
-
     tool_map = {
         **{f"slow-{index}-mcp": [] for index in range(24)},
         server: [(tool, description)],
@@ -1064,7 +1059,7 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
         await asyncio.sleep(1)
         return {"tools": [], "error": None}
 
-    monkeypatch.setattr(agent_config, "mcp_dynamic_discovery_timeout", 0.05)
+    mux._fleet.config.mcp_dynamic_discovery_timeout = 0.05
     mux.probe_server = AsyncMock(side_effect=staged_probe)
 
     discovery = await mux.discover_tools(query, top_k=5)
@@ -1788,14 +1783,14 @@ def test_require_fleet_capability_denies_admin_only_caller_for_discover(monkeypa
     scope the requested action declares."""
     _mock_authenticated_http_caller(monkeypatch, scopes=["admin"])
     with pytest.raises(ToolError, match="MCP fleet discover capability required"):
-        require_fleet_capability("discover")
+        require_fleet_capability("discover", RuntimeConfig())
 
 
 def test_require_fleet_capability_allows_exact_scope_caller_for_discover(monkeypatch):
     """The correctly scoped path, still allowed: a caller holding the fleet's
     own ``mcp:discover`` scope passes with no administrative grant at all."""
     _mock_authenticated_http_caller(monkeypatch, scopes=["mcp:discover"])
-    require_fleet_capability("discover")  # must not raise
+    require_fleet_capability("discover", RuntimeConfig())  # must not raise
 
 
 def test_require_fleet_capability_enforces_extra_scopes_even_for_admin_caller(
@@ -1806,14 +1801,18 @@ def test_require_fleet_capability_enforces_extra_scopes_even_for_admin_caller(
     admin no longer bypasses a declared child capability-scope requirement."""
     _mock_authenticated_http_caller(monkeypatch, scopes=["mcp:delegate", "admin"])
     with pytest.raises(ToolError, match="Child MCP capability scope required"):
-        require_fleet_capability("delegate", extra_scopes=["child:special"])
+        require_fleet_capability(
+            "delegate", RuntimeConfig(), extra_scopes=["child:special"]
+        )
 
 
 def test_require_fleet_capability_allows_caller_holding_the_extra_scope(monkeypatch):
     _mock_authenticated_http_caller(
         monkeypatch, scopes=["mcp:delegate", "child:special"]
     )
-    require_fleet_capability("delegate", extra_scopes=["child:special"])  # no raise
+    require_fleet_capability(
+        "delegate", RuntimeConfig(), extra_scopes=["child:special"]
+    )  # no raise
 
 
 def test_require_fleet_capability_denies_stdio_caller_with_no_verified_actor():
@@ -1822,7 +1821,7 @@ def test_require_fleet_capability_denies_stdio_caller_with_no_verified_actor():
     applies and the call is refused, exactly as an unauthenticated remote
     caller would be."""
     with pytest.raises(ToolError, match="Authenticated local process context"):
-        require_fleet_capability("discover")
+        require_fleet_capability("discover", RuntimeConfig())
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R022")
@@ -1840,7 +1839,7 @@ def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
     )
     with use_actor(actor):
         with pytest.raises(ToolError, match="MCP fleet discover capability required"):
-            require_fleet_capability("discover")
+            require_fleet_capability("discover", RuntimeConfig())
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R022")
@@ -1858,7 +1857,7 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
         authenticated=True,
     )
     with use_actor(actor):
-        require_fleet_capability("discover")  # must not raise
+        require_fleet_capability("discover", RuntimeConfig())  # must not raise
 
 
 @pytest.mark.spec("ARBORA-FLEET-R035")

@@ -100,7 +100,7 @@ def test_browser_boundary_hands_the_federation_to_the_auth_application(
         audience="a",
         store=object(),
         request_dispatch=None,
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         config=RuntimeConfig(),
     )
     assert captured["auth_app"].federation is sentinel

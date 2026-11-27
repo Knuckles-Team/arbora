@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from arbora.api.domain.a2a.media_refs import SessionMediaRefStore
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 from .authority import WorkItemA2AAuthority
@@ -72,7 +72,7 @@ def _harness_decider(
 
 
 async def compose_anonymous_a2a(
-    client: Any, *, graph: str, policy: Any, audit: Any = None
+    client: Any, *, graph: str, policy: Any, config: RuntimeConfig, audit: Any = None
 ) -> Any:
     """The read-only anonymous ``/a2a`` application, or ``None`` when it must not compose.
 
@@ -90,7 +90,7 @@ async def compose_anonymous_a2a(
         return None
     return create_anonymous_a2a_application(
         owner=owner,
-        service=A2AService(authority=owner, router=AnonymousNoRouter()),
+        service=A2AService(authority=owner, router=AnonymousNoRouter(), config=config),
     )
 
 
@@ -108,6 +108,7 @@ def build_a2a_service(
     provisioning: Any = None,
     capacity: Any = None,
     ports: Any = None,
+    config: RuntimeConfig,
 ) -> A2AService:
     """One service over the WorkItem authority and its durable event cursor.
 
@@ -117,7 +118,7 @@ def build_a2a_service(
     from .authority import _RUN_LEASE_SECONDS
     from .run_delegation import engine_delegation_reader, engine_run_delegations
 
-    log = A2AEventLog(engine_provider, clock=clock)
+    log = A2AEventLog(engine_provider, config=config, clock=clock)
     authority = WorkItemA2AAuthority(
         engine_provider,
         # PIN-LAG: None until the installed engine serves agent-run delegations.
@@ -130,6 +131,7 @@ def build_a2a_service(
         hosted_invocation=hosted_invocation,
         events=log,
         ports=ports,
+        config=config,
     )
     push = PushDeliveryWorker(authority)
     authority.push = push
@@ -150,8 +152,9 @@ def build_a2a_service(
         principal_kind=_principal_kind,
         card_metadata=card_metadata or A2ACardMetadata(),
         streaming=A2AEventStreams(
-            log, authority, buffer_events=stream_buffer_events(runtime_config)
+            log, authority, buffer_events=stream_buffer_events(config)
         ),
         history=EngineTransitionHistory(authority),
-        media_refs=SessionMediaRefStore(engine_provider),
+        media_refs=SessionMediaRefStore(engine_provider, config=config),
+        config=config,
     )

@@ -21,6 +21,8 @@ from pydantic_ai.messages import (
 from arbora.a2a.application import _event_frames
 from arbora.a2a.event_log import A2AEventConsumerTooSlow, A2AEventStreams
 from arbora.a2a.run_events import RunEventObserver
+from arbora.api.invoke.screening import screen_settings
+from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_event_log import (
     ITEM,
     TASK,
@@ -50,7 +52,10 @@ def test_text_deltas_tool_events_and_redaction_use_the_one_publisher(
             await log.publish(ITEM, draft, claim=claim)
 
         observer = RunEventObserver(
-            publish, task_id=TASK, context_id="a2a-context-" + "b" * 64
+            publish,
+            task_id=TASK,
+            context_id="a2a-context-" + "b" * 64,
+            screen=screen_settings(RuntimeConfig()),
         )
         # A secret streamed across two deltas is never split over two events.
         await observer(
@@ -124,7 +129,12 @@ def test_a_reply_that_differs_from_the_streamed_text_replaces_the_artifact(
         published.append(draft)
 
     async def scenario() -> None:
-        observer = RunEventObserver(publish, task_id=TASK, context_id="c")
+        observer = RunEventObserver(
+            publish,
+            task_id=TASK,
+            context_id="c",
+            screen=screen_settings(RuntimeConfig()),
+        )
         await observer(PartStartEvent(index=0, part=TextPart("thinking aloud ")))
         assert await observer.finish("the real answer") is True
 

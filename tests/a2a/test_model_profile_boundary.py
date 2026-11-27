@@ -9,6 +9,7 @@ from arbora.a2a.admission import (
     ModelProfileUnavailable,
     resolve_model_profile,
 )
+from arbora.core.settings import RuntimeConfig
 
 
 @pytest.mark.parametrize("reference", [None, "profile-one", "x" * 512])
@@ -83,7 +84,7 @@ def test_service_refuses_explicit_preference_before_routing(reference):
 
     authority = Mock(dispatch=AsyncMock())
     router = Mock(route=AsyncMock())
-    service = A2AService(authority=authority, router=router)
+    service = A2AService(authority=authority, router=router, config=RuntimeConfig())
     message = {
         "role": "user",
         "messageId": "preference-request",
@@ -107,7 +108,9 @@ def test_service_without_preference_preserves_dispatch():
     authority = Mock(dispatch=AsyncMock(return_value="existing-result"))
     router = Mock(route=AsyncMock(return_value=decision))
     result = asyncio.run(
-        A2AService(authority=authority, router=router).send_message(
+        A2AService(
+            authority=authority, router=router, config=RuntimeConfig()
+        ).send_message(
             message={
                 "role": "user",
                 "messageId": "default-request",
@@ -135,7 +138,7 @@ def test_http_profile_admission_has_no_dispatch(reference, expected):
     authority = Mock(dispatch=AsyncMock())
     router = Mock(route=AsyncMock())
     app = create_a2a_application(
-        service=A2AService(authority=authority, router=router),
+        service=A2AService(authority=authority, router=router, config=RuntimeConfig()),
         authenticator=Authenticator(),
     )
     with TestClient(app) as client:

@@ -24,6 +24,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.server_factory import (
     _hardened_jwt_verifier,
     _validate_network_exposure,
@@ -213,6 +214,7 @@ _RSA_PUBLIC_KEY_PEM = (
 
 def _build_verifier(**kwargs):
     return _hardened_jwt_verifier(
+        RuntimeConfig(),
         public_key=kwargs.pop("public_key", "shared-secret-not-checked-by-shim"),
         issuer="https://idp.test",
         audience="aud",

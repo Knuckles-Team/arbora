@@ -450,12 +450,12 @@ def _nbf_iat_claims_invalid(claims: dict, now: float) -> bool:
     return False
 
 
-def _hardened_jwt_verifier(**kwargs: Any) -> Any:
+def _hardened_jwt_verifier(config: RuntimeConfig, **kwargs: Any) -> Any:
     """Build FastMCP's verifier with pinned JWKS I/O and privacy-safe logging."""
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
     # The verifier owns the key sets it fetches; no other component shares them.
-    owned_keys = JwksCache()
+    owned_keys = JwksCache(config)
 
     class _Verifier(JWTVerifier):
         async def _fetch_jwks(self) -> dict[str, Any]:
@@ -1080,7 +1080,7 @@ def _apply_mcp_auth_config_overrides(args: argparse.Namespace) -> None:
         )
 
 
-def _discover_delegation_token_endpoint(config_url: str) -> str:
+def _discover_delegation_token_endpoint(config_url: str, config: RuntimeConfig) -> str:
     """OIDC-discover the token endpoint for token delegation. Raises
     ValueError on any failure (unavailable issuer, no token_endpoint)."""
     if not isinstance(config_url, str):
@@ -1088,17 +1088,18 @@ def _discover_delegation_token_endpoint(config_url: str) -> str:
     suffix = "/.well-known/openid-configuration"
     issuer = config_url[: -len(suffix)] if config_url.endswith(suffix) else config_url
 
-    from arbora.core.settings import RuntimeConfig
     from arbora.security.oidc_discovery import discover
 
-    oidc_config = discover(issuer, RuntimeConfig())
+    oidc_config = discover(issuer, config)
     token_endpoint = oidc_config.get("token_endpoint")
     if not token_endpoint:
         raise ValueError("No token_endpoint found in OIDC configuration")
     return token_endpoint
 
 
-def _enforce_delegation_requirements(args: argparse.Namespace) -> None:
+def _enforce_delegation_requirements(
+    args: argparse.Namespace, config: RuntimeConfig
+) -> None:
     """When token delegation is enabled, require oidc-proxy + a complete
     OIDC configuration, and resolve the delegation token endpoint."""
     if not mcp_auth_config["enable_delegation"]:
@@ -1120,7 +1121,7 @@ def _enforce_delegation_requirements(args: argparse.Namespace) -> None:
         sys.exit(1)
     try:
         mcp_auth_config["token_endpoint"] = _discover_delegation_token_endpoint(
-            mcp_auth_config["oidc_config_url"]
+            mcp_auth_config["oidc_config_url"], config
         )
     except Exception as exc:
         logger.error(
@@ -1275,7 +1276,7 @@ def _configure_static_auth(args: argparse.Namespace) -> Any:
 
 
 def _configure_oauth_proxy_auth(
-    args: argparse.Namespace, allowed_uris: list[str] | None
+    args: argparse.Namespace, allowed_uris: list[str] | None, config: RuntimeConfig
 ) -> Any:
     from fastmcp.server.auth import OAuthProxy
 
@@ -1309,6 +1310,7 @@ def _configure_oauth_proxy_auth(
         logger.error("Error: OAuth proxy URL policy is invalid")
         sys.exit(1)
     token_verifier = _hardened_jwt_verifier(
+        config,
         jwks_uri=args.token_jwks_uri,
         issuer=args.token_issuer,
         audience=args.token_audience,
@@ -1364,7 +1366,9 @@ def _configure_oidc_proxy_auth(
     )
 
 
-def _configure_remote_oauth_auth(args: argparse.Namespace) -> Any:
+def _configure_remote_oauth_auth(
+    args: argparse.Namespace, config: RuntimeConfig
+) -> Any:
     from fastmcp.server.auth import RemoteAuthProvider
     from pydantic import AnyHttpUrl
 
@@ -1397,6 +1401,7 @@ def _configure_remote_oauth_auth(args: argparse.Namespace) -> Any:
         logger.error("Error: remote authorization-server policy is invalid")
         sys.exit(1)
     token_verifier = _hardened_jwt_verifier(
+        config,
         jwks_uri=args.token_jwks_uri,
         issuer=args.token_issuer,
         audience=args.token_audience,
@@ -1410,7 +1415,7 @@ def _configure_remote_oauth_auth(args: argparse.Namespace) -> Any:
     )
 
 
-def _configure_auth(args: argparse.Namespace) -> Any:
+def _configure_auth(args: argparse.Namespace, config: RuntimeConfig) -> Any:
     """Configure authentication provider based on parsed CLI args.
 
     Returns the auth provider instance, or ``None`` only for the explicitly
@@ -1422,7 +1427,7 @@ def _configure_auth(args: argparse.Namespace) -> Any:
         return None
 
     _apply_mcp_auth_config_overrides(args)
-    _enforce_delegation_requirements(args)
+    _enforce_delegation_requirements(args, config)
     allowed_uris = _validate_allowed_redirect_uris(args)
 
     if args.auth_type == "none":
@@ -1430,13 +1435,13 @@ def _configure_auth(args: argparse.Namespace) -> Any:
     if args.auth_type == "static":
         return _configure_static_auth(args)
     if args.auth_type == "jwt":
-        return _configure_jwt_auth(args)
+        return _configure_jwt_auth(args, config)
     if args.auth_type == "oauth-proxy":
-        return _configure_oauth_proxy_auth(args, allowed_uris)
+        return _configure_oauth_proxy_auth(args, allowed_uris, config)
     if args.auth_type == "oidc-proxy":
         return _configure_oidc_proxy_auth(args, allowed_uris)
     if args.auth_type == "remote-oauth":
-        return _configure_remote_oauth_auth(args)
+        return _configure_remote_oauth_auth(args, config)
     logger.error(
         "Refusing to build an MCP server for unsupported auth type %r", args.auth_type
     )
@@ -1466,11 +1471,9 @@ def _resolve_jwt_basic_params(
     return jwks_uri, issuer, audience, algorithm, secret_or_key
 
 
-def _oidc_discover_jwks_uris(issuer: str) -> list[str | None]:
-    from arbora.core.settings import RuntimeConfig
+def _oidc_discover_jwks_uris(issuer: str, config: RuntimeConfig) -> list[str | None]:
     from arbora.security.oidc_discovery import jwks_uri_for
 
-    config = RuntimeConfig()
     return [
         jwks_uri_for(i.strip(), config) for i in str(issuer).split(",") if i.strip()
     ]
@@ -1481,6 +1484,7 @@ def _maybe_discover_jwks(
     secret_or_key: str | None,
     args: argparse.Namespace,
     issuer: str | None,
+    config: RuntimeConfig,
 ) -> str | None:
     """CONCEPT:MERISTEM-OS.identity.resolve-token-endpoint-from -- IdP-agnostic:
     with no explicit JWKS URI (and not a static key), resolve it from each
@@ -1496,7 +1500,7 @@ def _maybe_discover_jwks(
     """
     if jwks_uri or secret_or_key or args.token_secret_ref or not issuer:
         return jwks_uri
-    resolved = _oidc_discover_jwks_uris(issuer)
+    resolved = _oidc_discover_jwks_uris(issuer, config)
     if resolved and all(resolved):
         return ",".join(u for u in resolved if u)
     if any(resolved):
@@ -1614,9 +1618,11 @@ def _build_multi_realm_verifiers(
     audience: str | None,
     algorithm: str | None,
     required_scopes: list[str] | None,
+    config: RuntimeConfig,
 ) -> list[Any]:
     return [
         _hardened_jwt_verifier(
+            config,
             jwks_uri=u,
             issuer=i,
             audience=audience,
@@ -1634,6 +1640,7 @@ def _configure_multi_realm_jwt(
     algorithm: str | None,
     required_scopes: list[str] | None,
     args: argparse.Namespace,
+    config: RuntimeConfig,
 ) -> Any:
     """CONCEPT:MERISTEM-OS.identity.native-multi-realm-jwt -- native multi-realm
     JWT trust. FASTMCP_SERVER_AUTH_JWT_ISSUER and _JWKS_URI may each be a
@@ -1677,7 +1684,7 @@ def _configure_multi_realm_jwt(
 
     try:
         verifiers = _build_multi_realm_verifiers(
-            jwks_uris, issuers, audience, algorithm, required_scopes
+            jwks_uris, issuers, audience, algorithm, required_scopes, config
         )
         logger.info("JWT auth: native multi-issuer trust configured")
         return _wrap_with_resource_metadata(
@@ -1703,9 +1710,11 @@ def _configure_single_realm_jwt(
     required_scopes: list[str] | None,
     args: argparse.Namespace,
     issuer_values: list[str],
+    config: RuntimeConfig,
 ) -> Any:
     try:
         verifier = _hardened_jwt_verifier(
+            config,
             jwks_uri=jwks_uri,
             public_key=public_key,
             issuer=issuer,
@@ -1723,12 +1732,12 @@ def _configure_single_realm_jwt(
         sys.exit(1)
 
 
-def _configure_jwt_auth(args: argparse.Namespace) -> Any:
+def _configure_jwt_auth(args: argparse.Namespace, config: RuntimeConfig) -> Any:
     """Configure JWT authentication from CLI args."""
     jwks_uri, issuer, audience, algorithm, secret_or_key = _resolve_jwt_basic_params(
         args
     )
-    jwks_uri = _maybe_discover_jwks(jwks_uri, secret_or_key, args, issuer)
+    jwks_uri = _maybe_discover_jwks(jwks_uri, secret_or_key, args, issuer, config)
     _validate_jwt_key_material_present(jwks_uri, secret_or_key, args)
     _validate_jwt_issuer_audience_present(issuer, audience)
     _validate_jwt_audience_format(audience)
@@ -1742,7 +1751,7 @@ def _configure_jwt_auth(args: argparse.Namespace) -> Any:
     jwks_uris = _split_csv(str(jwks_uri)) if jwks_uri else []
     if len(jwks_uris) > 1 or len(issuers) > 1:
         return _configure_multi_realm_jwt(
-            jwks_uris, issuers, audience, algorithm, required_scopes, args
+            jwks_uris, issuers, audience, algorithm, required_scopes, args, config
         )
     return _configure_single_realm_jwt(
         jwks_uri,
@@ -1753,6 +1762,7 @@ def _configure_jwt_auth(args: argparse.Namespace) -> Any:
         required_scopes,
         args,
         issuer_values,
+        config,
     )
 
 
@@ -2516,7 +2526,7 @@ def create_mcp_server(
 
     _validate_network_exposure(args)
 
-    auth = _configure_auth(args)
+    auth = _configure_auth(args, config)
     middlewares = _configure_middleware(
         args,
         keys,

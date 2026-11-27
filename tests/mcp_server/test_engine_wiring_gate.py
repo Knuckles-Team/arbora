@@ -17,8 +17,9 @@ pytest.importorskip("medulla")
 from medulla import client as eg_client  # noqa: E402
 
 from arbora.core.engine_domains import DOMAIN_CLASSES
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.8")
@@ -88,7 +89,7 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
         return json.dumps([{"id": "n1", "name": "alpha"}, {"id": "n2"}])
 
     monkeypatch.setattr(engine_tools, "_dispatch", _dispatch)
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     func = caches.tools[tool]
     text_arg = "question" if tool in {"graph_ask", "ask_data"} else "text"

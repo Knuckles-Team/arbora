@@ -328,6 +328,7 @@ async def handle_process_run(
         resolve_prompts,
     )
     from arbora.api.domain.processes.run_ports import RunEvidence
+    from arbora.api.invoke.screening import screen_settings
     from arbora.api.ops.plans import _plan_model, execute_task_plan
 
     planned = await handle_process_plan(context, params, op)
@@ -355,7 +356,12 @@ async def handle_process_run(
             "tasks": {},
         }
     run = await execute_task_plan(
-        plan, _plan_model(context), run_id=run_id, ports=ports, prompts=prompts
+        plan,
+        _plan_model(context),
+        run_id=run_id,
+        screen=screen_settings(context.services["config"]),
+        ports=ports,
+        prompts=prompts,
     )
     status = str(run.get("status") or "failed")
     await broker_for(context).settle_run(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security import auth
 from arbora.security.key_cache import JwksCache
 
@@ -28,11 +29,11 @@ async def test_a_fetched_key_set_is_cached_in_the_given_cache(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls = _downloads(monkeypatch, DOCUMENT)
-    keys = JwksCache()
+    keys = JwksCache(RuntimeConfig())
     assert await auth.fetch_jwks(keys, URI) == DOCUMENT
     assert await auth.fetch_jwks(keys, URI) == DOCUMENT
     assert calls == [URI]
-    await auth.fetch_jwks(JwksCache(), URI)
+    await auth.fetch_jwks(JwksCache(RuntimeConfig()), URI)
     assert calls == [URI, URI]
 
 
@@ -42,7 +43,7 @@ async def test_a_malformed_key_set_is_refused_and_not_cached(
     monkeypatch: pytest.MonkeyPatch, document: object
 ) -> None:
     _downloads(monkeypatch, document)
-    keys = JwksCache()
+    keys = JwksCache(RuntimeConfig())
     with pytest.raises(RuntimeError, match="invalid shape"):
         await auth.fetch_jwks(keys, URI)
     assert keys.get(URI, 0.0) is None
@@ -51,4 +52,4 @@ async def test_a_malformed_key_set_is_refused_and_not_cached(
 @pytest.mark.asyncio
 async def test_a_credentialed_endpoint_is_refused() -> None:
     with pytest.raises(RuntimeError, match="credentials"):
-        await auth.fetch_jwks(JwksCache(), CREDENTIALED)
+        await auth.fetch_jwks(JwksCache(RuntimeConfig()), CREDENTIALED)

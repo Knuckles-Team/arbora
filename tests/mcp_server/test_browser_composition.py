@@ -12,6 +12,7 @@ from arbora.mcp_server.browser_composition import configured_browser_boundary
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.observability.state import Telemetry
 from arbora.security.key_cache import JwksCache
+from arbora.security.process_authority import ProcessAuthority
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 
@@ -40,7 +41,7 @@ def test_missing_secure_deployment_prerequisites_refuse(monkeypatch, origin):
             broker_claims=lambda: {},
             request_dispatch=object(),
             browser=BrowserState(),
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
             settings=RuntimeConfig(),
         )
 
@@ -68,7 +69,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
         composition, "run_web_ui", lambda stop, **kwargs: calls.append((stop, kwargs))
     )
     policies = ActionPolicies()
-    tools = ToolTable()
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     browser = BrowserState()
     telemetry = Telemetry()
     engine = object()
@@ -204,7 +205,7 @@ def test_settings_composition_forwards_factory_without_constructing_it(monkeypat
     )
     served_invocation.served_invocation_from_settings(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         process_session=lambda: SimpleNamespace(graph="fixture-graph"),
         engine_pool=lambda: pool,
         action_policies=ActionPolicies(),
@@ -305,7 +306,7 @@ def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
         object(),
         object(),
         action_policies=ActionPolicies(),
-        tools=ToolTable(),
+        tools=ToolTable(ProcessAuthority(config=RuntimeConfig())),
         browser=BrowserState(),
         telemetry=Telemetry(),
         host=object(),

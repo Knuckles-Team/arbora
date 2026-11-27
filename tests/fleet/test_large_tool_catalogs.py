@@ -16,6 +16,7 @@ import pytest
 from fastmcp import Client, FastMCP
 
 from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.catalog_composition import probe_primer
 from arbora.fleet.catalog_items import CatalogItem
 from arbora.fleet.multiplexer import (
@@ -564,7 +565,10 @@ def test_the_call_deadline_ignores_the_connect_budget() -> None:
     assert _child_call_timeout({"call_timeout": 120}, 5.0) == 5.0
     assert (
         ChildRuntime(
-            "slow", {"timeout": 15}, confirmations=PlanConfirmations()
+            "slow",
+            {"timeout": 15},
+            confirmations=PlanConfirmations(),
+            config=RuntimeConfig(),
         ).call_timeout
         == 300.0
     )
@@ -576,6 +580,7 @@ def test_a_call_slower_than_the_connect_budget_completes(monkeypatch) -> None:
 
     mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
     mux._catalog_epoch = 0
+    mux._fleet = SimpleNamespace(config=RuntimeConfig())
     mux.credential_authority = None
     monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
     monkeypatch.setattr(

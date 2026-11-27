@@ -15,8 +15,9 @@ from typing import Any
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.api.mcp.discovery import find_visible
+from arbora.api.mcp.discovery import discovery_budget_s, find_visible
 from arbora.api.policy import PolicyGate
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.declarations import Declarations
 from arbora.mcp_server.fleet_composition import LateFleetGateway
 
@@ -52,13 +53,17 @@ class _Resolver:
         return self.rank(verb, intent, items, scope_ref=scope_ref, top_k=top_k), None
 
 
-def _find(**kwargs: Any) -> dict[str, Any]:
+_HOST_CONFIG = RuntimeConfig()
+
+
+def _find(config: RuntimeConfig = _HOST_CONFIG, **kwargs: Any) -> dict[str, Any]:
     return asyncio.run(
         find_visible(
             registry=_Registry(),
             caller=_Caller(),
             policy_gate=PolicyGate("none"),
             resolver=_Resolver(),
+            budget_s=discovery_budget_s(config),
             **kwargs,
         )
     )
@@ -66,15 +71,15 @@ def _find(**kwargs: Any) -> dict[str, Any]:
 
 @pytest.mark.spec("ARBORA-FLEET-R062")
 def test_find_returns_partial_when_fleet_search_times_out(monkeypatch) -> None:
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "mcp_dynamic_discovery_timeout", 0.05)
+    config = RuntimeConfig()
+    config.mcp_dynamic_discovery_timeout = 0.05
 
     async def slow(**_kwargs: Any) -> list[dict[str, Any]]:
         await asyncio.sleep(5)
         return []
 
-    found = _find(fleet_search=slow, intent="webarchiver")
+    found = _find(config, fleet_search=slow, intent="webarchiver")
     assert found["items"] == []
     assert found["fleet_partial"] is True
     assert found["fleet"] == "timeout"
@@ -93,7 +98,7 @@ def test_fleet_call_refuses_fast_with_retry_hint_when_not_ready() -> None:
     from arbora.api.invoke.pipeline import OpError, _effective_op
 
     late = LateFleetGateway()
-    services = SimpleNamespace(fleet_effect=late.effect)
+    services = SimpleNamespace(fleet_effect=late.effect, config=RuntimeConfig())
     op = SimpleNamespace(id="fleet.call")
     caller: Any = _Caller()
     wired: Any = services

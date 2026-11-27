@@ -6,6 +6,7 @@ import pytest
 from starlette.requests import Request
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import SubsystemWindows
 from arbora.security.key_cache import JwksCache
 
@@ -540,7 +541,10 @@ def test_http_local_bearer_bridge_passes_exact_token_to_owner(monkeypatch):
     monkeypatch.setattr(request_identity, "verify_local_bearer_token", verify)
     req = bearer_request((b"authorization", b"Bearer exact-synthetic-token"))
     req.scope["state"] = {"principal": "spoofed", "tenant": "spoofed"}
-    assert asyncio.run(verify_local_bearer_request(JwksCache(), req)) is result
+    assert (
+        asyncio.run(verify_local_bearer_request(JwksCache(RuntimeConfig()), req))
+        is result
+    )
     assert seen == ["exact-synthetic-token"]
     assert result.principal == "fixture-principal"
 
@@ -562,7 +566,7 @@ def test_http_local_bearer_bridge_rejects_ambiguous_credentials(monkeypatch):
         (b"authorization", b"Bearer first"), (b"authorization", b"Bearer second")
     )
     with pytest.raises(HTTPAuthenticationError):
-        asyncio.run(verify_local_bearer_request(JwksCache(), req))
+        asyncio.run(verify_local_bearer_request(JwksCache(RuntimeConfig()), req))
 
 
 def test_bound_browser_verifier_calls_actual_webui_exporter(monkeypatch):

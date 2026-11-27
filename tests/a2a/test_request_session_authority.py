@@ -20,7 +20,7 @@ from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.application import AmbientA2AAuthenticator
 from arbora.a2a.service import A2AService
 from arbora.api.registry import Surface
-from arbora.core.settings import runtime_config as config
+from arbora.core.settings import RuntimeConfig
 from arbora.security import request_identity
 from arbora.security.actor_context import (
     ActorContext,
@@ -46,8 +46,8 @@ pytestmark = pytest.mark.spec("ARBORA-A2A-R006.2.1.1")
 
 def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
     # Existing configuration only; AU's actual public session minter executes.
-    monkeypatch.setitem(config._overrides, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setitem(config._overrides, "kg_policy_version", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
     verified: list[Any] = []
     requests: list[Any] = []
 
@@ -107,14 +107,11 @@ def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
 
 
 def test_authority_fixture_restores_live_configuration(monkeypatch) -> None:
-    for name in ("auth_jwt_audience", "kg_policy_version"):
-        monkeypatch.delitem(config._overrides, name, raising=False)
+    config = RuntimeConfig()
     with monkeypatch.context() as scoped:
         fixture(scoped)
         assert config.auth_jwt_audience == "arbora-fixture"
         assert config.kg_policy_version == "policy:fixture"
-    for name in ("auth_jwt_audience", "kg_policy_version"):
-        assert name not in config._overrides
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", "next-test-audience")
     monkeypatch.setenv("KG_POLICY_VERSION", "next-test-policy")
     assert config.auth_jwt_audience == "next-test-audience"
@@ -276,9 +273,11 @@ def registered_unary(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
     registrar = _Mcp()
     a2a_mcp.register_a2a_tools(
         registrar,
-        service=A2AService(authority=authority, router=Router()),
+        service=A2AService(
+            authority=authority, router=Router(), config=RuntimeConfig()
+        ),
         tool_table={},
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
     )
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():

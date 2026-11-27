@@ -18,6 +18,7 @@ from arbora.a2a.event_log import (
     A2AEventLog,
     A2AEventStreams,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.security.session import use_session
 from tests.a2a.test_operation_bridge import session
 from tests.test_agents_run_end_to_end import FakeEngine
@@ -74,7 +75,9 @@ def _draft(state: str = "working", *, final: bool = False, **extra: Any) -> dict
 
 
 def _log(engine: FakeEngine, clock: StepClock | None = None) -> A2AEventLog:
-    return A2AEventLog(lambda: engine, clock=clock or StepClock())
+    return A2AEventLog(
+        lambda: engine, clock=clock or StepClock(), config=RuntimeConfig()
+    )
 
 
 @pytest.mark.spec("ARBORA-A2A-R001.2")
@@ -292,10 +295,14 @@ def test_card_advertises_streaming_only_when_the_authority_is_wired() -> None:
 
     engine = _engine()
     wired = build_a2a_service(
-        engine_provider=lambda: engine, origins=RunOriginRegistry()
+        engine_provider=lambda: engine,
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     bare = A2AService(
-        authority=Authority(), router=OrchestratorA2ARouter(lambda: engine)
+        authority=Authority(),
+        router=OrchestratorA2ARouter(lambda: engine),
+        config=RuntimeConfig(),
     )
     assert wired.agent_card("http://x/a2a").capabilities.streaming is True
     assert bare.agent_card("http://x/a2a").capabilities.streaming is False

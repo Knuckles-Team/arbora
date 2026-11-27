@@ -62,12 +62,8 @@ class MediaLimits:
     max_text_bytes: int = MAX_TEXT_BYTES
 
     @classmethod
-    def from_config(cls, config: object | None = None) -> MediaLimits:
-        """The limits from runtime settings, each bounded to its range."""
-        if config is None:
-            from arbora.core.settings import runtime_config
-
-            config = runtime_config
+    def from_config(cls, config: object) -> MediaLimits:
+        """The limits from the host's runtime settings, each bounded to its range."""
         return cls(
             max_file_part_bytes=_bounded(
                 config, "a2a_max_file_part_bytes", 5_242_880, 1_024, 33_554_432

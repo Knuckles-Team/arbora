@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
@@ -16,7 +17,7 @@ from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsBinding,
     HostPortsSlot,
 )
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.current_plan_publication import publication_scope
 from arbora.run_origin import RunOriginRegistry
 from tests._support import run_events
@@ -35,7 +36,7 @@ def _model(model_id: str) -> Any:
     """The registry model; the bare ``test`` id answers once, without the plan tool."""
     if model_id == "test":
         return TestModel(call_tools=[])
-    return agent_runs.resolve_model(model_id)
+    return agent_runs.resolve_model(model_id, config=RuntimeConfig())
 
 
 def _ports(engine: _Engine | None) -> HostPortsSlot:
@@ -44,7 +45,7 @@ def _ports(engine: _Engine | None) -> HostPortsSlot:
     slot.bind(
         HostPortsBinding(
             HostPorts(
-                decide=agent_runs.decide_run,
+                decide=partial(agent_runs.decide_run, config=RuntimeConfig()),
                 models=_model,
                 events=run_events(engine),
                 scaffold_publication=publication_scope,
@@ -59,7 +60,7 @@ def _ports(engine: _Engine | None) -> HostPortsSlot:
 def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> _Engine:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
-    monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
+    monkeypatch.setenv("MODEL_REGISTRY_PATH", str(registry))
     engine = _Engine()
     return engine
 
@@ -70,7 +71,7 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
     bound: _Engine,
 ) -> None:
     result = await agent_runs.AgentRunPort(
-        origins=RunOriginRegistry(), ports=_ports(bound)
+        origins=RunOriginRegistry(), ports=_ports(bound), config=RuntimeConfig()
     ).execute_agent(
         AgentExecutionRequest(agent_name="helper", task="say hello"),
         session=cast(Any, object()),
@@ -98,10 +99,11 @@ def test_a_registry_endpoint_builds_an_openai_compatible_model(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
+    config = RuntimeConfig()
+    config.model_registry_path = str(registry)
 
-    assert agent_runs.resolve_model("unlisted") == "unlisted"
-    assert agent_runs.resolve_model("local").model_name == "m"
+    assert agent_runs.resolve_model("unlisted", config=config) == "unlisted"
+    assert agent_runs.resolve_model("local", config=config).model_name == "m"
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.1")
@@ -109,10 +111,10 @@ def test_a_registry_endpoint_builds_an_openai_compatible_model(
 async def test_a_run_without_a_model_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(runtime_config, "model_registry_path", None)
+    monkeypatch.delenv("MODEL_REGISTRY_PATH", raising=False)
     with pytest.raises(RuntimeError, match="no model"):
         await agent_runs.AgentRunPort(
-            origins=RunOriginRegistry(), ports=_ports(None)
+            origins=RunOriginRegistry(), ports=_ports(None), config=RuntimeConfig()
         ).execute_agent(
             AgentExecutionRequest(agent_name="helper", task="say hello"),
             session=cast(Any, object()),

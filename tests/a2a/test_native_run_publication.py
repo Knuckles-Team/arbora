@@ -1,3 +1,4 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Trusted A2A native admission binds actual AU scaffold callbacks, not metadata."""
@@ -45,7 +46,10 @@ async def test_only_native_claim_path_binds_actual_au_callback(
             return "done"
 
     authority = WorkItemA2AAuthority(
-        lambda: work_engine, executor=Executor(), origins=RunOriginRegistry()
+        lambda: work_engine,
+        executor=Executor(),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     if native:
         authority.task_plan_config = TaskPlanConfig({}, {}, 1, 2)

@@ -42,7 +42,7 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch):
     monkeypatch.setattr(served_invocation, "compose_served_invocation", compose)
     served_invocation.served_invocation_from_settings(
         config=config,
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         process_session=lambda: SimpleNamespace(graph="fixture"),
         engine_pool=lambda: object(),
         action_policies=ActionPolicies(),

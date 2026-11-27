@@ -10,9 +10,11 @@ import pytest
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.key_cache import JwksCache
+from arbora.security.process_authority import ProcessAuthority
 
 
 class _Mcp:
@@ -49,12 +51,12 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
         async def get(self, task_id: str) -> A2ATask | None:
             return task if task_id == task.id else None
 
-    service = A2AService(authority=Authority(), router=object())  # type: ignore[arg-type]
+    service = A2AService(authority=Authority(), router=object(), config=RuntimeConfig())  # type: ignore[arg-type]
     mcp = _Mcp()
-    table = ToolTable()
+    table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     try:
         a2a_mcp.register_a2a_tools(
-            mcp, service=service, tool_table=table, keys=JwksCache()
+            mcp, service=service, tool_table=table, keys=JwksCache(RuntimeConfig())
         )
         assert table["graph_a2a"] is mcp.tools["graph_a2a"]
         assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"

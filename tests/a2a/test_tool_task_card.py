@@ -17,6 +17,7 @@ from arbora.a2a.tool_task_card import (
     verify_attestation,
 )
 from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
+from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_application import Authenticator, Authority, Router
 
 HEADERS = {"Authorization": "Bearer verified", "Idempotency-Key": "send-key"}
@@ -49,7 +50,9 @@ class Admitter:
 
 
 def _client(**kwargs: Any) -> TestClient:
-    service = A2AService(authority=Authority(), router=Router(), **kwargs)
+    service = A2AService(
+        authority=Authority(), router=Router(), **kwargs, config=RuntimeConfig()
+    )
     app = create_a2a_application(service=service, authenticator=Authenticator())
     return TestClient(app)
 

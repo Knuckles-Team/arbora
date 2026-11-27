@@ -80,7 +80,11 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
             if isinstance(config, dict) and config.get("url"):
                 try:
                     url = str(
-                        resolve_runtime_value(config.get("url", ""), sensitive=False)
+                        resolve_runtime_value(
+                            config.get("url", ""),
+                            sensitive=False,
+                            config=multiplexer.fleet.config,
+                        )
                     )
                 except Exception as exc:  # omit an unresolvable URL
                     logger.debug(

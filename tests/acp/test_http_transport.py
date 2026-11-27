@@ -470,7 +470,6 @@ def _test_issuer(monkeypatch):
     from joserfc import jwt
     from joserfc.jwk import RSAKey
 
-    from arbora.core.settings import runtime_config
     from arbora.security import auth
 
     key = RSAKey.generate_key(2048, parameters={"kid": "test-only"})
@@ -483,19 +482,6 @@ def _test_issuer(monkeypatch):
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", audience)
     monkeypatch.setenv("AUTH_JWT_ALGORITHMS", "RS256")
     monkeypatch.setenv("KG_POLICY_VERSION", policy_version)
-    # This fixture is imported by the central-runtime tests alongside other
-    # settings-heavy fixtures.  Remove any earlier process overrides for the
-    # values this issuer owns so the live environment is authoritative.  The
-    # override layer is restored by pytest's monkeypatch fixture after each
-    # server fixture; later drift checks can therefore change the environment
-    # and exercise the real profile comparison rather than a pinned override.
-    for name in (
-        "auth_jwt_jwks_uri",
-        "auth_jwt_issuer",
-        "auth_jwt_audience",
-        "kg_policy_version",
-    ):
-        monkeypatch.delitem(runtime_config._overrides, name, raising=False)
 
     async def fetch(_keys, uri):
         assert uri == "https://issuer.invalid/jwks"

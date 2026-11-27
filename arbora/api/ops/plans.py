@@ -53,6 +53,11 @@ from arbora.api.invoke.certification_gate import (
     require_run_attestation,
 )
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.screening import (
+    ScreenSettings,
+    redact_result,
+    screen_settings,
+)
 from arbora.api.ops._common import Params
 from arbora.api.ops.policy import policy_guard
 from arbora.api.ops.ports import port_of
@@ -759,16 +764,20 @@ async def governed_tool_caller(
     return await fleet.run_step(task_id, server, tool, arguments)
 
 
-def _redacted(value: Any) -> Any:
-    from arbora.api.invoke.screening import redact_result
+def _screen(context: Any) -> ScreenSettings:
+    """The screen settings of the host config the operation context carries."""
+    return screen_settings(context.services["config"])
 
-    return redact_result(value)[0]
+
+def _redacted(value: Any, screen: ScreenSettings) -> Any:
+    return redact_result(value, screen)[0]
 
 
 def _reply_steps(
     plan: Mapping[str, Any],
     tasks: Mapping[str, Mapping[str, Any]],
     fleet: FleetStepTools | None,
+    screen: ScreenSettings,
 ) -> list[dict[str, Any]]:
     """Each tool step in declaration order, from the harness record and the ledger.
 
@@ -778,15 +787,19 @@ def _reply_steps(
     """
     ledger = fleet.ledger if fleet is not None else []
     return [
-        _reply_step(task, (tasks.get(task["task_id"]) or {}).get("tool_step"), ledger)
+        _reply_step(
+            task, (tasks.get(task["task_id"]) or {}).get("tool_step"), ledger, screen
+        )
         for task in _plan_calls(plan)
     ]
 
 
-def _step_evidence(task: Mapping[str, Any], entries: list[Any]) -> dict[str, Any]:
+def _step_evidence(
+    task: Mapping[str, Any], entries: list[Any], screen: ScreenSettings
+) -> dict[str, Any]:
     """The pipeline half of a step reply: per-item entries, or the one call's key."""
     if isinstance(task.get("foreach"), Mapping):
-        return {"items": [_reply_item(entry) for entry in entries]}
+        return {"items": [_reply_item(entry, screen) for entry in entries]}
     first = entries[0] if entries else {}
     return {
         "idempotency_key": first.get("idempotency_key"),
@@ -795,25 +808,28 @@ def _step_evidence(task: Mapping[str, Any], entries: list[Any]) -> dict[str, Any
 
 
 def _reply_step(
-    task: Mapping[str, Any], record: Mapping[str, Any] | None, ledger: list[Any]
+    task: Mapping[str, Any],
+    record: Mapping[str, Any] | None,
+    ledger: list[Any],
+    screen: ScreenSettings,
 ) -> dict[str, Any]:
     record = record or {}
     entries = [e for e in ledger if e["task_id"] == task["task_id"]]
     reason = record.get("error") or (None if record else "not_started")
     step: dict[str, Any] = {
         "task_id": task["task_id"],
-        "resolved_arguments": _redacted(record.get("arguments")),
+        "resolved_arguments": _redacted(record.get("arguments"), screen),
         "outcome": record.get("outcome") or "refused",
-        "failure_reason": _redacted(reason),
-        "result": _redacted(record.get("result")),
-        **_step_evidence(task, entries),
+        "failure_reason": _redacted(reason, screen),
+        "result": _redacted(record.get("result"), screen),
+        **_step_evidence(task, entries, screen),
     }
     if record.get("reference"):
         step["failed_reference"] = record["reference"]
     return step
 
 
-def _reply_item(entry: Mapping[str, Any]) -> dict[str, Any]:
+def _reply_item(entry: Mapping[str, Any], screen: ScreenSettings) -> dict[str, Any]:
     code = entry.get("error")
     outcome = (
         "ok"
@@ -824,10 +840,10 @@ def _reply_item(entry: Mapping[str, Any]) -> dict[str, Any]:
     )
     return {
         "index": entry.get("item_index"),
-        "resolved_arguments": _redacted(entry.get("arguments")),
+        "resolved_arguments": _redacted(entry.get("arguments"), screen),
         "outcome": outcome,
         "failure_reason": code,
-        "result": _redacted(entry.get("result")),
+        "result": _redacted(entry.get("result"), screen),
         "idempotency_key": entry.get("idempotency_key"),
         "audit_ref": entry.get("audit_ref"),
     }
@@ -928,6 +944,7 @@ async def execute_task_plan(
     *,
     run_id: str,
     fleet: FleetStepTools | None = None,
+    screen: ScreenSettings,
     ports: Any = None,
     prompts: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
@@ -946,7 +963,7 @@ async def execute_task_plan(
         "started_order": started,
         "tasks": tasks,
         "fleet_calls": _fleet_calls(fleet),
-        "steps": _reply_steps(plan, tasks, fleet),
+        "steps": _reply_steps(plan, tasks, fleet, screen),
     }
 
 
@@ -955,12 +972,13 @@ def _plan_model(context: Any) -> Any:
     if model is not None:
         return model
     settings = port_of(context, "run_settings")
-    model_id = settings.run_config().get("agent_model")
+    config = context.services["config"]
+    model_id = settings.run_config(config).get("agent_model")
     if not model_id:
         raise OperationRefused(
             "UNAVAILABLE", {"reason": "no agent model is configured for task plans"}
         )
-    return settings.resolve_model(model_id)
+    return settings.resolve_model(model_id, config=config)
 
 
 async def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
@@ -1431,6 +1449,7 @@ async def _publish_and_execute_native_plan(
             _plan_model(context),
             run_id=admission.run_id,
             fleet=_fleet_step_tools(context, parsed.fleet_tools, context.caller, plan),
+            screen=_screen(context),
             ports=_host_ports(context),
         )
     return published_plan, run
@@ -1535,6 +1554,7 @@ async def handle_plan_run(
                     _plan_model(context),
                     run_id=lease.run_id,
                     fleet=_fleet_step_tools(context, parsed.fleet_tools, caller, plan),
+                    screen=_screen(context),
                     ports=_host_ports(context),
                 )
         except asyncio.CancelledError:
@@ -1559,6 +1579,7 @@ async def handle_plan_run(
             _plan_model(context),
             run_id=run_id,
             fleet=_fleet_step_tools(context, parsed.fleet_tools, caller, plan),
+            screen=_screen(context),
             ports=_host_ports(context),
         )
     if native is not None:

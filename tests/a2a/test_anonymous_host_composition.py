@@ -15,6 +15,7 @@ from fastmcp import FastMCP
 from arbora.a2a.anonymous_host import anonymous_a2a_provider
 from arbora.a2a.mcp import register_a2a_tools
 from arbora.a2a.service import A2AService
+from arbora.core.settings import RuntimeConfig
 from arbora.security import anonymous
 from arbora.security.key_cache import JwksCache
 from tests.a2a.test_anonymous_native_reads import RUN, response
@@ -35,11 +36,15 @@ def _host(client: Any) -> FastMCP:
     mcp = FastMCP("arbora-test")
     register_a2a_tools(
         mcp,
-        service=A2AService(authority=None, router=None),  # type: ignore[arg-type]
+        service=A2AService(authority=None, router=None, config=RuntimeConfig()),  # type: ignore[arg-type]
         tool_table={},
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         anonymous=anonymous_a2a_provider(
-            origin=ORIGIN, graph="control", revision="test", connect=connect
+            origin=ORIGIN,
+            graph="control",
+            revision="test",
+            connect=connect,
+            config=RuntimeConfig(),
         ),
     )
     return mcp

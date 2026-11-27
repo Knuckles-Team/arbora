@@ -45,8 +45,17 @@ def _install(mux: MCPMultiplexer, path: Path) -> MCPMultiplexer:
     return mux
 
 
-def multiplexer_from_fixture(path: Path) -> MCPMultiplexer:
-    return _install(MCPMultiplexer(_NeverRead(), fleet=FleetState()), path)
+def fleet_config(**overrides: Any) -> RuntimeConfig:
+    """A host config view whose named settings are overridden, never the environment."""
+    config = RuntimeConfig()
+    for name, value in overrides.items():
+        setattr(config, name, value)
+    return config
+
+
+def multiplexer_from_fixture(path: Path, **overrides: Any) -> MCPMultiplexer:
+    fleet = FleetState(config=fleet_config(**overrides))
+    return _install(MCPMultiplexer(_NeverRead(), fleet=fleet), path)
 
 
 def attach_multiplexer_from_fixture(host: Any, path: Path) -> MCPMultiplexer:

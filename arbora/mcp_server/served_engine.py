@@ -480,12 +480,12 @@ def engine_unbound() -> Any:
 
 
 def _pool_factory_over(
-    pool_factory: Callable[[], Any] | None, config: RuntimeConfig | None
+    pool_factory: Callable[[], Any] | None, config: RuntimeConfig
 ) -> Callable[[], Any]:
-    """The given pool factory, or the process pool over the given (or a fresh) config."""
+    """The given pool factory, or the process pool over the host's config."""
     if pool_factory is not None:
         return pool_factory
-    return partial(_build_process_pool, RuntimeConfig() if config is None else config)
+    return partial(_build_process_pool, config)
 
 
 class EngineHandles:
@@ -502,7 +502,8 @@ class EngineHandles:
         self,
         pool_factory: Callable[[], Any] | None = None,
         process_session: Callable[[], Any] = no_process_session,
-        config: RuntimeConfig | None = None,
+        *,
+        config: RuntimeConfig,
     ) -> None:
         self._lock = threading.Lock()
         self._process_session = process_session

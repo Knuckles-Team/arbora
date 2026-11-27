@@ -8,6 +8,7 @@ from medulla.client import MedullaClient
 
 from arbora.a2a.anonymous import AnonymousCaller
 from arbora.a2a.anonymous_native import EgAnonymousTaskReadPort
+from arbora.core.settings import RuntimeConfig
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.8.3")
 RUN = "a2a-" + "a" * 64
@@ -184,7 +185,8 @@ async def test_real_http_service_and_generated_native_sender_compose():
         work_items=port,
     )
     app = create_anonymous_a2a_application(
-        owner=owner, service=A2AService(authority=owner, router=None)
+        owner=owner,
+        service=A2AService(authority=owner, router=None, config=RuntimeConfig()),
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://127.0.0.1:8080"

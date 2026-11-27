@@ -26,6 +26,7 @@ from arbora.api.domain.a2a.models import (
     A2ATextPart,
 )
 from arbora.core.a2a_errors import A2AIdempotencyConflict
+from arbora.core.settings import RuntimeConfig
 from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
@@ -242,8 +243,11 @@ class WorkItemA2AAuthority:
         clock: Callable[[], float] = time.time,
         held_output_refs: Callable[[str, Any], Any] | None = None,
         ports: Any = None,
+        config: RuntimeConfig,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The host settings the default agent executor reads.
+        self._config = config
         #: The host's ``HostPortsSlot`` the default agent executor runs on.
         self._ports = ports
         #: ``(task_id, session) -> HeldOutputRefs | None``: the refs of the held
@@ -662,12 +666,19 @@ class WorkItemA2AAuthority:
 
         if self.events is None or native_stream_open():
             return None
+        from arbora.api.invoke.screening import screen_settings
+
         from .run_events import RunEventObserver
 
         async def publish(draft: dict[str, Any]) -> None:
             await self.events.publish(item_id, draft, claim=claim)
 
-        return RunEventObserver(publish, task_id=task_id, context_id=context_id)
+        return RunEventObserver(
+            publish,
+            task_id=task_id,
+            context_id=context_id,
+            screen=screen_settings(self.events.config),
+        )
 
     async def owned_item(self, task_id: str) -> dict[str, Any] | None:
         """The caller's own task record, or ``None`` for an absent or foreign task."""
@@ -680,7 +691,9 @@ class WorkItemA2AAuthority:
         if self._executor is None:
             from arbora.agent_runs import AgentRunPort
 
-            self._executor = AgentRunPort(origins=self._origins, ports=self._ports)
+            self._executor = AgentRunPort(
+                origins=self._origins, ports=self._ports, config=self._config
+            )
         return self._executor
 
     def _held_refs(self, task_id: str, session: Any) -> Any:

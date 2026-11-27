@@ -123,7 +123,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedCli
     process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
@@ -159,7 +159,7 @@ def _served_native_app(
     process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

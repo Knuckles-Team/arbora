@@ -101,7 +101,7 @@ async def _served(
     host = compose_host_context(FixedEngineHandles(client))
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,
@@ -190,7 +190,9 @@ class _Model:
 
 
 async def _run(session: Any, run_id: str) -> Any:
-    return await AgentRunPort(origins=RunOriginRegistry(), ports=_PORTS).execute_agent(
+    return await AgentRunPort(
+        origins=RunOriginRegistry(), ports=_PORTS, config=RuntimeConfig()
+    ).execute_agent(
         AgentExecutionRequest(
             agent_name="webui-assistant",
             task="request synthetic attended browser action",

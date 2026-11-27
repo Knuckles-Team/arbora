@@ -155,5 +155,5 @@ def test_server_factory_discovers_jwks(monkeypatch: pytest.MonkeyPatch) -> None:
         token_public_key=None,
         required_scopes=None,
     )
-    verifier = _configure_jwt_auth(args)
+    verifier = _configure_jwt_auth(args, RuntimeConfig())
     assert isinstance(verifier, JWTVerifier)

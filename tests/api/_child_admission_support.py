@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 DONE = "a2a-" + "b" * 64
@@ -125,4 +126,6 @@ def authority(
         "_session",
         staticmethod(lambda scope: SimpleNamespace(tenant="t1", actor="a")),
     )
-    return WorkItemA2AAuthority(lambda: object(), origins=RunOriginRegistry())
+    return WorkItemA2AAuthority(
+        lambda: object(), origins=RunOriginRegistry(), config=RuntimeConfig()
+    )

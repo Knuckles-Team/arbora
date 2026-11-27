@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.tool_rows import EngineToolRows, ProbeToolRows, ToolRowReader
 
@@ -37,6 +38,7 @@ class _Recording:
 def _mux(reader: ToolRowReader) -> Any:
     return SimpleNamespace(
         _tool_rows=reader,
+        _fleet=SimpleNamespace(config=RuntimeConfig()),
         _tool_enabled=lambda server, tool: True,
         tool_dispatchable=lambda name: True,
         server_prefix=lambda server: "p",

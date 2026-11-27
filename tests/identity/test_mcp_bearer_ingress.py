@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.middlewares import ActorContextMiddleware
 from arbora.security.bearer import BearerRefusal, BearerRefused
 from arbora.security.key_cache import JwksCache
@@ -24,7 +25,9 @@ def test_mcp_tool_call_verifies_the_bearer_first(
             raise BearerRefused(BearerRefusal.SIGNATURE_INVALID)
 
     monkeypatch.setattr("arbora.security.bearer.precheck_bearer", precheck)
-    middleware = ActorContextMiddleware(keys=JwksCache(), require_verified_session=True)
+    middleware = ActorContextMiddleware(
+        keys=JwksCache(RuntimeConfig()), require_verified_session=True
+    )
     claims = {"sub": "person:ada", "tenant_id": "tenant:one", "scope": "kg:read"}
     monkeypatch.setattr(ActorContextMiddleware, "_claims", lambda self, context: claims)
     monkeypatch.setattr(

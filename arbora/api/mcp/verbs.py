@@ -13,6 +13,7 @@ from arbora.api.mcp.discovery import (
     FleetCatalog,
     FleetSearch,
     describe_op,
+    discovery_budget_s,
     find_visible,
     visible_ops,
 )
@@ -155,6 +156,7 @@ async def _try_find_discovery(
             policy_gate=projection.policy_gate,
             resolver=projection.resolver,
             fleet_search=projection.fleet_search,
+            budget_s=discovery_budget_s(projection.services.config),
             fleet_catalog=projection.fleet_catalog,
             intent=intent,
             op=op,

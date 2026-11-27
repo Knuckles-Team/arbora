@@ -10,10 +10,12 @@ from typing import Any
 import pytest
 
 from arbora.api.contracts.agent_control_plane import GraphRlmRunRequest
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.agent_control import register_graph_rlm
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.process_authority import ProcessAuthority
 from arbora.security.session import GraphSession, resolve_session
 
 
@@ -73,13 +75,13 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
             calls.append(request)
             return SimpleNamespace(model_dump_json=lambda: '{"action":"run","ok":true}')
 
-    def factory(actual_client: Any, actual_session: Any, *, origins: Any):
+    def factory(actual_client: Any, actual_session: Any, *, origins: Any, config: Any):
         assert actual_client is client
         assert actual_session is session
         assert resolve_session(actual_session) is session
         return ControlPlane()
 
-    table = ToolTable()
+    table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     table.authority.bind_session(session)
     prior_route = runtime.ACTION_TOOL_ROUTES.get("graph_rlm")
     try:
@@ -90,6 +92,7 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
                 client if actual_session is session else None
             ),
             origins=object(),
+            config=RuntimeConfig(),
             factory=factory,
         )
         request = GraphRlmRunRequest(task="inspect", input_text="state")
@@ -118,9 +121,10 @@ async def test_graph_rlm_call_has_no_unverified_fallback() -> None:
     try:
         register_graph_rlm(
             mcp,
-            ToolTable(),
+            ToolTable(ProcessAuthority(config=RuntimeConfig())),
             client_for_session=lambda session: object(),
             origins=object(),
+            config=RuntimeConfig(),
         )
         with pytest.raises(PermissionError, match="verified authorities required"):
             await mcp.tools["graph_rlm"](
@@ -144,9 +148,10 @@ async def test_graph_rlm_rejects_mismatched_ambient_session() -> None:
     try:
         register_graph_rlm(
             mcp,
-            ToolTable(),
+            ToolTable(ProcessAuthority(config=RuntimeConfig())),
             client_for_session=lambda session: object(),
             origins=object(),
+            config=RuntimeConfig(),
         )
         with pytest.raises(PermissionError, match="authority differ"):
             await mcp.tools["graph_rlm"](

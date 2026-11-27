@@ -13,7 +13,7 @@ from arbora.access.approval import ApprovalDecisions
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import HostCaches, build_host_caches
 from arbora.mcp_server.host_context import build_host_context
 from arbora.observability.state import build_health_state
 
@@ -76,7 +76,7 @@ def test_two_host_caches_register_independent_tool_tables() -> None:
 
 
 def test_a_table_is_complete_only_after_a_finished_build_and_only_while_whole() -> None:
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     assert not caches.tools.is_complete()
     caches.tools["find"] = object()
     assert not caches.tools.is_complete()
@@ -87,14 +87,17 @@ def test_a_table_is_complete_only_after_a_finished_build_and_only_while_whole() 
 
 
 def test_host_caches_is_frozen_and_slotted() -> None:
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     with pytest.raises(dataclasses.FrozenInstanceError):
         caches.tools = caches.tools  # type: ignore[misc]
     assert not hasattr(caches, "__dict__")
 
 
 def test_intent_state_is_per_host_and_previews_and_approvals_expire() -> None:
-    first, second = HostCaches().intent, HostCaches().intent
+    first, second = (
+        build_host_caches(RuntimeConfig()).intent,
+        build_host_caches(RuntimeConfig()).intent,
+    )
     first.approve("op", now=0.0)
     first.remember_preview("ref", "plan", now=0.0)
     assert first.approved("op", now=1.0)
@@ -107,7 +110,7 @@ def test_intent_state_is_per_host_and_previews_and_approvals_expire() -> None:
 
 
 def test_a_rebuilt_candidate_table_versions_the_resolution_key() -> None:
-    cache = HostCaches().intent
+    cache = build_host_caches(RuntimeConfig()).intent
     assert cache.candidates() is None
     assert cache.generation == 0
     cache.store_candidates([])

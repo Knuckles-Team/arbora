@@ -105,7 +105,6 @@ def files(
     request: pytest.FixtureRequest,
     tmp_path: Path,
 ) -> Any:
-    from arbora.core.settings import runtime_config
 
     composed: list[Any] = []
     compose = served_api.compose_served_invocation
@@ -116,7 +115,7 @@ def files(
 
     monkeypatch.setattr(served_api, "compose_served_invocation", capture)
 
-    monkeypatch.setattr(runtime_config, "memory_files_root", str(tmp_path / "root"))
+    monkeypatch.setenv("MEMORY_FILES_ROOT", str(str(tmp_path / "root")))
     monkeypatch.setattr(
         served_api, "SCOPES", (*served_api.SCOPES, "memory:read", "memory:write")
     )
@@ -236,10 +235,9 @@ def test_materialization_writes_the_file_then_acknowledges_with_a_growing_genera
 def test_an_unset_root_refuses_before_any_engine_call(
     files: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from arbora.core.settings import runtime_config
 
     app, snapshots, _ = files
-    monkeypatch.setattr(runtime_config, "memory_files_root", None)
+    monkeypatch.delenv("MEMORY_FILES_ROOT", raising=False)
     response = _save(app, "notes/a", "one", "k1")
     assert response.status_code == 503
     assert snapshots.calls == []

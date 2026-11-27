@@ -26,6 +26,7 @@ from arbora.a2a.held_output_source import (
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter
 from arbora.api.domain.a2a.models import A2AArtifact
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_application import Authenticator, Authority, Router, _send
 
@@ -124,7 +125,9 @@ async def _produce(engine: Engine, decide: Decide) -> dict[str, Any] | None:
 
 def _served(engine: Engine, decide: Decide) -> TestClient:
     """The task a real terminal read yields, sent through the real ``/a2a`` route."""
-    reader = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
+    reader = WorkItemA2AAuthority(
+        lambda: engine, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     reader.held_output_source = HeldOutputSource(decide)
     artifacts, held = reader._persisted_reply(
         TASK, item={"status": "succeeded", "metadata": {"a2a_run_id": TASK}}
@@ -143,7 +146,9 @@ def _served(engine: Engine, decide: Decide) -> TestClient:
     chain = SimpleNamespace(held_items=HeldItemAdmitter(HeldDecider(decide), audit))
     return TestClient(
         create_a2a_application(
-            service=A2AService(authority=authority, router=Router()),
+            service=A2AService(
+                authority=authority, router=Router(), config=RuntimeConfig()
+            ),
             authenticator=Authenticator(),
             approvals=chain,  # type: ignore[arg-type]
         )
@@ -251,7 +256,9 @@ async def test_without_a_checklist_or_an_answer_no_refs_exist_and_the_output_sta
 
 @pytest.mark.spec("ARBORA-A2A-R022.1")
 def test_binding_needs_the_whole_decision_port() -> None:
-    authority = WorkItemA2AAuthority(lambda: None, origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     assert not bind_held_output(authority, SimpleNamespace())
     assert authority.held_output_source is None
     assert bind_held_output(

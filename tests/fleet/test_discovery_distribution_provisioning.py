@@ -12,6 +12,7 @@ from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.work_items import WorkItemView
 from arbora.control_plane.policy.models import canonical_digest
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.provision_flow import (
     EVIDENCE_KIND,
     REFUSALS,
@@ -174,7 +175,9 @@ def test_graph_and_agent_agree_before_success(sdk: Any) -> None:
 def test_one_request_traverses_discovery_to_skill(sdk: Any) -> None:
     probe = Probe()
     service, _adapter, journal = _service(sdk, probe)
-    authority = WorkItemA2AAuthority(lambda: None, origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     authority.provisioning = service
     receipt = authority.provision_work_item(VIEW, request("flow-3", 1))
     assert probe.calls[0] == "discover" and probe.calls[-1] == "graph_read"
@@ -185,7 +188,7 @@ def test_one_request_traverses_discovery_to_skill(sdk: Any) -> None:
     assert receipt.discovery_generation == "gen-9" and journal.verify()
     with pytest.raises(RuntimeError, match="unavailable"):
         WorkItemA2AAuthority(
-            lambda: None, origins=RunOriginRegistry()
+            lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
         ).provision_work_item(VIEW, request("x", 1))
 
 

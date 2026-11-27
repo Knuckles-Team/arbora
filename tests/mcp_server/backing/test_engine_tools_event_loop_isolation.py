@@ -36,9 +36,10 @@ import time
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools import engine_tools
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
 from arbora.security.session import GraphSession, use_session
 
@@ -67,7 +68,7 @@ _BLOCK_SECONDS = 0.6
 
 @pytest.mark.asyncio
 async def test_slow_domain_tool_call_does_not_freeze_the_event_loop(monkeypatch):
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     tool = engine_tools._make_domain_tool("tenants", ["list"])
 
@@ -117,7 +118,7 @@ async def test_offloaded_dispatch_still_sees_the_calling_tasks_session(monkeypat
     correctness, not just concurrency. asyncio.to_thread copies the current
     context, so `_dispatch` running on the worker thread must observe the
     SAME ambient session the calling task set up."""
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     tool = engine_tools._make_domain_tool("nodes", ["has"])
 

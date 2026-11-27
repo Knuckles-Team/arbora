@@ -6,6 +6,7 @@ import threading
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.ecosystem import ard_signing
 from arbora.mcp_server import bootstrap, runtime
 from arbora.mcp_server.host_context import build_host_context
@@ -16,7 +17,10 @@ from arbora.security.process_authority import ProcessAuthority
 
 @pytest.mark.spec("ARBORA-HOST-R039.9")
 def test_two_authorities_hold_separate_sessions_and_stop_events() -> None:
-    first, second = ProcessAuthority(), ProcessAuthority()
+    first, second = (
+        ProcessAuthority(config=RuntimeConfig()),
+        ProcessAuthority(config=RuntimeConfig()),
+    )
     first.bind_session("session-one")
     assert first.session() == "session-one"
     assert second.session() is None
@@ -37,7 +41,9 @@ def test_the_host_authority_is_the_tool_table_authority() -> None:
     host = build_host_context()
     assert host.authority is host.caches.tools.authority
     host.authority.bind_session("bound")
-    handles = EngineHandles(lambda: object(), host.authority.session)
+    handles = EngineHandles(
+        lambda: object(), host.authority.session, config=RuntimeConfig()
+    )
     assert handles.served().process_session() == "bound"
 
 

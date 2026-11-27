@@ -21,7 +21,7 @@ from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.gateway.state import GatewayState
-from arbora.mcp_server.host_caches import HostCaches, ToolTable
+from arbora.mcp_server.host_caches import HostCaches, ToolTable, build_host_caches
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.mcp_server.sql_schema_binding import serve_sql_schema
 from arbora.observability.metric_evidence import EngineMetricEvidence
@@ -97,11 +97,7 @@ def build_host_context() -> HostContext:
 def compose_host_context(engine: EngineHandles) -> HostContext:
     """Compose the host state over the given engine handles and fresh caches."""
     config = RuntimeConfig()
-    keys = JwksCache(config)
-    return compose_host_context_over(
-        engine,
-        HostCaches(tools=ToolTable(ProcessAuthority(keys, config=config)), jwks=keys),
-    )
+    return compose_host_context_over(engine, build_host_caches(config))
 
 
 def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> HostContext:
@@ -120,6 +116,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         feature_schema=decide.feature_schema,
         decision_principal=decide.principal,
         ports=ports,
+        config=caches.tools.authority.config,
     )
     fleet = FleetState(config=caches.tools.authority.config)
     gateway = GatewayState()

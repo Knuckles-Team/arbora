@@ -19,6 +19,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
 from arbora.api.domain.a2a.models import A2AInlineMediaFile
+from arbora.core.settings import RuntimeConfig
 
 logger = logging.getLogger(__name__)
 
@@ -244,11 +245,11 @@ def run_media(message: Any, capability: Any) -> dict[str, Any]:
 class SessionMediaRefStore:
     """The served store: the engine view and graph come from the verified session."""
 
-    def __init__(self, engine_provider: Any) -> None:
+    def __init__(self, engine_provider: Any, *, config: RuntimeConfig) -> None:
         self._engine_provider = engine_provider
+        self._config = config
 
     def _store(self) -> EngineMediaRefStore:
-        from arbora.core.settings import runtime_config
         from arbora.security.session import current_session
 
         session = current_session()
@@ -257,7 +258,7 @@ class SessionMediaRefStore:
             raise MediaStoreUnavailable("no verified session or engine")
         client = engine.graph_compute.for_graph(session.graph).async_client
         return EngineMediaRefStore(
-            client, session.graph, int(runtime_config.a2a_media_ref_ttl_seconds)
+            client, session.graph, int(self._config.a2a_media_ref_ttl_seconds)
         )
 
     async def put(

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tool_specs import (
     INTENT_VERBS,
@@ -20,7 +21,7 @@ from arbora.mcp_server.backing.tool_specs import (
     canonical_tool_names,
 )
 from arbora.mcp_server.backing.tools import engine_tools
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import HostCaches, build_host_caches
 from arbora.mcp_server.routes import mount_rest_routes
 
 # The 21 ``engine_<domain>`` tool families are declared as REQUIRED
@@ -80,7 +81,7 @@ def _canonical_runtime_names(caches: HostCaches) -> frozenset[str]:
 
 @_NEEDS_ENGINE_DOMAINS
 def test_every_mcp_tool_has_a_rest_route():
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     tools = set(caches.tools)
     mapped = set(runtime.ACTION_TOOL_ROUTES)
@@ -96,7 +97,7 @@ def test_every_mcp_tool_has_a_rest_route():
 
 @_NEEDS_ENGINE_DOMAINS
 def test_no_phantom_routes_for_missing_tools():
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     tools = set(caches.tools)
     mapped = set(runtime.ACTION_TOOL_ROUTES)
@@ -110,7 +111,7 @@ def test_no_phantom_routes_for_missing_tools():
 
 
 def test_mapped_routes_are_actually_mounted():
-    paths = _mounted_paths(HostCaches())
+    paths = _mounted_paths(build_host_caches(RuntimeConfig()))
     for tool, path in runtime.ACTION_TOOL_ROUTES.items():
         assert path in paths, (
             f"Tool '{tool}' maps to '{path}' but that route is not mounted by "
@@ -120,14 +121,14 @@ def test_mapped_routes_are_actually_mounted():
 
 def test_prefix_is_applied_to_mounted_routes():
     # The API gateway mounts these under /api — confirm the prefix is honoured.
-    paths = _mounted_paths(HostCaches(), prefix="/api")
+    paths = _mounted_paths(build_host_caches(RuntimeConfig()), prefix="/api")
     for path in runtime.ACTION_TOOL_ROUTES.values():
         assert ("/api" + path) in paths
 
 
 def test_retired_legacy_tool_fanout_is_not_mounted():
     """Old standalone mining/research routes are absent from AU's served API."""
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     paths = _mounted_paths(caches)
     retired = {"graph_mine", "graph_mine_deep", "graph_ops_causal", "graph_research"}
     assert retired.isdisjoint(caches.tools)

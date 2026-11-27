@@ -33,6 +33,7 @@ from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.tool_action_admission import ToolActionAdmitter
 from arbora.api.invoke.plan import PlanBinding
 from arbora.core.claims import params_digest
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.approval import RegisteredApprovalKey
 from tests.a2a.test_application import Authority, Router
 from tests.api._support import make_verified_caller
@@ -234,7 +235,9 @@ def _post(
     chain: ApprovalChain, caller: Any, task: str, call: str, ref: str, sig: str
 ) -> Any:
     app = create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
+        service=A2AService(
+            authority=Authority(), router=Router(), config=RuntimeConfig()
+        ),
         authenticator=Authenticator(caller),
         approvals=chain,
     )

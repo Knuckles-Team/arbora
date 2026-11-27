@@ -24,6 +24,7 @@ from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.bootstrap import verify_current_from_session
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Confirm, Surface
+from arbora.core.settings import RuntimeConfig
 from arbora.security.actor_context import (
     ActorContext,
     ActorType,
@@ -102,7 +103,9 @@ def fixture(bound: GraphSession | None = None, **changes: Any) -> Any:
 
     auth = AmbientHTTPAuthenticator(session_for_request=resolve)
     app = create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
+        service=A2AService(
+            authority=Authority(), router=Router(), config=RuntimeConfig()
+        ),
         authenticator=Authenticator(),
         operation_services=services,
         operation_authenticator=auth,
@@ -215,7 +218,9 @@ def test_partial_composition_is_rejected(part: str) -> None:
     )
     with pytest.raises(ValueError):
         create_a2a_application(
-            service=A2AService(authority=Authority(), router=Router()),
+            service=A2AService(
+                authority=Authority(), router=Router(), config=RuntimeConfig()
+            ),
             authenticator=Authenticator(),
             **kwargs,
         )
@@ -223,7 +228,9 @@ def test_partial_composition_is_rejected(part: str) -> None:
 
 def test_missing_composition_still_refuses_without_effects() -> None:
     app = create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
+        service=A2AService(
+            authority=Authority(), router=Router(), config=RuntimeConfig()
+        ),
         authenticator=Authenticator(),
     )
     response = post(
@@ -292,9 +299,11 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
     table: dict[str, Any] = {}
     a2a_mcp.register_a2a_tools(
         registrar,
-        service=A2AService(authority=Authority(), router=Router()),
+        service=A2AService(
+            authority=Authority(), router=Router(), config=RuntimeConfig()
+        ),
         tool_table=table,
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(session_for_request=resolve),
     )
@@ -340,7 +349,9 @@ def test_ambient_session_cannot_replace_missing_request_authority() -> None:
     bound = session()
     _app, services, runtime, audit, journal, _requests = fixture(bound)
     app = create_a2a_application(
-        service=A2AService(authority=Authority(), router=Router()),
+        service=A2AService(
+            authority=Authority(), router=Router(), config=RuntimeConfig()
+        ),
         authenticator=Authenticator(),
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(),

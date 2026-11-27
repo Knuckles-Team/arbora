@@ -42,7 +42,6 @@ __all__ = [
     "platform_config_file",
     "read_config_document",
     "RuntimeConfig",
-    "runtime_config",
     "CONFIG_FIELDS",
 ]
 
@@ -115,7 +114,7 @@ class ArboraConfig(BaseModel):
     """The typed Arbora settings, read from the environment by alias.
 
     ``ArboraConfig()`` takes one snapshot of the environment. Use
-    :data:`runtime_config` for a live read of one field at call time.
+    :class:`RuntimeConfig` for a live read of one field at call time.
     """
 
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -1267,9 +1266,6 @@ class RuntimeConfig:
 
 #: The typed, declared settings (alias to field), read by the environment manifest.
 CONFIG_FIELDS = ArboraConfig.model_fields
-
-#: The live settings view every Arbora module reads.
-runtime_config: Any = RuntimeConfig()
 
 
 def _config_file() -> Path:

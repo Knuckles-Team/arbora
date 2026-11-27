@@ -422,7 +422,9 @@ async def handle_rlm(
         context.client,
         context.caller.session,
         origins=origins,
-        agent_executor=port_of(context, "run_executors")(origins=origins, ports=ports),
+        agent_executor=port_of(context, "run_executors")(
+            origins=origins, ports=ports, config=context.services["config"]
+        ),
         ports=ports,
     )
     result = await control_plane.graph_rlm(request)

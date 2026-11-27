@@ -30,8 +30,7 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
-    from arbora.core.settings import runtime_config
-    from arbora.mcp_server.host_caches import HostCaches
+    from arbora.mcp_server.host_caches import build_host_caches
     from arbora.security.request_identity import ActorIdentityMiddleware
     from arbora.webui_host.webui_co_service import compose_web_application
 
@@ -55,8 +54,8 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("ALLOWED_HOSTS", "console.invalid")
     monkeypatch.setenv("GATEWAY_RATE_LIMIT", "0")
-    monkeypatch.setattr(runtime_config, "gateway_rate_limit", 0)
-    monkeypatch.setattr(runtime_config, "gateway_metrics", False)
+    monkeypatch.setenv("GATEWAY_RATE_LIMIT", str(0))
+    monkeypatch.setenv("GATEWAY_METRICS", "false")
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
     package = tmp_path / "overstory"
@@ -79,7 +78,8 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
     # ActorIdentityMiddleware/route registrations are deliberately not patched.
     fixture = GatewayFixture()
     host = SimpleNamespace(
-        gateway=SimpleNamespace(application=lambda: fixture), caches=HostCaches()
+        gateway=SimpleNamespace(application=lambda: fixture),
+        caches=build_host_caches(RuntimeConfig()),
     )
 
     async def scenario():

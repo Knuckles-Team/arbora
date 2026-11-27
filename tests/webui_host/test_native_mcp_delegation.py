@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.webui_host import mcp_delegation
 
@@ -21,6 +22,7 @@ pytestmark = pytest.mark.spec("ARBORA-HOST-R017")
 class _FakeMux:
     def __init__(self) -> None:
         self._host_mcp = object()
+        self.fleet = SimpleNamespace(config=RuntimeConfig())
         self.child_probes: list[str] = []
 
     async def delegated_server_tools(self, server_name: str) -> list[dict[str, Any]]:
@@ -45,7 +47,9 @@ def mux(monkeypatch: pytest.MonkeyPatch) -> _FakeMux:
         "unregistered_leak": SimpleNamespace(description="hidden", parameters={}),
     }
     monkeypatch.setattr(mcp_delegation, "run_on_served_multiplexer", run_on_served)
-    monkeypatch.setattr(mcp_delegation, "require_fleet_capability", lambda kind: None)
+    monkeypatch.setattr(
+        mcp_delegation, "require_fleet_capability", lambda kind, config: None
+    )
     monkeypatch.setattr(mcp_delegation, "provider_tools", lambda host: host_tools)
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": object()})
     return fake

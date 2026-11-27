@@ -954,6 +954,7 @@ def _anonymous_a2a(args: Any, invocation: Any, settings: RuntimeConfig) -> Any:
         graph=graph,
         revision=__version__,
         connect=connect,
+        config=settings,
     )
 
 
@@ -1183,7 +1184,11 @@ def ensure_tools_registered(caches: HostCaches) -> None:
 
     # A headless build (no served process) owns a context of its own.
     host = compose_host_context_over(
-        EngineHandles(process_session=caches.tools.authority.session), caches
+        EngineHandles(
+            process_session=caches.tools.authority.session,
+            config=caches.tools.authority.config,
+        ),
+        caches,
     )
     _args, mcp, _middlewares = _build_server(bootstrap=False, host=host)
     _attach_headless_fleet_loader(mcp, host.fleet, host.authority)

@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.api.http.auth import HTTPAuthenticationError, verify_local_bearer_request
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.client_entry_points import (
     CLIENT_TOKEN_REQUIREMENTS,
     ClientEntryPoint,
@@ -75,7 +76,9 @@ class Host:
         )
 
     def call(self, *headers: str) -> Any:
-        return asyncio.run(verify_local_bearer_request(JwksCache(), _request(*headers)))
+        return asyncio.run(
+            verify_local_bearer_request(JwksCache(RuntimeConfig()), _request(*headers))
+        )
 
 
 def _status(error: HTTPAuthenticationError) -> int:
@@ -111,7 +114,9 @@ def test_served_stateless_bearer_requires_tenant(
         host.call(f"Bearer {mint()}", f"Bearer {mint()}")
     assert host.handler_calls == before
     assert (
-        asyncio.run(precheck_bearer(mint(), key_cache=JwksCache())).tenant
+        asyncio.run(
+            precheck_bearer(mint(), key_cache=JwksCache(RuntimeConfig()))
+        ).tenant
         == "tenant:one"
     )  # type: ignore[union-attr]
     # An unreadable key authority keeps the ingress unavailable (503), never open.

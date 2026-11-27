@@ -701,6 +701,7 @@ def mcp_server(
                 host_context.caches.tools,
                 client_for_session=client_for_session,
                 origins=host_context.runs.origins,
+                config=host_context.config,
             )
 
             # Self-composing co-services, phase 2: messaging now that a real engine

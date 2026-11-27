@@ -17,6 +17,7 @@ from arbora.api.domain.a2a.models import (
     A2ATaskStatus,
 )
 from arbora.core.a2a_errors import A2AIdempotencyConflict
+from arbora.core.settings import RuntimeConfig
 
 
 class Authenticator:
@@ -62,7 +63,9 @@ def _app() -> tuple[Any, Authenticator, Authority]:
     auth = Authenticator()
     authority = Authority()
     app = create_a2a_application(
-        service=A2AService(authority=authority, router=Router()),
+        service=A2AService(
+            authority=authority, router=Router(), config=RuntimeConfig()
+        ),
         authenticator=auth,
     )
     return app, auth, authority
@@ -209,7 +212,9 @@ def test_json_rpc_preserves_service_error_translation() -> None:
             raise A2AIdempotencyConflict("idempotency conflict")
 
     app = create_a2a_application(
-        service=A2AService(authority=ConflictAuthority(), router=Router()),
+        service=A2AService(
+            authority=ConflictAuthority(), router=Router(), config=RuntimeConfig()
+        ),
         authenticator=Authenticator(),
     )
     response = TestClient(app).post(
@@ -396,7 +401,9 @@ def _gated_app(
     authority.task = task
     chain = SimpleNamespace(held_items=HeldItemAdmitter(engine, audit))
     app = create_a2a_application(
-        service=A2AService(authority=authority, router=Router()),
+        service=A2AService(
+            authority=authority, router=Router(), config=RuntimeConfig()
+        ),
         authenticator=Authenticator(),
         approvals=chain,  # type: ignore[arg-type]
     )

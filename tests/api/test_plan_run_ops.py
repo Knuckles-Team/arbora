@@ -31,6 +31,7 @@ from arbora.api.errors import EngineRefusal as EngineCodeRefusal  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
 from arbora.api.ops.ports import PORTS_BINDING, OperationPorts  # noqa: E402
+from arbora.core.settings import RuntimeConfig
 from arbora.security.actor_context import ActorContext, ActorType  # noqa: E402
 from arbora.security.session import GraphSession  # noqa: E402
 
@@ -231,6 +232,7 @@ def _context(engine: FakeEngine, model: RecordingModel) -> Any:
                 run_settings=agent_runs,
                 plan_publication=current_plan_publication,
             ),
+            "config": RuntimeConfig(),
         },
     )
 
@@ -271,6 +273,7 @@ async def test_invoke_thaws_frozen_plan_before_strict_engine_dto():
         "task_plan_engine": engine,
         "task_plan_model": model.model,
         "task_plan_feature_schema": SCHEMA_PIN,
+        "config": RuntimeConfig(),
     }
 
     async def dispatch() -> Any:

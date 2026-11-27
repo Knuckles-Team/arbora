@@ -12,6 +12,7 @@ from arbora.a2a.authority import (
     WorkItemA2AAuthority,
 )
 from arbora.a2a.push import PushDeliveryWorker, PushSettings
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_operation_bridge import session as _session
 
@@ -144,7 +145,7 @@ def world(
     engine = SimpleNamespace(work_items=items)
     who = _session(frozenset({"kg:read", "kg:write"}))
     authority = WorkItemA2AAuthority(
-        lambda: engine, origins=RunOriginRegistry(), clock=clock
+        lambda: engine, origins=RunOriginRegistry(), clock=clock, config=RuntimeConfig()
     )
     worker = PushDeliveryWorker(
         authority,

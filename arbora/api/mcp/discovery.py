@@ -27,12 +27,10 @@ def not_ready_detail() -> dict[str, Any]:
 CATALOG_OP = "catalog"
 
 
-def discovery_budget_s() -> float:
+def discovery_budget_s(config: Any) -> float:
     """The interactive fleet discovery budget (``MCP_DYNAMIC_DISCOVERY_TIMEOUT``)."""
 
-    from arbora.core.settings import runtime_config
-
-    return float(getattr(runtime_config, "mcp_dynamic_discovery_timeout", 5.0))
+    return float(getattr(config, "mcp_dynamic_discovery_timeout", 5.0))
 
 
 def _fleet_not_ready(exc: BaseException) -> bool:
@@ -123,6 +121,7 @@ async def _fleet_entries(
     caller: Any,
     intent: str | None,
     params: Mapping[str, Any] | None,
+    budget_s: float,
 ) -> list[dict[str, Any]]:
     """Run the caller-filtered fleet catalog search for unmatched discovery.
 
@@ -140,7 +139,7 @@ async def _fleet_entries(
                 query=intent or "",
                 context_budget_tokens=(params or {}).get("context_budget_tokens"),
             ),
-            timeout=discovery_budget_s(),
+            timeout=budget_s,
         )
     except TimeoutError as exc:
         raise FleetPartial("timeout") from exc
@@ -209,6 +208,7 @@ async def find_visible(
     policy_gate: Any,
     resolver: Any,
     fleet_search: FleetSearch | None,
+    budget_s: float,
     fleet_catalog: FleetCatalog | None = None,
     intent: str | None = None,
     op: str | None = None,
@@ -232,7 +232,11 @@ async def find_visible(
         try:
             entries.extend(
                 await _fleet_entries(
-                    fleet_search, caller=caller, intent=intent, params=params
+                    fleet_search,
+                    caller=caller,
+                    intent=intent,
+                    params=params,
+                    budget_s=budget_s,
                 )
             )
         except FleetPartial as exc:

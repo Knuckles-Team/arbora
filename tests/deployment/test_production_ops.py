@@ -138,9 +138,7 @@ def test_cli_retains_diagnostics_on_stderr_and_one_json_report(
         return {"ok": outcome == "success", "operation": "onboard-fleet"}
 
     monkeypatch.setattr(settings, "load_config", configure)
-    monkeypatch.setattr(
-        settings, "runtime_config", SimpleNamespace(arbora_auth_mode="required")
-    )
+    monkeypatch.setenv("ARBORA_AUTH_MODE", "external")
     monkeypatch.setattr(production_ops, "_run", operation)
     stdout = sys.stdout
     code = production_ops_cli.main(["onboard-fleet"])

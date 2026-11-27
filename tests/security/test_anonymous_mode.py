@@ -148,7 +148,9 @@ async def test_real_asgi_admission_projects_anonymous_caller(local_mode):
 
     app = FastAPI()
     auth = AmbientHTTPAuthenticator(
-        session_for_request=partial(verified_bearer_session_for_request, JwksCache())
+        session_for_request=partial(
+            verified_bearer_session_for_request, JwksCache(RuntimeConfig())
+        )
     )
 
     @app.get("/probe")
@@ -161,7 +163,8 @@ async def test_real_asgi_admission_projects_anonymous_caller(local_mode):
         }
 
     transport = httpx.ASGITransport(
-        app=ActorIdentityMiddleware(app, JwksCache()), client=("127.0.0.1", 1234)
+        app=ActorIdentityMiddleware(app, JwksCache(RuntimeConfig())),
+        client=("127.0.0.1", 1234),
     )
     async with httpx.AsyncClient(
         transport=transport, base_url="http://127.0.0.1:18765"
@@ -260,7 +263,7 @@ def test_effect_journal_records_honest_anonymous_provenance(local_mode):
 def test_system_session_does_not_reuse_verified_cache(local_mode, monkeypatch):
     from arbora.security import request_identity
 
-    session = request_identity.system_write_session(JwksCache())
+    session = request_identity.system_write_session(JwksCache(RuntimeConfig()))
     assert session.actor.authenticated is False
     assert anonymous.admitted_actor(session.actor)
 
@@ -357,7 +360,9 @@ async def test_real_fastmcp_outer_http_boundary_covers_public_routes(local_mode)
         Namespace(transport="streamable-http", host="127.0.0.1", port=18765)
     )
     assert network is not None
-    kwargs = anonymous.network_run_kwargs(network.fastmcp_run_kwargs(), JwksCache())
+    kwargs = anonymous.network_run_kwargs(
+        network.fastmcp_run_kwargs(), JwksCache(RuntimeConfig())
+    )
     app = mcp.http_app(path="/mcp", middleware=kwargs["middleware"])
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://127.0.0.1:18765"

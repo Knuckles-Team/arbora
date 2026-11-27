@@ -10,8 +10,10 @@ from fastapi.testclient import TestClient
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.models import A2ARouteDecision
+from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_application import Authenticator, Authority
 
+_CONFIG = RuntimeConfig()
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 24
 JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 24
 WEBP = b"RIFF\x00\x00\x00\x00WEBP" + b"\x00" * 16
@@ -38,6 +40,7 @@ def served(
     capability: Any = None,
     media_refs: Any = None,
     owner: str = "tenant:ann",
+    config: RuntimeConfig = _CONFIG,
 ) -> tuple[TestClient, CountingAuthority]:
     authority = CountingAuthority()
 
@@ -50,6 +53,7 @@ def served(
         media_capability=read if capability is not None else None,
         media_refs=media_refs,
         caller_owner=lambda: owner,
+        config=config,
     )
     app = create_a2a_application(
         service=service,

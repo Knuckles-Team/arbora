@@ -19,6 +19,7 @@ from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.tools import analysis_tools
 from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.observability.state import build_health_state
+from arbora.security.process_authority import ProcessAuthority
 
 
 class _FakeMCP:
@@ -176,7 +177,11 @@ def test_graph_configure_registration_error_is_source_safe(
 ) -> None:
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(
-        fake, ToolTable(), AnalysisCore(), build_health_state(), config=RuntimeConfig()
+        fake,
+        ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        AnalysisCore(),
+        build_health_state(),
+        config=RuntimeConfig(),
     )
     sensitive_detail = "https://sensitive.invalid/mcp?token=synthetic"
 
@@ -202,7 +207,11 @@ def test_graph_configure_preserves_filesystem_policy_denial(
 ) -> None:
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(
-        fake, ToolTable(), AnalysisCore(), build_health_state(), config=RuntimeConfig()
+        fake,
+        ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        AnalysisCore(),
+        build_health_state(),
+        config=RuntimeConfig(),
     )
 
     def _deny(_name: str, _definition: str) -> None:
@@ -239,7 +248,11 @@ def test_legacy_sparql_backend_actions_answer_typed_unavailable(action: str) -> 
     material or an import error, regardless of what it sends."""
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(
-        fake, ToolTable(), AnalysisCore(), build_health_state(), config=RuntimeConfig()
+        fake,
+        ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        AnalysisCore(),
+        build_health_state(),
+        config=RuntimeConfig(),
     )
 
     result = json.loads(
@@ -267,7 +280,11 @@ def test_legacy_set_config_cannot_bypass_governed_config_admin(
     persisted: list[tuple[str, object]] = []
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(
-        fake, ToolTable(), AnalysisCore(), build_health_state(), config=RuntimeConfig()
+        fake,
+        ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        AnalysisCore(),
+        build_health_state(),
+        config=RuntimeConfig(),
     )
     monkeypatch.setattr(
         RuntimeConfig,
@@ -294,7 +311,11 @@ def test_get_config_redacts_endpoint_and_path_values(
 
     fake = _FakeMCP()
     analysis_tools.register_analysis_tools(
-        fake, ToolTable(), AnalysisCore(), build_health_state(), config=RuntimeConfig()
+        fake,
+        ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        AnalysisCore(),
+        build_health_state(),
+        config=RuntimeConfig(),
     )
     monkeypatch.setattr(
         deployment,

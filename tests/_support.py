@@ -15,6 +15,7 @@ from functools import partial
 from typing import Any
 
 from arbora.agent_runs import record_run_event
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.security.process_authority import ProcessAuthority
 from arbora.security.secrets import SecretsBackend
@@ -66,20 +67,25 @@ class FakeSecretsBackend(SecretsBackend):
             return True
 
 
+_HOST_CONFIG = RuntimeConfig()
+
+
 def unwrap_decide(params):
     """The ``request`` of one ``Decide``; the engine's wire params are ``{request}`` only."""
     assert list(params) == ["request"], "a Decide carries MethodDecideParams {request}"
     return params["request"]
 
 
-def FixedEngineHandles(engine: object) -> EngineHandles:  # noqa: N802
+def FixedEngineHandles(  # noqa: N802
+    engine: object, config: RuntimeConfig = _HOST_CONFIG
+) -> EngineHandles:
     """An ``EngineHandles`` whose engine handle is one given object, for tests."""
 
     class _Fixed(EngineHandles):
         def served(self):  # type: ignore[override]
             return engine
 
-    return _Fixed()
+    return _Fixed(config=config)
 
 
 def run_events(engine: object):
@@ -89,7 +95,7 @@ def run_events(engine: object):
 
 def bound_authority(session: object) -> ProcessAuthority:
     """A process authority whose session slot holds one given session, for tests."""
-    authority = ProcessAuthority()
+    authority = ProcessAuthority(config=RuntimeConfig())
     authority.bind_session(session)
     return authority
 

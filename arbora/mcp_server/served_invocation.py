@@ -913,6 +913,15 @@ def _with_operation_ports(
     return {PORTS_BINDING: build_operation_ports(), **bindings}
 
 
+def _with_host_config(
+    bindings: Mapping[str, Any] | None, config: RuntimeConfig
+) -> Mapping[str, Any] | None:
+    """Bind the host's config so an operation reads it from its context services."""
+    if bindings is None:
+        return bindings
+    return {"config": config, **bindings}
+
+
 def _with_delivery_ports(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -1191,6 +1200,7 @@ def compose_served_invocation(
         )
 
     minted = session()
+    bindings = _with_host_config(bindings, config)
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph, process_session)
     bindings = _with_nl_federation_planner(bindings)
@@ -1260,7 +1270,9 @@ def compose_served_invocation(
 
         bindings = {
             **bindings,
-            "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
+            "media_ref_store": SessionMediaRefStore(
+                lambda: _Engine(pool), config=config
+            ),
         }
     bindings = _with_a2a_peer_transport(bindings)
     bindings = _with_finance_read_port(bindings)
@@ -1277,7 +1289,7 @@ def compose_served_invocation(
         # heads to the hosted directory and reports them to the engine.
         from arbora.api.ops.memory_files import MemoryMaterializer
 
-        bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
+        bindings = {**bindings, "memory_materializer": MemoryMaterializer(config)}
     if (
         bindings is not None
         and promotion_ci_tool is not None

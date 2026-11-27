@@ -17,10 +17,11 @@ from arbora.access.policy_state import PolicyState
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.registry import Surface
 from arbora.browser_control.browser_state import BrowserState
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import NativeGatewayApplication
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.security.actor_context import LeaseEvent
 from tests.a2a.test_application import Authority, Router
@@ -64,10 +65,12 @@ def mount_a2a(monkeypatch, value):
         invocation=value,
         host=SimpleNamespace(
             runs=SimpleNamespace(
-                a2a=A2AService(authority=Authority(), router=Router())
+                a2a=A2AService(
+                    authority=Authority(), router=Router(), config=RuntimeConfig()
+                )
             ),
             policy=PolicyState(),
-            caches=HostCaches(),
+            caches=build_host_caches(RuntimeConfig()),
             browser=BrowserState(),
         ),
     )
@@ -105,7 +108,7 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(RuntimeConfig()),
     ).mount_rest_routes(http, prefix="/api")
     response = http_post(http)
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
@@ -125,7 +128,7 @@ def test_composed_gateway_refuses_dependency_replacement(monkeypatch):
             fleet=FleetState(),
             approvals=ApprovalDecisions(),
             engine_provider=lambda: None,
-            caches=HostCaches(),
+            caches=build_host_caches(RuntimeConfig()),
         ).mount_rest_routes(app, prefix="/api", services=value.services)
     assert not any(route.path.startswith("/api") for route in app.routes)
 

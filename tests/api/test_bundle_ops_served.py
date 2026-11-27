@@ -167,7 +167,7 @@ def _app(
     process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(engine),
         graph=process.graph,
         process_session=lambda: process,
