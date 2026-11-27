@@ -6,7 +6,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 
 - [x] T001 ARBORA-A2A-R001.1 Fail-closed `tasks/resubscribe` stub on the A2A method table
 - [x] T002 ARBORA-A2A-R002.1 Fail-closed refusal when assembly selects a tool subset
-- [x] T003 ARBORA-A2A-R002.2.1 Owner-blocked: AU carried, enforced tool-subset field
+- [x] T003 ARBORA-A2A-R002.2.1 Carry the selected tool subset on the harness and refuse without the carrier
 - [x] T004 ARBORA-A2A-R002.2.2.1 Single-invocation worker contract
 - [x] T005 ARBORA-A2A-R002.2.2.2 Native WorkItem fence binding
 - [x] T006 ARBORA-A2A-R002.2.3.1 Immutable native request transport

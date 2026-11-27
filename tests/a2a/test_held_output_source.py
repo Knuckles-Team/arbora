@@ -125,6 +125,7 @@ async def _produce(engine: Engine, decide: Decide) -> dict[str, Any] | None:
 def _served(engine: Engine, decide: Decide) -> TestClient:
     """The task a real terminal read yields, sent through the real ``/a2a`` route."""
     reader = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
+    reader.held_output_source = HeldOutputSource(decide)
     artifacts, held = reader._persisted_reply(
         TASK, item={"status": "succeeded", "metadata": {"a2a_run_id": TASK}}
     )
