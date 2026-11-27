@@ -62,6 +62,7 @@ from typing import Any, NoReturn
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.core.settings import RuntimeConfig
 from arbora.gateway.route_marks import plain_routes
 from arbora.gateway.state import GatewayState, gateway_of, gateway_on
 
@@ -74,7 +75,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _default_provider_registry() -> Any:
+def _default_provider_registry(config: RuntimeConfig) -> Any:
     """Build the administrator-populated registry from typed ``AgentConfig``.
 
     The configuration field accepts the JSON-array environment representation
@@ -90,8 +91,6 @@ def _default_provider_registry() -> Any:
 
     registry = ProviderRegistry()
     try:
-        from arbora.core.settings import runtime_config as config
-
         entries = config.remote_oauth_providers
     except Exception as exc:  # disable the feature, not the gateway
         logger.error(
@@ -117,14 +116,14 @@ def _default_provider_registry() -> Any:
     return registry
 
 
-def _build_default_broker() -> Any:
+def _build_default_broker(config: RuntimeConfig) -> Any:
     from arbora.fleet.remote_oauth_broker import RemoteOAuthBroker
 
-    return RemoteOAuthBroker(registry=_default_provider_registry())
+    return RemoteOAuthBroker(registry=_default_provider_registry(config))
 
 
-def _get_broker(gateway: GatewayState) -> Any:
-    return gateway.broker.get_or_build(_build_default_broker)
+def _get_broker(gateway: GatewayState, config: RuntimeConfig) -> Any:
+    return gateway.broker.get_or_build(lambda: _build_default_broker(config))
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +149,7 @@ def _scope_policy(gateway: GatewayState) -> ScopePolicy:
     return gateway.scope_policy.get() or _default_scope_policy
 
 
-def _success_redirect_url() -> str | None:
+def _success_redirect_url(config: RuntimeConfig) -> str | None:
     """The ONE administrator-configured post-authorization redirect target.
 
     Never derived from request input — there is no query param, header, or
@@ -159,8 +158,6 @@ def _success_redirect_url() -> str | None:
     plain JSON success body instead of redirecting.
     """
     try:
-        from arbora.core.settings import runtime_config as config
-
         return config.remote_oauth_success_redirect_url
     except Exception as exc:  # fail closed to a JSON success body
         logger.error(
@@ -247,7 +244,7 @@ async def authorize(
 
     actor = _resolve_verified_actor()
     gateway = gateway_of(request)
-    broker = _get_broker(gateway)
+    broker = _get_broker(gateway, request.app.state.host.config)
     provider = broker.registry.get(provider_id)
     if provider is None or not provider.enabled:
         raise HTTPException(status_code=404, detail="Unknown provider")
@@ -296,7 +293,7 @@ async def oauth_callback(
     )
 
     actor = _resolve_verified_actor()
-    broker = _get_broker(gateway_of(request))
+    broker = _get_broker(gateway_of(request), request.app.state.host.config)
     try:
         stored = await asyncio.to_thread(
             broker.callback,
@@ -324,7 +321,7 @@ async def oauth_callback(
         )
         _oauth_error_response(exc, code="oauth_callback_failed", status_code=500)
 
-    target = _success_redirect_url()
+    target = _success_redirect_url(request.app.state.host.config)
     if target is None:
         return JSONResponse({"status": "success"})
     return RedirectResponse(url=target, status_code=302)
@@ -339,7 +336,7 @@ async def _revoke(request: Request, provider_id: str) -> Any:
     from arbora.fleet.remote_oauth_broker import OAuthProviderError
 
     actor = _resolve_verified_actor()
-    broker = _get_broker(gateway_of(request))
+    broker = _get_broker(gateway_of(request), request.app.state.host.config)
     provider = broker.registry.get(provider_id)
     if provider is None or not provider.enabled:
         raise HTTPException(status_code=404, detail="Unknown provider")

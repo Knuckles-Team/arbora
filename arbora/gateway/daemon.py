@@ -152,7 +152,6 @@ def mint_process_identity(keys: JwksCache) -> Any:
     backend, and attach a renewable in-memory lease so worker threads retain
     bounded authority without retaining token material.
     """
-    from arbora.core.settings import runtime_config as config
     from arbora.security.actor_context import CredentialLease
     from arbora.security.request_identity import (
         acquire_process_identity_token,
@@ -160,6 +159,7 @@ def mint_process_identity(keys: JwksCache) -> Any:
         mint_graph_session,
     )
 
+    config = keys.config
     token = acquire_process_identity_token(config)
     actor = mint_actor_from_token_sync(token, keys)
     del token
@@ -184,7 +184,6 @@ def refresh_process_identity(session: Any, keys: JwksCache) -> Any:
     actor type must remain byte-for-byte equivalent to the authority captured
     by the background worker threads.
     """
-    from arbora.core.settings import runtime_config as config
     from arbora.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
@@ -201,7 +200,7 @@ def refresh_process_identity(session: Any, keys: JwksCache) -> Any:
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
         raise RuntimeError("Graph host process authority is not renewable")
-    token = acquire_process_identity_token(config)
+    token = acquire_process_identity_token(keys.config)
     renewed_actor = mint_actor_from_token_sync(token, keys)
     del token
     identity_fields = (
