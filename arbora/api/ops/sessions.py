@@ -19,7 +19,7 @@ from pydantic import Field
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, bound_service, build_read_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import OpSpec
 
 SESSIONS_SCOPE = "sessions:read"

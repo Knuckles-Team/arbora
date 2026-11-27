@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.registry import OpSpec
 

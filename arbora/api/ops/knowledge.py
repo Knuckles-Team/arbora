@@ -15,7 +15,7 @@ from typing import Any, Literal
 from pydantic import Field
 
 from arbora.api.ops._common import Params, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_graph_op
+from arbora.api.ops.engine_calls import engine_graph_op
 from arbora.api.registry import OpSpec, Verb
 
 FLAG_SCOPE = "knowledge:flag"

@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._question import advisory_scores
+from arbora.api.ops.question_round import advisory_scores
 from arbora.fleet.scaling.fleet_actuator import request_context
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleIntentRecord,
@@ -62,8 +62,8 @@ class EngineScalePolicy:
         from medulla.decision_client import scale_intent_request
 
         from arbora.api.invoke.bootstrap import caller_dispatch_graph
-        from arbora.api.ops._engine import engine_send
         from arbora.api.ops.deploy import feature_schema_of
+        from arbora.api.ops.engine_calls import engine_send
         from arbora.deployment.placement import (
             check_receipt,
             send_decide,

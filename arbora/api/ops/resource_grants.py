@@ -13,7 +13,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 
 #: The engine KV namespace, one key per tenant (the caller's tenant keys the entry).
 NAMESPACE = "resource_grants"

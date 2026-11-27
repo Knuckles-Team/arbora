@@ -16,7 +16,7 @@ from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_write_op
-from arbora.api.ops._engine import engine_graph_op
+from arbora.api.ops.engine_calls import engine_graph_op
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.otlp_logs import MAX_RECORDS, TelemetryFieldUnknown, events_from_logs
 from arbora.api.registry import HttpShape, OpSpec, Verb

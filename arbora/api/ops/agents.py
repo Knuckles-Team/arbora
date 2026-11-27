@@ -10,7 +10,7 @@ from pydantic import Field
 from arbora.api.contracts.provisioning_capacity import ProvisionRequest
 from arbora.api.invoke.certification_gate import MAX_RUN_SKILLS, SkillRef
 from arbora.api.ops._common import Params, bound_service
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import (
     AuditClass,
     Composite,

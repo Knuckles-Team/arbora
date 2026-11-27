@@ -19,7 +19,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import params_digest
 from arbora.api.ops._common import bound_service
 from arbora.api.ops._decide import committed_record, record_digest
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import (
     AuditClass,
     Composite,

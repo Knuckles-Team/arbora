@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from arbora.api.ops._engine import decode
+from arbora.api.ops.engine_calls import decode
 from arbora.fleet.outbox_consumer import (
     Handler,
     OutboxEvent,

@@ -40,7 +40,7 @@ def _pin_with_chain(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _sent(monkeypatch: pytest.MonkeyPatch, answer: Any = None) -> list[tuple[str, Any]]:
-    import arbora.api.ops._engine as engine
+    import arbora.api.ops.engine_calls as engine
 
     sent: list[tuple[str, Any]] = []
 

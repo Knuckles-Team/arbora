@@ -86,7 +86,7 @@ def served(monkeypatch: pytest.MonkeyPatch) -> Engine:
         return "graph:t1"
 
     declare_scale_builder(monkeypatch)
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", engine)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", engine)
     monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
     return engine
 
@@ -97,7 +97,7 @@ async def test_a_pinned_release_without_the_question_refuses_before_any_send(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     engine = Engine()
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", engine)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", engine)
     monkeypatch.delattr("medulla.decision_client.scale_intent_request", raising=False)
     reconciler = ScaleIntentReconciler(
         MemoryScaleIntentLedger(),

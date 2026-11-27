@@ -260,7 +260,7 @@ async def _find_for_job(
     from medulla.decision_client import load_set_request
 
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
-    from arbora.api.ops._engine import engine_send
+    from arbora.api.ops.engine_calls import engine_send
     from arbora.api.ops.skills_tier import _feature_schema
     from arbora.fleet.job_loads import JobLoadRequest, find_for_job
 

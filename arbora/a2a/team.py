@@ -214,7 +214,7 @@ MAX_READ_PAGES = 64
 
 async def _nodes(send: TeamSend, label: str) -> list[tuple[str, dict[str, Any]]]:
     """Every node of ``label`` the verified caller may see, in pages."""
-    from arbora.api.ops._engine import node_rows
+    from arbora.api.ops.engine_calls import node_rows
 
     rows: list[tuple[str, dict[str, Any]]] = []
     after: str | None = None

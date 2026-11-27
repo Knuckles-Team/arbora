@@ -23,7 +23,7 @@ from pydantic import Field, model_validator
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.ops._common import Params, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import Confirm, OpSpec, Verb
 from arbora.pin_lag.medulla import send_main
 

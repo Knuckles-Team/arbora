@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 
 #: Seconds one fast-gate run may take; a timeout counts as a failed gate.

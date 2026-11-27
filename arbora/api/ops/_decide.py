@@ -13,7 +13,7 @@ import re
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.pin_lag.medulla import guard
 
 

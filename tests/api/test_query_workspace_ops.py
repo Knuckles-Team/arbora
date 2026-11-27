@@ -112,7 +112,7 @@ def test_get_and_delete_pass_the_engines_not_found_through_unchanged(
 ) -> None:
     """Arbora never distinguishes the four absent cases; the engine's refusal is the answer."""
     from arbora.api.errors import EngineRefusal
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
 
     detail = {
         "missing": "STORED_QUERY_NOT_FOUND: no stored query `q`",

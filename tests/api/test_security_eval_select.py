@@ -64,7 +64,7 @@ async def test_an_unlisted_question_kind_refuses_unavailable_naming_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.api.ops import _question
+    from arbora.api.ops import question_round as _question
     from arbora.pin_lag.medulla import PinLagUnavailable
 
     ctx, engine, runner = evaluation_context(monkeypatch)

@@ -67,7 +67,7 @@ def _record(request: dict[str, Any], answer: str, echoed: dict[str, Any]) -> Any
 
 
 def _stack(loop: Any, answer: str, echoed: dict[str, Any] = PROPOSAL) -> None:
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
 
     loop.config["tools"] = {"capacity_scale": {"server": "ops", "tool": "scale"}}
     loop.serve_decide(lambda request: _record(request, answer, echoed))

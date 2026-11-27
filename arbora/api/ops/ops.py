@@ -395,13 +395,13 @@ async def _process_verdict(context: Any, params: Mapping[str, Any]) -> ProcessVe
     """Ask the engine whether the evidence shows a zombie, a hung or a live process."""
     from medulla import decision_client as dc
 
-    from arbora.api.ops._question import (
+    from arbora.api.ops.plans import _feature_schema
+    from arbora.api.ops.question_round import (
         FamilyRefusal,
         chosen_option,
         decide_question,
         question_request,
     )
-    from arbora.api.ops.plans import _feature_schema
 
     evidence = params["evidence"]
     request = question_request(

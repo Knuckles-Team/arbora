@@ -72,7 +72,7 @@ def engine_kv_send(engine_provider: Callable[[], Any]) -> EngineSend:
 
     async def send(method: str, params: dict[str, Any], key: str | None) -> Any:
         from arbora import work_items
-        from arbora.api.ops._engine import send_on_client
+        from arbora.api.ops.engine_calls import send_on_client
         from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 
         engine = engine_provider()

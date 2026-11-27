@@ -13,7 +13,7 @@ from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused, invoke
 from arbora.api.invoke.steps import OpError
-from arbora.api.ops._engine import unavailable
+from arbora.api.ops.engine_calls import unavailable
 from arbora.api.registry import OpSpec, Surface
 
 

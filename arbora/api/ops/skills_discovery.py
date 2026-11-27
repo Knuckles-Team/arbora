@@ -15,7 +15,7 @@ from typing import Any, Literal
 from pydantic import Field, ValidationError, model_validator
 
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import engine_graph_op, unavailable
+from arbora.api.ops.engine_calls import engine_graph_op, unavailable
 from arbora.api.registry import OpSpec
 
 TELEMETRY_READ_SCOPE = "telemetry:read"

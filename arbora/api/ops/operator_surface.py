@@ -30,9 +30,9 @@ from pydantic import Field, create_model
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_send
-from arbora.api.ops._nested import invoke_registered
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.ops.knowledge import EngineReply
+from arbora.api.ops.nested_invoke import invoke_registered
 from arbora.api.registry import Effect, OpSpec, Verb
 from arbora.pin_lag.medulla import (
     PinLagUnavailable,

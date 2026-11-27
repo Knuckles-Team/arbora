@@ -16,7 +16,7 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import engine_send, node_rows
+from arbora.api.ops.engine_calls import engine_send, node_rows
 from arbora.fleet.scaling.scaling_authority import (
     ControllerRegistration,
     FailureDomain,

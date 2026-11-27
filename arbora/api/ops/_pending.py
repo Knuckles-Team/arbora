@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from arbora.api.ops._engine import unavailable
+from arbora.api.ops.engine_calls import unavailable
 from arbora.api.registry import OpSpec
 
 

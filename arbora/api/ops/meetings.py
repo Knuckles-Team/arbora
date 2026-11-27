@@ -26,7 +26,7 @@ from arbora.api.ops._common import (
     build_read_op,
     build_write_op,
 )
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import Confirm, OpSpec, Verb
 from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_symbol
 

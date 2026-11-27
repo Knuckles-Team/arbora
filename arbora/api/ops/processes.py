@@ -24,7 +24,7 @@ from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, _build_op, build_read_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import (
     AuditClass,
     Confirm,

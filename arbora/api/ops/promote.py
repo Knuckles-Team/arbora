@@ -21,8 +21,8 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import approval_id_for
 from arbora.api.invoke.steps import OpError
 from arbora.api.ops._common import Params, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_send
 from arbora.api.ops.deploy import _assemble
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import Confirm, OpSpec
 from arbora.deployment.assembly import (
     graph_digest,

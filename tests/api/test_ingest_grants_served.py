@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import _grants
+from arbora.api.ops import resource_grants as _grants
 from arbora.ingest import service
 from tests.api._lane_double import EngineDouble, context
 

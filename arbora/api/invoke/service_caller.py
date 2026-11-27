@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import send_on_client
+from arbora.api.ops.engine_calls import send_on_client
 
 #: ``(op_id, params, caller, idempotency_key) -> result``: the served pipeline.
 InvokeOp = Callable[[str, Mapping[str, Any], Any, str], Awaitable[Any]]

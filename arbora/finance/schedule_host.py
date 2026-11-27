@@ -28,7 +28,7 @@ from typing import Any
 import msgpack
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import decode, node_rows
+from arbora.api.ops.engine_calls import decode, node_rows
 from arbora.finance.dca import (
     DCAHost,
     DCAPlan,

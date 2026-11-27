@@ -19,7 +19,7 @@ from pydantic import Field, field_validator
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, bound_service, build_read_op
-from arbora.api.ops._nested import invoke_registered
+from arbora.api.ops.nested_invoke import invoke_registered
 from arbora.api.registry import (
     AuditClass,
     Composite,

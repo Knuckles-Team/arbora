@@ -25,8 +25,8 @@ from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops import _common
-from arbora.api.ops._engine import send_on_client
 from arbora.api.ops.a2a_peers import _registry
+from arbora.api.ops.engine_calls import send_on_client
 from arbora.api.registry import OpSpec
 from arbora.security.anonymous import client_scope
 

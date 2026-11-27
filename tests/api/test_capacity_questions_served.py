@@ -13,7 +13,7 @@ import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import capacity_questions
-from arbora.api.ops._question import Q32_ONE
+from arbora.api.ops.question_round import Q32_ONE
 from arbora.api.ops.registry_factory import get_registry
 from arbora.ingest import service
 from tests.api._lane_double import EngineDouble, context
@@ -111,7 +111,7 @@ async def test_below_at_above_threshold_and_refusal_reach_the_engine_route(
 async def test_a_family_refusal_keeps_the_engine_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.api.ops._question import FamilyRefusal
+    from arbora.api.ops.question_round import FamilyRefusal
 
     client = EngineDouble(MeasureIngestThroughput=lambda params: {})
     ctx = context(client, monkeypatch)
@@ -161,7 +161,7 @@ async def test_the_run_adjustment_record_is_the_receipt(
 async def test_a_mid_run_widening_is_the_engine_refusal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.api.ops._question import FamilyRefusal
+    from arbora.api.ops.question_round import FamilyRefusal
 
     ctx = context(EngineDouble(), monkeypatch)
 
@@ -210,7 +210,7 @@ def _constant(value: int) -> Any:
 
 def _engine_pages(monkeypatch: pytest.MonkeyPatch, pages: list[dict[str, Any]]) -> list:
     """Serve ``Introspect`` pages as the engine and record each request."""
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
     from arbora.pin_lag import medulla as pin
 
     seen: list[tuple[str, dict[str, Any]]] = []
@@ -267,7 +267,7 @@ async def test_a_knob_above_the_host_grant_leaves_the_host_grant(
 async def test_a_pinned_engine_without_the_knobs_section_leaves_the_host_grant(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
     from arbora.core.settings import runtime_config
     from arbora.pin_lag import medulla as pin
     from arbora.pin_lag.unavailable import PinLagUnavailable

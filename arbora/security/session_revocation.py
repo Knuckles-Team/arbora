@@ -88,7 +88,7 @@ async def revoke_session(
 ) -> dict[str, Any]:
     """The served operation: revoke a named session of the tenant (admin only)."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.api.ops._engine import decode, engine_send
+    from arbora.api.ops.engine_calls import decode, engine_send
     from arbora.api.ops.workstreams import _pack, _props
     from arbora.identity.client_session import session_node_id
 

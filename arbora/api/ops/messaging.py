@@ -244,7 +244,7 @@ def _inbox_topic(tenant: str, session_id: str) -> str:
 
 async def _session_props(context: Any, session_id: str) -> Mapping[str, Any] | None:
     """The ``ClientSession`` node of the caller's tenant, or ``None``."""
-    from arbora.api.ops._engine import decode, engine_send
+    from arbora.api.ops.engine_calls import decode, engine_send
     from arbora.api.ops.workstreams import _props
     from arbora.identity.client_session import session_node_id
 
