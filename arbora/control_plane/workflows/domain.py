@@ -18,7 +18,7 @@ import hashlib
 import json
 import re
 from collections import defaultdict, deque
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -483,11 +483,15 @@ def _canonical_value(value: object) -> object:
     if isinstance(value, tuple | list):
         return [_canonical_value(item) for item in value]
     if isinstance(value, dict):
-        return {
-            str(key): _canonical_value(item)
-            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
-        }
+        return _canonical_mapping(value)
     return value
+
+
+def _canonical_mapping(value: dict[Any, Any]) -> dict[str, object]:
+    return {
+        str(key): _canonical_value(item)
+        for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+    }
 
 
 def _sha256_digest(value: object) -> str:
@@ -514,7 +518,7 @@ def canonical_definition(definition: WorkflowDefinition) -> dict[str, object]:
         step["depends_on"] = sorted(step.get("depends_on", []))
         steps.append(step)
     raw["steps"] = sorted(steps, key=lambda item: str(item["step_id"]))
-    return _canonical_value(raw)  # type: ignore[return-value]
+    return _canonical_mapping(raw)
 
 
 def definition_digest(definition: WorkflowDefinition) -> str:

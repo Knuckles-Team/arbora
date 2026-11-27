@@ -8,6 +8,7 @@ the event eligible for retry. Keyset cursors are per aggregate and bounded.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -46,6 +47,8 @@ from .repository import (
     _commit_validated_change,
     _validate_event_matches_mutation,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ProjectionBatchResult",
@@ -321,7 +324,8 @@ class ProjectionService:
             raise _BatchAborted(
                 self._failure_result(scope, reason_code="checkpoint_fence_lost")
             ) from None
-        except Exception:
+        except Exception:  # injected store: aborts the batch with a typed result
+            logger.warning("projection checkpoint read failed", exc_info=True)
             raise _BatchAborted(
                 self._failure_result(scope, reason_code="checkpoint_conflict")
             ) from None
@@ -336,7 +340,8 @@ class ProjectionService:
 
         try:
             events = tuple(self._outbox.read_after(scope, current.last_sequence, limit))
-        except Exception:
+        except Exception:  # injected outbox: aborts the batch with a typed result
+            logger.warning("projection outbox read failed", exc_info=True)
             raise _BatchAborted(
                 self._failure_result(
                     scope,
@@ -489,7 +494,8 @@ class ProjectionService:
             return _EventStep(
                 outcome=outcome, stop=True, current=current, persisted=persisted
             )
-        except Exception:
+        except Exception:  # injected graph port: recorded as drift, step stops
+            logger.warning("projection graph apply failed", exc_info=True)
             outcome = self._outcome("failed", event, "graph_apply_failed")
             self._record_drift(
                 reason_code="graph_apply_failed",
@@ -538,10 +544,12 @@ class ProjectionService:
         try:
             self._graph.reset_projection(scope, fence_token)
             self._checkpoints.reset_checkpoint(scope, fence_token)
-        except Exception:
+        except Exception:  # injected ports: converted to a typed failure result
+            logger.warning("projection rebuild failed", exc_info=True)
             try:
                 current = self._checkpoints.read_checkpoint(scope)
             except Exception:
+                logger.warning("projection checkpoint re-read failed", exc_info=True)
                 current = None
             return self._failure_result(
                 scope,
@@ -608,7 +616,8 @@ class ProjectionService:
             raise _CleanupAborted(
                 ProjectionCleanupResult(scope=scope, checkpoint=None)
             ) from None
-        except Exception:
+        except Exception:  # injected ports: recorded as drift, pass aborts
+            logger.warning("tombstone cleanup read failed", exc_info=True)
             self._record_drift(
                 reason_code="tombstone_cleanup_failed",
                 scope=scope,
@@ -647,7 +656,8 @@ class ProjectionService:
             return self._outcome("rejected", event, "tombstone_not_durable")
         try:
             self._graph.cleanup_tombstone(event, fence_token)
-        except Exception:
+        except Exception:  # injected graph port: recorded as drift
+            logger.warning("tombstone cleanup failed", exc_info=True)
             self._record_drift(
                 reason_code="tombstone_cleanup_failed",
                 scope=scope,

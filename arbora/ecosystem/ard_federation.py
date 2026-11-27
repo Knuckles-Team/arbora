@@ -30,6 +30,8 @@ import socket
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+import httpx
+
 from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
@@ -174,8 +176,9 @@ class ArdFederationRelay:
                 data = json.loads(data)
             results = data.get("results") if isinstance(data, dict) else None
             return [r for r in (results or []) if isinstance(r, dict)]
-        except Exception as exc:  # a down peer must not break the others
-            logger.warning("[ECO-4.97] ARD fan-out failed (%s)", type(exc).__name__)
+        except (httpx.HTTPError, OSError, ValueError, RuntimeError):
+            # a down peer must not break the others (RuntimeError: air-gap refusal)
+            logger.warning("[ECO-4.97] ARD fan-out failed", exc_info=True)
             return []
 
 

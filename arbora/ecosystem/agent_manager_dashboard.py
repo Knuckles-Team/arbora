@@ -282,7 +282,7 @@ class AgentManagerDashboard:
                         detail=f"{deny_count} deny rules",
                     )
                 )
-            except Exception:
+            except (OSError, ValueError, AttributeError):
                 items.append(
                     ComponentStatus(
                         category="permissions",
@@ -326,10 +326,8 @@ class AgentManagerDashboard:
                         usage_count=uses,
                     )
                 )
-        except (
-            Exception
-        ) as e:  # dashboard status probe, failure just leaves the panel row unpopulated
-            logger.debug("[ECO-4.8] Skill check failed: %s", e)
+        except Exception:  # probe: a failure just leaves the panel row unpopulated
+            logger.debug("[ECO-4.8] Skill check failed", exc_info=True)
         return items
 
     def _check_proposals(self) -> list[ComponentStatus]:

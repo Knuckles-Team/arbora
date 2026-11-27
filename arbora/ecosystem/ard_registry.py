@@ -88,8 +88,8 @@ def _probe_fleet(multiplexer: Any = None) -> dict[str, dict]:
     mux = multiplexer
     try:
         return _run_async(mux.probe_catalog())
-    except Exception as exc:  # probe is best-effort
-        logger.debug("ard: probe failed: %s", exc)
+    except Exception:  # probe is best-effort; the multiplexer owns no error contract
+        logger.debug("ard: probe failed", exc_info=True)
         return {}
 
 
@@ -160,8 +160,8 @@ def _skill_entries(engine: Any, pub: dict[str, str], *, limit: int = 500) -> lis
             "RETURN s.id AS id, s.name AS name, s.description AS description "
             f"LIMIT {int(limit)}"
         )
-    except Exception as exc:  # KG cold/absent ⇒ no skill entries
-        logger.debug("ard: skill query failed: %s", exc)
+    except (RuntimeError, OSError, ValueError, LookupError):  # KG cold/absent
+        logger.debug("ard: skill query failed", exc_info=True)
         return []
     entries: list[dict] = []
     for r in rows or []:

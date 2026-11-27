@@ -42,18 +42,16 @@ def run_terminal_host(
     hosts = TerminalHttpHosts(owner)
     log_runtime = runtime.host_log_runtime
     host_instance = (
-        log_runtime.sink.host_instance  # type: ignore[attr-defined]
-        if log_runtime is not None
-        else uuid.uuid4().hex
+        log_runtime.sink.host_instance if log_runtime is not None else uuid.uuid4().hex
     )
     app = build_agent_host_app(
         graph=runtime.graph,
-        graph_config=runtime.graph_config,  # type: ignore[arg-type]
+        graph_config=runtime.graph_config,
         name=configuration.name,
         description=configuration.system_prompt,
-        executor=runtime.executor,  # type: ignore[arg-type]
-        host_logs=runtime.host_logs,  # type: ignore[arg-type]
-        host_log_runtime=log_runtime,  # type: ignore[arg-type]
+        executor=runtime.executor,
+        host_logs=runtime.host_logs,
+        host_log_runtime=log_runtime,
         host_start=context,
         host_configuration=configuration,
         host_runtime=runtime,
@@ -72,6 +70,6 @@ def run_terminal_host(
     finally:
         try:
             if log_runtime is not None:
-                asyncio.run(log_runtime.sink.drain())  # type: ignore[attr-defined]
+                asyncio.run(log_runtime.sink.drain())
         finally:
             hosts.stop(host_instance)
