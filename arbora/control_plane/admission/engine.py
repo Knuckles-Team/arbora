@@ -33,8 +33,8 @@ PARITY_SAMPLE_DEFAULT = 1000
 _SAMPLE_RANGE = (10, 100_000)
 _PROPOSAL_TTL_MS = 7 * 24 * 3_600_000
 _WINDOW_MS = 24 * 3_600_000
-#: Engine methods ``main`` publishes that the pinned release lacks (MEDULLA-UNIFIED-DATA-PLANE
-#: R769 and R770); each refuses ``UNAVAILABLE`` until pinned. Attach is the existing registry read.
+#: Engine methods ``main`` publishes that the pinned release lacks (
+#: engine main); each refuses ``UNAVAILABLE`` until pinned. Attach is the existing registry read.
 SOURCE_METHODS = ("ForeignSourceDetach", "ForeignSourceParity")
 
 
