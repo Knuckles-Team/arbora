@@ -60,7 +60,7 @@ async def _send(backend: MessagingBackend, event: InboundEvent, text: str) -> No
             await backend.reply_to(event.channel_id, message_id, text)
         else:
             await backend.send_message(event.channel_id, text)
-    except Exception as exc:  # noqa: BLE001 - one failed send must not stop intake
+    except Exception as exc:  # one failed send must not stop intake
         logger.error("messaging reply send failed: %s", exc)
 
 

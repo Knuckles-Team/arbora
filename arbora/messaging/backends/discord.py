@@ -226,7 +226,7 @@ class DiscordBackend(MessagingBackend):
                 try:
                     ref_msg = await channel.fetch_message(int(reply_to_id))
                     kwargs["reference"] = ref_msg
-                except Exception:  # noqa: BLE001 - a missing reply target sends unthreaded
+                except Exception:  # a missing reply target sends unthreaded
                     logger.debug("discord reply target unavailable", exc_info=True)
 
             if metadata and "embed" in metadata:
