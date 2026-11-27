@@ -97,7 +97,7 @@ Define small protocols in `arbora.identity.ports`:
 - `ExternalAuthenticator`: verify and resolve.
 - `SessionStore`: engine-backed opaque session operations.
 - `NotificationPort` and `Clock`.
- DTOs carry only redacted public fields and typed error/reason codes. `arbora.api.ops.access_service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
+ DTOs carry only redacted public fields and typed error/reason codes. `arbora.access.service` depends on an `AccessAuthority` protocol with request/approve/deny/revoke/check/explain/lease methods. The `mcp_server` serving composition creates the concrete adapters once and injects them into gateway, web host, CLI command factory, and MCP registry. Keep `webui_host` and MCP packages importing ports, not each other. Dependency inversion must clear the configured KISS indirect dependency threshold without increasing that threshold.
 
 The adapter returns `UNAVAILABLE` when an engine method is absent. Where safe, it omits the operation from advertised capability discovery. It also emits a readiness reason. It never emulates RBAC, lease, or approval locally. The CLI can use the same factory with a local engine fixture. Mock ports support all ordinary PR tests.
 
@@ -290,7 +290,7 @@ Their current broker import is `arbora.fleet.remote_oauth_broker`; that import d
 `arbora/api/http/auth.py:127` `verify_local_bearer_request` obtains verified token evidence but explicitly lacks current policy/delegation authority.
 `arbora/api/mcp/caller.py:12` `caller_from_session` and :117 `caller_for_request` bind that authority for served requests.
 `arbora/identity/oidc.py:102` `check_id_token_claims` is a decoded-claims helper; it cannot replace cryptographic bearer verification.
-`arbora/api/ops/access_service.py:90` `check_access` projects EG access; `arbora/api/ops/access.py:151` registers its served operations.
+`arbora/access/service.py:90` `check_access` projects EG access; `arbora/api/ops/access.py:151` registers its served operations.
 Missing wiring includes the scoped vault broker, SDK challenge-result adapter, qualified bearer-to-EG binding and all protocol enforcement adapters.
 The protocol-grant binding requires a qualified EG contract; existing graph access checks alone do not prove that producer capability.
 No second token store, local grant authority, OAuth manager or access-decision engine is introduced.

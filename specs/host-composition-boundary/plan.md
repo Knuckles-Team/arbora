@@ -390,7 +390,7 @@ It adds no provider, policy or UI import. R010.7.2.2.2.2 retains live client acc
 ### 2026-10-18 R010.7.1 access-operation adapter assessment
 
 The existing operations cannot yet provide an authoritative HostStartGrant.
-`arbora/api/ops/access_service.py:check_access` delegates graph access to CheckAccess
+`arbora/access/service.py:check_access` delegates graph access to CheckAccess
 and returns only allowed. EG AccessDecision binds agent, graph and read/write
 access; it carries no session, workspace, configuration or grant lifetime.
 RbacElevation remains graph-access elevation, not a host-start grant.
