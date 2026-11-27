@@ -83,7 +83,9 @@ async def run_blocking_ordered[T](
         # caller's explicit request.
         try:
             worker.result()
-        except BaseException as worker_exc:  # noqa: BLE001 — caller cancellation supersedes worker failure
+        except (
+            BaseException
+        ) as worker_exc:  # caller cancellation supersedes worker failure
             # The caller asked to cancel, so CancelledError is the public outcome
             # either way — but a worker that ALSO failed is real information, and
             # discarding it silently would make a crash inside the offloaded
@@ -123,7 +125,7 @@ def allow_nested_run_sync() -> None:
         import nest_asyncio
 
         nest_asyncio.apply()
-    except Exception:  # noqa: BLE001 - optional dep; caller degrades gracefully
+    except Exception:  # optional dep; caller degrades gracefully
         logger.debug(
             "nest_asyncio unavailable; nested run_sync may fail", exc_info=True
         )

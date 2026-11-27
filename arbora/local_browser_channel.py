@@ -1,6 +1,7 @@
 """Private same-socket local provenance, without browser operation authority."""
 
 import asyncio
+import logging
 import secrets
 import sys
 import time
@@ -142,7 +143,10 @@ class LocalBrowserChannelOwner:
                 cancelled = cancelled or error
                 self._invalidate_current_task()
                 source.cancel()
-            except Exception:  # noqa: BLE001 - retrieve canonical redacted refusal
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "retrieve canonical redacted refusal", exc_info=True
+                )
                 break
         if cancelled is not None:
             if not source.cancelled():

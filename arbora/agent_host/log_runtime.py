@@ -1,6 +1,7 @@
 """Explicit production sink composition; grants remain externally owned."""
 
 import asyncio
+import logging
 import uuid
 from dataclasses import dataclass
 from typing import Literal
@@ -88,6 +89,9 @@ def register_host_log_runtime(app: FastAPI, runtime: HostLogRuntime) -> None:
                     request_id=uuid.uuid4().hex,
                     message="Authenticated host request received",
                 )
-        except Exception:  # noqa: BLE001 - required sink and authority fail before dispatch
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "required sink and authority fail before dispatch", exc_info=True
+            )
             return JSONResponse({"detail": "log_unavailable"}, status_code=503)
         return await call_next(request)

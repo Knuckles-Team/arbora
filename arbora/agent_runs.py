@@ -469,7 +469,10 @@ def _run_event_payload(
         payload = json.dumps(
             dict(event), sort_keys=True, default=str, ensure_ascii=True, allow_nan=False
         )
-    except Exception:  # noqa: BLE001 - retain the event identity when its body fails
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "retain the event identity when its body fails", exc_info=True
+        )
         payload_error = "payload_serialization_failed"
     else:
         if len(payload) > MAX_RUN_EVENT_PAYLOAD_BYTES:
@@ -594,7 +597,7 @@ def record_run_event(
             add_node(node_id, "RunEvent", properties)
         else:
             logger.warning("run event not persisted: no engine is bound")
-    except Exception as exc:  # noqa: BLE001 - the trace never fails the run
+    except Exception as exc:  # the trace never fails the run
         # The engine's refusal code and detail are public contract values;
         # they name why the write was refused, never a payload value.
         logger.warning(
@@ -733,7 +736,7 @@ class AgentRunPort:
             task = asyncio.get_running_loop().create_task(
                 _drive_cycle_tick(run_request, plan, ownership)
             )
-        except Exception as exc:  # noqa: BLE001 - a tick never changes the run result
+        except Exception as exc:  # a tick never changes the run result
             logger.warning(
                 "harness cycle tick not started for run %s: %s",
                 getattr(ownership, "run_id", ""),
@@ -781,7 +784,7 @@ async def _drive_cycle_tick(run_request: Any, plan: Any, ownership: Any) -> None
                 root=config_dir() / "harness",
                 mode="ask",
             )
-    except Exception as exc:  # noqa: BLE001 - a tick never changes the run result
+    except Exception as exc:  # a tick never changes the run result
         logger.warning(
             "harness cycle tick of run %s failed: %s",
             ownership.run_id,

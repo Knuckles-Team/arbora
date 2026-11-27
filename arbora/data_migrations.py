@@ -244,7 +244,10 @@ def run_data_migrations(
                 else:
                     _record(engine, migration, result)
                     report["status"] = "applied"
-        except Exception as exc:  # noqa: BLE001 - one migration's fault must not stop serving
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "one migration's fault must not stop serving", exc_info=True
+            )
             report.update(
                 status="failed", error=f"{type(exc).__name__}: {str(exc)[:200]}"
             )

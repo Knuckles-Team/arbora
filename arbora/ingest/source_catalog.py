@@ -23,6 +23,7 @@ CONCEPT:MERISTEM-ECO.connector.document-source-framework
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -360,7 +361,7 @@ def _dump(value: Any) -> dict[str, Any]:
     if isinstance(value, BaseModel):
         try:
             rendered = value.model_dump(mode="python", by_alias=False)
-        except Exception:  # noqa: BLE001 - a malformed optional profile is absent
+        except (TypeError, ValueError):  # a malformed optional profile is absent
             return {}
         return dict(rendered) if isinstance(rendered, Mapping) else {}
     if isinstance(value, Mapping):
@@ -473,7 +474,10 @@ def _mapping_items(value: Any) -> list[Mapping[str, Any]]:
 def _registry_status_items(registry: Any) -> list[Mapping[str, Any]]:
     try:
         raw = registry.status()
-    except Exception:  # noqa: BLE001 - one registry health fault must not break reads
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "one registry health fault must not break reads", exc_info=True
+        )
         return []
     entries = raw.get("connections", []) if isinstance(raw, Mapping) else []
     return _mapping_items(entries)
@@ -482,7 +486,10 @@ def _registry_status_items(registry: Any) -> list[Mapping[str, Any]]:
 def _registry_spec_items(registry: Any) -> list[Mapping[str, Any]]:
     try:
         return _mapping_items(registry.export_specs())
-    except Exception:  # noqa: BLE001 - transient/literal specs are simply omitted
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "transient/literal specs are simply omitted", exc_info=True
+        )
         return []
 
 
@@ -574,7 +581,10 @@ def _source_connector_types() -> tuple[str, ...]:
         )
 
         values = [str(item).strip() for item in list_sources()]
-    except Exception:  # noqa: BLE001 - optional connector discovery is best effort
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "optional connector discovery is best effort", exc_info=True
+        )
         values = []
     # Registry keys are source-type aliases, not external coordinates.  Keep
     # this projection on the same neutral grammar as provider/connection names

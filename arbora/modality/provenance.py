@@ -87,7 +87,7 @@ def engine_recorder(
         try:
             engine = engine_for()
             await asyncio.to_thread(record_provenance, engine, prompt)
-        except Exception as exc:  # noqa: BLE001 - provenance is logged, not fatal
+        except Exception as exc:  # provenance is logged, not fatal
             logger.warning("modality provenance write failed: %s", type(exc).__name__)
 
     return record

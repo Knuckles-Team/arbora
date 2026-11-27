@@ -106,7 +106,7 @@ class UsageLedger:
                     key=f"usage:{run_id}:{index // self._max_batch}",
                 )
                 accepted += 1
-            except Exception as exc:  # noqa: BLE001 - usage never fails the run
+            except Exception as exc:  # usage never fails the run
                 logger.warning(
                     "usage batch %s of run %s not appended: %s %s",
                     index // self._max_batch,
