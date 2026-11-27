@@ -8,7 +8,10 @@ from typing import Any
 
 import pytest
 
-from arbora.api.domain.deployment.assembly import choices_digest, graph_digest  # noqa: F401
+from arbora.api.domain.deployment.assembly import (  # noqa: F401
+    choices_digest,
+    graph_digest,
+)
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import approval_id_for
 from arbora.api.ops import promote
