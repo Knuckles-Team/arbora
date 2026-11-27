@@ -877,6 +877,11 @@ def _build_server(
 
         # Always reported, never gating (ARBORA-IDENTITY-R030.4.3, .8).
         body["identity"] = identity_readiness()
+        from arbora.pin_lag.gates import ready_report
+
+        # A gate the pinned engine cannot serve is named, never silent; it never gates
+        # readiness, because refusing every call on the pin would halt the system.
+        body.update(ready_report())
         from arbora.mcp_server.catalog_warmup import catalog_state
 
         catalog = catalog_state()
@@ -1013,7 +1018,13 @@ def _register_graph_tool_surface(
         from arbora.a2a.team import bind_team_coordination
 
         # ARBORA-OPS-R877: admission writes team records and applies the decision.
-        bind_team_coordination(host.runs.a2a.authority, invocation.engine_send)
+        bind_team_coordination(
+            host.runs.a2a.authority,
+            invocation.engine_send,
+            graph=invocation.decision_graph,
+            feature_schema=invocation.decision_feature_schema,
+            principal=invocation.decision_principal,
+        )
     mount_sdk_a2a(mcp, stream_handler=rpc_handler)
 
 

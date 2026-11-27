@@ -21,6 +21,7 @@ from arbora.api.ops.ops import (
     RestoreReceipt,
     TenantPage,
 )
+from tests.question_kinds import declare_question_kinds
 
 _OPS = {op.id: op for op in ops_admin.operations()}
 
@@ -73,7 +74,12 @@ class _FakeOpsAdminStore:
         return RestoreReceipt(tenant=tenant, backup_id=backup_id, status="reserved")
 
 
-async def test_ops_doctor_is_scoped_to_the_callers_own_tenant() -> None:
+async def test_ops_doctor_is_scoped_to_the_callers_own_tenant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    declare_question_kinds(
+        monkeypatch, "autonomy_verdict", "tool_relevance", "team_coordination"
+    )
     store = _FakeOpsAdminStore()
     context = _context(store=store, tenant="tenant-a")
     result = await ops_admin.handle_ops_doctor(context, {}, _OPS["ops.doctor"])

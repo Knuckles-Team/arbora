@@ -956,6 +956,13 @@ def compose_served_invocation(
         audit_adapter=EgAuditAdapter(audit_client),
         current_session=current_session,
     )
+    from arbora.mcp_server.gate_audit import gate_inactive_startup
+
+    # A gate the pinned engine cannot serve is on the audit record once per process.
+    process_startup = _chained_startup(
+        process_startup,
+        gate_inactive_startup(EgAuditAdapter(audit_client), session),
+    )
 
     if services.hooks:
         # ARBORA-OPS-R009.7: a hook runs through ``invoke`` as the host service
@@ -979,6 +986,7 @@ def compose_served_invocation(
         decision_feature_schema=tenant_pin,
         decision_principal=confirm_principal,
         decision_tenant=lambda: str(session().tenant),
+        decision_graph=graph,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         background_services=_background_services(
