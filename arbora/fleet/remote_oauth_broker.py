@@ -412,6 +412,37 @@ def discover_protected_resource(
     )
 
 
+def _require_https_endpoint(endpoint: str, message: str) -> None:
+    """Fail closed with ``message`` unless ``endpoint`` is an HTTPS URL with a host."""
+    parsed = urlsplit(endpoint)
+    if parsed.scheme.casefold() != "https" or not parsed.hostname:
+        raise OAuthDiscoveryError(message)
+
+
+def _check_registration_endpoint(registration_endpoint: object) -> None:
+    """An advertised registration endpoint must be an HTTPS URL string."""
+    if registration_endpoint is None:
+        return
+    if not isinstance(registration_endpoint, str):
+        raise OAuthDiscoveryError(
+            "authorization-server registration_endpoint is invalid"
+        )
+    _require_https_endpoint(
+        registration_endpoint,
+        "authorization-server registration_endpoint must be HTTPS",
+    )
+
+
+def _check_pkce_and_grant(challenge_methods: object, grant_types: object) -> None:
+    """The server must support PKCE S256 and the authorization_code grant."""
+    if not isinstance(challenge_methods, list) or "S256" not in challenge_methods:
+        raise OAuthDiscoveryError("authorization server does not support PKCE S256")
+    if not isinstance(grant_types, list) or "authorization_code" not in grant_types:
+        raise OAuthDiscoveryError(
+            "authorization server does not support the authorization_code grant"
+        )
+
+
 def discover_authorization_server(
     client: httpx.Client,
     resource_metadata: ProtectedResourceMetadata,
@@ -449,25 +480,11 @@ def discover_authorization_server(
     ):
         raise OAuthDiscoveryError("authorization-server metadata is incomplete")
     for endpoint in (authorization_endpoint, token_endpoint):
-        parsed = urlsplit(endpoint)
-        if parsed.scheme.casefold() != "https" or not parsed.hostname:
-            raise OAuthDiscoveryError("authorization-server endpoints must be HTTPS")
-    if registration_endpoint is not None:
-        if not isinstance(registration_endpoint, str):
-            raise OAuthDiscoveryError(
-                "authorization-server registration_endpoint is invalid"
-            )
-        parsed = urlsplit(registration_endpoint)
-        if parsed.scheme.casefold() != "https" or not parsed.hostname:
-            raise OAuthDiscoveryError(
-                "authorization-server registration_endpoint must be HTTPS"
-            )
-    if not isinstance(challenge_methods, list) or "S256" not in challenge_methods:
-        raise OAuthDiscoveryError("authorization server does not support PKCE S256")
-    if not isinstance(grant_types, list) or "authorization_code" not in grant_types:
-        raise OAuthDiscoveryError(
-            "authorization server does not support the authorization_code grant"
+        _require_https_endpoint(
+            endpoint, "authorization-server endpoints must be HTTPS"
         )
+    _check_registration_endpoint(registration_endpoint)
+    _check_pkce_and_grant(challenge_methods, grant_types)
     return AuthorizationServerMetadata(
         issuer=issuer,
         authorization_endpoint=authorization_endpoint,
@@ -717,6 +734,16 @@ class OAuthTransaction:
         return cls(**data)
 
 
+def _state_is_well_formed(state: object) -> bool:
+    """True for a non-empty, bounded state string with no control characters."""
+    return (
+        isinstance(state, str)
+        and bool(state)
+        and len(state) <= _MAX_STATE_LEN
+        and not any(ord(character) < 32 or ord(character) == 127 for character in state)
+    )
+
+
 class TransactionStore:
     """Session-bound encrypted transaction storage, single-use by atomic claim.
 
@@ -751,12 +778,7 @@ class TransactionStore:
             return None
 
     def consume_once(self, state: str, *, now: float | None = None) -> OAuthTransaction:
-        if (
-            not isinstance(state, str)
-            or not state
-            or len(state) > _MAX_STATE_LEN
-            or any(ord(character) < 32 or ord(character) == 127 for character in state)
-        ):
+        if not _state_is_well_formed(state):
             raise OAuthStateError("malformed state")
         key = self._key(state)
         raw = self._secrets.get(key)
@@ -819,6 +841,35 @@ def _new_grant_revision() -> str:
     """Mint a process-owned opaque identity for one grant revision."""
 
     return secrets.token_hex(24)
+
+
+def _refuse_revoked_overwrite(
+    raw: str | None, authorization_started_at: float | None
+) -> None:
+    """A revoked stored token is replaced only by a flow that began after the revocation."""
+    if raw is None:
+        return
+    try:
+        current = json.loads(raw)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        current = None
+    if not (isinstance(current, dict) and current.get("revoked")):
+        return
+    try:
+        revoked_at = float(current["revoked_at"])
+        if authorization_started_at is None:
+            raise TypeError("authorization start time is required")
+        started_at = float(authorization_started_at)
+    except (KeyError, TypeError, ValueError, OverflowError):
+        raise OAuthRevokedError(
+            "revoked token requires a newer authorization flow"
+        ) from None
+    if (
+        not math.isfinite(revoked_at)
+        or not math.isfinite(started_at)
+        or started_at <= revoked_at
+    ):
+        raise OAuthRevokedError("authorization flow predates the token revocation")
 
 
 class OAuthTokenStore:
@@ -894,30 +945,7 @@ class OAuthTokenStore:
         }
         lock = _lock_for(key)
         with lock:
-            raw = self._secrets.get(key)
-            if raw is not None:
-                try:
-                    current = json.loads(raw)
-                except (TypeError, ValueError, json.JSONDecodeError):
-                    current = None
-                if isinstance(current, dict) and current.get("revoked"):
-                    try:
-                        revoked_at = float(current["revoked_at"])
-                        if authorization_started_at is None:
-                            raise TypeError("authorization start time is required")
-                        started_at = float(authorization_started_at)
-                    except (KeyError, TypeError, ValueError, OverflowError):
-                        raise OAuthRevokedError(
-                            "revoked token requires a newer authorization flow"
-                        ) from None
-                    if (
-                        not math.isfinite(revoked_at)
-                        or not math.isfinite(started_at)
-                        or started_at <= revoked_at
-                    ):
-                        raise OAuthRevokedError(
-                            "authorization flow predates the token revocation"
-                        )
+            _refuse_revoked_overwrite(self._secrets.get(key), authorization_started_at)
             self._secrets.set(key, json.dumps(record, separators=(",", ":")))
 
     def get(
