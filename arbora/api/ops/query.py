@@ -17,9 +17,14 @@ from arbora.api.ops.projections import (
 )
 from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, OpSpec, Verb, eg_method_ref
+from arbora.gateway.schemas.schema_context import (
+    SchemaContextRequest,
+    SchemaContextResult,
+)
 
 __all__ = [
     "NaturalLanguageParams",
+    "handle_schema_context",
     "handle_cross_source_report",
     "handle_query_projections",
     "operations",
@@ -56,6 +61,61 @@ async def handle_cross_source_report(
     return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
 
 
+async def handle_schema_context(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Ask the engine's ``SchemaContext`` and project its answer (ARBORA-DATA-MARKET-R005).
+
+    Arbora derives no fact. A pinned engine without the method, or an answer with no
+    approved catalog revision, refuses ``UNAVAILABLE``. An unverified or inferred
+    relationship is returned labelled ``proposal``. The answer is bounded to the
+    request limit with a ``truncated`` flag. An answer for another tenant's source
+    reads as an absent object.
+    """
+    from pydantic import ValidationError
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+    try:
+        require_methods("SchemaContext")
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
+    request = SchemaContextRequest.model_validate(dict(params))
+    answer = await engine_send(
+        context,
+        "SchemaContext",
+        {
+            "intent": request.intent,
+            "object": request.object,
+            "schema": request.schema_name,
+            "source_id": request.source_id,
+        },
+    )
+    try:
+        result = SchemaContextResult.model_validate(answer)
+    except ValidationError:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "no approved catalog snapshot for the source"}
+        ) from None
+    if result.tenant_id != str(context.caller.tenant) or (
+        request.catalog_revision and result.catalog_revision != request.catalog_revision
+    ):
+        raise OperationRefused("NOT_FOUND")
+    cut = request.limit
+    truncated = result.truncated or any(
+        len(rows) > cut
+        for rows in (result.facts, result.proposals, result.dependency_edges)
+    )
+    return {
+        **result.model_dump(),
+        "facts": result.facts[:cut],
+        "proposals": [{**row, "status": "proposal"} for row in result.proposals[:cut]],
+        "dependency_edges": result.dependency_edges[:cut],
+        "truncated": truncated,
+    }
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         OpSpec(
@@ -90,6 +150,15 @@ def operations() -> tuple[OpSpec, ...]:
             result=CrossSourceReportResult,
             handler="arbora.api.ops.query.handle_cross_source_report",
             scope="query:unified",
+        ),
+        build_read_op(
+            op_id="schema.context",
+            summary="Explain a source table: definition, joins, ontology class, owner or impact",
+            examples=("what does this table mean and what depends on it",),
+            params=SchemaContextRequest,
+            result=SchemaContextResult,
+            handler="arbora.api.ops.query.handle_schema_context",
+            scope="graph:read",
         ),
         build_read_op(
             op_id="query.projections",

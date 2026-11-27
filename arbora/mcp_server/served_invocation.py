@@ -169,6 +169,21 @@ def _with_a2a_peer_transport(
     return {**bindings, "a2a_peer_transport": A2APeerTransport()}
 
 
+def _with_finance_read_port(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the marketplace read port (ARBORA-DATA-MARKET-R003.6).
+
+    The port reaches the venue only through the governed fleet call; it holds no
+    provider client and no order method.
+    """
+    if bindings is None or "finance_read_port" in bindings:
+        return bindings
+    from arbora.finance.fleet_read_port import FleetFinanceReadPort
+
+    return {**bindings, "finance_read_port": FleetFinanceReadPort()}
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -966,6 +981,7 @@ def compose_served_invocation(
             "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
         }
     bindings = _with_a2a_peer_transport(bindings)
+    bindings = _with_finance_read_port(bindings)
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.
