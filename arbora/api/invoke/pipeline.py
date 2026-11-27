@@ -841,7 +841,9 @@ async def _record(
                         call,
                         {
                             **(evidence or {}),
-                            **result_evidence(call.op.id, call.arguments, result),
+                            **result_evidence(
+                                call.op.id, call.arguments, result, call.caller
+                            ),
                         },
                     ),
                 ),

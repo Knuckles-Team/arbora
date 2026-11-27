@@ -185,6 +185,23 @@ class RunTerminalEvents:
 TERMINALS = RunTerminalEvents()
 
 
+class ProcessTableHolder:
+    """The host's per-run sandbox process table, set when the host ports compose."""
+
+    def __init__(self) -> None:
+        self.table: SandboxProcessTable | None = None
+
+    def bind(self, table: SandboxProcessTable | None) -> None:
+        self.table = table
+
+    def current(self) -> SandboxProcessTable | None:
+        return self.table
+
+
+#: The process's one holder; ``ops.process.terminate`` ends processes through it.
+PROCESS_TABLE = ProcessTableHolder()
+
+
 def terminal_extension_supplier(
     owner_of: Callable[[str], Any],
     events: RunTerminalEvents,

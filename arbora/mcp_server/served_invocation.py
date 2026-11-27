@@ -686,6 +686,51 @@ def _with_security_evaluation(
     return {**bindings, "security_evaluation": EngineSecurityEvaluation()}
 
 
+def _with_retriever(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the engine-backed retriever and plan decision (ARBORA-OPS-R053.3).
+
+    ``retrieval.search``, ``retrieval.freshness`` and ``retrieval.space`` share the
+    one ``retriever``; each request binds it to the caller's own session. Without
+    bindings the operations refuse ``UNAVAILABLE``.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.api.ops.retrieval_space import EngineRetrievalPlan, EngineRetriever
+
+    adapters = {
+        "retriever": EngineRetriever(),
+        "retrieval_plan": EngineRetrievalPlan(),
+    }
+    return {**{k: v for k, v in adapters.items() if k not in bindings}, **bindings}
+
+
+def _with_host_adapters(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the harness adapters the host supplies (ARBORA-OPS-R051.3, R055.2).
+
+    ``security_probe_runner`` submits ``agents.run`` through the governed step
+    pipeline. ``process_terminator`` ends one process through the host's per-run
+    sandbox process table, resolved when the termination is applied; with no
+    table composed it refuses ``UNAVAILABLE``.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.agent_host.port_backends import PROCESS_TABLE
+    from arbora.api.ops.host_adapters import (
+        HarnessProbeRunner,
+        SandboxProcessTerminator,
+    )
+
+    adapters = {
+        "security_probe_runner": HarnessProbeRunner(),
+        "process_terminator": SandboxProcessTerminator(PROCESS_TABLE.current),
+    }
+    return {**{k: v for k, v in adapters.items() if k not in bindings}, **bindings}
+
+
 def _with_task_plan_schema(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -778,6 +823,8 @@ def compose_served_invocation(
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
     bindings = _with_security_evaluation(bindings)
+    bindings = _with_host_adapters(bindings)
+    bindings = _with_retriever(bindings)
     bindings, process_startup = _with_task_plan_schema(
         bindings, pool, graph, connect_context, session, action_policies
     )

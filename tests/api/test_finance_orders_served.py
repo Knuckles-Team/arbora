@@ -13,12 +13,14 @@ D = "a" * 64
 _PARAMS = {"proposal_id": "p1", "admission_digest": D, "approver_set_digest": "b" * 64}
 
 
+@pytest.mark.spec("ARBORA-OPS-R070")
 def test_the_operation_is_absent_until_the_engine_publishes_the_receipt() -> None:
     assert finance_orders.receipt_published() is False
     assert finance_orders.operations() == ()
     assert get_registry().get("order.proposal.confirm") is None
 
 
+@pytest.mark.spec("ARBORA-OPS-R070")
 async def test_the_handler_refuses_naming_the_missing_receipt_type(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -34,7 +36,8 @@ async def test_the_handler_refuses_naming_the_missing_receipt_type(
     assert client.sent == []
 
 
-async def test_a_published_receipt_binds_the_digest_and_refuses_a_stale_one(
+@pytest.mark.spec("ARBORA-OPS-R070")
+async def test_confirmation_binds_digest_and_refuses_stale(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import medulla.generated as generated
@@ -62,3 +65,6 @@ async def test_a_published_receipt_binds_the_digest_and_refuses_a_stale_one(
     with pytest.raises(OperationRefused) as refused:
         await finance_orders.handle_order_proposal_confirm(ctx, stale, None)  # type: ignore[arg-type]
     assert refused.value.code == "PLAN_STALE"
+    # A refused confirmation issues no receipt and calls no provider: the only
+    # engine call is the receipt read.
+    assert {method for method, *_ in client.sent} == {"FinanceOrderReceiptGet"}

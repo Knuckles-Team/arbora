@@ -187,6 +187,9 @@ def compose_host_ports(
         inbox = ApprovalInboxWaiter(backends.read_lease, wait, backends.now_ms)
         ports["approval"] = approval_waiter(inbox.decided, wait)
     if backends.processes is not None:
+        from arbora.agent_host.port_backends import PROCESS_TABLE
+
+        PROCESS_TABLE.bind(backends.processes)
         ports["sandbox_processes"] = sandbox_process_provider(backends.processes.list)
     if backends.confirm_exchange is not None:
         ports["confirm"] = plan_confirmer(RunVerdictConfirm(backends.confirm_exchange))

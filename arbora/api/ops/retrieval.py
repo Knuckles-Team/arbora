@@ -79,6 +79,13 @@ class Retriever(Protocol):
     async def freshness(self, *, tenant: str) -> RetrievalFreshnessOutcome: ...
 
 
+def request_retriever(context: Any) -> Retriever:
+    """The composed retriever for this request; a request-bound one binds its session."""
+    service = bound_service(context, "retriever", reason="retriever is not composed")
+    bind = getattr(service, "bind", None)
+    return bind(context) if callable(bind) else service  # type: ignore[no-any-return]
+
+
 async def _bound_retriever(context: Any, record_id: str) -> Retriever:
     """The one provider the committed record binds, or a refusal that calls no other."""
     from arbora.api.invoke.pipeline import OperationRefused
@@ -104,7 +111,7 @@ async def handle_retrieval_search(
     retriever: Retriever = (
         await _bound_retriever(context, record_id)
         if record_id
-        else bound_service(context, "retriever", reason="retriever is not composed")
+        else request_retriever(context)
     )
     context_budget = params["context_budget"]
     outcome = await retriever.search(
@@ -127,9 +134,7 @@ async def handle_retrieval_freshness(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Return source freshness for the caller's own tenant."""
-    retriever: Retriever = bound_service(
-        context, "retriever", reason="retriever is not composed"
-    )
+    retriever = request_retriever(context)
     outcome = await retriever.freshness(tenant=context.caller.tenant)
     return {"value": outcome.model_dump(mode="json")}
 
@@ -529,6 +534,7 @@ __all__ = [
     "RetrievalSearchParams",
     "RetrievalSearchResult",
     "Retriever",
+    "request_retriever",
     "KnowledgeScopeSetParams",
     "RetrievalFeedbackParams",
     "handle_agent_knowledge_scope_set",
