@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import mimetypes
 from collections.abc import Awaitable, Callable
+from types import MappingProxyType
 from typing import Any
 
 from arbora.messaging.models import InboundEvent, MediaAttachment, MediaType
@@ -22,12 +23,14 @@ __all__ = ["attachment_media_type", "fetch_attachment", "normalize_inbound"]
 
 Fetch = Callable[[MediaAttachment, int], Awaitable[bytes]]
 
-_DEFAULT_TYPE = {
-    MediaType.VOICE_NOTE: "audio/ogg",
-    MediaType.AUDIO: "audio/mpeg",
-    MediaType.IMAGE: "image/jpeg",
-    MediaType.VIDEO: "video/mp4",
-}
+_DEFAULT_TYPE = MappingProxyType(
+    {
+        MediaType.VOICE_NOTE: "audio/ogg",
+        MediaType.AUDIO: "audio/mpeg",
+        MediaType.IMAGE: "image/jpeg",
+        MediaType.VIDEO: "video/mp4",
+    }
+)
 
 
 def attachment_media_type(attachment: MediaAttachment) -> str:

@@ -33,8 +33,10 @@ and the rendered output is committed into the operator's PRIVATE repo, never her
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from string import Template
+from types import MappingProxyType
 
 # ── deployment profiles (mirror config_generator.PROFILES) ──────────────────
 PROFILES = ("tiny", "single-node-prod", "enterprise")
@@ -308,11 +310,13 @@ Operator specifics are CI/CD variables / placeholder tokens (runner tag, registr
 this project's path) — resolved at deploy time, never committed in the public template.
 """
 
-CI_TEMPLATES: dict[str, str] = {
-    "stages.yml": _CI_STAGES,
-    "agent-package-ci.yml": _CI_AGENT_PACKAGE,
-    "service-deploy.yml": _CI_SERVICE_DEPLOY,
-}
+CI_TEMPLATES: Mapping[str, str] = MappingProxyType(
+    {
+        "stages.yml": _CI_STAGES,
+        "agent-package-ci.yml": _CI_AGENT_PACKAGE,
+        "service-deploy.yml": _CI_SERVICE_DEPLOY,
+    }
+)
 
 # A minimal infrastructure-repo CI that just consumes the shared deploy template.
 _INFRA_CI = """\
@@ -380,35 +384,39 @@ STANDARD_REPOS: tuple[RepoTemplate, ...] = (
     ),
 )
 
-_BY_KEY = {r.key: r for r in STANDARD_REPOS}
+_BY_KEY = MappingProxyType({r.key: r for r in STANDARD_REPOS})
 
 # Profile scaling — a pi/tiny deploy stays minimal & LOCAL; enterprise gets the
 # full set + the shared CI templates repo. (degrades cleanly across profiles)
-PROFILE_REPO_SETS: dict[str, tuple[str, ...]] = {
-    "tiny": ("inventory", "config"),
-    "single-node-prod": (
-        "inventory",
-        "config",
-        "networks",
-        "secrets-config",
-        "infrastructure",
-    ),
-    "enterprise": (
-        "inventory",
-        "config",
-        "networks",
-        "secrets-config",
-        "infrastructure",
-        "pipelines",
-    ),
-}
+PROFILE_REPO_SETS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "tiny": ("inventory", "config"),
+        "single-node-prod": (
+            "inventory",
+            "config",
+            "networks",
+            "secrets-config",
+            "infrastructure",
+        ),
+        "enterprise": (
+            "inventory",
+            "config",
+            "networks",
+            "secrets-config",
+            "infrastructure",
+            "pipelines",
+        ),
+    }
+)
 
 # tiny keeps repos LOCAL (git init, not pushed to a remote host); larger profiles
 # push to the operator's git host. CI is off for tiny, on otherwise.
-_GIT_MODE = {"tiny": "local", "single-node-prod": "remote", "enterprise": "remote"}
+_GIT_MODE = MappingProxyType(
+    {"tiny": "local", "single-node-prod": "remote", "enterprise": "remote"}
+)
 
 # Runner registration scales with the profile (no operator tokens/tags here).
-_RUNNER_COUNT = {"tiny": 0, "single-node-prod": 1, "enterprise": 2}
+_RUNNER_COUNT = MappingProxyType({"tiny": 0, "single-node-prod": 1, "enterprise": 2})
 
 
 # ── public helpers ──────────────────────────────────────────────────────────

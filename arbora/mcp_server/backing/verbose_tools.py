@@ -25,7 +25,9 @@ import inspect
 import keyword
 import logging
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from fastmcp import Context
@@ -48,14 +50,16 @@ logger = logging.getLogger(__name__)
 GRANULAR_TAG = "granular"
 
 #: OpenAPI/JSON-schema primitive -> Python type for synthesized typed signatures.
-_PY_TYPES: dict[str, type] = {
-    "string": str,
-    "integer": int,
-    "number": float,
-    "boolean": bool,
-    "array": list,
-    "object": dict,
-}
+_PY_TYPES: Mapping[str, type] = MappingProxyType(
+    {
+        "string": str,
+        "integer": int,
+        "number": float,
+        "boolean": bool,
+        "array": list,
+        "object": dict,
+    }
+)
 
 #: Reserved parameter names a synthesized verbose signature already uses.
 _RESERVED_PARAM_NAMES = frozenset({"client", "ctx", "self"})

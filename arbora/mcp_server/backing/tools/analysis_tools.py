@@ -12,6 +12,7 @@ import os
 import re
 from functools import partial
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -1314,29 +1315,31 @@ def _configure_action_doctor(action, config_key, config_value):
         )
 
 
-_CONFIGURE_ACTION_DISPATCH = {
-    "set_secret": _configure_action_set_secret,
-    "vault_sync": _configure_action_vault_sync,
-    "register_mcp": _configure_action_register_mcp,
-    "mirror_status": _configure_action_mirror_status,
-    "reconcile": _configure_action_mirror_status,
-    "push_to_stardog": _configure_action_legacy_backend_removed,
-    "pull_from_stardog": _configure_action_legacy_backend_removed,
-    "stardog_sparql": _configure_action_legacy_backend_removed,
-    "stardog_export_graph": _configure_action_legacy_backend_removed,
-    "stardog_import_graph": _configure_action_legacy_backend_removed,
-    "setup_databases": _configure_action_legacy_backend_removed,
-    "verify_databases": _configure_action_legacy_backend_removed,
-    "generate_config": _configure_action_generate_config,
-    "config_doctor": _configure_action_generate_config,
-    "config_reference": _configure_action_generate_config,
-    "get_config": _configure_action_get_config,
-    "list_config": _configure_action_get_config,
-    "preflight": _configure_action_preflight,
-    "install_hooks": _configure_action_install_hooks,
-    "uninstall_hooks": _configure_action_uninstall_hooks,
-    "doctor": _configure_action_doctor,
-}
+_CONFIGURE_ACTION_DISPATCH = MappingProxyType(
+    {
+        "set_secret": _configure_action_set_secret,
+        "vault_sync": _configure_action_vault_sync,
+        "register_mcp": _configure_action_register_mcp,
+        "mirror_status": _configure_action_mirror_status,
+        "reconcile": _configure_action_mirror_status,
+        "push_to_stardog": _configure_action_legacy_backend_removed,
+        "pull_from_stardog": _configure_action_legacy_backend_removed,
+        "stardog_sparql": _configure_action_legacy_backend_removed,
+        "stardog_export_graph": _configure_action_legacy_backend_removed,
+        "stardog_import_graph": _configure_action_legacy_backend_removed,
+        "setup_databases": _configure_action_legacy_backend_removed,
+        "verify_databases": _configure_action_legacy_backend_removed,
+        "generate_config": _configure_action_generate_config,
+        "config_doctor": _configure_action_generate_config,
+        "config_reference": _configure_action_generate_config,
+        "get_config": _configure_action_get_config,
+        "list_config": _configure_action_get_config,
+        "preflight": _configure_action_preflight,
+        "install_hooks": _configure_action_install_hooks,
+        "uninstall_hooks": _configure_action_uninstall_hooks,
+        "doctor": _configure_action_doctor,
+    }
+)
 
 
 def register_analysis_tools(

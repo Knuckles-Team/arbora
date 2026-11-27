@@ -17,6 +17,7 @@ import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, TypeVar
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 
@@ -138,39 +139,61 @@ def _always_false(expected: Any, actual: Any) -> bool:
     return False
 
 
-_EQUALITY_OPERATORS: dict[enums.ConditionOperator, Callable[[Any, Any], bool]] = {
-    enums.ConditionOperator.EQUALS: lambda expected, actual: expected == actual,
-    enums.ConditionOperator.NOT_EQUALS: lambda expected, actual: expected != actual,
-}
+_EQUALITY_OPERATORS: Mapping[enums.ConditionOperator, Callable[[Any, Any], bool]] = (
+    MappingProxyType(
+        {
+            enums.ConditionOperator.EQUALS: lambda expected, actual: expected == actual,
+            enums.ConditionOperator.NOT_EQUALS: lambda expected, actual: (
+                expected != actual
+            ),
+        }
+    )
+)
 
-_STRING_OPERATORS: dict[enums.ConditionOperator, Callable[[str, str], bool]] = {
-    enums.ConditionOperator.CONTAINS: lambda expected, actual: expected in actual,
-    enums.ConditionOperator.NOT_CONTAINS: (
-        lambda expected, actual: expected not in actual
-    ),
-    enums.ConditionOperator.STARTS_WITH: (
-        lambda expected, actual: actual.startswith(expected)
-    ),
-    enums.ConditionOperator.ENDS_WITH: (
-        lambda expected, actual: actual.endswith(expected)
-    ),
-}
+_STRING_OPERATORS: Mapping[enums.ConditionOperator, Callable[[str, str], bool]] = (
+    MappingProxyType(
+        {
+            enums.ConditionOperator.CONTAINS: lambda expected, actual: (
+                expected in actual
+            ),
+            enums.ConditionOperator.NOT_CONTAINS: (
+                lambda expected, actual: expected not in actual
+            ),
+            enums.ConditionOperator.STARTS_WITH: (
+                lambda expected, actual: actual.startswith(expected)
+            ),
+            enums.ConditionOperator.ENDS_WITH: (
+                lambda expected, actual: actual.endswith(expected)
+            ),
+        }
+    )
+)
 
-_NUMERIC_OPERATORS: dict[enums.ConditionOperator, Callable[[Any, Any], bool]] = {
-    enums.ConditionOperator.GREATER: lambda expected, actual: expected > actual,
-    enums.ConditionOperator.GREATER_OR_EQUAL: (
-        lambda expected, actual: expected >= actual
-    ),
-    enums.ConditionOperator.LESS: lambda expected, actual: expected < actual,
-    enums.ConditionOperator.LESS_OR_EQUAL: (
-        lambda expected, actual: expected <= actual
-    ),
-}
+_NUMERIC_OPERATORS: Mapping[enums.ConditionOperator, Callable[[Any, Any], bool]] = (
+    MappingProxyType(
+        {
+            enums.ConditionOperator.GREATER: lambda expected, actual: expected > actual,
+            enums.ConditionOperator.GREATER_OR_EQUAL: (
+                lambda expected, actual: expected >= actual
+            ),
+            enums.ConditionOperator.LESS: lambda expected, actual: expected < actual,
+            enums.ConditionOperator.LESS_OR_EQUAL: (
+                lambda expected, actual: expected <= actual
+            ),
+        }
+    )
+)
 
-_LIST_OPERATORS: dict[enums.ConditionOperator, Callable[[Any, Any], bool]] = {
-    enums.ConditionOperator.IN: lambda expected, actual: actual in expected,
-    enums.ConditionOperator.NOT_IN: lambda expected, actual: actual not in expected,
-}
+_LIST_OPERATORS: Mapping[enums.ConditionOperator, Callable[[Any, Any], bool]] = (
+    MappingProxyType(
+        {
+            enums.ConditionOperator.IN: lambda expected, actual: actual in expected,
+            enums.ConditionOperator.NOT_IN: lambda expected, actual: (
+                actual not in expected
+            ),
+        }
+    )
+)
 
 
 def _condition_matches(condition: schemas.Condition, obj: Any) -> bool:

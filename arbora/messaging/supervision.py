@@ -18,7 +18,9 @@ meristem.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import Enum
+from types import MappingProxyType
 
 
 class ChannelSupervisionState(Enum):
@@ -68,30 +70,40 @@ class AdapterImportFailed(ImportError):
 
 
 # The fixed legal-transition table. A pair not present here is refused.
-_TRANSITIONS: dict[ChannelSupervisionState, frozenset[ChannelSupervisionState]] = {
-    ChannelSupervisionState.STOPPED: frozenset({ChannelSupervisionState.STARTING}),
-    ChannelSupervisionState.STARTING: frozenset(
+_TRANSITIONS: Mapping[ChannelSupervisionState, frozenset[ChannelSupervisionState]] = (
+    MappingProxyType(
         {
-            ChannelSupervisionState.RUNNING,
-            ChannelSupervisionState.STOPPED,
-            ChannelSupervisionState.DEGRADED,
+            ChannelSupervisionState.STOPPED: frozenset(
+                {ChannelSupervisionState.STARTING}
+            ),
+            ChannelSupervisionState.STARTING: frozenset(
+                {
+                    ChannelSupervisionState.RUNNING,
+                    ChannelSupervisionState.STOPPED,
+                    ChannelSupervisionState.DEGRADED,
+                }
+            ),
+            ChannelSupervisionState.RUNNING: frozenset(
+                {
+                    ChannelSupervisionState.BACKING_OFF,
+                    ChannelSupervisionState.STOPPING,
+                }
+            ),
+            ChannelSupervisionState.BACKING_OFF: frozenset(
+                {
+                    ChannelSupervisionState.RUNNING,
+                    ChannelSupervisionState.STOPPING,
+                }
+            ),
+            ChannelSupervisionState.DEGRADED: frozenset(
+                {ChannelSupervisionState.STOPPING}
+            ),
+            ChannelSupervisionState.STOPPING: frozenset(
+                {ChannelSupervisionState.STOPPED}
+            ),
         }
-    ),
-    ChannelSupervisionState.RUNNING: frozenset(
-        {
-            ChannelSupervisionState.BACKING_OFF,
-            ChannelSupervisionState.STOPPING,
-        }
-    ),
-    ChannelSupervisionState.BACKING_OFF: frozenset(
-        {
-            ChannelSupervisionState.RUNNING,
-            ChannelSupervisionState.STOPPING,
-        }
-    ),
-    ChannelSupervisionState.DEGRADED: frozenset({ChannelSupervisionState.STOPPING}),
-    ChannelSupervisionState.STOPPING: frozenset({ChannelSupervisionState.STOPPED}),
-}
+    )
+)
 
 
 def legal_targets(

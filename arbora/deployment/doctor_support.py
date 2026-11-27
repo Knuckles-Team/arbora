@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.errors import ArboraRefusal
@@ -19,7 +20,7 @@ PROBE_FAULTS = (
 )
 
 # Status precedence (worst wins for the overall verdict).
-_RANK = {"ok": 0, "skip": 0, "warn": 1, "fail": 2, "error": 2}
+_RANK = MappingProxyType({"ok": 0, "skip": 0, "warn": 1, "fail": 2, "error": 2})
 
 
 def _result(

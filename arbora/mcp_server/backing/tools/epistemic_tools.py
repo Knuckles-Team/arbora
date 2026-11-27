@@ -57,6 +57,8 @@ REST twin.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -70,14 +72,16 @@ from arbora.security.error_surface import public_error_json
 #: ``epistemic_status`` method as ``status`` — see the module docstring: they
 #: have no standalone wire ``Method``, only a field on ``EpistemicStatus``'s
 #: response, which :data:`_PROJECTED_STATUS_FIELDS` selects out below.
-_ACTION_TO_METHOD: dict[str, str] = {
-    "status": "epistemic_status",
-    "why": "explain_belief",
-    "what_changed": "what_changed",
-    "resolve_conflict": "resolve_conflict",
-    "why_not": "epistemic_status",
-    "what_would_invalidate": "epistemic_status",
-}
+_ACTION_TO_METHOD: Mapping[str, str] = MappingProxyType(
+    {
+        "status": "epistemic_status",
+        "why": "explain_belief",
+        "what_changed": "what_changed",
+        "resolve_conflict": "resolve_conflict",
+        "why_not": "epistemic_status",
+        "what_would_invalidate": "epistemic_status",
+    }
+)
 
 #: Actions whose engine call is ``epistemic_status`` but whose RESULT is one
 #: named field of ``EpistemicStatusResult.status`` (CONCEPT:EPI-P3-5), not the

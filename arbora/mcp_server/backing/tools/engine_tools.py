@@ -52,6 +52,8 @@ import base64
 import inspect
 import json
 import logging
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -65,40 +67,42 @@ from arbora.security.error_surface import public_error_json
 
 logger = logging.getLogger(__name__)
 
-_DOMAIN_BLURB: dict[str, str] = {
-    "nodes": "node CRUD, batch/union reads, degree/neighbour queries",
-    "edges": "edge CRUD, temporal invalidate/supersede, batch reads",
-    "graph": "graph algorithms, AST parse/index, semantic+embedding compute",
-    "analytics": "centrality + (personalized) PageRank",
-    "lifecycle": "prune/decay/evict, batch_update, context view, (de)serialize",
-    "reasoning": "forward-chaining OWL/RDFS Datalog closure",
-    "ledger": "audit ledger get/clear/apply",
-    "channels": "dynamic agent communication channels",
-    "tenants": "multi-tenant graph create/delete/list",
-    "resharding": "M3 catalog/reshard/rebalance admin (redb)",
-    "placement": "DIST-P2-1 raft PlacementCatalog: route (read) + assign/move/abort_move admin (raft/cluster only)",
-    "consensus": "zero-trust identity + multisig mutation",
-    "finance": "quantitative finance (optimize/risk/regime/signals/HFT/derivatives)",
-    "datascience": "estimators + primitives + training kernels",
-    "mining": "association-rule mining (Apriori/FP-Growth/Eclat: support/confidence/lift)",
-    "query": "SQL / Cypher / GraphQL / UQL / unified cross-modal query / federation",
-    "txn": "server-side OCC ACID transactions",
-    "timeseries": "native TSDB append/range/window/asof/gapfill",
-    "rdf": "RDF triples + SPARQL + OWL reasoning",
-    "streaming": "CDC / continuous queries / watch / triggers",
-    "blob": "streamed content-addressed media blobs",
-    "broker": "native message broker: exchange/queue/stream admin + routed publish/consume",
-    "rbac": "RBAC policy administration: roles + resource/action grants (ADMIN)",
-    "admin": "ops/maintenance: online backup + restore (ADMIN)",
-    "graphlearn": "KAN graph-learning: fit/predict a learned per-feature edge-function link predictor",
-    "viz": "D-VZ-1 native visualization: render/capability_matrix over the eg-viz LOD ColumnStore/export pipeline",
-    "modalities": "native document/image/audio/video ingest, typed region/window query, lifecycle (cold/restore/delete/tombstone), and events (B-12)",
-}
+_DOMAIN_BLURB: Mapping[str, str] = MappingProxyType(
+    {
+        "nodes": "node CRUD, batch/union reads, degree/neighbour queries",
+        "edges": "edge CRUD, temporal invalidate/supersede, batch reads",
+        "graph": "graph algorithms, AST parse/index, semantic+embedding compute",
+        "analytics": "centrality + (personalized) PageRank",
+        "lifecycle": "prune/decay/evict, batch_update, context view, (de)serialize",
+        "reasoning": "forward-chaining OWL/RDFS Datalog closure",
+        "ledger": "audit ledger get/clear/apply",
+        "channels": "dynamic agent communication channels",
+        "tenants": "multi-tenant graph create/delete/list",
+        "resharding": "M3 catalog/reshard/rebalance admin (redb)",
+        "placement": "DIST-P2-1 raft PlacementCatalog: route (read) + assign/move/abort_move admin (raft/cluster only)",
+        "consensus": "zero-trust identity + multisig mutation",
+        "finance": "quantitative finance (optimize/risk/regime/signals/HFT/derivatives)",
+        "datascience": "estimators + primitives + training kernels",
+        "mining": "association-rule mining (Apriori/FP-Growth/Eclat: support/confidence/lift)",
+        "query": "SQL / Cypher / GraphQL / UQL / unified cross-modal query / federation",
+        "txn": "server-side OCC ACID transactions",
+        "timeseries": "native TSDB append/range/window/asof/gapfill",
+        "rdf": "RDF triples + SPARQL + OWL reasoning",
+        "streaming": "CDC / continuous queries / watch / triggers",
+        "blob": "streamed content-addressed media blobs",
+        "broker": "native message broker: exchange/queue/stream admin + routed publish/consume",
+        "rbac": "RBAC policy administration: roles + resource/action grants (ADMIN)",
+        "admin": "ops/maintenance: online backup + restore (ADMIN)",
+        "graphlearn": "KAN graph-learning: fit/predict a learned per-feature edge-function link predictor",
+        "viz": "D-VZ-1 native visualization: render/capability_matrix over the eg-viz LOD ColumnStore/export pipeline",
+        "modalities": "native document/image/audio/video ingest, typed region/window query, lifecycle (cold/restore/delete/tombstone), and events (B-12)",
+    }
+)
 
 
 # The declarative engine-surface manifest (source of truth for the tools AND the
 # verbose action manifest generator). CONCEPT:MERISTEM-KG.compute.engine-surface-manifest.
-ENGINE_DOMAINS: dict[str, list[str]] = discover_domains()
+ENGINE_DOMAINS: Mapping[str, list[str]] = MappingProxyType(discover_domains())
 
 
 # ── Engine client resolution ───────────────────────────────────────────────────────

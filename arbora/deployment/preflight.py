@@ -34,8 +34,9 @@ import platform
 import shutil
 import subprocess  # nosec B404 -- fixed-argv local prerequisite probes
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.deployment.genesis_environments import (
@@ -56,11 +57,13 @@ from .webui_reference_model import StaleWebUiReferenceError, current_web_ui_refe
 
 # Current deployment profiles from genesis.yaml; named environments are loaded
 # separately and never fall back to one of these profiles.
-_PROFILE_TARGETS = {
-    "tiny": "bare-metal",
-    "single-node-prod": "docker-compose",
-    "enterprise": "kubernetes",
-}
+_PROFILE_TARGETS = MappingProxyType(
+    {
+        "tiny": "bare-metal",
+        "single-node-prod": "docker-compose",
+        "enterprise": "kubernetes",
+    }
+)
 PROFILES = tuple(_PROFILE_TARGETS)
 COMPONENTS = ("agent-terminal-ui", "overstory", "geniusbot")
 
@@ -408,11 +411,13 @@ def _check_terminal_ui() -> dict[str, Any]:
     )
 
 
-_COMPONENT_CHECKS: dict[str, Callable[[], dict[str, Any]]] = {
-    "overstory": _check_webui,
-    "geniusbot": _check_geniusbot,
-    "agent-terminal-ui": _check_terminal_ui,
-}
+_COMPONENT_CHECKS: Mapping[str, Callable[[], dict[str, Any]]] = MappingProxyType(
+    {
+        "overstory": _check_webui,
+        "geniusbot": _check_geniusbot,
+        "agent-terminal-ui": _check_terminal_ui,
+    }
+)
 
 
 def run_preflight(

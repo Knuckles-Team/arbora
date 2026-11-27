@@ -18,16 +18,19 @@ import json
 import re
 import sys
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.deployment.doctor_support import PROBE_FAULTS
 
-_ENTRY_POINTS = {
-    # Certify the native serving composition, not the removed informational
-    # shell and never an AU compatibility alias.
-    "arbora": "arbora.console:main",
-    "arbora-doctor": "arbora.deployment.doctor:main",
-}
+_ENTRY_POINTS = MappingProxyType(
+    {
+        # Certify the native serving composition, not the removed informational
+        # shell and never an AU compatibility alias.
+        "arbora": "arbora.console:main",
+        "arbora-doctor": "arbora.deployment.doctor:main",
+    }
+)
 
 
 def _entry_points_ready() -> bool:

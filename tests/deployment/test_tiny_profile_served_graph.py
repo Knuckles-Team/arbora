@@ -17,6 +17,7 @@ import time
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 import httpx
@@ -147,7 +148,11 @@ def test_tiny_profile_refuses_a_configured_external_endpoint(
 
     preset = dict(config_generator._PROFILE_PRESETS["tiny"])
     preset["KAFKA_BOOTSTRAP_SERVERS"] = "broker.invalid:9092"
-    monkeypatch.setitem(config_generator._PROFILE_PRESETS, "tiny", preset)
+    monkeypatch.setattr(
+        config_generator,
+        "_PROFILE_PRESETS",
+        MappingProxyType({**config_generator._PROFILE_PRESETS, "tiny": preset}),
+    )
     with pytest.raises(pytest.fail.Exception, match="external endpoints"):
         _tiny_config()
 

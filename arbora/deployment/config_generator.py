@@ -29,6 +29,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from scion_sdk.utilities import to_boolean
@@ -71,35 +72,39 @@ _PLACEHOLDER_OTEL = "https://telemetry.example.test:4317"
 # Any setting that can apply/merge/develop a change remains fail-closed, and the
 # content-bearing regression-dataset path remains disabled.  Keeping this map in
 # one place prevents the single-host and enterprise postures from drifting.
-_SAFE_PROPOSE_ONLY_EVOLUTION: dict[str, Any] = {
-    "KG_LOOP": True,
-    "KG_LOOP_BREADTH": True,
-    "KG_LOOP_MINE_DISCOVERY": True,
-    "KG_LOOP_BELIEF_REVISION": True,
-    "KG_LOOP_INSIGHT_VALIDATION": True,
-    "KG_LOOP_TRACE_MINING": True,
-    "KG_OPTIMIZATION_ENABLED": True,
-    "KG_FAILURE_EVOLUTION": True,
-    "KG_FAILURE_REGRESSION_DATASET": False,
-    # External/cost-bearing or filesystem-writing stages stay explicit opt-ins.
-    "KG_LOOP_DISCOVER": False,
-    "KG_LOOP_DISTILL": False,
-    "KG_LOOP_STANDARDIZE": False,
-    # Mutating autonomy remains review-first even when learning is enabled.
-    "KG_GOLDEN_AUTO_MERGE": False,
-    "KG_AGENT_AUTO_APPLY": False,
-    "KG_LOOP_AUTO_DEVELOP": False,
-    "KG_LOOP_ALLOW_HOST_VALIDATION": False,
-    "KG_INSIGHT_AUTONOMY": False,
-}
+_SAFE_PROPOSE_ONLY_EVOLUTION: Mapping[str, Any] = MappingProxyType(
+    {
+        "KG_LOOP": True,
+        "KG_LOOP_BREADTH": True,
+        "KG_LOOP_MINE_DISCOVERY": True,
+        "KG_LOOP_BELIEF_REVISION": True,
+        "KG_LOOP_INSIGHT_VALIDATION": True,
+        "KG_LOOP_TRACE_MINING": True,
+        "KG_OPTIMIZATION_ENABLED": True,
+        "KG_FAILURE_EVOLUTION": True,
+        "KG_FAILURE_REGRESSION_DATASET": False,
+        # External/cost-bearing or filesystem-writing stages stay explicit opt-ins.
+        "KG_LOOP_DISCOVER": False,
+        "KG_LOOP_DISTILL": False,
+        "KG_LOOP_STANDARDIZE": False,
+        # Mutating autonomy remains review-first even when learning is enabled.
+        "KG_GOLDEN_AUTO_MERGE": False,
+        "KG_AGENT_AUTO_APPLY": False,
+        "KG_LOOP_AUTO_DEVELOP": False,
+        "KG_LOOP_ALLOW_HOST_VALIDATION": False,
+        "KG_INSIGHT_AUTONOMY": False,
+    }
+)
 
-_PRODUCTION_READINESS_EXPECTED: dict[str, bool] = {
-    "ENABLE_OTEL": True,
-    "LANGFUSE_MCP_ENABLED": True,
-    "TRACE_EXPORT_ENABLED": True,
-    "LANGFUSE_CAPTURE_CONTENT": False,
-    **_SAFE_PROPOSE_ONLY_EVOLUTION,
-}
+_PRODUCTION_READINESS_EXPECTED: Mapping[str, bool] = MappingProxyType(
+    {
+        "ENABLE_OTEL": True,
+        "LANGFUSE_MCP_ENABLED": True,
+        "TRACE_EXPORT_ENABLED": True,
+        "LANGFUSE_CAPTURE_CONTENT": False,
+        **_SAFE_PROPOSE_ONLY_EVOLUTION,
+    }
+)
 
 # `genesis.yaml`'s per-profile `engine_topology` run-plan axis (unified-binary-program.md
 # W-E; full depth: arbora/skills/arbora-genesis/references/runtime-topology.md),
@@ -109,115 +114,121 @@ _PRODUCTION_READINESS_EXPECTED: dict[str, bool] = {
 # in-process-vs-shared-engine transport based on it — that runtime switch is
 # unified-binary-program.md workstream W-A, still landing. Do not treat this as a live
 # behavioral toggle; promote it to a real typed field only once W-A wires a consumer.
-_ENGINE_TOPOLOGY_DEFAULTS: dict[str, str] = {
-    "tiny": "unified-in-process",
-    "single-node-prod": "unified-in-process",
-    "enterprise": "out-of-process-shared",
-}
+_ENGINE_TOPOLOGY_DEFAULTS: Mapping[str, str] = MappingProxyType(
+    {
+        "tiny": "unified-in-process",
+        "single-node-prod": "unified-in-process",
+        "enterprise": "out-of-process-shared",
+    }
+)
 
-_PROFILE_PRESETS: dict[str, dict[str, Any]] = {
-    "tiny": {
-        # Zero-infra: with no GRAPH_SERVICE_ENDPOINTS, the authoritative packaged
-        # medulla engine is provisioned locally on first use.
-        "APP_PROFILE": "dev",
-        "DEPLOYMENT_PROFILE": "tiny",
-        "SECRETS_BACKEND": "vault",
-        "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["tiny"],
-    },
-    "single-node-prod": {
-        # One host: the engine is the authority; pg-age is an async mirror (interop/
-        # BI/DR). Gateway hardened, secrets resolved from the vault backend.
-        "APP_PROFILE": "production",
-        "DEPLOYMENT_PROFILE": "single-node-prod",
-        "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["single-node-prod"],
-        "GRAPH_DB_CONNECTION_PROFILE_REF": None,
-        "GRAPH_MIRROR_TARGETS": ["age"],
-        "GRAPH_SERVICE_ENDPOINTS": [],
-        # Identity authority is deployment-owned and required by doctor; no
-        # audience, issuer, or endpoint is inferred by a portable template.
-        "AUTH_JWT_JWKS_URI": None,
-        "AUTH_JWT_ISSUER": None,
-        "AUTH_JWT_AUDIENCE": None,
-        "KG_POLICY_VERSION": "baseline-v1",
-        "MEDULLA_MAX_RESIDENT_GRAPHS": 1024,
-        "MEDULLA_LAZY_OPEN_PAGE_SIZE": 4096,
-        "MEDULLA_MAX_NODES_PER_GRAPH": 250000,
-        "MEDULLA_ENCRYPTION_KEY_REF": "env://ENGINE_DATA_KEY",
-        "GATEWAY_METRICS": "1",
-        "USAGE_CONTENT_RETENTION": "metadata",
-        "LANGFUSE_CAPTURE_CONTENT": False,
-        "PERSISTENCE_IDENTITY_HMAC_KEY_REF": "env://PERSISTENCE_IDENTITY_HMAC_KEY",
-        "SECRETS_BACKEND": "vault",
-        "KAFKA_BOOTSTRAP_SERVERS": "",  # optional on one host; doctor will note it
-        "ENABLE_OTEL": True,
-        "OTEL_EXPORTER_OTLP_ENDPOINT": _PLACEHOLDER_OTEL,
-        "LANGFUSE_PUBLIC_KEY_REF": "env://LANGFUSE_PUBLIC_KEY",
-        "LANGFUSE_SECRET_KEY_REF": "env://LANGFUSE_SECRET_KEY",  # nosec B105
-        "LANGFUSE_MCP_ENABLED": True,
-        "TRACE_EXPORT_ENABLED": True,
-        **_SAFE_PROPOSE_ONLY_EVOLUTION,
-    },
-    "enterprise": {
-        # Multi-node: shared/remote engine authority + pg-age mirror, durable state,
-        # queue dispatch, auth fail-closed, vault, event backbone, observability.
-        # Hand off multi-node wiring to the deployment workflow skill.
-        "APP_PROFILE": "production",
-        "DEPLOYMENT_PROFILE": "enterprise",
-        "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["enterprise"],
-        "GRAPH_DB_CONNECTION_PROFILE_REF": None,
-        "GRAPH_MIRROR_TARGETS": ["age"],
-        "GRAPH_SERVICE_ENDPOINTS": [],
-        "MEDULLA_MAX_RESIDENT_GRAPHS": 1024,
-        "MEDULLA_LAZY_OPEN_PAGE_SIZE": 4096,
-        "MEDULLA_MAX_NODES_PER_GRAPH": 250000,
-        "STATE_DB_URI": "",
-        "TASK_QUEUE_BACKEND": "kafka",
-        "KAFKA_BOOTSTRAP_SERVERS": "redpanda:9092",
-        # Identity authority is deployment-owned and required by doctor; no
-        # audience, issuer, or endpoint is inferred by a portable template.
-        "AUTH_JWT_JWKS_URI": None,
-        "AUTH_JWT_ISSUER": None,
-        "AUTH_JWT_AUDIENCE": None,
-        "KG_POLICY_VERSION": "baseline-v1",
-        "SECRETS_BACKEND": "vault",
-        "SECRETS_VAULT_URL": "https://vault.example.test:8200",
-        "VAULT_AUTH_METHOD": "approle",
-        "GATEWAY_METRICS": "1",
-        "USAGE_CONTENT_RETENTION": "metadata",
-        "LANGFUSE_CAPTURE_CONTENT": False,
-        "PERSISTENCE_IDENTITY_HMAC_KEY_REF": "env://PERSISTENCE_IDENTITY_HMAC_KEY",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": _PLACEHOLDER_OTEL,
-        "ENABLE_OTEL": True,
-        "LANGFUSE_PUBLIC_KEY_REF": "env://LANGFUSE_PUBLIC_KEY",
-        "LANGFUSE_SECRET_KEY_REF": "env://LANGFUSE_SECRET_KEY",  # nosec B105
-        "LANGFUSE_MCP_ENABLED": True,
-        "TRACE_EXPORT_ENABLED": True,
-        **_SAFE_PROPOSE_ONLY_EVOLUTION,
-    },
-}
+_PROFILE_PRESETS: Mapping[str, dict[str, Any]] = MappingProxyType(
+    {
+        "tiny": {
+            # Zero-infra: with no GRAPH_SERVICE_ENDPOINTS, the authoritative packaged
+            # medulla engine is provisioned locally on first use.
+            "APP_PROFILE": "dev",
+            "DEPLOYMENT_PROFILE": "tiny",
+            "SECRETS_BACKEND": "vault",
+            "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["tiny"],
+        },
+        "single-node-prod": {
+            # One host: the engine is the authority; pg-age is an async mirror (interop/
+            # BI/DR). Gateway hardened, secrets resolved from the vault backend.
+            "APP_PROFILE": "production",
+            "DEPLOYMENT_PROFILE": "single-node-prod",
+            "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["single-node-prod"],
+            "GRAPH_DB_CONNECTION_PROFILE_REF": None,
+            "GRAPH_MIRROR_TARGETS": ["age"],
+            "GRAPH_SERVICE_ENDPOINTS": [],
+            # Identity authority is deployment-owned and required by doctor; no
+            # audience, issuer, or endpoint is inferred by a portable template.
+            "AUTH_JWT_JWKS_URI": None,
+            "AUTH_JWT_ISSUER": None,
+            "AUTH_JWT_AUDIENCE": None,
+            "KG_POLICY_VERSION": "baseline-v1",
+            "MEDULLA_MAX_RESIDENT_GRAPHS": 1024,
+            "MEDULLA_LAZY_OPEN_PAGE_SIZE": 4096,
+            "MEDULLA_MAX_NODES_PER_GRAPH": 250000,
+            "MEDULLA_ENCRYPTION_KEY_REF": "env://ENGINE_DATA_KEY",
+            "GATEWAY_METRICS": "1",
+            "USAGE_CONTENT_RETENTION": "metadata",
+            "LANGFUSE_CAPTURE_CONTENT": False,
+            "PERSISTENCE_IDENTITY_HMAC_KEY_REF": "env://PERSISTENCE_IDENTITY_HMAC_KEY",
+            "SECRETS_BACKEND": "vault",
+            "KAFKA_BOOTSTRAP_SERVERS": "",  # optional on one host; doctor will note it
+            "ENABLE_OTEL": True,
+            "OTEL_EXPORTER_OTLP_ENDPOINT": _PLACEHOLDER_OTEL,
+            "LANGFUSE_PUBLIC_KEY_REF": "env://LANGFUSE_PUBLIC_KEY",
+            "LANGFUSE_SECRET_KEY_REF": "env://LANGFUSE_SECRET_KEY",  # nosec B105
+            "LANGFUSE_MCP_ENABLED": True,
+            "TRACE_EXPORT_ENABLED": True,
+            **_SAFE_PROPOSE_ONLY_EVOLUTION,
+        },
+        "enterprise": {
+            # Multi-node: shared/remote engine authority + pg-age mirror, durable state,
+            # queue dispatch, auth fail-closed, vault, event backbone, observability.
+            # Hand off multi-node wiring to the deployment workflow skill.
+            "APP_PROFILE": "production",
+            "DEPLOYMENT_PROFILE": "enterprise",
+            "ENGINE_TOPOLOGY": _ENGINE_TOPOLOGY_DEFAULTS["enterprise"],
+            "GRAPH_DB_CONNECTION_PROFILE_REF": None,
+            "GRAPH_MIRROR_TARGETS": ["age"],
+            "GRAPH_SERVICE_ENDPOINTS": [],
+            "MEDULLA_MAX_RESIDENT_GRAPHS": 1024,
+            "MEDULLA_LAZY_OPEN_PAGE_SIZE": 4096,
+            "MEDULLA_MAX_NODES_PER_GRAPH": 250000,
+            "STATE_DB_URI": "",
+            "TASK_QUEUE_BACKEND": "kafka",
+            "KAFKA_BOOTSTRAP_SERVERS": "redpanda:9092",
+            # Identity authority is deployment-owned and required by doctor; no
+            # audience, issuer, or endpoint is inferred by a portable template.
+            "AUTH_JWT_JWKS_URI": None,
+            "AUTH_JWT_ISSUER": None,
+            "AUTH_JWT_AUDIENCE": None,
+            "KG_POLICY_VERSION": "baseline-v1",
+            "SECRETS_BACKEND": "vault",
+            "SECRETS_VAULT_URL": "https://vault.example.test:8200",
+            "VAULT_AUTH_METHOD": "approle",
+            "GATEWAY_METRICS": "1",
+            "USAGE_CONTENT_RETENTION": "metadata",
+            "LANGFUSE_CAPTURE_CONTENT": False,
+            "PERSISTENCE_IDENTITY_HMAC_KEY_REF": "env://PERSISTENCE_IDENTITY_HMAC_KEY",
+            "OTEL_EXPORTER_OTLP_ENDPOINT": _PLACEHOLDER_OTEL,
+            "ENABLE_OTEL": True,
+            "LANGFUSE_PUBLIC_KEY_REF": "env://LANGFUSE_PUBLIC_KEY",
+            "LANGFUSE_SECRET_KEY_REF": "env://LANGFUSE_SECRET_KEY",  # nosec B105
+            "LANGFUSE_MCP_ENABLED": True,
+            "TRACE_EXPORT_ENABLED": True,
+            **_SAFE_PROPOSE_ONLY_EVOLUTION,
+        },
+    }
+)
 
 # Keys each profile genuinely *requires* an operator to set (doctor checks these).
-_PROFILE_REQUIRED: dict[str, tuple[str, ...]] = {
-    "tiny": (),
-    "single-node-prod": (
-        "GRAPH_DB_CONNECTION_PROFILE_REF",
-        "MEDULLA_ENCRYPTION_KEY_REF",
-        "AUTH_JWT_JWKS_URI",
-        "AUTH_JWT_ISSUER",
-        "AUTH_JWT_AUDIENCE",
-        "KG_POLICY_VERSION",
-    ),
-    "enterprise": (
-        "GRAPH_DB_CONNECTION_PROFILE_REF",
-        "GRAPH_SERVICE_ENDPOINTS",
-        "STATE_DB_URI",
-        "AUTH_JWT_JWKS_URI",
-        "AUTH_JWT_ISSUER",
-        "AUTH_JWT_AUDIENCE",
-        "KG_POLICY_VERSION",
-        "KAFKA_BOOTSTRAP_SERVERS",
-    ),
-}
+_PROFILE_REQUIRED: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "tiny": (),
+        "single-node-prod": (
+            "GRAPH_DB_CONNECTION_PROFILE_REF",
+            "MEDULLA_ENCRYPTION_KEY_REF",
+            "AUTH_JWT_JWKS_URI",
+            "AUTH_JWT_ISSUER",
+            "AUTH_JWT_AUDIENCE",
+            "KG_POLICY_VERSION",
+        ),
+        "enterprise": (
+            "GRAPH_DB_CONNECTION_PROFILE_REF",
+            "GRAPH_SERVICE_ENDPOINTS",
+            "STATE_DB_URI",
+            "AUTH_JWT_JWKS_URI",
+            "AUTH_JWT_ISSUER",
+            "AUTH_JWT_AUDIENCE",
+            "KG_POLICY_VERSION",
+            "KAFKA_BOOTSTRAP_SERVERS",
+        ),
+    }
+)
 
 
 #: Settings that only take effect on an engine/daemon rebuild — a live `set_config`

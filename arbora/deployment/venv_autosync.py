@@ -61,10 +61,11 @@ import secrets
 import shlex
 import subprocess  # nosec B404 -- fixed-argv workspace process control
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from arbora.deployment.venv_sync import (
@@ -718,7 +719,7 @@ def _spawn_reconciler(workspace: Workspace) -> int | None:
 # ─────────────────────────────────────────────────────────────────────────────
 # Reconciler
 # ─────────────────────────────────────────────────────────────────────────────
-_CLASS_RANK = {SOURCE_ONLY: 0, LOCK: 1, NATIVE: 2, METADATA: 3}
+_CLASS_RANK = MappingProxyType({SOURCE_ONLY: 0, LOCK: 1, NATIVE: 2, METADATA: 3})
 
 
 def _apply_drain(
@@ -953,15 +954,17 @@ def _dispatch_trigger_action(
     return 0
 
 
-_AUTOSYNC_DISPATCH: dict[str, Callable[..., int]] = {
-    "on": _dispatch_toggle,
-    "off": _dispatch_toggle,
-    "status": _dispatch_status,
-    "install": _dispatch_install_uninstall,
-    "uninstall": _dispatch_install_uninstall,
-    "drain": _dispatch_drain_action,
-    "trigger": _dispatch_trigger_action,
-}
+_AUTOSYNC_DISPATCH: Mapping[str, Callable[..., int]] = MappingProxyType(
+    {
+        "on": _dispatch_toggle,
+        "off": _dispatch_toggle,
+        "status": _dispatch_status,
+        "install": _dispatch_install_uninstall,
+        "uninstall": _dispatch_install_uninstall,
+        "drain": _dispatch_drain_action,
+        "trigger": _dispatch_trigger_action,
+    }
+)
 
 
 def dispatch(args: argparse.Namespace, workspace: Workspace, *, as_json: bool) -> int:

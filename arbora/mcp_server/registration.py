@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from fastmcp.exceptions import ToolError
@@ -26,12 +27,14 @@ from arbora.fleet.gateway_ops import native_dispatch_scope
 from arbora.fleet.multiplexer_ops import MultiplexerOps, item_binding
 from arbora.fleet.session_loads import LoadGrant
 
-FLEET_OPERATIONS = {
-    "find_tools": "fleet.catalog.search",
-    "load_tools": "fleet.tools.load",
-    "unload_tools": "fleet.tools.unload",
-    "multiplexer_status": "fleet.status",
-}
+FLEET_OPERATIONS = MappingProxyType(
+    {
+        "find_tools": "fleet.catalog.search",
+        "load_tools": "fleet.tools.load",
+        "unload_tools": "fleet.tools.unload",
+        "multiplexer_status": "fleet.status",
+    }
+)
 RESIDENT_NAMES = (*VERBS, *FLEET_OPERATIONS)
 _AUTHORITY_REFUSALS = frozenset(
     {

@@ -12,7 +12,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from types import MappingProxyType
 
 from arbora.api.domain.deployment.genesis_environments import (
     EnvironmentProfileError,
@@ -213,16 +214,18 @@ def _run_engine_admission(args: argparse.Namespace) -> int:
     return 0
 
 
-_COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
-    "onboard": _run_onboard,
-    "engine-admission": _run_engine_admission,
-    "release-plan": _run_release_plan,
-    "deploy": _run_deploy,
-    "generate": _run_generate,
-    "doctor": _run_doctor,
-    "reference": _run_reference,
-    "environments": _run_environments,
-}
+_COMMAND_HANDLERS: Mapping[str, Callable[[argparse.Namespace], int]] = MappingProxyType(
+    {
+        "onboard": _run_onboard,
+        "engine-admission": _run_engine_admission,
+        "release-plan": _run_release_plan,
+        "deploy": _run_deploy,
+        "generate": _run_generate,
+        "doctor": _run_doctor,
+        "reference": _run_reference,
+        "environments": _run_environments,
+    }
+)
 
 
 def main(argv: list[str] | None = None) -> int:

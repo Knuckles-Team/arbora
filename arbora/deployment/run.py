@@ -17,10 +17,11 @@ import json
 import os
 import subprocess  # nosec B404 - runs the fixed argv built from the validated deploy file
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.deployment.provision import ConfigError, DeployConfig
@@ -84,11 +85,15 @@ FORWARD: tuple[tuple[DeployState, DeployEvent, DeployState], ...] = (
 ROLLBACK_FROM = (S.APPLIED, S.CUT_OVER, S.SERVING)
 
 #: Every legal (state, event) pair and the state it leads to.
-LEGAL: dict[tuple[DeployState, DeployEvent], DeployState] = {
-    **{(state, event): target for state, event, target in FORWARD},
-    **{(state, E.ROLLBACK): S.ROLLED_BACK for state in ROLLBACK_FROM},
-    **{(state, E.ABORT): S.FAILED for state in DeployState if state not in TERMINAL},
-}
+LEGAL: Mapping[tuple[DeployState, DeployEvent], DeployState] = MappingProxyType(
+    {
+        **{(state, event): target for state, event, target in FORWARD},
+        **{(state, E.ROLLBACK): S.ROLLED_BACK for state in ROLLBACK_FROM},
+        **{
+            (state, E.ABORT): S.FAILED for state in DeployState if state not in TERMINAL
+        },
+    }
+)
 CHAIN = tuple(event for _, event, _ in FORWARD)
 
 
@@ -150,60 +155,64 @@ class StepContext:
 
 
 #: Each event is the commands it runs, in order; none holds logic of its own.
-STEPS: dict[DeployEvent, Callable[[StepContext], list[Command]]] = {
-    E.PREFLIGHT: lambda c: [
-        c.arbora("normalize-config", "--check", "--config", str(c.config_path)),
-        ["kubectl", "version", "--client"],
-    ],
-    E.BACKUP: lambda c: [
-        c.kube("get", "deployment,configmap,service,ingress", "-o", "yaml")
-    ],
-    E.CONFIG: lambda c: [c.arbora("normalize-config", "--config", str(c.config_path))],
-    E.BUILD: lambda c: [c.render(out=c.manifests)],
-    E.APPLY: lambda c: [
-        ["kubectl", "apply", "-f", c.manifests],
-        c.arbora(
-            "provision",
-            "--apply",
-            "--workdir",
-            str(c.workdir / "provision"),
-            "--config",
-            str(c.config_path),
-        ),
-    ],
-    E.CUTOVER: lambda c: [
-        c.kube("scale", f"deployment/{c.config.workload}", "--replicas=0")
-    ],
-    E.FIRST_START: lambda c: [
-        c.render("--first-start", out=c.job),
-        ["kubectl", "apply", "-f", c.job],
-        c.kube(
-            "wait",
-            "--for=condition=complete",
-            f"job/{c.config.workload}-first-start",
-            "--timeout=7200s",
-        ),
-    ],
-    E.SERVE: lambda c: [
-        c.kube("scale", f"deployment/{c.config.workload}", "--replicas=1"),
-        c.kube("rollout", "status", f"deployment/{c.config.workload}"),
-    ],
-    E.ONBOARD: lambda c: [
-        c.arbora("check-in-pod", "--config", str(c.config_path), "verify")
-    ],
-    E.ENROL: lambda c: [c.arbora("enrol", "--config", str(c.config_path))],
-    E.INGEST: lambda c: [
-        c.arbora("check-in-pod", "--config", str(c.config_path), "ingest")
-    ],
-    E.VERIFY: lambda c: [
-        c.arbora("probe-sso", "--config", str(c.config_path)),
-        c.kube("rollout", "status", f"deployment/{c.config.workload}"),
-    ],
-    E.ROLLBACK: lambda c: [
-        c.render("--rollback", out=str(c.workdir / "rollback.yaml")),
-        ["kubectl", "apply", "-f", str(c.workdir / "rollback.yaml")],
-    ],
-}
+STEPS: Mapping[DeployEvent, Callable[[StepContext], list[Command]]] = MappingProxyType(
+    {
+        E.PREFLIGHT: lambda c: [
+            c.arbora("normalize-config", "--check", "--config", str(c.config_path)),
+            ["kubectl", "version", "--client"],
+        ],
+        E.BACKUP: lambda c: [
+            c.kube("get", "deployment,configmap,service,ingress", "-o", "yaml")
+        ],
+        E.CONFIG: lambda c: [
+            c.arbora("normalize-config", "--config", str(c.config_path))
+        ],
+        E.BUILD: lambda c: [c.render(out=c.manifests)],
+        E.APPLY: lambda c: [
+            ["kubectl", "apply", "-f", c.manifests],
+            c.arbora(
+                "provision",
+                "--apply",
+                "--workdir",
+                str(c.workdir / "provision"),
+                "--config",
+                str(c.config_path),
+            ),
+        ],
+        E.CUTOVER: lambda c: [
+            c.kube("scale", f"deployment/{c.config.workload}", "--replicas=0")
+        ],
+        E.FIRST_START: lambda c: [
+            c.render("--first-start", out=c.job),
+            ["kubectl", "apply", "-f", c.job],
+            c.kube(
+                "wait",
+                "--for=condition=complete",
+                f"job/{c.config.workload}-first-start",
+                "--timeout=7200s",
+            ),
+        ],
+        E.SERVE: lambda c: [
+            c.kube("scale", f"deployment/{c.config.workload}", "--replicas=1"),
+            c.kube("rollout", "status", f"deployment/{c.config.workload}"),
+        ],
+        E.ONBOARD: lambda c: [
+            c.arbora("check-in-pod", "--config", str(c.config_path), "verify")
+        ],
+        E.ENROL: lambda c: [c.arbora("enrol", "--config", str(c.config_path))],
+        E.INGEST: lambda c: [
+            c.arbora("check-in-pod", "--config", str(c.config_path), "ingest")
+        ],
+        E.VERIFY: lambda c: [
+            c.arbora("probe-sso", "--config", str(c.config_path)),
+            c.kube("rollout", "status", f"deployment/{c.config.workload}"),
+        ],
+        E.ROLLBACK: lambda c: [
+            c.render("--rollback", out=str(c.workdir / "rollback.yaml")),
+            ["kubectl", "apply", "-f", str(c.workdir / "rollback.yaml")],
+        ],
+    }
+)
 
 
 def subprocess_runner(command: Command) -> int:

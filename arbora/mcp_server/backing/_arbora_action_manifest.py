@@ -14,7 +14,7 @@ class ArboraAction(TypedDict):
     name: str
 
 
-ARBORA_ACTIONS: list[ArboraAction] = [
+ARBORA_ACTIONS: tuple[ArboraAction, ...] = (
     {"tool": "act", "action": None, "name": "act"},
     {"tool": "ask", "action": None, "name": "ask"},
     {"tool": "ask_data", "action": None, "name": "ask_data"},
@@ -2239,4 +2239,4 @@ ARBORA_ACTIONS: list[ArboraAction] = [
     {"tool": "tabular_query", "action": None, "name": "tabular_query"},
     {"tool": "why", "action": None, "name": "why"},
     {"tool": "write", "action": None, "name": "write"},
-]
+)

@@ -13,8 +13,9 @@ import ipaddress
 import json
 import os
 import stat
+from collections.abc import Mapping
 from pathlib import Path
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -36,13 +37,15 @@ def validated_token_ttl_seconds(value: int | None) -> int:
     return ttl
 
 
-_MODEL_DEFAULTS: dict[str, Any] = {
-    "intelligence_level": "normal",
-    "base_url": None,
-    "api_key_ref": None,
-    "oauth2": None,
-    "headers_ref": None,
-}
+_MODEL_DEFAULTS: Mapping[str, Any] = MappingProxyType(
+    {
+        "intelligence_level": "normal",
+        "base_url": None,
+        "api_key_ref": None,
+        "oauth2": None,
+        "headers_ref": None,
+    }
+)
 
 
 def _chat_model(item: Any) -> SimpleNamespace:

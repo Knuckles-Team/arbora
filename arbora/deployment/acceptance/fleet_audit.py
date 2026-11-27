@@ -16,6 +16,7 @@ import re
 import subprocess  # nosec B404 -- fixed argv, no shell
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from .runner import AcceptanceConfig, Arbora, ResultWriter, err, excerpt, ok, unwrap
@@ -39,7 +40,9 @@ _CHEAP = re.compile(
 _LISTING = re.compile(
     r"(^|_)(list|get|search|find|query|read|show|describe)", re.IGNORECASE
 )
-_TRIVIAL = {k: "test" for k in ("query", "q", "search", "term", "keyword", "text")}
+_TRIVIAL = MappingProxyType(
+    {k: "test" for k in ("query", "q", "search", "term", "keyword", "text")}
+)
 _PAGE_KEYS = (
     "limit",
     "per_page",
