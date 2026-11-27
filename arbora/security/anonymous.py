@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 
 from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
+from arbora.security.signed_ingress import SignedIngressSlot
 
 PRINCIPAL = "anonymous"
 TENANT = "local"
@@ -273,7 +274,9 @@ def client_scope(client: Any, context: Any) -> Any:
     return client.use_verified_context(context)
 
 
-def network_run_kwargs(kwargs: dict[str, Any], keys: JwksCache) -> dict[str, Any]:
+def network_run_kwargs(
+    kwargs: dict[str, Any], keys: JwksCache, ingress: SignedIngressSlot
+) -> dict[str, Any]:
     """Compose Arbora admission around the SDK-owned network boundary."""
     if not enabled():
         return kwargs
@@ -284,7 +287,7 @@ def network_run_kwargs(kwargs: dict[str, Any], keys: JwksCache) -> dict[str, Any
     return {
         **kwargs,
         "middleware": [
-            Middleware(ActorIdentityMiddleware, keys=keys),
+            Middleware(ActorIdentityMiddleware, keys=keys, ingress=ingress),
             *kwargs.get("middleware", ()),
         ],
     }

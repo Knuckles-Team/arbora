@@ -71,9 +71,7 @@ __all__ = [
     "ApplyReport",
     "Applier",
     "external_policy_sync_enabled",
-    "invalidate_cache",
-    "is_dirty",
-    "clear_dirty_state",
+    "DirtyTenants",
 ]
 
 # Matches au's `Marking.role_token` (`ontology/permissioning.py`) and eg's
@@ -664,6 +662,7 @@ class Applier:
             )
         self._renderers = renderers
         self._clients = clients
+        self.dirty = DirtyTenants()
 
     def apply_all(self, fetched: FetchedBundle) -> ApplyReport:
         if not external_policy_sync_enabled():
@@ -736,24 +735,28 @@ def external_policy_sync_enabled() -> bool:
     )
 
 
-_DIRTY_TENANTS: set[str] = set()
+class DirtyTenants:
+    """The tenants whose next :class:`Applier` cycle re-fetches eagerly.
 
-
-def invalidate_cache(tenant: str, node_id: str) -> None:
-    """Mark `tenant` dirty so the next :class:`Applier` cycle re-fetches
-    eagerly instead of waiting out the poll interval -- called from
-    the access sync after a marking is newly applied inbound. `node_id` is
-    accepted but not tracked: the bundle is per tenant, so any single node's change dirties
-    the whole tenant's next fetch, never a per-node partial refresh.
+    One instance belongs to one applier, so no module holds the set.
     """
-    del node_id  # bundle granularity is per-tenant, not per-node
-    if tenant:
-        _DIRTY_TENANTS.add(tenant)
 
+    def __init__(self) -> None:
+        self._tenants: set[str] = set()
 
-def is_dirty(tenant: str) -> bool:
-    return tenant in _DIRTY_TENANTS
+    def invalidate(self, tenant: str, node_id: str) -> None:
+        """Mark `tenant` dirty so the next cycle re-fetches eagerly instead of
+        waiting out the poll interval -- called from the access sync after a marking is
+        newly applied inbound. `node_id` is accepted but not tracked: the bundle is per
+        tenant, so any single node's change dirties the whole tenant's next fetch,
+        never a per-node partial refresh.
+        """
+        del node_id  # bundle granularity is per-tenant, not per-node
+        if tenant:
+            self._tenants.add(tenant)
 
+    def is_dirty(self, tenant: str) -> bool:
+        return tenant in self._tenants
 
-def clear_dirty_state(tenant: str) -> None:
-    _DIRTY_TENANTS.discard(tenant)
+    def clear(self, tenant: str) -> None:
+        self._tenants.discard(tenant)

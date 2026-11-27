@@ -18,6 +18,7 @@ from arbora.access.credential_use import (
     AuthorizationChallenge,
     CredentialUseGrant,
     CredentialUseRequest,
+    RefreshLocks,
 )
 from arbora.access.resource_gate import ResourceGate
 from arbora.access.resource_grants import ResourceAccessRequest
@@ -114,6 +115,7 @@ class CredentialPorts:
         self._ask = ask
         self._vault = vault
         self._broker = broker
+        self.refresh_locks = RefreshLocks()
         self.clock = clock
         self.emit = emit
 

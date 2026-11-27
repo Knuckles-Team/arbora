@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.security.signed_ingress import SignedIngressSlot
 
 __all__ = ["PolicyState"]
 
@@ -16,3 +17,5 @@ class PolicyState:
 
     action_policies: ActionPolicies = field(default_factory=ActionPolicies)
     approvals: ApprovalDecisions = field(default_factory=ApprovalDecisions)
+    #: The signed code-host delivery admitter the identity middleware reads.
+    ingress: SignedIngressSlot = field(default_factory=SignedIngressSlot)

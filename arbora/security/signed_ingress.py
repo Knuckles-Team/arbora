@@ -52,17 +52,21 @@ class SignedIngressAdmitter(Protocol):
     ) -> AdmittedIngress: ...
 
 
-_BOUND: list[SignedIngressAdmitter | None] = [None]
+class SignedIngressSlot:
+    """The host's signed-ingress admitter, bound at the composition root."""
 
+    __slots__ = ("_admitter",)
 
-def bind_signed_ingress(admitter: SignedIngressAdmitter | None) -> None:
-    """Bind (or clear) the admitter at the host composition root."""
-    _BOUND[0] = admitter
+    def __init__(self) -> None:
+        self._admitter: SignedIngressAdmitter | None = None
 
+    def bind(self, admitter: SignedIngressAdmitter | None) -> None:
+        """Bind (or clear) the admitter."""
+        self._admitter = admitter
 
-def bound_signed_ingress() -> SignedIngressAdmitter | None:
-    """The admitter the composition root bound, or ``None``."""
-    return _BOUND[0]
+    def admitter(self) -> SignedIngressAdmitter | None:
+        """The admitter the composition root bound, or ``None``."""
+        return self._admitter
 
 
 def is_signed_ingress_path(path: Any) -> bool:

@@ -533,43 +533,37 @@ class ClientCredentialsTokenProvider:
             return self._token
 
 
-_provider: ClientCredentialsTokenProvider | None = None
-_provider_lock = threading.Lock()
-
-
 def get_provider(config: RuntimeConfig) -> ClientCredentialsTokenProvider | None:
     """Return the configured provider, or ``None`` only when auth is disabled.
 
     Self-healing: a missing-creds result is NOT cached. A first call that races
     ahead of the secret bridge / OIDC discovery (e.g. at server startup) must not
     permanently disable fleet auth — the next call retries and succeeds once the
-    creds are present. Only the successfully-built provider is memoized.
+    creds are present. Only the successfully-built provider is kept, by the host
+    config view that owns it.
     """
-    global _provider
     if _auth_mode() != _MODE_OIDC:
         return None
-    if _provider is not None:
-        return _provider
-    with _provider_lock:
-        if _provider is not None:
-            return _provider
-        validate_outbound_auth_configuration()
-        token_url = _derive_token_url(config)
-        client_id = _configured_text("OIDC_CLIENT_ID")
-        audience = _configured_text("OIDC_AUDIENCE")
-        client_secret = _resolve_runtime_secret("OIDC_CLIENT_SECRET_REF")
-        if not (token_url and client_id and client_secret and audience):
-            logger.error("Outbound MCP service identity is incomplete")
-            raise RuntimeError("Outbound MCP service identity is incomplete")
-        _provider = ClientCredentialsTokenProvider(
-            token_url=token_url,
-            client_id=client_id,
-            client_secret=client_secret,
-            audience=audience,
-            scope=read_env("OIDC_SCOPE") or None,
-            config=config,
-        )
-        return _provider
+    return config.owned("outbound_token_provider", lambda: _build_provider(config))
+
+
+def _build_provider(config: RuntimeConfig) -> ClientCredentialsTokenProvider:
+    validate_outbound_auth_configuration()
+    token_url = _derive_token_url(config)
+    client_id = _configured_text("OIDC_CLIENT_ID")
+    audience = _configured_text("OIDC_AUDIENCE")
+    client_secret = _resolve_runtime_secret("OIDC_CLIENT_SECRET_REF")
+    if not (token_url and client_id and client_secret and audience):
+        logger.error("Outbound MCP service identity is incomplete")
+        raise RuntimeError("Outbound MCP service identity is incomplete")
+    return ClientCredentialsTokenProvider(
+        token_url=token_url,
+        client_id=client_id,
+        client_secret=client_secret,
+        audience=audience,
+        scope=read_env("OIDC_SCOPE") or None,
+        config=config,
+    )
 
 
 def _basic_credentials() -> tuple[str, str] | None:
