@@ -12,6 +12,7 @@ from arbora.fleet.catalog_reader import (
     ReadContext,
 )
 from arbora.fleet.epistemic_adapter import GeneratedFleetCatalogPort, GraphBinder
+from arbora.fleet.tool_rows import tool_row_reader
 from arbora.gateway.enhanced_catalog_api import (
     AgentCatalogReadPort,
     EnhancedCatalogAuthority,
@@ -119,15 +120,21 @@ async def compose_catalog_authorities(
     compute = engine.graph_compute
     tenant_client = compute.for_graph(tenant_graph).async_client
     commons_client = compute.for_graph("__commons__").async_client
-    reader = FleetCatalogReader(
-        GeneratedFleetCatalogPort(
-            tenant_client=tenant_client,
-            commons_client=commons_client,
-            context=context,
-            tenant_graph=tenant_graph,
-            bind_graph=bind_graph,
-        ),
-        snapshot_ttl_s=_catalog_snapshot_ttl_s(),
+    port = GeneratedFleetCatalogPort(
+        tenant_client=tenant_client,
+        commons_client=commons_client,
+        context=context,
+        tenant_graph=tenant_graph,
+        bind_graph=bind_graph,
+    )
+    reader = FleetCatalogReader(port, snapshot_ttl_s=_catalog_snapshot_ttl_s())
+    # ARBORA-FLEET-R073.2: tool rows come from the engine once its search filters exist.
+    multiplexer.bind_tool_rows(
+        tool_row_reader(
+            port,
+            tenant_id=context.tenant_id,
+            scope=lambda: _use_process_session(session),
+        )
     )
     with bind_graph(tenant_graph):
         await verify_semantic_content(
