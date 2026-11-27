@@ -45,11 +45,13 @@ An administrator wants to watch decisions before they affect traffic.
 - **FR-004**: Observe mode computes and records decisions but does not enforce them. Enforce mode applies the narrower limit at the Arbora admission boundary before delegated fleet calls. Mode changes require a verified administrator, audit reservation and a policy recheck; `capacity:read` permits status only. Disabled/unavailable policy cannot turn a refusal into an automatic allow. Rows: `ARBORA-CAPACITY-R002`, `ARBORA-CAPACITY-R001.5`.
 - **FR-005**: Disconnected children, missing telemetry and expired premises are distinguishable. The controller does not manufacture success from silence. Recovery uses conservative bounded probing with jitter and a circuit state visible in status, not a burst to the old ceiling. Rows: `ARBORA-CAPACITY-R001.4`.
 - **FR-006**: MCP and HTTP capacity operations use the same registry, identity, service and error envelope as other [hosted operations](../hosted-api-operations/spec.md). No separate administrator endpoint or state authority is introduced. Rows: `ARBORA-CAPACITY-R002`.
+- **FR-007**: Arbora serves the engine's build-slot lease operations to authenticated callers and ships `arbora lease run`, which holds one lease around one child process, heartbeats while it runs, releases on exit or signal, kills the child if the lease is revoked, and never lets the child inherit the lease handle. Arbora holds no lease state or priority policy. Rows: `ARBORA-CAPACITY-R754`.
 
 ## Success Criteria
 
 - **SC-001**: A clean-checkout deterministic fixture shows decrease, gradual recovery, floor and ceiling bounds and tenant isolation. Rows: `ARBORA-CAPACITY-R001.1`.
 - **SC-002**: A served fault-injection test throttles one child while another tenant is unaffected. Rows: `ARBORA-CAPACITY-R001.4`, `ARBORA-CAPACITY-R001.5`.
+- **SC-003**: Two `arbora lease run` commands against a one-slot engine cell run one after the other in priority order, and a revoked lease stops its child. Rows: `ARBORA-CAPACITY-R754.6`, `ARBORA-CAPACITY-R754.4`.
 
 ## Assumptions
 

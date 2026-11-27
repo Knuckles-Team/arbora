@@ -35,3 +35,10 @@
 - [ ] T025 ARBORA-CAPACITY-R751 Gate every limit raise on an engine `allow` verdict and record the receipt.
 - [ ] T026 ARBORA-CAPACITY-R752 Add `ModelCapacityGate` that applies the engine per-model decision with a fallback of 1.
 - [ ] T027 ARBORA-CAPACITY-R753 Pass `max_working_bytes` from the host grant on each `IndexRepository` job.
+- [ ] T028 ARBORA-CAPACITY-R754 Build-slot leases are served through the one door, and one command runs a child under a lease (rollup).
+- [ ] T029 ARBORA-CAPACITY-R754.1 Six served operations request, start, renew, release, revoke and inspect a lease.
+- [ ] T030 ARBORA-CAPACITY-R754.2 Admission: the holder is the verified caller, never a parameter.
+- [ ] T031 ARBORA-CAPACITY-R754.3 The command `arbora lease run` and its run state machine.
+- [ ] T032 ARBORA-CAPACITY-R754.4 Heartbeat while the child runs, and kill the child if the lease is lost.
+- [ ] T033 ARBORA-CAPACITY-R754.5 Release on exit and on signal.
+- [ ] T034 ARBORA-CAPACITY-R754.6 The child never inherits the lease handle; hot-path proof.
