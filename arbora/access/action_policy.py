@@ -701,7 +701,7 @@ class ActionPolicy:
                 data = DEFAULT_POLICY
             self._file_cache = (mtime, data)
             return data
-        except Exception as e:  # noqa: BLE001 — a broken file must not open the gate
+        except Exception as e:  # a broken file must not open the gate
             logger.warning(
                 "action_policy load failed (%s) — using default", type(e).__name__
             )
@@ -732,7 +732,7 @@ class ActionPolicy:
             rows = self.engine.query_cypher(
                 "MATCH (r:governance_rule {scope: 'action_policy'}) RETURN r LIMIT 100"
             )
-        except Exception as e:  # noqa: BLE001 — overrides are best-effort
+        except Exception as e:  # overrides are best-effort
             logger.debug("action_policy: KG rule load failed: %s", e)
             return []
         rules: list[ActionRule] = []
@@ -816,7 +816,7 @@ class ActionPolicy:
                 f"d.decided_unix AS ts LIMIT {_LEDGER_SCAN_LIMIT}",
                 {"kind": kind},
             )
-        except Exception as e:  # noqa: BLE001 — ledger read failed; callers must fail CLOSED on None, never treat it as an empty (=clear) ledger
+        except Exception as e:  # ledger read failed; callers must fail CLOSED on None, never treat it as an empty (=clear) ledger
             logger.warning("action_policy: ledger scan failed, failing closed: %s", e)
             return LedgerUnreadable(
                 reason=f"ledger unreadable: read failed ({type(e).__name__})"
@@ -976,7 +976,7 @@ class ActionPolicy:
                 rule_origin=rule.origin,
                 verify_ms=verify.latency_ms,
             )
-        except Exception as e:  # noqa: BLE001 — evaluate fails CLOSED
+        except Exception as e:  # evaluate fails CLOSED
             logger.warning(
                 "action_policy: evaluate error for %s: %s", request.summary(), e
             )
@@ -1009,7 +1009,10 @@ class ActionPolicy:
             if reader is None:
                 return False
             return bool(reader(self.engine, request.actor_id, request.kind))
-        except Exception:  # noqa: BLE001 — ramp never widens scope on error
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "ramp never widens scope on error", exc_info=True
+            )
             return False
 
     def classify(self, request: ActionRequest) -> str:
@@ -1045,7 +1048,7 @@ class ActionPolicy:
             if tier == TIER_APPROVAL and self._graduates(request):
                 return TIER_AUTO_NOTIFY
             return tier
-        except Exception as e:  # noqa: BLE001 — classification fails CLOSED
+        except Exception as e:  # classification fails CLOSED
             logger.warning(
                 "action_policy: classify error for %s: %s", request.summary(), e
             )
@@ -1059,7 +1062,7 @@ class ActionPolicy:
         """
         try:
             decision = self._decide_inner(request)
-        except Exception as e:  # noqa: BLE001 — the gate fails CLOSED
+        except Exception as e:  # the gate fails CLOSED
             logger.warning(
                 "action_policy: decision error for %s: %s", request.summary(), e
             )
@@ -1102,7 +1105,10 @@ class ActionPolicy:
                 raise RuntimeError("Policy source changed during audit")
             self._check_qualified_request(request, captured, digest)
             return decision
-        except Exception:  # noqa: BLE001 - qualified source absence never widens authority
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "qualified source absence never widens authority", exc_info=True
+            )
             return self._bind_decision_receipt(
                 ActionDecision(
                     decision=DECISION_UNAVAILABLE,
@@ -1304,7 +1310,7 @@ class ActionPolicy:
             return granted_approval(
                 self.engine, request.digest(), now_ms=int(_now() * 1000)
             )
-        except Exception as exc:  # noqa: BLE001 — missing evidence fails closed
+        except Exception as exc:  # missing evidence fails closed
             logger.debug("action_policy: granted approval probe failed: %s", exc)
         return None
 
@@ -1336,7 +1342,7 @@ class ActionPolicy:
         }
         try:
             approval_id = file_approval(self.engine, grant, now_ms=int(_now() * 1000))
-        except Exception as e:  # noqa: BLE001 — no approval: the hold fails closed
+        except Exception as e:  # no approval: the hold fails closed
             logger.warning(
                 "action_policy: approval queue write failed (%s) for kind=%s target=%s",
                 type(e).__name__,
@@ -1362,7 +1368,7 @@ class ActionPolicy:
                 ACTION_DECISION_LABEL,
                 action_decision_record(decision),
             )
-        except Exception as e:  # noqa: BLE001 — missing audit evidence cannot authorize
+        except Exception as e:  # missing audit evidence cannot authorize
             # WARNING, not DEBUG: without this row the decision has no receipt
             # and is refused. Class, kind and target only; never params.
             logger.warning(
@@ -1390,7 +1396,7 @@ class ActionPolicy:
             return
         try:
             notifier(message)
-        except Exception as e:  # noqa: BLE001 — a notification never blocks a decision
+        except Exception as e:  # a notification never blocks a decision
             logger.info(
                 "action_policy notification (fallback log): %s (%s)", message, e
             )

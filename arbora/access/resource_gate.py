@@ -8,6 +8,7 @@ tool without the declaration skips the gate; the shared invoke policy path stays
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from types import SimpleNamespace
 from typing import Any
@@ -126,7 +127,10 @@ class ResourceGate:
     ) -> tuple[ResourceGrant | None, ResourceRefusal | None]:
         try:
             answer = await self._decide(request)
-        except Exception:  # noqa: BLE001 - an unanswered question grants nothing
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unanswered question grants nothing", exc_info=True
+            )
             return None, ResourceRefusal.AUTHORITY_UNAVAILABLE
         if not answer.get("allow"):
             return None, ResourceRefusal.GRANT_MISSING
