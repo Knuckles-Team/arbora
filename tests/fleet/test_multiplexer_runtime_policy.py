@@ -12,6 +12,7 @@ from fastmcp.exceptions import ToolError
 
 from arbora.fleet import child_runtime_policy as _mod_child_runtime_policy
 from arbora.fleet import child_transport as _mod_child_transport
+from arbora.fleet import fleet_loader as _fleet_loader
 from arbora.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
@@ -142,7 +143,7 @@ async def test_runtime_policy_owns_spawn_catalog_call_and_teardown(
     registered = mux.mounts._register_child_result(server_name, runtime, tools, cfg)
     assert len(registered) == 1
     host = FastMCP("runtime-policy-fixture")
-    mod._register_forwarder(host, mux, registered[0])
+    _fleet_loader._register_forwarder(host, mux, registered[0])
     assert not mux.tool_dispatchable(registered[0].name)
     mux.session_loaded(mod._session_key()).add(registered[0].name)
     assert mux.tool_dispatchable(registered[0].name)

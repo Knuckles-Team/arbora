@@ -13,8 +13,9 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from arbora.core.settings import RuntimeConfig
+from arbora.fleet.fleet_loader import attach_fleet_loader
 from arbora.fleet.gateway_ops import ConfirmingTools
-from arbora.fleet.multiplexer import MCPMultiplexer, attach_fleet_loader
+from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.state import FleetState
 from arbora.observability.state import SubsystemWindows
 
@@ -84,8 +85,8 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
     from arbora.api.policy import PolicyGate
     from arbora.api.registry import Registry, Surface
     from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
+    from arbora.fleet.fleet_loader import make_governed_tool_mount
     from arbora.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
-    from arbora.fleet.multiplexer import make_governed_tool_mount
     from arbora.fleet.multiplexer_ops import MultiplexerOps
     from arbora.fleet.session_loads import SessionLoads
     from arbora.mcp_server.registration import (

@@ -1257,3 +1257,15 @@ class ChildMounts:
                 continue
             out.append(_live_tool_entry(original, self.tool_object(prefixed)))
         return out
+
+
+def provider_tools(mcp: _typing.Any) -> dict[str, _typing.Any]:
+    """Return the FastMCP host's registered local tools."""
+    components = getattr(getattr(mcp, "_local_provider", None), "_components", None)
+    if not isinstance(components, dict):
+        return {}
+    return {
+        value.name: value
+        for key, value in components.items()
+        if str(key).startswith("tool:") and getattr(value, "name", None)
+    }

@@ -34,7 +34,7 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
     mcp = SimpleNamespace()
     fleet = FleetState()
     authority = ProcessAuthority(config=RuntimeConfig())
-    with patch("arbora.fleet.multiplexer.attach_fleet_loader") as mock_attach:
+    with patch("arbora.fleet.fleet_loader.attach_fleet_loader") as mock_attach:
         runtime._attach_headless_fleet_loader(mcp, fleet, authority)
 
     mock_attach.assert_called_once_with(
@@ -70,7 +70,7 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     with (
         caplog.at_level(logging.WARNING, logger="arbora.mcp_server.runtime"),
         patch(
-            "arbora.fleet.multiplexer.attach_fleet_loader",
+            "arbora.fleet.fleet_loader.attach_fleet_loader",
             side_effect=RuntimeError("no mcp_config.json found"),
         ),
     ):

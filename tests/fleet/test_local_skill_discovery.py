@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import arbora.fleet.multiplexer as multiplexer_module
+import arbora.fleet.fleet_probe as _fleet_probe
 from arbora.fleet.local_skill_catalog import LOCAL_SKILLS_SERVER
 from tests.fleet.test_multiplexer_dynamic_gateway import (
     CNT,
@@ -47,7 +47,7 @@ async def test_discover_tools_ranks_a_local_skill_with_fleet_tools(
         "error": None,
     }
     monkeypatch.setattr(
-        multiplexer_module,
+        _fleet_probe,
         "build_local_skill_catalog",
         _fixture_local_catalog(
             [
@@ -74,7 +74,7 @@ async def test_discover_tools_ranks_a_local_skill_with_fleet_tools(
     }
     # "Loading" a skill returns its SKILL.md body exactly as for a harvested
     # one: the ranked row's own probe entry already carries it.
-    local_info = mux._local_skill_probe_info()
+    local_info = mux.probe._local_skill_probe_info()
     loaded = next(s for s in local_info["skills"] if s["name"] == "local-onboarding")
     assert loaded["instructions"] == "# local onboarding\n\nbody"
 
@@ -92,9 +92,7 @@ async def test_local_skill_result_is_cached_and_reused_across_calls(
         calls["count"] += 1
         return [], []
 
-    monkeypatch.setattr(
-        multiplexer_module, "build_local_skill_catalog", _counting_catalog
-    )
+    monkeypatch.setattr(_fleet_probe, "build_local_skill_catalog", _counting_catalog)
 
     await mux.discover_tools("anything", top_k=5)
     await mux.discover_tools("anything else", top_k=5)
@@ -120,7 +118,7 @@ async def test_local_skill_shadows_a_fleet_harvested_skill_of_the_same_name(
         "error": None,
     }
     monkeypatch.setattr(
-        multiplexer_module,
+        _fleet_probe,
         "build_local_skill_catalog",
         _fixture_local_catalog(
             [
@@ -150,7 +148,7 @@ async def test_catalog_fleet_probe_lists_local_skills_without_a_query(
     always-offered core pack is a subset of exactly this unconditional set."""
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "manage docker containers")]})
     monkeypatch.setattr(
-        multiplexer_module,
+        _fleet_probe,
         "build_local_skill_catalog",
         _fixture_local_catalog(
             [
@@ -164,6 +162,6 @@ async def test_catalog_fleet_probe_lists_local_skills_without_a_query(
         ),
     )
 
-    probe = await mux._catalog_fleet_probe(include_tools=False)
+    probe = await mux.discovery._catalog_fleet_probe(include_tools=False)
 
     assert probe[LOCAL_SKILLS_SERVER]["skills"][0]["name"] == "always-there"

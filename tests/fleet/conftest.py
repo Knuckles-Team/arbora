@@ -31,7 +31,7 @@ from collections.abc import Iterator
 
 import pytest
 
-import arbora.fleet.multiplexer as _multiplexer_module
+import arbora.fleet.fleet_probe as _fleet_probe
 from arbora.security.actor_context import ActorContext, use_actor
 
 # Covers every discover/delegate call these tests drive; no test in this
@@ -55,9 +55,7 @@ def stdio_fleet_authority() -> Iterator[None]:
 
 @pytest.fixture(autouse=True)
 def _empty_local_skill_catalog_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        _multiplexer_module, "build_local_skill_catalog", lambda: ([], [])
-    )
+    monkeypatch.setattr(_fleet_probe, "build_local_skill_catalog", lambda: ([], []))
 
 
 from tests.fleet._provisioning_support import sdk as sdk  # noqa: E402,F401

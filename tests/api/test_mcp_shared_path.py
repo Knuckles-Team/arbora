@@ -18,7 +18,7 @@ from arbora.api.policy import PolicyGate
 from arbora.api.registry import Registry, Surface
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.child_mounts import _make_forwarder
-from arbora.fleet.multiplexer import make_governed_tool_mount
+from arbora.fleet.fleet_loader import make_governed_tool_mount
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.session_loads import SessionLoads
 from arbora.mcp_server.registration import (

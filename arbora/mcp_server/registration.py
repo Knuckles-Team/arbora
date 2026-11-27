@@ -60,7 +60,8 @@ def _tool_result(payload: dict[str, Any]) -> ToolResult:
 
 def _native_result(payload: dict[str, Any]) -> ToolResult:
     """Preserve the MCP wire result carried by the fleet operation result."""
-    from arbora.fleet.multiplexer import mcp_types, tool_result_from_child
+    from arbora.fleet.fleet_loader import tool_result_from_child
+    from arbora.fleet.multiplexer import mcp_types
 
     result = payload["result"]
     child = result.get("value") if isinstance(result, Mapping) else None

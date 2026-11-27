@@ -11,14 +11,20 @@ gone, and the settled-probe fold carries a neutral name.
 from __future__ import annotations
 
 import ast
+import inspect
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
 import arbora
 
-_MULTIPLEXER_RELATIVE_PATH = Path("fleet") / "multiplexer.py"
+_MULTIPLEXER_RELATIVE_PATHS = (
+    Path("fleet") / "multiplexer.py",
+    Path("fleet") / "fleet_probe.py",
+    Path("fleet") / "tool_discovery.py",
+)
 
 #: ARBORA-FLEET-R006.3 removed these symbols.
 _REMOVED_SYMBOLS = frozenset(
@@ -37,8 +43,15 @@ _REMOVED_SYMBOLS = frozenset(
 
 
 def _multiplexer_source() -> str:
-    path = Path(arbora.__file__).resolve().parent / _MULTIPLEXER_RELATIVE_PATH
-    return path.read_text(encoding="utf-8")
+    root = Path(arbora.__file__).resolve().parent
+    return "\n".join(
+        map(Path.read_text, map(root.joinpath, _MULTIPLEXER_RELATIVE_PATHS))
+    )
+
+
+def _blank_probe(module: Any) -> Any:
+    names = inspect.signature(module.FleetProbe).parameters
+    return module.FleetProbe(**{name: SimpleNamespace() for name in names})
 
 
 def _defined_and_referenced_names(tree: ast.Module) -> set[str]:
@@ -129,7 +142,7 @@ def test_probe_protocol_families_has_no_direct_harvest_call() -> None:
 async def test_probe_protocol_families_resolves_admitted_skill_without_wire_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.fleet import multiplexer as mux
+    from arbora.fleet import fleet_probe as _fleet_probe
 
     resource = SimpleNamespace(
         uri="skill://admitted/SKILL.md", name="admitted", description="d"
@@ -149,19 +162,21 @@ async def test_probe_protocol_families_resolves_admitted_skill_without_wire_read
             raise AssertionError("wire read for an admitted child")
 
     monkeypatch.setattr(
-        mux,
+        _fleet_probe,
         "build_local_skill_catalog",
         lambda: ([{"name": "admitted", "instructions": "LOCAL BODY"}], []),
     )
     monkeypatch.setattr(
-        mux,
+        _fleet_probe,
         "_bounded_skill_catalog",
         lambda _r: [{"name": "admitted", "uri": resource.uri}],
     )
-    monkeypatch.setattr(mux, "_bounded_prompt_catalog", lambda _r: [])
-    monkeypatch.setattr(mux, "_bounded_descriptor_catalog", lambda *_a, **_k: [])
-    m = mux.MCPMultiplexer.__new__(mux.MCPMultiplexer)
-    *_rest, skills, _prompts, errors = await m._probe_protocol_families(
+    monkeypatch.setattr(_fleet_probe, "_bounded_prompt_catalog", lambda _r: [])
+    monkeypatch.setattr(
+        _fleet_probe, "_bounded_descriptor_catalog", lambda *_a, **_k: []
+    )
+    probe = _blank_probe(_fleet_probe)
+    *_rest, skills, _prompts, errors = await probe._probe_protocol_families(
         "srv", _Session()
     )
     assert errors == {}

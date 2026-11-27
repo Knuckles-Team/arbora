@@ -114,7 +114,7 @@ class ProbePrimer:
     def _fresh(self, server: str) -> bool:
         if not _good(self._mux._probe_cache.get(server)):
             return False
-        hit = getattr(self._mux, "_probe_cache_hit", None)
+        hit = getattr(getattr(self._mux, "probe", None), "_probe_cache_hit", None)
         return hit is None or hit(server) is not None
 
     def _keep_last_good(self, server: str, previous: Any) -> None:

@@ -24,13 +24,11 @@ from fastmcp.tools import Tool
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.child_mounts import _make_forwarder, get_server_prefix
 from arbora.fleet.fleet_capabilities import fleet_required_capabilities
-from arbora.fleet.multiplexer import (
-    _register_forwarder,
-    _tenant_local_discovery_binding,
-    _tool_is_verbose,
-    require_fleet_capability,
-)
+from arbora.fleet.fleet_loader import _register_forwarder
+from arbora.fleet.fleet_probe import _tenant_local_discovery_binding
+from arbora.fleet.multiplexer import require_fleet_capability
 from arbora.fleet.session_keys import LOCAL_SESSION_META_KEY, ambient_session_key
+from arbora.fleet.tool_discovery import _tool_is_verbose
 from tests.fleet.catalog_fixture import (
     bind_governed_forwarder_fixture,
     multiplexer_from_fixture,
@@ -751,7 +749,7 @@ async def test_probe_catalog_returns_partial_results_within_budget(tmp_path):
         await asyncio.sleep(1)
         return {"tools": [], "error": None}
 
-    mux.probe_server = AsyncMock(side_effect=slow_probe)
+    mux.probe.probe_server = AsyncMock(side_effect=slow_probe)
     result = await mux.probe_catalog(budget=0.01)
 
     # Honest, per-server "still working" -- NOT the old fixed "budget
@@ -780,7 +778,7 @@ async def test_slow_server_degrades_alone_fast_servers_unaffected(tmp_path):
         mux._probe_cache[server] = info
         return info
 
-    mux.probe_server = AsyncMock(side_effect=mixed_probe)
+    mux.probe.probe_server = AsyncMock(side_effect=mixed_probe)
     result = await mux.probe_catalog(budget=0.05)
 
     assert result[CNT]["error"] is None
@@ -810,7 +808,7 @@ async def test_discovery_succeeds_for_a_previously_timed_out_server(tmp_path):
         mux._probe_cache[server] = info
         return info
 
-    mux.probe_server = AsyncMock(side_effect=eventually_probe)
+    mux.probe.probe_server = AsyncMock(side_effect=eventually_probe)
 
     first = await mux.probe_catalog(budget=0.01)
     assert first["slow-mcp"]["pending"] is True
@@ -920,9 +918,9 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
             "tools": [{"name": CNT_TOOL, "description": "containers v2"}],
             "error": None,
         }
-        return mux._cache_probe(server, info)
+        return mux.probe._cache_probe(server, info)
 
-    mux.probe_server = AsyncMock(side_effect=refreshed_probe)
+    mux.probe.probe_server = AsyncMock(side_effect=refreshed_probe)
 
     # Still inside the TTL: served as-is, no re-probe triggered.
     monkeypatch.setattr(time, "time", lambda: fixed_now + 5.0)
@@ -952,9 +950,9 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
             "tools": [{"name": CNT_TOOL, "description": "containers v3"}],
             "error": None,
         }
-        return mux._cache_probe(server, info)
+        return mux.probe._cache_probe(server, info)
 
-    mux.probe_server = AsyncMock(side_effect=slow_refresh)
+    mux.probe.probe_server = AsyncMock(side_effect=slow_refresh)
     monkeypatch.setattr(time, "time", lambda: fixed_now + 22.0)  # past the TTL again
     budgeted = await mux.probe_catalog(budget=0.01)
     assert budgeted[CNT]["stale"] is True
@@ -1060,7 +1058,7 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
         return {"tools": [], "error": None}
 
     mux._fleet.config.mcp_dynamic_discovery_timeout = 0.05
-    mux.probe_server = AsyncMock(side_effect=staged_probe)
+    mux.probe.probe_server = AsyncMock(side_effect=staged_probe)
 
     discovery = await mux.discover_tools(query, top_k=5)
 
@@ -1345,7 +1343,7 @@ async def test_discover_skips_disabled_tools(tmp_path):
 
 
 def test_format_probe_error_unwraps_exceptiongroup():
-    from arbora.fleet.multiplexer import _format_probe_error
+    from arbora.fleet.fleet_probe import _format_probe_error
 
     eg = ExceptionGroup(
         "boom",
@@ -1719,16 +1717,16 @@ async def test_forced_reprobe_does_not_evict_a_live_joinable_probe(tmp_path):
             await release.wait()
         return {"tools": [], "error": None}
 
-    mux.probe_server = AsyncMock(side_effect=probe)
+    mux.probe.probe_server = AsyncMock(side_effect=probe)
 
-    shared = mux._ensure_probing("slow-mcp", force=False, timeout=None)
-    forced = mux._ensure_probing("slow-mcp", force=True, timeout=None)
+    shared = mux.probe._ensure_probing("slow-mcp", force=False, timeout=None)
+    forced = mux.probe._ensure_probing("slow-mcp", force=True, timeout=None)
     assert forced is not shared
     await forced
 
     # The slow shared probe is still running and still joinable.
     assert mux._probe_inflight.get("slow-mcp") is shared
-    assert mux._ensure_probing("slow-mcp", force=False, timeout=None) is shared
+    assert mux.probe._ensure_probing("slow-mcp", force=False, timeout=None) is shared
 
     release.set()
     await shared
@@ -1746,9 +1744,9 @@ async def test_aclose_cancels_a_forced_probe_too(tmp_path):
         await asyncio.Event().wait()
         return {"tools": [], "error": None}
 
-    mux.probe_server = AsyncMock(side_effect=never_finishes)
+    mux.probe.probe_server = AsyncMock(side_effect=never_finishes)
 
-    forced = mux._ensure_probing("slow-mcp", force=True, timeout=None)
+    forced = mux.probe._ensure_probing("slow-mcp", force=True, timeout=None)
     await asyncio.sleep(0)
     assert "slow-mcp" not in mux._probe_inflight  # forced probes are not joinable
     assert forced in mux._probe_tasks

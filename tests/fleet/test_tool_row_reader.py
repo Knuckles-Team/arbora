@@ -11,7 +11,8 @@ from typing import Any
 import pytest
 
 from arbora.core.settings import RuntimeConfig
-from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.fleet_probe import FleetProbe
+from arbora.fleet.tool_discovery import ToolDiscovery
 from arbora.fleet.tool_rows import EngineToolRows, ProbeToolRows, ToolRowReader
 
 
@@ -36,12 +37,22 @@ class _Recording:
 
 
 def _mux(reader: ToolRowReader) -> Any:
-    return SimpleNamespace(
-        _tool_rows=reader,
-        _fleet=SimpleNamespace(config=RuntimeConfig()),
-        mounts=SimpleNamespace(
-            _tool_enabled=lambda server, tool: True, server_prefix=lambda server: "p"
-        ),
+    mounts = SimpleNamespace(
+        _tool_enabled=lambda server, tool: True, server_prefix=lambda server: "p"
+    )
+    probe = SimpleNamespace(
+        _probe_age_and_staleness=lambda info, now, ttl: (0.0, False)
+    )
+    return ToolDiscovery(
+        fleet=SimpleNamespace(config=RuntimeConfig()),
+        children={},
+        exposed=set(),
+        probe_cache={},
+        probe=probe,  # type: ignore[arg-type]
+        mounts=lambda: mounts,
+        tool_to_server=lambda: {},
+        tool_rows=lambda: reader,
+        load_catalog=lambda: {},
         tool_dispatchable=lambda name: True,
     )
 
@@ -60,8 +71,8 @@ async def test_the_probe_reader_copies_rows_and_counts_them() -> None:
 
 async def test_the_catalog_detail_reads_through_the_reader() -> None:
     reader = _Recording()
-    rows = await MCPMultiplexer._catalog_detail_tools(
-        _mux(reader), "srv", "p", {"tools": [{"name": "probe_only"}]}
+    rows = await _mux(reader)._catalog_detail_tools(
+        "srv", "p", {"tools": [{"name": "probe_only"}]}
     )
     assert [row["tool"] for row in rows] == ["from_reader"]
     assert reader.reads == ["srv"]
@@ -70,13 +81,9 @@ async def test_the_catalog_detail_reads_through_the_reader() -> None:
 async def test_the_fleet_listing_reads_through_the_reader() -> None:
     reader = _Recording()
     mux = _mux(reader)
-    mux._catalog_tool_partition = lambda *a: MCPMultiplexer._catalog_tool_partition(
-        mux, *a
-    )
-    mux.children = {}
     mux._stamp_catalog_freshness = lambda *a: None
-    entry = await MCPMultiplexer._catalog_fleet_entry(
-        mux, "srv", {"tools": [{"name": "probe_only"}]}, True, 0.0, 1.0, True
+    entry = await mux._catalog_fleet_entry(
+        "srv", {"tools": [{"name": "probe_only"}]}, True, 0.0, 1.0, True
     )
     assert entry["tool_count"] == 1
     assert entry["tools"] == ["p_from_reader"] or "from_reader" in entry["tools"][0]
@@ -106,9 +113,7 @@ async def test_the_delegated_server_tools_read_through_the_reader(monkeypatch) -
 async def test_the_discovery_rows_read_through_the_reader() -> None:
     reader = _Recording()
     mux = _mux(reader)
-    mux._probe_age_and_staleness = lambda info, now, ttl: (0.0, False)
-    rows = await MCPMultiplexer._discovery_rows(
-        mux,
+    rows = await mux._discovery_rows(
         "srv",
         {"tools": [{"name": "probe_only"}], "skills": []},
         {"srv": {}},
@@ -220,14 +225,27 @@ def test_probe_memory_is_flat_in_catalog_size() -> None:
 def test_the_multiplexer_probe_cache_keeps_no_rows_once_the_engine_reader_is_bound() -> (
     None
 ):
-    mux: Any = SimpleNamespace(
-        _tool_rows=_engine(_Port({})),
-        _probe_cache={},
-        _drop_discovery_bindings_for_server=lambda name: None,
+    probe_cache: dict[str, Any] = {}
+    reader = _engine(_Port({}))
+    probe = FleetProbe(
+        fleet=SimpleNamespace(),
+        children={},
+        sessions={},
+        transport=SimpleNamespace(),
+        probe_cache=probe_cache,
+        probe_inflight={},
+        probe_tasks=set(),
+        child_policy_admitted_tools={},
+        discovery_binding_sidechannel={},
+        local_discovery_cache_authority={},
+        fleet_catalog=lambda: None,
+        fleet_catalog_loaded_at=lambda: None,
+        tool_rows=lambda: reader,
+        mounts=lambda: SimpleNamespace(),
         load_catalog=lambda: {},
     )
     info = {"tools": [{"name": "a"}, {"name": "b"}], "error": None}
-    returned = MCPMultiplexer._cache_probe(mux, "srv", info)
-    assert returned is mux._probe_cache["srv"]
+    returned = probe._cache_probe("srv", info)
+    assert returned is probe_cache["srv"]
     assert returned["tools"] == [] and returned["tool_count"] == 2
     assert "probed_at" in returned

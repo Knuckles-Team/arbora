@@ -45,7 +45,8 @@ from arbora.api.domain.fleet.mcp_resource_reconciliation import (
 )
 
 from .child_mounts import auto_server_prefix, clean_tool_name, get_server_prefix
-from .multiplexer import MCPMultiplexer, attach_fleet_loader
+from .fleet_loader import attach_fleet_loader
+from .multiplexer import MCPMultiplexer
 
 __all__ = [
     "FLEET_COMPONENT_KINDS",

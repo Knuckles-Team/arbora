@@ -112,7 +112,7 @@ async def _mounted(tmp_path, port: int):
 
 
 async def _read(mux):
-    result = await mux._relay_read(
+    result = await mux.probe._relay_read(
         "relay-child",
         lambda session: session.read_resource("ontology://relay-child/x.ttl"),
         10.0,
@@ -121,7 +121,7 @@ async def _read(mux):
 
 
 async def _prompt(mux):
-    result = await mux._relay_read(
+    result = await mux.probe._relay_read(
         "relay-child", lambda session: session.get_prompt("triage", {}), 10.0
     )
     return result.messages[0].content.text
@@ -183,7 +183,7 @@ async def test_a_prompt_called_without_its_arguments_is_a_typed_refusal(
     mux, runtime = await _mounted(tmp_path, port)
     try:
         with pytest.raises(child_resilience.MCPError) as raised:
-            await mux._relay_read(
+            await mux.probe._relay_read(
                 "relay-child",
                 lambda session: session.get_prompt("create_branch_prompt", {}),
                 10.0,

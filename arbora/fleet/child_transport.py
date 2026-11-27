@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import collections.abc as _collections_abc
+import concurrent.futures
 import contextlib
 import contextvars
 import logging
 import os
 import re
+import tempfile
 import typing as _typing
 from pathlib import Path
 from types import SimpleNamespace
@@ -1046,3 +1048,123 @@ class ChildTransport:
         # reconnect after a catalog epoch changes, so this transport-open path
         # mutates no shared handshake record.
         return session
+
+
+def _child_transport_is_remote(cfg: dict, config: RuntimeConfig) -> bool | None:
+    """Whether one child speaks HTTP; ``None`` when its declaration is invalid.
+
+    A child is remote (HTTP) when it declares a ``url`` or an http/sse
+    ``transport``; otherwise it is a local stdio subprocess run via
+    ``command``. Either kind loads transparently from the same config.
+    """
+
+    command, _, _, is_remote = _child_transport_values(cfg, cfg.get("command"), config)
+    if is_remote is None:
+        logger.error("MCP child transport declaration is invalid")
+        return None
+    if not command and not is_remote:
+        logger.warning("MCP child has neither command nor URL; skipping")
+        return None
+    return is_remote
+
+
+def _child_timeout_admissible(cfg: dict) -> bool:
+    """Whether one child's declared call timeout is inside the safety boundary."""
+
+    try:
+        timeout = float(cfg.get("timeout", 300.0))
+    except (TypeError, ValueError):
+        timeout = 0.0
+    if not 0.001 <= timeout <= 3_600.0:
+        logger.error("MCP child timeout is outside the safety boundary")
+        return False
+    return True
+
+
+def _child_pool_size(cfg: dict, is_remote: bool, config: RuntimeConfig) -> int | None:
+    """Session-pool sizing (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client).
+
+    Remote children may hold N independent connections for parallel in-flight
+    calls; stdio children are single-pipe and always keep exactly one session.
+    ``None`` means the declaration is outside the safety boundary.
+    """
+
+    if not is_remote:
+        return 1
+    try:
+        pool_size = int(cfg.get("pool_size") or config.mcp_child_pool_size)
+    except (TypeError, ValueError):
+        pool_size = 0
+    if not 1 <= pool_size <= 64:
+        logger.error("MCP child pool size is outside the safety boundary")
+        return None
+    return pool_size
+
+
+def _child_launch_shape(cfg: dict, config: RuntimeConfig) -> tuple[bool, int] | None:
+    """``(is_remote, pool_size)`` for one child, or ``None`` when any part of its
+    declaration is outside a safety boundary (already logged by the gate that
+    rejected it)."""
+
+    is_remote = _child_transport_is_remote(cfg, config)
+    if is_remote is None or not _child_timeout_admissible(cfg):
+        return None
+    pool_size = _child_pool_size(cfg, is_remote, config)
+    if pool_size is None:
+        return None
+    return is_remote, pool_size
+
+
+def _close_abandoned_provider_projection(
+    task: concurrent.futures.Future[_typing.Any],
+) -> None:
+    """Erase a provider projection that completed after its caller left."""
+
+    if task.cancelled():
+        return
+    try:
+        projection = task.result()
+    except Exception:
+        logger.debug("Abandoned provider projection failed", exc_info=True)
+        return
+    projection.close()
+
+
+def _provider_child_sandbox_environment(
+    stack: contextlib.AsyncExitStack,
+) -> dict[str, str]:
+    """Return a private empty home/XDG tree for one provider child."""
+
+    sandbox = tempfile.TemporaryDirectory(prefix="agent-provider-child-")
+    stack.callback(sandbox.cleanup)
+    root = Path(sandbox.name)
+    roots = {
+        "config": root / "config",
+        "data": root / "data",
+        "state": root / "state",
+        "cache": root / "cache",
+        "runtime": root / "runtime",
+        "temp": root / "temp",
+    }
+    for path in (root, *roots.values()):
+        path.mkdir(mode=0o700, parents=True, exist_ok=True)
+        try:
+            path.chmod(0o700)
+        except OSError:
+            logger.debug("Provider sandbox permission update failed", exc_info=True)
+    return {
+        "HOME": str(root),
+        "USERPROFILE": str(root),
+        "APPDATA": str(roots["config"]),
+        "LOCALAPPDATA": str(roots["data"]),
+        "XDG_CONFIG_HOME": str(roots["config"]),
+        "XDG_DATA_HOME": str(roots["data"]),
+        "XDG_STATE_HOME": str(roots["state"]),
+        "XDG_CACHE_HOME": str(roots["cache"]),
+        "XDG_RUNTIME_DIR": str(roots["runtime"]),
+        "ARBORA_CONFIG_DIR": str(roots["config"]),
+        "ARBORA_DATA_DIR": str(roots["data"]),
+        "ARBORA_CACHE_DIR": str(roots["cache"]),
+        "TEMP": str(roots["temp"]),
+        "TMP": str(roots["temp"]),
+    }
