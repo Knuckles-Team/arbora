@@ -21,7 +21,10 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("meristem.graph", reason="meristem run loop")
+pytest.importorskip(
+    "meristem.graph",
+    reason="meristem.graph ships from meristem 6.0.0; the pinned meristem lacks it",
+)
 
 from arbora.api.invoke.steps import OpResult  # noqa: E402
 from tests.api._loopback_engine import PRINCIPAL, Loopback, loopback  # noqa: E402,F401

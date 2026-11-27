@@ -13,13 +13,13 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import Params, bound_service, build_write_op
+from arbora.api.ops._common import FrozenState, Params, bound_service, build_write_op
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import OpSpec, Verb
 
@@ -28,6 +28,51 @@ ADMISSION_CODES = frozenset(
     {"CAPTURE_DENIED", "EGRESS_DENIED", "TENANT_DENIED", "PROVIDER_UNAVAILABLE"}
 )
 MAX_ATTEMPTS = 3
+
+
+class TranscriptEvent(FrozenState):
+    """One transcript segment revision on the live stream (ARBORA-OPS-R065.1).
+
+    ``state`` is ``partial`` while the speech model may still change the text, ``final``
+    once a segment is settled and ``finalized`` only when the contiguous sequence is
+    complete. A correction carries a higher ``correction_revision`` for the same segment.
+    """
+
+    schema_version: int = Field(default=1, ge=1)
+    meeting_id: str = Field(min_length=1, max_length=256)
+    segment_id: str = Field(min_length=1, max_length=256)
+    sequence: int = Field(ge=0)
+    correction_revision: int = Field(ge=0)
+    state: Literal["partial", "final", "finalized"]
+    start_ms: int = Field(ge=0)
+    end_ms: int = Field(ge=0)
+    text: str = Field(max_length=65_536)
+    source_id: str = Field(min_length=1, max_length=256)
+    model_id: str = Field(min_length=1, max_length=256)
+
+
+class ProviderChoice(FrozenState):
+    """One summary provider, with the explicit class that decides its egress."""
+
+    provider_id: str = Field(min_length=1, max_length=128)
+    execution_class: Literal["local", "hosted"]
+    model_id: str = Field(min_length=1, max_length=128)
+
+
+class SummaryRequest(FrozenState):
+    schema_version: int = Field(default=1, ge=1)
+    meeting_id: str = Field(min_length=1, max_length=256)
+    transcript_revision: int = Field(ge=0)
+    provider_id: str = Field(min_length=1, max_length=128)
+    context_revision: str = Field(min_length=1, max_length=256)
+
+
+class SummaryResult(FrozenState):
+    schema_version: int = Field(default=1, ge=1)
+    summary_id: str = Field(min_length=1, max_length=256)
+    text: str = Field(max_length=262_144)
+    provenance: dict[str, str]
+    state: Literal["pending", "complete", "unavailable"]
 
 
 class MeetingSummaryCreateParams(Params):
@@ -198,6 +243,10 @@ specs = operations
 
 __all__ = [
     "ADMISSION_CODES",
+    "ProviderChoice",
+    "SummaryRequest",
+    "SummaryResult",
+    "TranscriptEvent",
     "NATIVE_IDEMPOTENCY",
     "MeetingSummaryCreateParams",
     "MeetingSummaryResult",
