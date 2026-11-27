@@ -114,3 +114,36 @@ def test_invalid_owner_metadata_refuses_without_server_error(
         )
         assert response.status_code == 503
         assert response.json() == {"detail": "log_unavailable"}
+
+
+@pytest.mark.spec("ARBORA-HOST-R009.8.2.2")
+def test_message_only_batch_is_refused_with_log_schema_unsupported(
+    tmp_path: Path,
+) -> None:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from arbora.agent_host.log_routes import register_host_log_routes
+
+    owners = ControlledOwners()
+    sink = WorkspaceLogSink(str(tmp_path), "host-1", max_bytes=1024)
+    asyncio.run(sink.emit(tenant="tenant-a", request_id="r1", message="one"))
+    app = FastAPI()
+    app.state.public_base_url = "http://127.0.0.1:1"
+    register_host_log_routes(app, access_for(sink, owners), metadata_required=True)
+    try:
+        client = TestClient(app, base_url="http://127.0.0.1:1")
+        ref = reference(client)
+        headers = {"Authorization": "Bearer a"}
+        refused = client.post(
+            "/host/logs/read", headers=headers, json={"version": 1, "log_ref": ref}
+        )
+        assert refused.status_code == 400
+        assert refused.json() == {"detail": "LOG_SCHEMA_UNSUPPORTED"}
+        served = client.post(
+            "/host/logs/read", headers=headers, json={"version": 2, "log_ref": ref}
+        )
+        assert served.status_code == 200
+        assert served.json()["records"][0]["request"] == "r1"
+    finally:
+        sink.close()

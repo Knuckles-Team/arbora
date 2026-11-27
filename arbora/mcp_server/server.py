@@ -389,9 +389,10 @@ def mcp_server(
     ):
         raise RuntimeError("EG browser requires the process-root identity factory")
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
+    from arbora.mcp_server.serving_options import parse_serving_options
     from arbora.security.anonymous import validate_startup
 
-    startup_args, _unknown = create_mcp_parser().parse_known_args()
+    startup_args = parse_serving_options(create_mcp_parser)
     validate_startup(startup_args)
     early_session = None
     from arbora.mcp_server.host_context import build_host_context
@@ -513,7 +514,9 @@ def mcp_server(
     catalog_warmup = None
     background_host = None
     try:
-        logger.info("Starting arbora MCP server (transport=%s)", transport)
+        from arbora.mcp_server.serving_options import log_startup
+
+        log_startup(logger, transport, runtime.SERVED_PROJECTION, fleet_mux)
 
         from arbora.security.request_identity import (
             apply_served_security_profile,

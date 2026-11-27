@@ -114,8 +114,15 @@ def _trusted_request_origin(request: Request) -> str:
     return endpoint
 
 
-def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None:
-    """Attach the same optional read authority to the existing connector host."""
+def register_host_log_routes(
+    app: FastAPI, access: HostLogAccess | None, *, metadata_required: bool = False
+) -> None:
+    """Attach the same optional read authority to the existing connector host.
+
+    With ``metadata_required`` a read that asks for the message-only batch (version 1)
+    is refused with ``LOG_SCHEMA_UNSUPPORTED`` before any source read
+    (ARBORA-HOST-R009.8.2.2); the terminal host sets it.
+    """
 
     def available() -> HostLogAccess:
         if access is None:
@@ -144,6 +151,7 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
     @app.post("/host/logs/read")
     async def read(request: Request, body: LogReadRequest) -> dict:
         service = available()
+        _require_schema(metadata_required, body.version)
         credential = host_log_credential(request)
         try:
             async with asyncio.timeout(HOST_LOG_REQUEST_BUDGET_SECONDS):
@@ -177,6 +185,12 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
             "cursor": batch.cursor,
             "gap": batch.gap,
         }
+
+
+def _require_schema(metadata_required: bool, version: int) -> None:
+    """A terminal host serves only the metadata batch (ARBORA-HOST-R009.8.2.2)."""
+    if metadata_required and version != 2:
+        raise HTTPException(400, "LOG_SCHEMA_UNSUPPORTED")
 
 
 def _metadata(record: HostLogRecord) -> dict:

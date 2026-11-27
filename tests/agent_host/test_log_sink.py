@@ -255,3 +255,44 @@ def test_cursor_binds_exact_source_generations(tmp_path: Path) -> None:
         asyncio.run(exercise())
     finally:
         sink.close()
+
+
+@pytest.mark.spec("ARBORA-HOST-R009.4")
+def test_overflow_reports_gap_and_stalled_reader_does_not_block(tmp_path: Path) -> None:
+    sink = WorkspaceLogSink(str(tmp_path), "host-1", max_bytes=1024, keep_files=2)
+
+    def page(cursor: str | None) -> object:
+        return sink.read(
+            tenant="tenant-a",
+            workspace=str(tmp_path),
+            host_instance="host-1",
+            source_generations=("host-1",),
+            cursor=cursor,
+            limit=1,
+        )
+
+    async def exercise() -> None:
+        await sink.emit(tenant="tenant-a", request_id="first", message="x" * 300)
+        first = await page(None)  # type: ignore[misc]
+        for index in range(30):
+            await sink.emit(tenant="tenant-a", request_id=str(index), message="x" * 300)
+        from arbora.agent_host.log_access import HostLogRetentionGap
+
+        with pytest.raises(HostLogRetentionGap):
+            await page(first.cursor)  # type: ignore[misc]
+        # A reader that never returns holds the one I/O slot; a write refuses at once.
+        assert sink._io_slots.acquire(blocking=False)
+        try:
+            from arbora.agent_host.log_access import HostLogDenied
+
+            with pytest.raises(HostLogDenied):
+                await sink.emit(tenant="tenant-a", request_id="x", message="y")
+        finally:
+            sink._io_slots.release()
+        await sink.drain()
+
+    try:
+        asyncio.run(exercise())
+        assert len(list((tmp_path / "agent_data/logs").glob("server.log*"))) == 2
+    finally:
+        sink.close()

@@ -190,7 +190,9 @@ def build_agent_host_app(
             raise ValueError("one host log composition required")
         host_logs = host_log_runtime.access
         register_host_log_runtime(app, host_log_runtime)
-    register_host_log_routes(app, host_logs)
+    register_host_log_routes(
+        app, host_logs, metadata_required=_serves_terminal(host_runtime)
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -263,6 +265,82 @@ def build_agent_host_app(
         }
 
     return app
+
+
+def _admit_start(
+    host_start: HostStartContext | None,
+    configuration: HostStartConfiguration,
+    host_runtime: HostRuntimeResources | None,
+    resources: tuple[object, ...],
+    unused_arguments: dict[str, Any],
+) -> Any:
+    """Check the declared inputs, and admit the borrowed runtime when one is supplied.
+
+    Returns the admitted start for a borrowed runtime, else ``None`` after the
+    selection check.
+    """
+    if host_runtime is not None:
+        return check_runtime_configuration(
+            host_start,
+            configuration,
+            host_runtime,
+            resources=resources,
+            unused_arguments=unused_arguments,
+        )
+    check_start_configuration(
+        host_start,
+        configuration,
+        resources=resources,
+        unused_arguments=unused_arguments,
+    )
+    check_host_start(
+        host_start,
+        workspace=configuration.workspace,
+        terminal=configuration.enable_terminal_ui,
+        web=configuration.enable_web_ui,
+        web_logs=configuration.enable_web_logs,
+    )
+    return None
+
+
+def _serves_terminal(host_runtime: HostRuntimeResources | None) -> bool:
+    """Whether the admitted runtime carries a terminal client."""
+    return host_runtime is not None and callable(host_runtime.terminal_client)
+
+
+def _runs_terminal(
+    host_runtime: HostRuntimeResources | None,
+    host_start: HostStartContext | None,
+    terminal: bool,
+    web: bool | None,
+) -> bool:
+    """A terminal-only launch whose admitted runtime has a terminal client."""
+    return (
+        _serves_terminal(host_runtime)
+        and host_start is not None
+        and terminal
+        and not web
+    )
+
+
+def _runs_managed_web(
+    host_runtime: HostRuntimeResources | None,
+    host_start: HostStartContext | None,
+    terminal: bool,
+    web: bool | None,
+    web_logs: bool,
+) -> bool:
+    """A web-only launch over a borrowed web application and no log composition."""
+    return (
+        host_runtime is not None
+        and host_start is not None
+        and web is True
+        and not terminal
+        and not web_logs
+        and callable(host_runtime.web_application)
+        and host_runtime.host_logs is None
+        and host_runtime.host_log_runtime is None
+    )
 
 
 def create_agent_server(
@@ -338,38 +416,15 @@ def create_agent_server(
             enable_web_ui=enable_web_ui,
             enable_web_logs=enable_web_logs,
         )
-        resources = (graph, graph_config, executor, host_logs, host_log_runtime)
-        if host_runtime is not None:
-            checked = check_runtime_configuration(
-                host_start,
-                configuration,
-                host_runtime,
-                resources=resources,
-                unused_arguments=_unused_au_hosting_kwargs,
-            )
-        else:
-            check_start_configuration(
-                host_start,
-                configuration,
-                resources=resources,
-                unused_arguments=_unused_au_hosting_kwargs,
-            )
-            check_host_start(
-                host_start,
-                workspace=workspace,
-                terminal=enable_terminal_ui,
-                web=enable_web_ui,
-                web_logs=enable_web_logs,
-            )
-        if (
-            host_runtime is not None
-            and host_start is not None
-            and enable_web_ui is True
-            and not enable_terminal_ui
-            and not enable_web_logs
-            and callable(host_runtime.web_application)
-            and host_runtime.host_logs is None
-            and host_runtime.host_log_runtime is None
+        checked = _admit_start(
+            host_start,
+            configuration,
+            host_runtime,
+            (graph, graph_config, executor, host_logs, host_log_runtime),
+            _unused_au_hosting_kwargs,
+        )
+        if _runs_managed_web(
+            host_runtime, host_start, enable_terminal_ui, enable_web_ui, enable_web_logs
         ):
             import uvicorn
 
@@ -384,6 +439,16 @@ def create_agent_server(
                 port=port if port is not None else 9000,
                 lifespan="on",
                 access_log=False,
+            )
+            return
+        if _runs_terminal(host_runtime, host_start, enable_terminal_ui, enable_web_ui):
+            from arbora.agent_host.terminal_host import run_terminal_host
+
+            run_terminal_host(
+                context=host_start,
+                admitted=checked,
+                configuration=configuration,
+                runtime=host_runtime,
             )
             return
         raise HostInterfaceUnavailable("client_unavailable")

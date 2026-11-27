@@ -111,3 +111,80 @@ def test_unknown_method_is_rejected() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["error"]["code"] == -32601
+
+
+# ---- terminal-mode HTTP in a supervised thread (ARBORA-HOST-R009.2) ----
+
+import threading  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import httpx  # noqa: E402
+import pytest  # noqa: E402
+
+from arbora.agent_host import create_agent_server  # noqa: E402
+from arbora.agent_host.terminal_http import (  # noqa: E402
+    HTTP_THREAD_NAME,
+    HostLaunchRefused,
+    TerminalHttpHosts,
+)
+from arbora.mcp_server.composition import CoServiceSupervisor  # noqa: E402
+from tests.agent_host._terminal_owner import launch_arguments, terminal_owner  # noqa: E402
+
+
+@pytest.mark.spec("ARBORA-HOST-R009.2")
+def test_terminal_mode_serves_http_in_distinct_thread(tmp_path: Path) -> None:
+    seen: dict[str, Any] = {}
+
+    def client(host: Any, admitted: Any) -> None:
+        seen["host"] = host
+        seen["authority"] = admitted.runtime.engine
+        seen["foreground"] = threading.current_thread().name
+        seen["health"] = httpx.get(f"{host.endpoint}/health").json()
+        seen["threads"] = sorted(
+            t.name for t in threading.enumerate() if t.name == HTTP_THREAD_NAME
+        )
+
+    owner = terminal_owner(tmp_path, client)
+    create_agent_server(**launch_arguments(owner))
+    host = seen["host"]
+    assert seen["health"] == {"status": "ok"}
+    assert host.ready is True and host.thread_name == HTTP_THREAD_NAME
+    assert host.thread_id != threading.get_ident()
+    assert seen["foreground"] != HTTP_THREAD_NAME
+    assert seen["threads"] == [HTTP_THREAD_NAME]
+    assert host.authority == f"authority:{id(seen['authority']):x}"
+    assert not any(t.name == HTTP_THREAD_NAME for t in threading.enumerate())
+
+
+@pytest.mark.spec("ARBORA-HOST-R009.2")
+def test_terminal_launch_refusals_carry_their_codes() -> None:
+    supervisor = CoServiceSupervisor()
+    hosts = TerminalHttpHosts(supervisor)
+
+    async def app(scope: Any, receive: Any, send: Any) -> None:
+        if scope["type"] == "lifespan":
+            await receive()
+            await send({"type": "lifespan.startup.complete"})
+            await receive()
+            await send({"type": "lifespan.shutdown.complete"})
+
+    common = dict(app=app, session=object(), bind_host="127.0.0.1", port=0)
+    with pytest.raises(HostLaunchRefused) as absent:
+        hosts.start(host_instance="h0", authority=None, **common)
+    assert absent.value.code == "HOST_AUTHORITY_ABSENT"
+    first = hosts.start(host_instance="h1", authority=object(), **common)
+    try:
+        with pytest.raises(HostLaunchRefused) as duplicate:
+            hosts.start(host_instance="h1", authority=object(), **common)
+        assert duplicate.value.code == "HOST_DUPLICATE_INSTANCE"
+        taken = int(first.endpoint.rsplit(":", 1)[1])
+        with pytest.raises(HostLaunchRefused) as bind:
+            hosts.start(
+                host_instance="h2",
+                authority=object(),
+                **{**common, "port": taken},
+            )
+        assert bind.value.code == "HOST_BIND_FAILED"
+        assert supervisor.running() == (f"{HTTP_THREAD_NAME}:h1",)
+    finally:
+        assert hosts.stop("h1") is True
