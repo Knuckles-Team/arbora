@@ -22,9 +22,9 @@ from fastmcp.exceptions import ToolError
 from fastmcp.tools import Tool
 
 from arbora.core.settings import RuntimeConfig
+from arbora.fleet.fleet_capabilities import fleet_required_capabilities
 from arbora.fleet.multiplexer import (
     _LOCAL_SESSION_META_KEY,
-    _fleet_required_capabilities,
     _make_forwarder,
     _register_forwarder,
     _tenant_local_discovery_binding,
@@ -1776,9 +1776,9 @@ def test_fleet_required_capabilities_rejects_generic_admin_for_discover_and_dele
     fleet-specific scope of its own, so an administrative grant remains its
     exact requirement."""
     for admin_scope in ("admin", "kg:admin", "mcp:admin"):
-        assert admin_scope not in _fleet_required_capabilities("discover")
-        assert admin_scope not in _fleet_required_capabilities("delegate")
-        assert admin_scope in _fleet_required_capabilities("manage")
+        assert admin_scope not in fleet_required_capabilities("discover")
+        assert admin_scope not in fleet_required_capabilities("delegate")
+        assert admin_scope in fleet_required_capabilities("manage")
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R022")
