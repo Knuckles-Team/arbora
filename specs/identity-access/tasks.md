@@ -209,7 +209,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T049 ARBORA-IDENTITY-R009.2 OIDC authentication flow (rollup).
 - [x] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
 - [x] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
-- [ ] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
+- [x] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
 - [x] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
 - [ ] T054 ARBORA-IDENTITY-R010.2 Directory bind and group sync (rollup).
 - [x] T055 ARBORA-IDENTITY-R010.2.1 Group-DN-to-role mapping evaluation.
@@ -231,7 +231,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] T071 ARBORA-IDENTITY-R012.2.2 Signature verification through an injected verifier port.
 - [ ] T072 ARBORA-IDENTITY-R012.2.3 SAML replay check and sign-in wiring (rollup).
 - [x] T073 ARBORA-IDENTITY-R012.2.3.1 Replay check through a seen-assertion-id store port.
-- [ ] T074 ARBORA-IDENTITY-R012.2.3.2 SAML sign-in handler.
+- [x] T074 ARBORA-IDENTITY-R012.2.3.2 SAML sign-in handler.
 - [ ] T075 ARBORA-IDENTITY-R012.2.4 Live SAML provider sign-in probe.
 - [ ] T076 ARBORA-IDENTITY-R013 Identity CLI commands and doctor diagnostics (rollup).
 - [ ] T077 ARBORA-IDENTITY-R014 Shared RBAC decision oracle across identity modes.

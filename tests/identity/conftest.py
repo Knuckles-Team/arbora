@@ -8,6 +8,11 @@ from arbora.identity.sandbox_principal import (
     SandboxPrincipal,
     mint_sandbox_principals,
 )
+from tests.identity._federated_fixture import (  # noqa: F401
+    fed_lagged,
+    fed_readerless,
+    fed_world,
+)
 
 
 @pytest.fixture

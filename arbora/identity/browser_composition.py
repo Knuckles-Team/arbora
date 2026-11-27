@@ -131,6 +131,7 @@ def build_browser_boundary(
         BrowserCallerResolver,
     )
     from arbora.identity.composition import build_engine_identity_ports
+    from arbora.identity.federated import federation_from_settings
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
     from arbora.identity.issuer_discovery import IssuerDiscovery
     from arbora.security.request_identity import verify_local_bearer_token
@@ -171,6 +172,7 @@ def build_browser_boundary(
             caller=caller,
             discovery=discovery,
             acting=getattr(client, "acting_as", None),
+            federation=federation_from_settings(client, graph, origin),
         ),
     )
 
