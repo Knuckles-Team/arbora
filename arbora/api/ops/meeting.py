@@ -59,7 +59,7 @@ async def handle_meeting_summarize(
         context, "meeting_final", reason="meeting finalization reader is not composed"
     )
     current = await finals.get_final(
-        tenant=context.caller.tenant, meeting_id=params["meeting_id"]
+        request=context, tenant=context.caller.tenant, meeting_id=params["meeting_id"]
     )
     try:
         _require_finalized(

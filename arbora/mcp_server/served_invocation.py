@@ -187,12 +187,23 @@ def _with_finance_read_port(
 def _with_meeting_summarizer(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
-    """Bind the meeting summarizer port over the governed fleet call (ARBORA-OPS-R065.3)."""
+    """Bind the meeting ports: the fleet summarizer, policy admission and engine reads (ARBORA-OPS-R065.3)."""
     if bindings is None or "meeting_summarizer" in bindings:
         return bindings
+    from arbora.api.ops.meeting_engine import (
+        EngineMeetingFinal,
+        EngineMeetingTranscript,
+        FleetPolicyAdmission,
+    )
     from arbora.api.ops.meeting_fleet import FleetMeetingSummarizer
 
-    return {**bindings, "meeting_summarizer": FleetMeetingSummarizer()}
+    ports = {
+        "meeting_summarizer": FleetMeetingSummarizer(),
+        "meeting_provider_admission": FleetPolicyAdmission(),
+        "meeting_transcript": EngineMeetingTranscript(),
+        "meeting_final": EngineMeetingFinal(),
+    }
+    return {**ports, **bindings}
 
 
 def _with_fleet_source_executor(
