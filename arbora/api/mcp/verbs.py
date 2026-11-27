@@ -222,7 +222,7 @@ async def _resolve_op(
             _refusal("POLICY_UNAVAILABLE", projection, caller, verb),
         )
     candidates = [describe_op(item) for item in visible]
-    resolution = projection.resolver.resolve(
+    resolution = await projection.resolver.resolve_async(
         verb, intent, candidates, scope_ref=scope_ref, params=arguments
     )
     resolved_op = resolution.op

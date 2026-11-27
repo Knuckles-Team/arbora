@@ -263,72 +263,12 @@ async def test_discover_tools_skill_absent_when_server_has_no_skills(tmp_path):
     assert all(r["kind"] == "tool" for r in discovery["results"])
 
 
-async def test_semantic_scoring_covers_skills_not_only_tools(tmp_path):
-    """Skills must get the SAME embedding term tools do.
+async def test_a_skill_and_a_same_named_tool_are_one_ranked_space(tmp_path):
+    """Skills and tools go to the ranking port together and come back in one order.
 
-    Waves 1-5 merge gate regression: ``_embed_semantic_scores`` iterated
-    ``info["tools"]`` only, so ``semantic.get(skill, 0.0)`` in ``discover_tools``
-    was always 0.0 and skills were ranked on token overlap alone while tools
-    additionally carried a cosine term. Whenever the embedder is warm — the
-    production condition this whole feature exists for — skills were
-    structurally under-ranked against tools for exactly the intent-similarity
-    queries the feature was built to serve. The existing ranking test set
-    ``_kg_call`` rather than ``_embed_fn``, so ``_embed_fn is None`` and
-    ``_embed_semantic_scores`` returned before reaching the buggy loop — it only
-    ever exercised the token-overlap-only regime where the two kinds happen to
-    be symmetric.
+    A skill and a tool may share a name on one server; each stays its own row, and
+    the port's order (medulla's choice) decides which leads (ARBORA-FLEET-R083.3).
     """
-    mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "manage docker containers")]})
-    mux._kg_call = AsyncMock(return_value=None)
-    mux._probe_cache[CNT] = {
-        "tools": [
-            {"name": CNT_TOOL, "description": "alpha", "inputSchema": {}},
-        ],
-        "skills": [
-            {
-                "name": "container-runbook",
-                "uri": "skill://container-runbook/SKILL.md",
-                "description": "beta",
-            }
-        ],
-        "error": None,
-    }
-
-    # A deterministic "embedder": the query vector matches the SKILL's text and
-    # is orthogonal to the tool's, so a correctly-covered skill outranks the tool.
-    def _embed(texts):
-        out = []
-        for text in texts:
-            lowered = text.lower()
-            if "beta" in lowered or "runbook" in lowered:
-                out.append([1.0, 0.0])
-            elif "alpha" in lowered or CNT_TOOL in lowered:
-                out.append([0.0, 1.0])
-            else:
-                out.append([1.0, 0.0])  # the query
-        return out
-
-    mux._embed_fn = _embed
-
-    semantic: dict[str, float] = {}
-    await mux._embed_semantic_scores("beta runbook", mux._probe_cache, semantic)
-
-    assert semantic.get("container-runbook", 0.0) > 0.0, (
-        "the skill received no semantic score — skills are not in the same "
-        "ranking space as tools"
-    )
-    assert semantic.get(CNT_TOOL, 0.0) == 0.0
-
-    discovery = await mux.discover_tools("beta runbook", top_k=5)
-    results = discovery["results"]
-    skill_hit = next(r for r in results if r["kind"] == "skill")
-    tool_hits = [r for r in results if r["kind"] == "tool"]
-    assert not tool_hits or skill_hit["score"] > tool_hits[0]["score"]
-
-
-async def test_semantic_cache_key_separates_a_skill_from_a_same_named_tool(tmp_path):
-    """A skill and a tool may share a name on one server; they must not share
-    one cached embedding."""
     mux = _mux_with_children(tmp_path, {CNT: [("deploy", "tool description")]})
     mux._kg_call = AsyncMock(return_value=None)
     mux._probe_cache[CNT] = {
@@ -336,16 +276,14 @@ async def test_semantic_cache_key_separates_a_skill_from_a_same_named_tool(tmp_p
         "skills": [{"name": "deploy", "description": "skill description"}],
         "error": None,
     }
-    embedded: list[str] = []
+    seen: list[tuple[str, str]] = []
 
-    def _embed(texts):
-        embedded.extend(texts)
-        return [[1.0, 0.0] for _ in texts]
+    async def prefer_skills(question_id, query, candidates):
+        seen.append((question_id, query))
+        return [c.id for c in sorted(candidates, key=lambda c: c.kind != "skill")]
 
-    mux._embed_fn = _embed
-    await mux._embed_semantic_scores("deploy", mux._probe_cache, {})
+    mux.fleet.ranking.bind(prefer_skills)
+    results = (await mux.discover_tools("deploy description", top_k=5))["results"]
 
-    assert f"{CNT}::tools::deploy" in mux._tool_embeddings
-    assert f"{CNT}::skills::deploy" in mux._tool_embeddings
-    assert any("tool description" in t for t in embedded)
-    assert any("skill description" in t for t in embedded)
+    assert [r["kind"] for r in results] == ["skill", "tool"]
+    assert seen == [("catalog.operation_rank", "deploy description")]

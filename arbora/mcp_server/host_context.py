@@ -20,7 +20,13 @@ from arbora.access.policy_state import PolicyState
 from arbora.fleet.state import FleetState
 from arbora.run_origin import RunOriginRegistry
 
-__all__ = ["HostContext", "RunState", "bind_a2a_decision", "build_host_context"]
+__all__ = [
+    "HostContext",
+    "RunState",
+    "bind_a2a_decision",
+    "bind_ranking",
+    "build_host_context",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,3 +80,22 @@ def bind_a2a_decision(host: HostContext, invocation: Any) -> None:
     if send is None or schema is None or principal is None:
         return
     host.runs.decide.bind(send, feature_schema=schema, principal=principal)
+
+
+def bind_ranking(host: HostContext, invocation: Any) -> None:
+    """Bind the fleet's ranking port to the served invocation's engine sender.
+
+    A host with no engine endpoint has no invocation, so the port stays unbound and
+    every ranking site answers the lexical floor (ARBORA-FLEET-R083.5).
+    """
+    from arbora.fleet.ranking import engine_ask
+
+    send = getattr(invocation, "engine_send", None)
+    schema = getattr(invocation, "decision_feature_schema", None)
+    principal = getattr(invocation, "decision_principal", None)
+    tenant = getattr(invocation, "decision_tenant", None)
+    if send is None or schema is None or principal is None or tenant is None:
+        return
+    host.fleet.ranking.bind(
+        engine_ask(send, tenant=tenant, feature_schema=schema, principal=principal)
+    )

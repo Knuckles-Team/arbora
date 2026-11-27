@@ -854,20 +854,6 @@ async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
     return await _list_all(session, "list_tools", "tools")
 
 
-def _discovery_ranker(query: str, sources: list[tuple[str, dict]]) -> _typing.Any:
-    """One ranker over every tool and skill row this discovery call scores."""
-    from arbora.fleet.lexical_floor import LexicalFloor
-
-    documents = (
-        f"{entry.get('name', '')} {entry.get('description', '')}"
-        for _server, info in sources
-        for family in ("tools", "skills")
-        for entry in info.get(family) or ()
-        if isinstance(entry, dict)
-    )
-    return LexicalFloor(query, documents)
-
-
 def _tool_catalog_digest(tools: list[MCPTool]) -> str:
     """Return a stable digest of the client-visible portion of one child catalog.
 
@@ -1700,21 +1686,6 @@ def clean_tool_name(prefix: str, server_name: str, original_tool_name: str) -> s
     return candidate
 
 
-def _cosine(a: list[float], b: list[float]) -> float:
-    """Cosine similarity of two dense vectors (dependency-free; find_tools embeds only
-    a handful of short texts, so a pure-Python dot product is cheaper than pulling in a
-    numeric dep here)."""
-    n = min(len(a), len(b))
-    if n == 0:
-        return 0.0
-    dot = sum(a[i] * b[i] for i in range(n))
-    na = sum(x * x for x in a[:n]) ** 0.5
-    nb = sum(x * x for x in b[:n]) ** 0.5
-    if na == 0.0 or nb == 0.0:
-        return 0.0
-    return dot / (na * nb)
-
-
 def _format_probe_error(exc: BaseException) -> str:
     """Render leaf exception types **and their messages** from a probe failure.
 
@@ -2190,30 +2161,6 @@ def _assert_task_route_current(
         _assert_task_mutation_fence(route, current_generation, current_secret)
 
 
-class _DiscoveryRanking(_typing.TypedDict):
-    """The per-call inputs every ranked ``find_tools`` row is scored against."""
-
-    query: str
-    semantic: dict[str, float]
-    catalog: dict[str, dict]
-    loaded: set[str]
-    #: The query's lexical ranker over this call's candidates (R074).
-    lexical: _typing.NotRequired[_typing.Any]
-
-
-class _EmbeddingTargets(_typing.TypedDict):
-    """Every probed capability to score, plus the not-yet-embedded batch.
-
-    ``names`` is the full ``(bare_name, cache_key)`` set to score; the two
-    ``pending_*`` lists are the parallel subset that still needs an embedding
-    computed, so only genuinely-uncached text is sent to the model.
-    """
-
-    names: list[tuple[str, str]]
-    pending_text: list[str]
-    pending_key: list[str]
-
-
 def _operator_call_timeouts() -> dict[str, _typing.Any]:
     """Per-server ``call_timeout`` from the operator's fleet config (R075).
 
@@ -2428,12 +2375,6 @@ class MCPMultiplexer:
         # concurrency cap as a newer call's probes, instead of every call
         # getting its own fresh set of slots.
         self._probe_semaphore = asyncio.Semaphore(_PROBE_CONCURRENCY)
-        # Optional in-process embedder for SEMANTIC find_tools ranking (injected by
-        # arbora via attach_fleet_loader). ``_embed_fn(texts)->list[vector]`` (sync,
-        # called off-thread); per-tool embeddings are cached by ``server::tool`` so only
-        # the query is embedded per call. Absent ⇒ token-overlap ranking only.
-        self._embed_fn: _typing.Any = None
-        self._tool_embeddings: dict[str, list[float]] = {}
         # Server names never mountable as a child of this multiplexer (self +
         # retired aliases) — set post-construction by the arbora fleet loader
         # (:func:`attach_fleet_loader`); defaults to just "mcp-multiplexer" via
@@ -4773,11 +4714,6 @@ class MCPMultiplexer:
         """Invalidate every derived cache keyed on one server's old catalog."""
         self._probe_cache.pop(server_name, None)
         self._drop_discovery_bindings_for_server(server_name)
-        embedding_prefix = f"{server_name}::"
-        for key in [
-            key for key in self._tool_embeddings if key.startswith(embedding_prefix)
-        ]:
-            self._tool_embeddings.pop(key, None)
 
     def _retract_removed_from_sessions(self, removed: set[str]) -> None:
         """Retract tools a child no longer serves from every session's view."""
@@ -6127,26 +6063,6 @@ class MCPMultiplexer:
                 result[server] = self._unsettled_probe_entry(server, now, budget)
         return result
 
-    @staticmethod
-    def _relevance(query: str, text: str) -> float:
-        """Cheap, deterministic token-overlap relevance in [0, 1] — the
-        embedding-free backbone so discovery (and its tests) never depend on a
-        live model. Semantic scores from the KG are layered on top when present."""
-        q_tokens = set(re.findall(r"[a-z0-9]+", query.lower()))
-        if not q_tokens:
-            return 0.0
-        t_tokens = set(re.findall(r"[a-z0-9]+", text.lower()))
-        return len(q_tokens & t_tokens) / len(q_tokens)
-
-    def _lexical_score(
-        self, rank: _DiscoveryRanking, name: str, description: str
-    ) -> float:
-        """The lexical backbone: rarity-weighted when the call built a ranker."""
-        ranker = rank.get("lexical")
-        if ranker is None:
-            return self._relevance(rank["query"], f"{name} {description}")
-        return ranker.score(name, description)
-
     def _server_level_fallback(self) -> list[dict]:
         """When the KG yields no tool-level index (cold/absent KG), still let
         the caller act: surface mountable servers so they can ``load_tools`` by
@@ -6189,94 +6105,6 @@ class MCPMultiplexer:
         ranked.sort(reverse=True)
         return [server for _coverage, _overlap, server in ranked]
 
-    def _collect_kind_embedding_targets(
-        self, server: str, kind: str, entries: _typing.Any, out: _EmbeddingTargets
-    ) -> None:
-        """Accumulate one server's tools OR skills into the embedding batch.
-
-        Each entry is namespaced by KIND as well as server: a skill and a tool
-        may legitimately share a name on the same server, and they must not
-        share one cached embedding.
-        """
-        for entry in entries or []:
-            name = entry.get("name")
-            if not name:
-                continue
-            key = f"{server}::{kind}::{name}"
-            out["names"].append((name, key))
-            if key in self._tool_embeddings:
-                continue
-            out["pending_text"].append(f"{name}. {entry.get('description', '')}"[:512])
-            out["pending_key"].append(key)
-
-    def _collect_embedding_targets(self, probe: dict) -> _EmbeddingTargets:
-        """Every probed capability to embed — tools AND skills, in ONE pass.
-
-        Skills were previously skipped entirely, so `semantic.get(skill, ...)`
-        in discover_tools always returned 0.0 and skills were ranked on token
-        overlap alone while tools additionally got a cosine term. That is not
-        one capability space: whenever the embedder is warm — the production
-        condition this whole feature exists for — skills were structurally
-        under-ranked against tools for any query where intent similarity
-        matters more than literal token overlap.
-        """
-        out: _EmbeddingTargets = {"names": [], "pending_text": [], "pending_key": []}
-        for server, info in probe.items():
-            if info.get("error"):
-                continue
-            for kind in ("tools", "skills"):
-                self._collect_kind_embedding_targets(
-                    server, kind, info.get(kind, []), out
-                )
-        return out
-
-    async def _embed_query_and_batch(
-        self, embed: _typing.Any, query: str, targets: _EmbeddingTargets
-    ) -> _typing.Any:
-        """Embed the uncached batch (cached per tool) and the query itself.
-
-        Returns the query vector, or ``None`` when embedding is unavailable —
-        which degrades find_tools silently to its token-overlap backbone.
-        """
-        try:
-            if targets["pending_text"]:
-                vecs = await asyncio.to_thread(embed, targets["pending_text"])
-                for k, v in zip(targets["pending_key"], vecs, strict=False):
-                    if v:
-                        self._tool_embeddings[k] = list(v)
-            return (await asyncio.to_thread(embed, [query]))[0]
-        except Exception as exc:
-            logger.debug(
-                "find_tools embedding rerank unavailable; token-overlap only: %s: %s",
-                type(exc).__name__,
-                redact_for_log(exc),
-            )
-            return None
-
-    async def _embed_semantic_scores(
-        self, query: str, probe: dict, semantic: dict[str, float]
-    ) -> None:
-        """Populate ``semantic[bare_tool] = query↔description cosine`` via the injected
-        in-process embedder (arbora wires its own embedding model here). Per-tool
-        embeddings are cached by ``server::tool`` so only the query is embedded per call;
-        all embedding runs OFF-THREAD (the embed model is sync/remote) so the event loop
-        never blocks. _typing.Any failure degrades silently to token-overlap (``semantic`` is
-        left as-is). No-op when no embedder is injected."""
-        embed = self._embed_fn
-        if embed is None:
-            return
-        targets = self._collect_embedding_targets(probe)
-        qv = await self._embed_query_and_batch(embed, query, targets)
-        if not qv:
-            return
-        for name, key in targets["names"]:
-            vec = self._tool_embeddings.get(key)
-            if not vec:
-                continue
-            cosine = _cosine(qv, vec)
-            if cosine > 0:
-                semantic[name] = max(semantic.get(name, 0.0), cosine)
-
     async def _discovery_probe(
         self,
         query: str,
@@ -6309,165 +6137,6 @@ class MCPMultiplexer:
                 priority=_resource_priority.PriorityClass.BACKGROUND_INGESTION,
             )
         return probe
-
-    async def _discovery_semantic_scores(
-        self, query: str, probe: dict, deadline: float
-    ) -> dict[str, float]:
-        """Semantic scores keyed by bare tool name, within the remaining budget.
-
-        When arbora injects an in-process embedder (attach_fleet_loader),
-        every probed tool is ranked by query↔description cosine similarity
-        (embeddings cached per tool). Absent ⇒ this stays empty and the
-        token-overlap backbone ranks alone. This is what makes find_tools
-        understand intent ("send a message to a gitlab MR" → the gitlab tools)
-        instead of only matching literal tokens.
-        (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
-        """
-        semantic: dict[str, float] = {}
-        remaining = deadline - asyncio.get_running_loop().time()
-        if remaining < 0.001:
-            return semantic
-        try:
-            await asyncio.wait_for(
-                self._embed_semantic_scores(query, probe, semantic),
-                timeout=remaining,
-            )
-        except TimeoutError:
-            logger.warning("find_tools semantic rerank exceeded its latency budget")
-        return semantic
-
-    def _ranked_tool_entry(
-        self,
-        server: str,
-        entry: dict,
-        rank: _DiscoveryRanking,
-        probe_age: float | None,
-        is_stale: bool,
-    ) -> dict | None:
-        """One ranked fleet-tool row, or ``None`` when it does not qualify.
-
-        find_tools surfaces only loadable (enabled) tools, so the caller never
-        picks one that load_tools would silently drop. Disabled-but-capable
-        tools remain visible via list_catalog.
-        """
-        tool = entry["name"]
-        if not self._tool_enabled(server, tool):
-            return None
-        desc = entry.get("description", "")
-        score = rank["semantic"].get(tool, 0.0) + self._lexical_score(rank, tool, desc)
-        if score <= 0:
-            return None
-        prefixed = clean_tool_name(self.server_prefix(server), server, tool)
-        capability = Capability(
-            kind="tool",
-            id=f"tool_{server}_{tool}",
-            name=tool,
-            description=desc,
-            score=score,
-            server=server,
-            source="fleet_probe",
-        )
-        return {
-            "kind": "tool",
-            "server": server,
-            "tool": tool,
-            "prefixed_name": prefixed,
-            "description": desc,
-            "score": round(score, 4),
-            "mountable": server in rank["catalog"],
-            "mounted": prefixed in rank["loaded"],
-            "bind": capability.to_binding(),
-            "age_s": probe_age,
-            "stale": is_stale,
-        }
-
-    def _ranked_skill_entry(
-        self,
-        server: str,
-        entry: dict,
-        rank: _DiscoveryRanking,
-        probe_age: float | None,
-        is_stale: bool,
-    ) -> dict | None:
-        """One ranked fleet-served ``skill://`` row, or ``None`` when it does not
-        qualify. Scored with the SAME backbone as a tool row, so tools and
-        skills share one ranked capability space."""
-        skill = entry.get("name")
-        if not skill:
-            return None
-        desc = entry.get("description", "")
-        score = rank["semantic"].get(skill, 0.0) + self._lexical_score(
-            rank, skill, desc
-        )
-        if score <= 0:
-            return None
-        capability = Capability(
-            kind="skill",
-            id=f"skill_{server}_{skill}",
-            name=skill,
-            description=desc,
-            score=score,
-            server=server,
-            source="fleet_probe",
-        )
-        return {
-            "kind": "skill",
-            "server": server,
-            "skill": skill,
-            "uri": entry.get("uri", ""),
-            "description": desc,
-            "score": round(score, 4),
-            "mountable": server in rank["catalog"],
-            "mounted": False,
-            "bind": capability.to_binding(),
-            "age_s": probe_age,
-            "stale": is_stale,
-        }
-
-    def _ranked_server_entries(
-        self,
-        server: str,
-        info: dict,
-        rank: _DiscoveryRanking,
-        now: float,
-        ttl: float,
-    ) -> list[dict]:
-        """Every qualifying tool AND skill row for one probed server.
-
-        Truthful freshness for every surfaced tool/skill (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
-        a result served from a probe that ran seconds/minutes ago is still
-        labelled with its real age, not presented as if it were just measured
-        live. ``is_stale`` is computed from that age against the TTL
-        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness) — never a bare
-        echo of the narrow in-flight ``stale`` flag, which stays ``False``
-        forever on a normally-settled cache entry no matter how old.
-        """
-        probe_age, is_stale = self._probe_age_and_staleness(info, now, ttl)
-        rows: list[dict] = []
-        for entry in info.get("tools", []):
-            row = self._ranked_tool_entry(server, entry, rank, probe_age, is_stale)
-            if row is not None:
-                rows.append(row)
-        for entry in info.get("skills", []) or []:
-            row = self._ranked_skill_entry(server, entry, rank, probe_age, is_stale)
-            if row is not None:
-                rows.append(row)
-        return rows
-
-    def _discovery_results(
-        self, ranked: list[dict], top_k: int, probe: dict
-    ) -> list[dict]:
-        """The top-``top_k`` rows, or a server-level fallback when nothing matched.
-
-        Nothing matched but reachable servers exist → list them so the caller
-        can still load by server. If every server errored, leave results empty
-        and let ``unavailable`` tell the story.
-        """
-        ranked.sort(key=lambda r: r["score"], reverse=True)
-        results = ranked[:top_k]
-        if not results and any(not info.get("error") for info in probe.values()):
-            return self._server_level_fallback()
-        return results
 
     def _catalog_tool_probe_info(self) -> dict[str, dict[str, _typing.Any]]:
         """Per-server tool descriptors already admitted into the EG catalog
@@ -6582,6 +6251,159 @@ class MCPMultiplexer:
                 deduped[server] = {**info, "skills": kept}
         return deduped
 
+    def _results_or_fallback(self, ranked: list[dict], probe: dict) -> list[dict]:
+        """The ranked rows, or every mountable server when nothing matched.
+
+        Nothing matched but a reachable server exists, so the caller can still load
+        by server; when every server errored the results stay empty and
+        ``unavailable`` tells the story.
+        """
+        if ranked or all(info.get("error") for info in probe.values()):
+            return ranked
+        return self._server_level_fallback()
+
+    def _probe_rows(
+        self, probe: dict, catalog: dict[str, dict], loaded: set[str]
+    ) -> tuple[list[dict], dict[str, str]]:
+        """Every loadable tool and skill row of the probe, and the servers that erred.
+
+        One ranked capability space (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract):
+        fleet tools AND fleet-served skill:// resources are rows of one list, each
+        carrying a ``bind`` dict, the exact kwargs `graph_orchestrate` needs to run it.
+        ARBORA-FLEET-R031: a server whose live probe errored (a timeout is the common
+        case) is not thereby invisible: its already-admitted catalog snapshot (never a
+        probe) is the fallback source, honestly marked stale.
+        """
+        now, ttl = time.time(), self._probe_ttl()
+        fallbacks = self._catalog_tool_probe_info()
+        rows: list[dict] = []
+        unavailable: dict[str, str] = {}
+        for server, info in probe.items():
+            if info.get("error"):
+                unavailable[server] = info["error"]
+                info = fallbacks.get(server)
+            rows.extend(
+                self._discovery_rows(server, info, catalog, loaded, now, ttl)
+                if info
+                else ()
+            )
+        return rows, unavailable
+
+    def _discovery_rows(
+        self,
+        server: str,
+        info: dict,
+        catalog: dict[str, dict],
+        loaded: set[str],
+        now: float,
+        ttl: float,
+    ) -> list[dict]:
+        """Every loadable tool AND skill row of one probed server, unordered.
+
+        Truthful freshness for every surfaced tool/skill (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
+        a row from a probe that ran seconds or minutes ago carries its real age,
+        and ``is_stale`` is computed from that age against the TTL
+        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness). find_tools
+        surfaces only loadable (enabled) tools; disabled-but-capable tools stay
+        visible through list_catalog.
+        """
+        probe_age, is_stale = self._probe_age_and_staleness(info, now, ttl)
+        common = {
+            "mountable": server in catalog,
+            "age_s": probe_age,
+            "stale": is_stale,
+        }
+        rows: list[dict] = []
+        for entry in info.get("tools", []):
+            tool = entry["name"]
+            if not self._tool_enabled(server, tool):
+                continue
+            desc = entry.get("description", "")
+            prefixed = clean_tool_name(self.server_prefix(server), server, tool)
+            capability = Capability(
+                kind="tool",
+                id=f"tool_{server}_{tool}",
+                name=tool,
+                description=desc,
+                score=0.0,
+                server=server,
+                source="fleet_probe",
+            )
+            rows.append(
+                {
+                    "kind": "tool",
+                    "server": server,
+                    "tool": tool,
+                    "prefixed_name": prefixed,
+                    "description": desc,
+                    "mounted": prefixed in loaded,
+                    "bind": capability.to_binding(),
+                    **common,
+                }
+            )
+        for entry in info.get("skills", []) or []:
+            skill = entry.get("name")
+            if not skill:
+                continue
+            desc = entry.get("description", "")
+            capability = Capability(
+                kind="skill",
+                id=f"skill_{server}_{skill}",
+                name=skill,
+                description=desc,
+                score=0.0,
+                server=server,
+                source="fleet_probe",
+            )
+            rows.append(
+                {
+                    "kind": "skill",
+                    "server": server,
+                    "skill": skill,
+                    "uri": entry.get("uri", ""),
+                    "description": desc,
+                    "mounted": False,
+                    "bind": capability.to_binding(),
+                    **common,
+                }
+            )
+        return rows
+
+    async def _ordered_discovery_rows(
+        self, query: str, rows: list[dict], top_k: int
+    ) -> list[dict]:
+        """The rows in the ranking port's order, the first ``top_k`` of them.
+
+        ARBORA-FLEET-R083.3: a ranking is medulla's choice; the lexical floor answers
+        when the engine cannot. The floor drops a row no routing term matches, as the
+        retired scorer did; an engine order is kept whole, since the engine owns the
+        semantic match. Each row's ``score`` is the floor's evidence for it.
+        """
+        from arbora.fleet.lexical_floor import evidence
+        from arbora.fleet.ranking import RankCandidate
+
+        candidates = [
+            RankCandidate(
+                f"{row['kind']}:{row['server']}:{row.get('tool') or row.get('skill')}",
+                str(row.get("tool") or row.get("skill")),
+                str(row["description"]),
+                row["kind"],
+            )
+            for row in rows
+        ]
+        outcome = await self.fleet.ranking.aordered(
+            "catalog.operation_rank", query, candidates
+        )
+        shown = evidence(query, ((c.id, c.name, c.description) for c in candidates))
+        by_id = dict(zip((c.id for c in candidates), rows, strict=True))
+        ordered: list[dict] = []
+        for candidate_id in outcome.order:
+            relevance = shown[candidate_id][0]
+            if outcome.source == "floor" and relevance <= 0:
+                continue
+            ordered.append({**by_id[candidate_id], "score": round(relevance, 4)})
+        return ordered[:top_k]
+
     async def discover_tools(
         self, query: str, top_k: int | None = None, loaded: set[str] | None = None
     ) -> dict:
@@ -6611,48 +6433,17 @@ class MCPMultiplexer:
         local_names = {s["name"] for s in local_info.get("skills", [])}
         probe = self._dedup_fleet_skills_against_local(fleet_probe, local_names)
         probe = {**probe, LOCAL_SKILLS_SERVER: local_info}
-        rank: _DiscoveryRanking = {
-            "query": query,
-            "semantic": await self._discovery_semantic_scores(query, probe, deadline),
-            "catalog": catalog,
-            "loaded": loaded if loaded is not None else self._exposed,
-        }
-
-        # One ranked capability space (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract):
-        # fleet tools AND fleet-served skill:// resources are scored with the
-        # SAME token-overlap+semantic backbone and merged into one ``ranked``
-        # list, each item carrying a ``bind`` dict — the exact kwargs
-        # `graph_orchestrate` needs to run it — so a caller never has to know
-        # in advance whether the winning candidate is a tool or a skill.
-        ranked: list[dict] = []
-        unavailable: dict[str, str] = {}
-        now = time.time()
-        ttl = self._probe_ttl()
-        # ARBORA-FLEET-R031: a server whose live probe errored (a timeout is
-        # the common case — see ``unavailable`` below) is not thereby invisible
-        # to ranking. Its already-admitted catalog snapshot (never a probe) is
-        # the fallback source, so ``find`` still surfaces its real tools,
-        # honestly marked stale, instead of only its skills or nothing at all.
-        catalog_fallback = self._catalog_tool_probe_info()
-        sources: list[tuple[str, dict]] = []
-        for server, info in probe.items():
-            if info.get("error"):
-                unavailable[server] = info["error"]
-                fallback = catalog_fallback.get(server)
-                if fallback is None:
-                    continue
-                info = fallback
-            sources.append((server, info))
-        rank["lexical"] = _discovery_ranker(query, sources)
-        for server, info in sources:
-            ranked.extend(self._ranked_server_entries(server, info, rank, now, ttl))
+        rows, unavailable = self._probe_rows(
+            probe, catalog, loaded if loaded is not None else self._exposed
+        )
+        ranked = await self._ordered_discovery_rows(query, rows, top_k)
         # The server-level fallback (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
         # answers "is any FLEET server mountable", so its trigger check uses
         # ``fleet_probe`` — never the merged ``probe`` — or the local-skill
         # pseudo-server's own always-``error: None`` entry would make every
         # fleet server look reachable even when none of them actually are.
         return {
-            "results": self._discovery_results(ranked, top_k, fleet_probe),
+            "results": self._results_or_fallback(ranked, fleet_probe),
             "unavailable": unavailable,
         }
 
@@ -7552,7 +7343,6 @@ def attach_fleet_loader(
     catalog_reader: _catalog_reader.FleetCatalogSource,
     fleet: FleetState,
     self_server: str = "arbora",
-    embed_fn=None,
     authority_scope=None,
 ) -> MCPMultiplexer:
     """Attach on-demand MCP fleet access to an EXISTING FastMCP server (arbora).
@@ -7572,12 +7362,6 @@ def attach_fleet_loader(
     All wiring here is synchronous (catalog-state initialization + binding); no
     child is spawned at attach time, so it drops cleanly into arbora's
     synchronous ``mcp.run(...)`` startup with no event loop.
-
-    ``embed_fn(texts: list[str]) -> list[vector]`` (optional) makes fleet tool
-    search SEMANTIC: arbora injects its own in-process embedding model so tool suggestions
-    rank by query↔description meaning (understands intent) instead of only literal token
-    overlap. Per-tool embeddings are cached; it runs off-thread. When absent, discovery
-    falls back to the embedding-free token-overlap backbone (never a hard dependency).
 
     ``authority_scope`` is the host's trusted context manager for stdio process
     authority. Arbora supplies its existing verified-tool scope; network calls
@@ -7600,8 +7384,6 @@ def attach_fleet_loader(
     # arbora is the HOST server — never mount it (or the retired standalone
     # multiplexer name) as a child of itself.
     mux._skip_servers = {"mcp-multiplexer", self_server}
-    if embed_fn is not None:
-        mux._embed_fn = embed_fn
     # Initialize the local catalog state without spawning children. A native EG
     # reader intentionally leaves this empty until the async composition root
     # calls refresh_engine_catalog(); it never consults the static file.

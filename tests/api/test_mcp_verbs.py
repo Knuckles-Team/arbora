@@ -94,15 +94,20 @@ class Resolver:
     def scope_ref(self, *_args: Any, **_kwargs: Any) -> str:
         return "scope-ref"
 
-    def rank(
+    async def arrange_sourced(
         self, _verb: str, _intent: str, items: Any, **_kwargs: Any
-    ) -> tuple[Any, ...]:
-        return tuple(
-            SimpleNamespace(descriptor=SimpleNamespace(id=item.get("id") or item["op"]))
-            for item in items
+    ) -> tuple[tuple[Any, ...], None]:
+        return (
+            tuple(
+                SimpleNamespace(
+                    descriptor=SimpleNamespace(id=item.get("id") or item["op"])
+                )
+                for item in items
+            ),
+            None,
         )
 
-    def resolve(self, *_args: Any, **_kwargs: Any) -> Any:
+    async def resolve_async(self, *_args: Any, **_kwargs: Any) -> Any:
         return SimpleNamespace(
             op="things.update",
             params={"value": "new"},

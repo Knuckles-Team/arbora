@@ -1,8 +1,9 @@
-"""Intent ranking over already-authorized operation and fleet descriptors.
+"""Intent resolution over already-authorized operation and fleet descriptors.
 
 The caller filters descriptors through scope, principal and Eunomia policy before
-passing them here. A ranking can select an operation, but it cannot authorize it.
-Only a trusted, completed invocation may feed :meth:`record_execution`.
+passing them here. An order can select an operation, but it cannot authorize it.
+The order is the ranking port's (ARBORA-FLEET-R083.2): medulla chooses it, and the
+lexical floor answers when the engine cannot. This module scores nothing.
 """
 
 from __future__ import annotations
@@ -10,13 +11,14 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-import math
 import re
 import secrets
 from collections import Counter, OrderedDict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
+
+from arbora.fleet.ranking import FLOOR_ONLY, RankCandidate, Ranked, RankingPort
 
 _WORDS = re.compile(r"[a-z0-9]+")
 _STOP = frozenset(
@@ -57,10 +59,10 @@ _DELEGATE_OP = "fleet.call"
 #: instead of the engine planner (ARBORA-FLEET-R014.3).
 _PLAIN_QUESTION_COVERAGE = 0.5
 _CACHE_LIMIT = 256
-_OUTCOME_LIMIT = 4096
-_REWARD_WEIGHT = 0.2
-_SEMANTIC_WEIGHT = 0.35
 _MIN_EVIDENCE = 0.05
+#: The clamp of ``top_k``, applied after the port's order (ARBORA-FLEET-R083.2).
+_TOP_K_CLAMP = 20
+_RANK_QUESTION = "catalog.operation_rank"
 
 
 def _tokens(value: str) -> Counter[str]:
@@ -144,16 +146,20 @@ class Resolution:
 
 
 class IntentResolver:
-    """Bounded lexical/semantic router with policy-partitioned outcome learning."""
+    """Bounded router: the ranking port orders, the scope-partitioned cache bounds."""
 
-    def __init__(self, *, cache_limit: int = _CACHE_LIMIT) -> None:
+    def __init__(
+        self, *, cache_limit: int = _CACHE_LIMIT, ranking: RankingPort = FLOOR_ONLY
+    ) -> None:
         if cache_limit < 1:
             raise ValueError("cache_limit must be positive")
         self._secret = secrets.token_bytes(32)
         self._cache_limit = cache_limit
-        self._cache: OrderedDict[tuple[str, ...], tuple[Candidate, ...]] = OrderedDict()
-        self._outcomes: OrderedDict[tuple[str, str, str], float] = OrderedDict()
-        self._epoch = 0
+        self._cache: OrderedDict[
+            tuple[str, ...], tuple[tuple[Candidate, ...], Ranked]
+        ] = OrderedDict()
+        #: Medulla chooses the order; the lexical floor answers when it cannot.
+        self._ranking: RankingPort = ranking
 
     def scope_ref(
         self,
@@ -171,44 +177,99 @@ class IntentResolver:
         ).encode()
         return hmac.digest(self._secret, authority, "sha256").hex()
 
-    def rank(
+    def _pool(
+        self,
+        verb: str,
+        intent: str,
+        descriptors: Sequence[Descriptor | Mapping[str, Any]],
+        scope_ref: str | None,
+        top_k: int,
+    ) -> tuple[tuple[Descriptor, ...], tuple[str, ...], int]:
+        if verb not in _VERBS:
+            raise ValueError(f"Unknown intent verb: {verb}")
+        visible = tuple(_coerce(item) for item in descriptors)
+        limit = max(1, min(top_k, _TOP_K_CLAMP))
+        key = (
+            verb,
+            _digest(" ".join(intent.lower().split())),
+            _digest([_fingerprint(item) for item in visible]),
+            scope_ref or "unverified",
+            str(limit),
+        )
+        pool = tuple(item for item in visible if verb == "find" or item.verb == verb)
+        return pool, key, limit
+
+    def _cached(
+        self, key: tuple[str, ...]
+    ) -> tuple[tuple[Candidate, ...], Ranked] | None:
+        cached = self._cache.get(key)
+        if cached is not None:
+            self._cache.move_to_end(key)
+        return cached
+
+    def _keep(
+        self, key: tuple[str, ...], result: tuple[Candidate, ...], ranked: Ranked
+    ) -> None:
+        """Cache an engine order, or a floor order when no engine is bound at all."""
+        if ranked.source == "medulla" or not getattr(
+            self._ranking, "configured", False
+        ):
+            self._cache[key] = (result, ranked)
+            self._cache.move_to_end(key)
+            _evict_oldest(self._cache, self._cache_limit)
+
+    def arrange(
         self,
         verb: str,
         intent: str,
         descriptors: Sequence[Descriptor | Mapping[str, Any]],
         *,
         scope_ref: str | None,
-        semantic_scores: Mapping[str, float] | None = None,
         top_k: int = 5,
     ) -> tuple[Candidate, ...]:
-        """Rank only the visible input snapshot; unseen items never enter cache."""
-        if verb not in _VERBS:
-            raise ValueError(f"Unknown intent verb: {verb}")
-        visible = tuple(_coerce(item) for item in descriptors)
-        scores = semantic_scores or {}
-        limit = max(1, min(top_k, 20))
-        key = (
-            verb,
-            _digest(" ".join(intent.lower().split())),
-            _digest([_fingerprint(item) for item in visible]),
-            _digest(scores),
-            scope_ref or "unverified",
-            str(limit),
-            str(self._epoch),
-        )
-        cached = self._cache.get(key)
+        """Order only the visible input snapshot; unseen items never enter cache."""
+        pool, key, limit = self._pool(verb, intent, descriptors, scope_ref, top_k)
+        cached = self._cached(key)
         if cached is not None:
-            self._cache.move_to_end(key)
+            return cached[0]
+        ordered = _port_outcome(self._ranking, intent, pool)
+        result = _candidates_in_order(pool, ordered, intent, limit)
+        self._keep(key, result, ordered)
+        return result
+
+    async def arrange_sourced(
+        self,
+        verb: str,
+        intent: str,
+        descriptors: Sequence[Descriptor | Mapping[str, Any]],
+        *,
+        scope_ref: str | None,
+        top_k: int = 5,
+    ) -> tuple[tuple[Candidate, ...], Ranked]:
+        """The order of one request awaiting an engine ask, and who produced it."""
+        pool, key, limit = self._pool(verb, intent, descriptors, scope_ref, top_k)
+        cached = self._cached(key)
+        if cached is not None:
             return cached
-        terms = _tokens(intent)
-        pool = tuple(item for item in visible if verb == "find" or item.verb == verb)
-        ranked = _ranked_candidates(
-            pool, lambda item: self._score(item, terms, scores, scope_ref), limit
+        ordered = await _port_outcome_async(self._ranking, intent, pool)
+        result = _candidates_in_order(pool, ordered, intent, limit)
+        self._keep(key, result, ordered)
+        return result, ordered
+
+    async def arrange_async(
+        self,
+        verb: str,
+        intent: str,
+        descriptors: Sequence[Descriptor | Mapping[str, Any]],
+        *,
+        scope_ref: str | None,
+        top_k: int = 5,
+    ) -> tuple[Candidate, ...]:
+        """:meth:`arrange` awaiting an engine ask (the served path)."""
+        result, _ = await self.arrange_sourced(
+            verb, intent, descriptors, scope_ref=scope_ref, top_k=top_k
         )
-        self._cache[key] = ranked
-        self._cache.move_to_end(key)
-        _evict_oldest(self._cache, self._cache_limit)
-        return ranked
+        return result
 
     def resolve(
         self,
@@ -218,16 +279,9 @@ class IntentResolver:
         *,
         scope_ref: str | None,
         params: Mapping[str, Any] | None = None,
-        semantic_scores: Mapping[str, float] | None = None,
     ) -> Resolution:
         """Select an NL op; mutations always require a reviewed preview first."""
-        ranked = self.rank(
-            verb,
-            intent,
-            descriptors,
-            scope_ref=scope_ref,
-            semantic_scores=semantic_scores,
-        )
+        ranked = self.arrange(verb, intent, descriptors, scope_ref=scope_ref)
         supplied = dict(params or {})
         graph_question = bool(_GRAPH_QUESTION.search(intent.lower()))
         if verb == "find":
@@ -312,52 +366,24 @@ class IntentResolver:
             why=f"Matched {', '.join(winner.matched_terms) or 'semantic similarity'}",
         )
 
-    def record_execution(
-        self, *, scope_ref: str | None, verb: str, op: str, success: bool
-    ) -> None:
-        """Record an observed authorized NL dispatch, called by invoke after completion."""
-        if scope_ref is None or verb not in _VERBS or not op:
-            return
-        key = (scope_ref, verb, op)
-        previous = self._outcomes.get(key, 0.5)
-        self._outcomes[key] = 0.2 * float(success) + 0.8 * previous
-        self._outcomes.move_to_end(key)
-        _evict_oldest(self._outcomes, _OUTCOME_LIMIT)
-        self._epoch += 1
-
-    def _score(
+    async def resolve_async(
         self,
-        item: Descriptor,
-        terms: Counter[str],
-        semantic_scores: Mapping[str, float],
+        verb: str,
+        intent: str,
+        descriptors: Sequence[Descriptor | Mapping[str, Any]],
+        *,
         scope_ref: str | None,
-    ) -> Candidate:
-        name = set(_WORDS.findall(item.id.lower()))
-        description = _tokens(
-            " ".join((item.summary, *item.examples, item.domain, *item.tags))
-        )
-        matched = tuple(
-            sorted(term for term in terms if term in name or term in description)
-        )
-        weight = sum(
-            count * (2 if term in name else 1)
-            for term, count in terms.items()
-            if term in matched
-        )
-        lexical = weight / max(sum(terms.values()), 1)
-        name_hits = len(name.intersection(matched))
-        lexical += (name_hits / len(name)) * 0.01 if name else 0.0
-        semantic = float(semantic_scores.get(item.id, 0.0))
-        semantic = max(0.0, min(1.0, semantic)) if math.isfinite(semantic) else 0.0
-        reward = (
-            self._outcomes.get((scope_ref, item.verb, item.id), 0.5)
-            if scope_ref
-            else 0.5
-        )
-        return Candidate(
-            item,
-            lexical + _SEMANTIC_WEIGHT * semantic + _REWARD_WEIGHT * (reward - 0.5),
-            matched,
+        params: Mapping[str, Any] | None = None,
+    ) -> Resolution:
+        """:meth:`resolve` after awaiting the engine's order (the served path).
+
+        The awaited order lands in the scope-partitioned cache, which the
+        synchronous resolution then reads; a floor answer is never cached when an
+        engine is bound, so the resolution recomputes the same floor order.
+        """
+        await self.arrange_async(verb, intent, descriptors, scope_ref=scope_ref)
+        return self.resolve(
+            verb, intent, descriptors, scope_ref=scope_ref, params=params
         )
 
 
@@ -365,19 +391,53 @@ def _coerce(item: Descriptor | Mapping[str, Any]) -> Descriptor:
     return item if isinstance(item, Descriptor) else Descriptor.from_mapping(item)
 
 
-def _ranked_candidates(
-    pool: Sequence[Descriptor],
-    score: Any,
-    limit: int,
-) -> tuple[Candidate, ...]:
-    """Score, then keep the top ``limit`` candidates in rank order."""
+def _text(item: Descriptor) -> str:
+    return " ".join((item.summary, *item.examples, item.domain, *item.tags))
 
-    return tuple(
-        sorted(
-            (score(item) for item in pool),
-            key=lambda candidate: (-candidate.score, candidate.descriptor.id),
-        )[:limit]
-    )
+
+def _port_candidates(pool: Sequence[Descriptor]) -> list[RankCandidate]:
+    return [RankCandidate(item.id, item.id, _text(item), "operation") for item in pool]
+
+
+def _port_outcome(
+    ranking: RankingPort, intent: str, pool: Sequence[Descriptor]
+) -> Ranked:
+    candidates = _port_candidates(pool)
+    ordered = getattr(ranking, "ordered", None)
+    if ordered is not None:
+        return ordered(_RANK_QUESTION, intent, candidates)
+    return Ranked(ranking.rank(_RANK_QUESTION, intent, candidates), "medulla")
+
+
+async def _port_outcome_async(
+    ranking: RankingPort, intent: str, pool: Sequence[Descriptor]
+) -> Ranked:
+    candidates = _port_candidates(pool)
+    ordered = getattr(ranking, "aordered", None)
+    if ordered is not None:
+        return await ordered(_RANK_QUESTION, intent, candidates)
+    return Ranked(ranking.rank(_RANK_QUESTION, intent, candidates), "medulla")
+
+
+def _candidates_in_order(
+    pool: Sequence[Descriptor], ordered: Ranked, intent: str, limit: int
+) -> tuple[Candidate, ...]:
+    """The port's order, clamped to ``limit`` after it, with its evidence.
+
+    A candidate is evidenced when the engine put it first or the request shares a
+    routing term with it; the port, not this function, chose the order.
+    """
+    wanted = frozenset(_tokens(intent))
+    by_id = {item.id: item for item in pool}
+    out: list[Candidate] = []
+    for index, op_id in enumerate(i for i in ordered.order if i in by_id):
+        item = by_id[op_id]
+        shared = wanted & (
+            set(_WORDS.findall(item.id.lower())) | set(_tokens(_text(item)))
+        )
+        evidenced = bool(shared) or (ordered.source == "medulla" and index == 0)
+        out.append(Candidate(item, 1.0 if evidenced else 0.0, tuple(sorted(shared))))
+    return tuple(out[:limit])
 
 
 def _evict_oldest(cache: OrderedDict[Any, Any], limit: int) -> None:

@@ -159,14 +159,17 @@ class FleetPartial(Exception):
         self.reason = reason
 
 
-def _ranked_entries(
+async def _arranged_entries(
     entries: list[dict[str, Any]],
     *,
     resolver: Any,
     intent: str,
     scope_ref: str | None,
-) -> list[dict[str, Any]]:
-    """Reorder merged op and fleet entries by the resolver's own ranking."""
+) -> tuple[list[dict[str, Any]], Any]:
+    """Reorder merged op and fleet entries by the ranking port's order.
+
+    Returns the entries and the order's source (``None`` for a resolver that
+    reports none)."""
 
     routing = [
         {**item, "op": item["id"]}
@@ -174,9 +177,24 @@ def _ranked_entries(
         else item
         for item in entries
     ]
-    ranked = resolver.rank("find", intent, routing, scope_ref=scope_ref, top_k=20)
+    ranked, sourced = await resolver.arrange_sourced(
+        "find", intent, routing, scope_ref=scope_ref, top_k=20
+    )
     by_id = {str(item.get("id") or item["op"]): item for item in entries}
-    return [by_id[item.descriptor.id] for item in ranked if item.descriptor.id in by_id]
+    ordered = [
+        by_id[item.descriptor.id] for item in ranked if item.descriptor.id in by_id
+    ]
+    return ordered, sourced
+
+
+def _order_fields(arranged: Any) -> dict[str, Any]:
+    """ARBORA-FLEET-R083.5: the order's source, and why the floor answered."""
+    if arranged is None:
+        return {}
+    fields: dict[str, Any] = {"ranking": arranged.source}
+    if arranged.source == "floor":
+        fields["ranking_reason"] = arranged.reason
+    return fields
 
 
 def _bounded_limit(params: Mapping[str, Any] | None) -> int:
@@ -209,6 +227,7 @@ async def find_visible(
     selected = _matching_ops(visible, op, (params or {}).get("domain"))
     entries = [describe_op(item) for item in selected]
     partial: str | None = None
+    arranged = None
     if op is None and fleet_search is not None:
         try:
             entries.extend(
@@ -219,7 +238,7 @@ async def find_visible(
         except FleetPartial as exc:
             partial = exc.reason
     if intent and op is None:
-        entries = _ranked_entries(
+        entries, arranged = await _arranged_entries(
             entries, resolver=resolver, intent=intent, scope_ref=scope_ref
         )
     found: dict[str, Any] = {
@@ -227,6 +246,7 @@ async def find_visible(
         "registry_digest": registry.digest,
         "next_cursor": None,
     }
+    found.update(_order_fields(arranged))
     if partial is not None:
         found["fleet_partial"] = True
         found["fleet"] = partial

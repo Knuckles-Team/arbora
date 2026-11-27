@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
+from arbora.fleet.ranking import FLOOR_ONLY, RankCandidate, RankingPort
 from arbora.fleet.surfaces import count_items, surface_report
 
 ItemKind = Literal[
@@ -72,10 +73,10 @@ class CatalogItem:
         return result
 
 
-def _rank(item: CatalogItem, query: str) -> int:
-    terms = query.lower().split()
+def _mentions(item: CatalogItem, query: str) -> bool:
+    """Whether the item's name, description or server mentions any query word."""
     text = f"{item.name} {item.description} {item.server or ''}".lower()
-    return sum(3 if term in item.name.lower() else 1 for term in terms if term in text)
+    return any(term in text for term in query.lower().split())
 
 
 def _validate_search_request(
@@ -102,7 +103,7 @@ def _passes_filters(
         return False
     if group_filter and item.group not in group_filter:
         return False
-    return not (query and _rank(item, query) == 0)
+    return not (query and not _mentions(item, query))
 
 
 def _paginate(
@@ -119,6 +120,15 @@ def _paginate(
     return page, next_cursor
 
 
+async def _order_from_port(
+    port: RankingPort, query: str, candidates: list[RankCandidate]
+) -> list[str]:
+    arank = getattr(port, "arank", None)
+    if arank is not None:
+        return await arank("catalog.catalog_item_rank", query, candidates)
+    return port.rank("catalog.catalog_item_rank", query, candidates)
+
+
 class FleetCatalog:
     """Merge EG, child and SDK descriptors through one visibility decision."""
 
@@ -127,8 +137,11 @@ class FleetCatalog:
         sources: Iterable[Callable[[], Awaitable[Iterable[CatalogItem]]]],
         visible: Visible,
         source_approvals: Callable[[str], Mapping[str, Any] | None] | None = None,
+        ranking: RankingPort = FLOOR_ONLY,
     ):
         self._sources = tuple(sources)
+        #: The host's ranking port (ARBORA-FLEET-R083.3); unbound it answers the floor.
+        self._ranking: RankingPort = ranking
         self._visible = visible
         #: Per-connector source-approval evidence (ARBORA-FLEET-R042.5).
         self._source_approvals = source_approvals
@@ -175,9 +188,7 @@ class FleetCatalog:
         browse = browse or (not query and bool(servers or groups))
         _validate_search_request(query, browse, limit, context_budget_tokens)
         matched = await self._matching_items(caller, query, kinds, servers, groups)
-        items = sorted(
-            matched.values(), key=lambda item: (-_rank(item, query), item.id)
-        )
+        items = await self._ordered(matched.values(), query)
         if context_budget_tokens is not None:
             limit = min(limit, max(1, context_budget_tokens // 80))
         page, next_cursor = _paginate(items, cursor, limit)
@@ -186,6 +197,26 @@ class FleetCatalog:
             "next_cursor": next_cursor,
             "servers": await self._server_surfaces(caller, matched, servers, page),
         }
+
+    async def _ordered(
+        self, matched: Iterable[CatalogItem], query: str
+    ) -> list[CatalogItem]:
+        """The matched items in the ranking port's order (by id with no query)."""
+        by_id = sorted(matched, key=lambda item: item.id)
+        if not query:
+            return by_id
+        candidates = [
+            RankCandidate(
+                item.id,
+                item.name,
+                f"{item.description} {item.server or ''}".strip(),
+                "catalog_item",
+            )
+            for item in by_id
+        ]
+        order = await _order_from_port(self._ranking, query, candidates)
+        index = {item.id: item for item in by_id}
+        return [index[i] for i in order]
 
     async def group_items(
         self, caller: Any, groups: Iterable[str]

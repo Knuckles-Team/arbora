@@ -1393,7 +1393,7 @@ _GRAPH_SEARCH_RESULTS_MODES = frozenset(
 )
 
 
-def _graph_search_rerank(engine: Any, session: Any, *, query: str, top_k: int) -> Any:
+def _graph_search_reorder(engine: Any, session: Any, *, query: str, top_k: int) -> Any:
     # Semantic-retrieval hybrid re-scoring of a candidate set.
     raise not_served(
         "knowledge_graph.retrieval.semantic_retrieval_engine",
@@ -1431,7 +1431,7 @@ def _graph_search_produce_results_extended(
     # Only "rerank" remains among `_GRAPH_SEARCH_RESULTS_MODES` at this point —
     # the caller has already dispatched hyde/deep/hybrid/concept/analogy above,
     # and every other results-producing mode just above.
-    return _graph_search_rerank(engine, session, query=query, top_k=top_k)
+    return _graph_search_reorder(engine, session, query=query, top_k=top_k)
 
 
 def _graph_search_produce_results(

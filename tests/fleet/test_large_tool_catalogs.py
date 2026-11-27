@@ -482,7 +482,6 @@ def _arr_like_catalog() -> list[tuple[str, str]]:
 @pytest.mark.spec("ARBORA-FLEET-R074")
 def test_find_ranks_the_named_system_and_object_first_in_a_large_catalog() -> None:
     from arbora.fleet.lexical_floor import LexicalFloor
-    from arbora.fleet.multiplexer import MCPMultiplexer
 
     catalog = _arr_like_catalog()
     query = "list pending media requests in seerr"
@@ -492,11 +491,64 @@ def test_find_ranks_the_named_system_and_object_first_in_a_large_catalog() -> No
         "seerr_get_requests",
         "seerr_get_request_count",
     ]
-    # The plain overlap ratio ties the seerr tools with generic "list media" rows.
-    plain = sorted(
-        catalog, key=lambda row: -MCPMultiplexer._relevance(query, f"{row[0]} {row[1]}")
-    )
-    assert plain[0][0] != "seerr_get_requests"
+
+
+# ── R083.3: the port orders discovery, bounded ──────────────────────────────
+
+
+def _mux_over(tmp_path: Any, catalog: list[tuple[str, str]]) -> Any:
+    from unittest.mock import AsyncMock
+
+    from tests.fleet.test_multiplexer_dynamic_gateway import CNT, _mux_with_children
+
+    mux = _mux_with_children(tmp_path, {CNT: [(catalog[0][0], catalog[0][1])]})
+    mux._kg_call = AsyncMock(return_value=None)
+    mux._probe_cache[CNT] = {
+        "tools": [{"name": n, "description": d, "inputSchema": {}} for n, d in catalog],
+        "error": None,
+    }
+    return mux
+
+
+@pytest.mark.spec("ARBORA-FLEET-R083.3")
+async def test_find_ranks_the_named_system_and_object_first_through_the_port(
+    tmp_path,
+) -> None:
+    mux = _mux_over(tmp_path, _arr_like_catalog())
+    asked: list[tuple[str, int]] = []
+
+    async def engine(question_id, query, candidates):
+        asked.append((question_id, len(candidates)))
+        first = [c.id for c in candidates if "seerr_get_requests" in c.id]
+        rest = [c.id for c in candidates if c.id not in first]
+        return first + rest
+
+    mux.fleet.ranking.bind(engine)
+    found = await mux.discover_tools("list pending media requests in seerr", top_k=3)
+
+    assert found["results"][0]["tool"] == "seerr_get_requests"
+    assert asked == [("catalog.operation_rank", len(_arr_like_catalog()))]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R083.3")
+async def test_candidate_set_is_bounded_before_the_port_call(tmp_path) -> None:
+    from arbora.fleet.ranking import MedullaRanking
+
+    catalog = _arr_like_catalog()
+    mux = _mux_over(tmp_path, catalog)
+    sizes: list[int] = []
+    kept: set[str] = set()
+
+    async def engine(question_id, query, candidates):
+        sizes.append(len(candidates))
+        kept.update(c.name for c in candidates)
+        return [c.id for c in candidates]
+
+    object.__setattr__(mux.fleet, "ranking", MedullaRanking(engine, max_candidates=50))
+    await mux.discover_tools("list pending media requests in seerr", top_k=3)
+
+    assert sizes == [50]  # the floor prefilter narrowed the set before the call
+    assert "seerr_get_requests" in kept  # and kept the tool the request names
 
 
 # ── R075: a slow tool's call deadline is not the connect budget ──────────────

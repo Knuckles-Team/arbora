@@ -973,7 +973,9 @@ def _check_snapshot(
     return tuple(dict.fromkeys(reasons))[:MAX_DENIAL_REASONS]
 
 
-def _candidate_rank(snapshot: ResourcePoolSnapshot) -> tuple[int, int, int, int, str]:
+def _candidate_preference(
+    snapshot: ResourcePoolSnapshot,
+) -> tuple[int, int, int, int, str]:
     """Rank only capability headroom; the digest is a stable final tie-breaker."""
 
     capabilities = snapshot.capabilities
@@ -1032,7 +1034,7 @@ def _select_eligible_candidate(
     checked: _CheckedSnapshots,
 ) -> ResourcePoolSnapshot | None:
     eligible = [snapshot for snapshot, reasons in checked if not reasons]
-    return min(eligible, key=_candidate_rank) if eligible else None
+    return min(eligible, key=_candidate_preference) if eligible else None
 
 
 def _build_evidence_rows(
