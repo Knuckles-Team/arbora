@@ -13,6 +13,9 @@ class _IdentityClient:
         self._client_factory = client_factory
         self._claims = claims
 
+    def _check(self, claims: Any) -> None:
+        _require_broker_claims(claims)
+
     async def _send(self, *args: Any, **kwargs: Any) -> Any:
         client = await self._client_factory()
         # Read after connection awaits; neither the first connection snapshot
@@ -23,9 +26,22 @@ class _IdentityClient:
 
         supplied = self._claims()
         claims = await supplied if inspect.isawaitable(supplied) else supplied
-        _require_broker_claims(claims)
+        self._check(claims)
         with client_scope(client, claims):
             return await client._send(*args, **kwargs)
+
+    def acting_as(self, session: Any) -> "_IdentityClient":
+        """A client whose engine calls carry this verified session's own claims."""
+        return _ActingClient(
+            self._client_factory, lambda: session.engine_verified_context()
+        )
+
+
+class _ActingClient(_IdentityClient):
+    """Sends as one verified session; the claims are the person's, not the broker's."""
+
+    def _check(self, claims: Any) -> None:
+        return None
 
 
 def configured_browser_boundary(
@@ -154,6 +170,7 @@ def build_browser_boundary(
             issuer=signer,
             caller=caller,
             discovery=discovery,
+            acting=getattr(client, "acting_as", None),
         ),
     )
 
