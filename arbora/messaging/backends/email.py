@@ -3,7 +3,7 @@
 IMAP mailbox for intake and SMTP for delivery. Threads use Message-ID and
 References. Inbound is polled every ``MESSAGING_EMAIL_POLL_INTERVAL_S`` seconds
 (default 30, range [5, 600]) and yields only messages whose IMAP UID is above
-the cursor. The mailbox password is ``setting('MESSAGING_EMAIL_TOKEN')``; hosts
+the cursor. The mailbox password is ``MESSAGING_EMAIL_TOKEN``; hosts
 and the account come from ``MESSAGING_EMAIL_IMAP_HOST``,
 ``MESSAGING_EMAIL_SMTP_HOST`` and ``MESSAGING_EMAIL_USER``. The standard
 library mail clients are imported inside ``connect``.
@@ -19,7 +19,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from email.message import EmailMessage
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.backends._channel_http import (
     POLL_INTERVAL_DEFAULT_S,
     POLL_INTERVAL_RANGE_S,
@@ -65,8 +65,8 @@ class EmailBackend(MessagingBackend):
     def capabilities(self) -> MessagingCapabilities:
         return CAPABILITY_MATRIX["email"]
 
-    def _setting(self, suffix: str, default: str = "") -> str:
-        return str(setting(f"MESSAGING_EMAIL_{suffix}", default) or default)
+    def _setting(self, name: str, default: str = "") -> str:
+        return str(read_env(name, default) or default)
 
     async def connect(self) -> None:
         try:
@@ -76,9 +76,13 @@ class EmailBackend(MessagingBackend):
             raise AdapterImportFailed(
                 "Install: pip install arbora[messaging-email]"
             ) from exc
-        self._password = self.config.token or self._setting("TOKEN") or None
+        self._password = (
+            self.config.token or self._setting("MESSAGING_EMAIL_TOKEN") or None
+        )
         if not (
-            self._password and self._setting("USER") and self._setting("SMTP_HOST")
+            self._password
+            and self._setting("MESSAGING_EMAIL_USER")
+            and self._setting("MESSAGING_EMAIL_SMTP_HOST")
         ):
             raise ValueError("Set MESSAGING_EMAIL_TOKEN, _USER and _SMTP_HOST.")
         self._imaplib, self._smtplib = imaplib, smtplib
@@ -88,7 +92,7 @@ class EmailBackend(MessagingBackend):
         self, to: str, text: str, reply_to_id: str, thread_id: str
     ) -> EmailMessage:
         message = EmailMessage()
-        message["From"] = self._setting("USER")
+        message["From"] = self._setting("MESSAGING_EMAIL_USER")
         message["To"] = to
         message["Subject"] = "Re: Arbora" if reply_to_id else "Arbora"
         message["Message-ID"] = f"<{uuid.uuid4().hex}@arbora>"
@@ -99,8 +103,8 @@ class EmailBackend(MessagingBackend):
         return message
 
     def _smtp_send(self, message: EmailMessage) -> None:
-        with self._smtplib.SMTP_SSL(self._setting("SMTP_HOST")) as smtp:
-            smtp.login(self._setting("USER"), self._password or "")
+        with self._smtplib.SMTP_SSL(self._setting("MESSAGING_EMAIL_SMTP_HOST")) as smtp:
+            smtp.login(self._setting("MESSAGING_EMAIL_USER"), self._password or "")
             smtp.send_message(message)
 
     async def send_message(
@@ -130,9 +134,9 @@ class EmailBackend(MessagingBackend):
         )
 
     def _fetch_after(self, cursor: int) -> list[tuple[int, bytes]]:
-        box = self._imaplib.IMAP4_SSL(self._setting("IMAP_HOST"))
+        box = self._imaplib.IMAP4_SSL(self._setting("MESSAGING_EMAIL_IMAP_HOST"))
         try:
-            box.login(self._setting("USER"), self._password or "")
+            box.login(self._setting("MESSAGING_EMAIL_USER"), self._password or "")
             box.select("INBOX")
             _, data = box.uid("search", None, f"UID {cursor + 1}:*")
             found: list[tuple[int, bytes]] = []
@@ -175,7 +179,11 @@ class EmailBackend(MessagingBackend):
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
         interval = clamp(
-            float(self._setting("POLL_INTERVAL_S", str(POLL_INTERVAL_DEFAULT_S))),
+            float(
+                self._setting(
+                    "MESSAGING_EMAIL_POLL_INTERVAL_S", str(POLL_INTERVAL_DEFAULT_S)
+                )
+            ),
             POLL_INTERVAL_RANGE_S,
         )
         while self._connected:

@@ -14,7 +14,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -56,7 +56,7 @@ class LINEBackend(MessagingBackend):
         except ImportError:
             raise ImportError("Install: pip install arbora[messaging-line]") from None
 
-        token = self.config.token or setting("LINE_CHANNEL_ACCESS_TOKEN", "")
+        token = self.config.token or read_env("LINE_CHANNEL_ACCESS_TOKEN", "")
         if not token:
             raise ValueError("Set LINE_CHANNEL_ACCESS_TOKEN.")
         config = Configuration(access_token=token)

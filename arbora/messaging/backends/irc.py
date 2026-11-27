@@ -14,7 +14,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -57,9 +57,9 @@ class IRCBackend(MessagingBackend):
         except ImportError:
             raise ImportError("Install: pip install arbora[messaging-irc]") from None
 
-        server = self.config.extra.get("server", setting("IRC_SERVER", ""))
-        port = int(self.config.extra.get("port", setting("IRC_PORT", "6667")))
-        nick = self.config.extra.get("nickname", setting("IRC_NICKNAME", "agent_bot"))
+        server = self.config.extra.get("server", read_env("IRC_SERVER"))
+        port = int(self.config.extra.get("port", read_env("IRC_PORT")))
+        nick = self.config.extra.get("nickname", read_env("IRC_NICKNAME"))
         if not server:
             raise ValueError("Set IRC_SERVER.")
         self._reactor = irc.client.Reactor()

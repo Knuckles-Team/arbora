@@ -27,7 +27,7 @@ import importlib.metadata
 import logging
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env, register_platform
 from arbora.messaging.models import MessagingConfig
 from arbora.messaging.supervision import (
     AdapterImportFailed,
@@ -44,6 +44,16 @@ _ENTRY_POINT_GROUP = "arbora.messaging"
 
 # Environment variable prefix for backend configuration.
 _ENV_PREFIX = "MESSAGING_"
+
+
+def _platform_setting(backend_id: str, suffix: str, default: str = "") -> str:
+    """One declared ``MESSAGING_<PLATFORM>_<SUFFIX>`` setting of ``backend_id``."""
+    return read_env(f"{_ENV_PREFIX}{backend_id.upper()}_{suffix}", default)
+
+
+def _native_setting(name: str) -> str:
+    """A platform-native variable, or empty when the platform names none."""
+    return read_env(name, "") if name else ""
 
 
 class MessagingRegistry:
@@ -241,7 +251,7 @@ class MessagingRegistry:
         """
         cfg = config if config is not None else self._auto_config(backend_id)
         reference_configured = backend_id == "synology" and bool(
-            str(setting("SYNOLOGY_CHAT_WEBHOOK_URL_REF", "") or "").strip()
+            str(read_env("SYNOLOGY_CHAT_WEBHOOK_URL_REF") or "").strip()
         )
         return bool(cfg.token or cfg.app_id or cfg.webhook_url or reference_configured)
 
@@ -333,6 +343,11 @@ class MessagingRegistry:
         """
         return self._degraded.get(backend_id)
 
+    def _declare_platform(self, backend_id: str) -> None:
+        """Enumerate a discovered backend for the ``MESSAGING_{PLATFORM}_*`` names."""
+        if backend_id in self._entry_points:
+            register_platform(backend_id)
+
     def _auto_config(self, backend_id: str) -> MessagingConfig:
         """Build a MessagingConfig from environment variables.
 
@@ -347,8 +362,7 @@ class MessagingRegistry:
         Returns:
             Auto-populated ``MessagingConfig``.
         """
-        prefix = f"{_ENV_PREFIX}{backend_id.upper()}_"
-
+        self._declare_platform(backend_id)
         # Platform-native env var mappings (from OpenClaw plugin manifests)
         native_token_vars: dict[str, list[str]] = {
             "discord": ["DISCORD_BOT_TOKEN"],
@@ -371,10 +385,10 @@ class MessagingRegistry:
         }
 
         # Try generic prefix first, then platform-native vars
-        token = setting(f"{prefix}TOKEN", "")
+        token = _platform_setting(backend_id, "TOKEN")
         if not token:
             for var in native_token_vars.get(backend_id, []):
-                token = setting(var, "")
+                token = read_env(var, "")
                 if token:
                     break
 
@@ -385,23 +399,27 @@ class MessagingRegistry:
             "line": "LINE_CHANNEL_ID",
             "voicecall": "TWILIO_ACCOUNT_SID",
         }
-        app_id = setting(f"{prefix}APP_ID", "")
+        app_id = _platform_setting(backend_id, "APP_ID")
         if not app_id:
-            app_id = setting(app_id_vars.get(backend_id, ""), "")
+            app_id = _native_setting(app_id_vars.get(backend_id, ""))
 
-        app_secret = setting(f"{prefix}APP_SECRET", "")
+        app_secret = _platform_setting(backend_id, "APP_SECRET")
         if not app_secret and backend_id == "teams":
-            app_secret = setting("MSTEAMS_APP_PASSWORD", "")
+            app_secret = read_env("MSTEAMS_APP_PASSWORD", "")
 
         # WhatsApp config switch
-        use_business_api = setting(f"{prefix}USE_BUSINESS_API", "false").lower() in (
+        use_business_api = _platform_setting(
+            backend_id, "USE_BUSINESS_API", "false"
+        ).lower() in (
             "true",
             "1",
             "yes",
         )
 
         webhook_url = (
-            "" if backend_id == "synology" else setting(f"{prefix}WEBHOOK_URL", "")
+            ""
+            if backend_id == "synology"
+            else _platform_setting(backend_id, "WEBHOOK_URL")
         )
         return MessagingConfig(
             platform=backend_id,
@@ -410,6 +428,6 @@ class MessagingRegistry:
             app_id=app_id,
             app_secret=app_secret,
             webhook_url=webhook_url,
-            webhook_port=int(setting(f"{prefix}WEBHOOK_PORT", "0")),
+            webhook_port=int(_platform_setting(backend_id, "WEBHOOK_PORT", "0")),
             use_business_api=use_business_api,
         )

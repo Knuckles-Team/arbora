@@ -16,7 +16,7 @@ from typing import Any
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import InboundSignatureInvalid
 
 logger = logging.getLogger(__name__)
@@ -36,15 +36,15 @@ class InboundRefusal(enum.Enum):
 
 def intake_enabled() -> bool:
     """True only when intake is explicitly on and this is the host process."""
-    flag = str(setting("MESSAGING_INTAKE_ENABLED", "") or "").strip().lower()
-    role = str(setting("KG_DAEMON_ROLE", "client") or "").strip()
+    flag = str(read_env("MESSAGING_INTAKE_ENABLED", "") or "").strip().lower()
+    role = str(read_env("KG_DAEMON_ROLE", "client") or "").strip()
     return flag in {"1", "true", "yes", "on"} and role == "host"
 
 
 def max_bytes() -> int:
     """The body limit from ``MESSAGING_INBOUND_MAX_BYTES``, clamped to its range."""
     try:
-        value = int(setting("MESSAGING_INBOUND_MAX_BYTES", MAX_BYTES_DEFAULT))
+        value = int(read_env("MESSAGING_INBOUND_MAX_BYTES", MAX_BYTES_DEFAULT))
     except (TypeError, ValueError):
         value = MAX_BYTES_DEFAULT
     return max(MAX_BYTES_RANGE[0], min(MAX_BYTES_RANGE[1], value))

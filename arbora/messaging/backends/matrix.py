@@ -14,7 +14,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import CAPABILITY_MATRIX as CAP_MATRIX
 from arbora.messaging.capabilities import MessagingCapabilities
@@ -55,11 +55,9 @@ class MatrixBackend(MessagingBackend):
         except ImportError:
             raise ImportError("Install: pip install arbora[messaging-matrix]") from None
 
-        homeserver = self.config.extra.get(
-            "homeserver", setting("MATRIX_HOMESERVER", "")
-        )
-        user_id = self.config.app_id or setting("MATRIX_USER_ID", "")
-        token = self.config.token or setting("MATRIX_ACCESS_TOKEN", "")
+        homeserver = self.config.extra.get("homeserver", read_env("MATRIX_HOMESERVER"))
+        user_id = self.config.app_id or read_env("MATRIX_USER_ID")
+        token = self.config.token or read_env("MATRIX_ACCESS_TOKEN", "")
         if not homeserver or not token:
             raise ValueError("Set MATRIX_HOMESERVER and MATRIX_ACCESS_TOKEN.")
         self._client = AsyncClient(homeserver, user_id)

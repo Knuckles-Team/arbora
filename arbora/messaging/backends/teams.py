@@ -22,6 +22,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -103,11 +104,10 @@ class TeamsBackend(MessagingBackend):
         Adaptive Cards ride in ``metadata["adaptive_card"]``.
         CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
-        from arbora.core.settings import setting
         from arbora.messaging.transport import channel_http_client
 
         service_url = str(
-            self.config.extra.get("service_url") or setting("MSTEAMS_SERVICE_URL", "")
+            self.config.extra.get("service_url") or read_env("MSTEAMS_SERVICE_URL")
         ).rstrip("/")
         if not service_url or not self.config.app_id or not self.config.app_secret:
             return SendResult(

@@ -21,6 +21,7 @@ from arbora.messaging.supervision import (
 
 if TYPE_CHECKING:
     from arbora.messaging.base import MessagingBackend
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 EventHandler = Callable[[InboundEvent, "MessagingBackend"], Awaitable[None]]
@@ -206,11 +207,10 @@ class InboundRouter:
         """Periodically re-attempt durably-recorded but still-unanswered inbound messages
         (CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending). Uses this router's own backends + the universal reply path, so a
         turn that failed while the engine was down is answered once the system recovers."""
-        from arbora.core.settings import setting
         from arbora.messaging.inbox import retry_unanswered
         from arbora.messaging.service import MessagingService
 
-        interval = float(setting("MESSAGING_INBOX_RETRY_S", "120"))
+        interval = float(read_env("MESSAGING_INBOX_RETRY_S"))
         while self._running:
             await asyncio.sleep(interval)
             try:
@@ -304,11 +304,10 @@ class InboundRouter:
         Args:
             backend: The messaging backend to supervise.
         """
-        from arbora.core.settings import setting
 
-        base = max(0.0, float(setting("MESSAGING_LISTEN_BACKOFF_BASE_S", "1")))
-        cap = max(base, float(setting("MESSAGING_LISTEN_BACKOFF_MAX_S", "60")))
-        healthy_reset = float(setting("MESSAGING_LISTEN_HEALTHY_RESET_S", "60"))
+        base = max(0.0, float(read_env("MESSAGING_LISTEN_BACKOFF_BASE_S")))
+        cap = max(base, float(read_env("MESSAGING_LISTEN_BACKOFF_MAX_S")))
+        healthy_reset = float(read_env("MESSAGING_LISTEN_HEALTHY_RESET_S"))
         # A zero base would busy-loop on a hard-failing backend; floor the delay.
         delay = base or 1.0
         while self._running:

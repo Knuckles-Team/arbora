@@ -20,7 +20,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.coalescer import BurstCoalescer, Clock, Sleep
 from arbora.messaging.commands import handle_command
@@ -44,7 +44,7 @@ def sender_admitted(event: InboundEvent) -> bool:
     """
     from scion_sdk.config import csv_values
 
-    allowed = set(csv_values(setting("MESSAGING_ALLOWED_SENDERS", "")))
+    allowed = set(csv_values(read_env("MESSAGING_ALLOWED_SENDERS")))
     return bool(event.user_id) and f"{event.platform}:{event.user_id}" in allowed
 
 
@@ -108,8 +108,8 @@ async def create_planner_handler(
         timers["sleep"] = sleep
     coalescer = BurstCoalescer(
         _burst_responder(service),
-        window_s=float(setting("MESSAGING_BURST_WINDOW_S", "2.5")),
-        max_wait_s=float(setting("MESSAGING_BURST_MAX_S", "12")),
+        window_s=float(read_env("MESSAGING_BURST_WINDOW_S")),
+        max_wait_s=float(read_env("MESSAGING_BURST_MAX_S")),
         **timers,
     )
 

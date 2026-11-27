@@ -11,7 +11,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -32,7 +32,7 @@ def _configured_webhook(config: MessagingConfig) -> str:
     """Resolve the webhook from an injected profile or a secret reference."""
     if config.webhook_url:
         return str(config.webhook_url)
-    reference = str(setting("SYNOLOGY_CHAT_WEBHOOK_URL_REF", "") or "").strip()
+    reference = str(read_env("SYNOLOGY_CHAT_WEBHOOK_URL_REF") or "").strip()
     if not reference:
         return ""
     return resolve_secret(reference)

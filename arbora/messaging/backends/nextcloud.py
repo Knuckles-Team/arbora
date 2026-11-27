@@ -11,7 +11,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -51,11 +51,11 @@ class NextcloudTalkBackend(MessagingBackend):
 
     async def connect(self) -> None:
         """Connect to Nextcloud Talk API. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
-        self._base_url = self.config.extra.get(
-            "url", setting("NEXTCLOUD_URL", "")
-        ).rstrip("/")
-        user = self.config.app_id or setting("NEXTCLOUD_USER", "")
-        token = self.config.token or setting("NEXTCLOUD_TOKEN", "")
+        self._base_url = self.config.extra.get("url", read_env("NEXTCLOUD_URL")).rstrip(
+            "/"
+        )
+        user = self.config.app_id or read_env("NEXTCLOUD_USER")
+        token = self.config.token or read_env("NEXTCLOUD_TOKEN", "")
         if not self._base_url or not token:
             raise ValueError("Set NEXTCLOUD_URL and NEXTCLOUD_TOKEN.")
         self._client = channel_http_client(

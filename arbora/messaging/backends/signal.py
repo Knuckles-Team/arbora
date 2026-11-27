@@ -14,7 +14,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -56,7 +56,7 @@ class SignalBackend(MessagingBackend):
         except ImportError:
             raise ImportError("Install: pip install arbora[messaging-signal]") from None
 
-        phone = self.config.token or setting("SIGNAL_PHONE_NUMBER", "")
+        phone = self.config.token or read_env("SIGNAL_PHONE_NUMBER")
         if not phone:
             raise ValueError("Set SIGNAL_PHONE_NUMBER.")
         self._bot = Bot(phone)

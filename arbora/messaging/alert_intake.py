@@ -25,7 +25,7 @@ from typing import Any
 
 from aiohttp import web
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.transport import resolve_secret
 
 logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ def _bearer_token(request: web.Request) -> str:
 
 def _resolve_alert_intake_token() -> str | None:
     """Resolve the configured bearer token without exposing reference details."""
-    token_ref = str(setting("MESSAGING_ALERT_INTAKE_TOKEN_REF", "") or "").strip()
+    token_ref = str(read_env("MESSAGING_ALERT_INTAKE_TOKEN_REF", "") or "").strip()
     if not token_ref:
         logger.error("messaging alert-intake disabled: token reference is required")
         return None
@@ -142,8 +142,8 @@ async def _handle(request: web.Request) -> web.Response:
             body = await request.text()
         text = extract_alert_text(body)
 
-        platform = setting("MESSAGING_DEFAULT_PLATFORM", "telegram")
-        channel = setting("MESSAGING_DEFAULT_CHANNEL", "")
+        platform = read_env("MESSAGING_DEFAULT_PLATFORM")
+        channel = read_env("MESSAGING_DEFAULT_CHANNEL")
         if not channel:
             return web.json_response(
                 {"ok": False, "error": "alert destination is unavailable"}, status=503
@@ -172,9 +172,9 @@ async def _handle(request: web.Request) -> web.Response:
 
 async def serve_alert_intake(engine: Any, port: int) -> None:
     """Run the alert-intake HTTP server until cancelled. Never raises into the caller."""
-    host = str(setting("MESSAGING_ALERT_INTAKE_HOST", "127.0.0.1") or "").strip()
+    host = str(read_env("MESSAGING_ALERT_INTAKE_HOST") or "").strip()
     allow_remote = str(
-        setting("MESSAGING_ALERT_INTAKE_ALLOW_REMOTE", "False") or "False"
+        read_env("MESSAGING_ALERT_INTAKE_ALLOW_REMOTE", "False") or "False"
     ).lower() in {"1", "true", "yes", "on"}
     if not _loopback_bind(host) and not allow_remote:
         logger.error(

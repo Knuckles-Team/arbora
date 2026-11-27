@@ -13,7 +13,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -55,9 +55,9 @@ class TwitchBackend(MessagingBackend):
         except ImportError:
             raise ImportError("Install: pip install arbora[messaging-twitch]") from None
 
-        token = self.config.token or setting("TWITCH_OAUTH_TOKEN", "")
+        token = self.config.token or read_env("TWITCH_OAUTH_TOKEN", "")
         channels = self.config.extra.get(
-            "channels", setting("TWITCH_CHANNELS", "").split(",")
+            "channels", read_env("TWITCH_CHANNELS").split(",")
         )
         if not token:
             raise ValueError("Set TWITCH_OAUTH_TOKEN.")
