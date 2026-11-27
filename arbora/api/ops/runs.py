@@ -314,7 +314,7 @@ def operations() -> tuple[OpSpec, ...]:
         ),
         build_read_op(
             op_id="runs.execution_graph",
-            summary="Read a bounded flat execution graph of an owned run",
+            summary="Read a bounded execution graph of an owned run, with declared nested runs",
             examples=("show the declared steps and evidenced lifecycle of this run",),
             params=ExecutionGraphParams,
             result=ExecutionGraphResult,

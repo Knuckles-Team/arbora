@@ -16,9 +16,14 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.run_graph import (
+    GRAPH_SCHEMA,
     MAX_GRAPH_EVENTS,
+    ChildPart,
+    DeclaredSpawn,
     ExecutionGraphParams,
+    GraphBounds,
     declared_topology,
+    nest_children,
     project_graph,
     unavailable_graph,
 )
@@ -123,32 +128,93 @@ class NativeRunReader:
     async def execution_graph(
         self, *, context: ExecutionContext, request: ExecutionGraphParams
     ) -> dict[str, Any]:
-        """One caller-bound native plan and bounded prefix, with no local store."""
-        if await self._owned(context, request.run_id, request.task_id) is None:
+        """Caller-bound native plans and bounded prefixes, with no local store.
+
+        The root and every producer-declared child are authorized through
+        ``_owned`` before any payload read; a foreign child reads as absent.
+        """
+        bounds = GraphBounds.from_config()
+        try:
+            flat = await self._flat_graph(context, request)
+            if flat is None:
+                return unavailable_graph(request)
+            seen = {request.run_id}
+            snapshot = await self._nest(context, flat["snapshot"], 0, seen, bounds)
+        except (ValueError, TypeError, KeyError, UnicodeError):
             return unavailable_graph(request)
+        flat["snapshot"] = snapshot
+        return flat
+
+    async def _flat_graph(
+        self, context: ExecutionContext, request: ExecutionGraphParams
+    ) -> dict[str, Any] | None:
+        """One owner-admitted run: plan, bounded prefix, plan recheck."""
+        if await self._owned(context, request.run_id, request.task_id) is None:
+            return None
         first = await read_native_snapshot(context, request.run_id)
         topology = _current_topology(first, request.run_id)
         if topology is None:
-            return unavailable_graph(request)
+            return None
         replay = RunEventsParams(
             run_id=request.run_id, task_id=request.task_id, limit=MAX_GRAPH_EVENTS
         )
         loaded = await self._page(context, replay)
         if loaded is None or loaded[1]["availability"] != "available":
-            return unavailable_graph(request)
+            return None
         # The owner and native publication can change while history is collected.
         if await self._owned(context, request.run_id, request.task_id) is None:
-            return unavailable_graph(request)
+            return None
         last = await read_native_snapshot(context, request.run_id)
         if (
             _current_topology(last, request.run_id) != topology
             or last["task_plan"] != first["task_plan"]
         ):
-            return unavailable_graph(request)
+            return None
+        return project_graph(request, topology, *loaded)
+
+    async def _nest(
+        self,
+        context: ExecutionContext,
+        snapshot: dict[str, Any],
+        depth: int,
+        seen: set[str],
+        bounds: GraphBounds,
+    ) -> dict[str, Any]:
+        """Follow producer-declared spawns, each under its own binding."""
+        spawns = [DeclaredSpawn.model_validate(item) for item in snapshot["spawns"]]
+        if not spawns:
+            return snapshot
+        if depth >= bounds.max_depth:
+            return nest_children(snapshot, [], bounds, "depth_bound")
+        parts = []
+        for spawn in spawns:
+            if spawn.child_run_id in seen:
+                raise ValueError("conflicting run identity")
+            seen.add(spawn.child_run_id)
+            child = await self._child_snapshot(context, spawn, depth + 1, seen, bounds)
+            parts.append(ChildPart(spawn=spawn, depth=depth + 1, snapshot=child))
+        return nest_children(snapshot, parts, bounds)
+
+    async def _child_snapshot(
+        self,
+        context: ExecutionContext,
+        spawn: DeclaredSpawn,
+        depth: int,
+        seen: set[str],
+        bounds: GraphBounds,
+    ) -> dict[str, Any] | None:
+        child_request = ExecutionGraphParams(
+            run_id=spawn.child_run_id,
+            task_id=spawn.child_task_id,
+            schema_version=GRAPH_SCHEMA,
+        )
         try:
-            return project_graph(request, topology, *loaded)
+            flat = await self._flat_graph(context, child_request)
+            if flat is None:
+                return None
+            return await self._nest(context, flat["snapshot"], depth, seen, bounds)
         except (ValueError, TypeError, KeyError, UnicodeError):
-            return unavailable_graph(request)
+            return None
 
     async def metrics(
         self, *, context: ExecutionContext, request: RunMetricsParams

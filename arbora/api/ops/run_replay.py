@@ -24,6 +24,7 @@ EVENT_KINDS = frozenset(
         "task_failed",
         "task_cancelled",
         "task_blocked",
+        "spawned_child",
         "public_summary",
     }
 )
@@ -115,7 +116,15 @@ def _event_identity(raw: dict[str, Any], run_id: str) -> tuple[int, str, str, st
 
 def _public_payload(raw: dict[str, Any]) -> dict[str, Any]:
     payload: dict[str, Any] = {}
-    for key in ("status", "node", "from_node", "to_node", "error_type"):
+    for key in (
+        "status",
+        "node",
+        "from_node",
+        "to_node",
+        "error_type",
+        "parent_run_id",
+        "child_run_id",
+    ):
         value = raw.get(key)
         if isinstance(value, str) and len(value) <= 256:
             payload[key] = value

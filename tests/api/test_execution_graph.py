@@ -638,3 +638,55 @@ def test_projection_lifecycle_transition_matrix(initial, history, next_status):
         "event_id": f"event-{len(prefix) + 1}",
         "sequence": len(prefix) + 1,
     }
+
+
+def _projected(events, after=0, base=None):
+    data = rows(*events)
+    page = project_page(data, RunEventsParams(run_id="run-one", after=after))
+    return project_graph(
+        request(), declared_topology(native_plan()), data, page, base=base
+    )
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.8")
+@pytest.mark.parametrize("cut", [1, 2, 3, 4])
+def test_snapshot_plus_updates_equals_fresh_snapshot(cut):
+    history = [
+        event(),
+        step_event(2),
+        step_event(3, type="task_completed", status="completed"),
+        step_event(
+            4,
+            task_id="left",
+            depends_on=["first"],
+            type="task_started",
+            status="running",
+        ),
+        event(
+            5,
+            type="spawned_child",
+            task_id="left",
+            parent_run_id="run-one",
+            child_run_id="run-child",
+        ),
+    ]
+    snapshot = _projected(history[:cut])
+    updated = _projected(history[cut:], after=cut, base=snapshot)
+    assert updated == _projected(history)
+    assert updated["snapshot"]["covered_after"] == 5
+
+
+@pytest.mark.spec("ARBORA-OPS-R021.4.8")
+def test_updates_must_continue_exactly_at_the_snapshot_cursor():
+    history = [
+        event(),
+        step_event(2),
+        step_event(3, type="task_completed", status="completed"),
+    ]
+    snapshot = _projected(history[:1])
+    with pytest.raises(ValueError, match="cursor"):
+        _projected(history[2:], after=2, base=snapshot)
+    other = _projected(history[:1])
+    other["snapshot"]["plan_digest"] = "another"
+    with pytest.raises(ValueError, match="cursor"):
+        _projected(history[1:], after=1, base=other)
