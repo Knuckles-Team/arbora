@@ -22,10 +22,9 @@ def test_providers_in_settings_build_a_federation_and_none_builds_nothing(
         "ARBORA_IDENTITY_OIDC_PROVIDERS": OIDC_CONFIG,
         "ARBORA_IDENTITY_SAML_PROVIDERS": SAML_CONFIG,
     }
-    import arbora.core.settings as core
-
     monkeypatch.setattr(
-        core, "setting", lambda name, default=None: values.get(name, default)
+        "arbora.core.environment.read_env",
+        lambda name, fallback=None: values.get(name, fallback),
     )
     built = federated.federation_from_settings(object(), "g", "https://console.invalid")
     assert (
