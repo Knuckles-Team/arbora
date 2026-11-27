@@ -225,7 +225,7 @@ def _install_search_shape(monkeypatch: pytest.MonkeyPatch, shape: type) -> list[
     return sent
 
 
-@pytest.mark.spec("ARBORA-FLEET-R073")
+@pytest.mark.spec("ARBORA-FLEET-R073.1")
 @pytest.mark.asyncio
 async def test_search_by_server_and_name_is_unavailable_on_the_pinned_release(
     monkeypatch: pytest.MonkeyPatch,
@@ -250,7 +250,7 @@ async def test_search_by_server_and_name_is_unavailable_on_the_pinned_release(
     assert len(sent) == 1  # nothing reached the engine
 
 
-@pytest.mark.spec("ARBORA-FLEET-R073")
+@pytest.mark.spec("ARBORA-FLEET-R073.1")
 @pytest.mark.asyncio
 async def test_search_by_server_and_name_reaches_the_engine_on_the_main_shape(
     monkeypatch: pytest.MonkeyPatch,
