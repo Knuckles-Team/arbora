@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import contextvars
 import functools
 import logging
 from collections.abc import Callable
@@ -163,4 +164,4 @@ def run_sync_isolated[T](fn: Callable[[], T]) -> T:
     except RuntimeError:
         return fn()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        return pool.submit(fn).result()
+        return pool.submit(contextvars.copy_context().run, fn).result()

@@ -12,8 +12,10 @@ import json
 import logging
 import traceback
 import uuid
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from contextvars import ContextVar, Token
-from functools import lru_cache
+from functools import lru_cache, wraps
 from importlib.resources import files
 from types import MappingProxyType
 from typing import Any
@@ -275,6 +277,36 @@ def bind_errors(errors: Errors) -> Token[Errors]:
 def unbind_errors(token: Token[Errors]) -> None:
     """Restore the scope :func:`bind_errors` replaced."""
     _ERRORS.reset(token)
+
+
+@contextmanager
+def bound_errors(errors: Errors) -> Iterator[Errors]:
+    """Run a block with ``errors`` bound, then restore the scope it replaced."""
+    token = bind_errors(errors)
+    try:
+        yield errors
+    finally:
+        unbind_errors(token)
+
+
+def carry_errors[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
+    """Wrap a thread or executor root so it runs with the caller's bound error store.
+
+    A thread does not inherit the context, so a root started from a bound entry point
+    carries the store across. Wrapped while nothing is bound, the root is returned
+    unchanged and a failure report inside it refuses with :class:`ErrorsNotBound`.
+    """
+    try:
+        errors = _ERRORS.get()
+    except LookupError:
+        return fn
+
+    @wraps(fn)
+    def rooted(*args: P.args, **kwargs: P.kwargs) -> R:
+        with bound_errors(errors):
+            return fn(*args, **kwargs)
+
+    return rooted
 
 
 def current_errors() -> Errors:

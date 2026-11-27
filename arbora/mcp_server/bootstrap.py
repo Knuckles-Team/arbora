@@ -16,6 +16,7 @@ from typing import Any
 
 from arbora.observability.state import HealthState
 from arbora.security.anonymous import session_context
+from arbora.security.error_surface import carry_errors
 from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
@@ -591,7 +592,7 @@ def _start_process_authority_supervisor(
         return
     health.lease.set(lease)
     thread = threading.Thread(
-        target=_process_authority_refresh_loop,
+        target=carry_errors(_process_authority_refresh_loop),
         args=(authority, session),
         daemon=True,
         name="GraphProcessAuthority",

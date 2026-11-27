@@ -11,6 +11,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.service_caller import ServiceCallers
 from arbora.knowledge.curator_scheduler import build_curator_scheduler
 from arbora.mcp_server.background import BackgroundHost
+from arbora.observability.state import Errors
 
 
 class FakeClock:
@@ -106,7 +107,7 @@ def test_background_host_runs_a_service_until_stopped() -> None:
             while not should_stop():
                 await asyncio.sleep(0)
 
-    host = BackgroundHost([Service()])
+    host = BackgroundHost([Service()], Errors())
     host.start()
     assert started.wait(5)
     host.stop()

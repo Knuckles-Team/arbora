@@ -15,7 +15,7 @@ import json
 import logging
 from typing import Any
 
-from arbora.security.error_surface import public_error_payload
+from arbora.security.error_surface import carry_errors, public_error_payload
 
 logger = logging.getLogger(__name__)
 
@@ -349,7 +349,7 @@ def run_coro(coro: Any) -> Any:
     import concurrent.futures
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-        return ex.submit(lambda: asyncio.run(coro)).result()
+        return ex.submit(carry_errors(lambda: asyncio.run(coro))).result()
 
 
 def caller_identity_fields(caller: Any) -> dict[str, Any]:

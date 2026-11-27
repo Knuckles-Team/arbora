@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.security.error_surface import carry_errors
 
 __all__ = ["FleetToolCallError", "call_fleet_tool", "run_coroutine"]
 
@@ -95,6 +96,6 @@ def run_coroutine[T](
             return asyncio.run(coro)
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     try:
-        return pool.submit(asyncio.run, coro).result(timeout=timeout)
+        return pool.submit(carry_errors(asyncio.run), coro).result(timeout=timeout)
     finally:
         pool.shutdown(wait=False)

@@ -77,6 +77,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from arbora.core.environment import read_env
+from arbora.security.error_surface import carry_errors
 from arbora.security.key_cache import JwksCache
 
 from .actor_context import (
@@ -1196,7 +1197,7 @@ def mint_actor_from_token_sync(token: str, keys: JwksCache) -> ActorContext:
         except RuntimeError:
             return _drive()
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            return pool.submit(_drive).result()
+            return pool.submit(carry_errors(_drive)).result()
     except Exception as exc:
         # Preserve the cause: this is the same JWT verification path as the
         # per-request boundary, and discarding it here would hide the exact

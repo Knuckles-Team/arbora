@@ -43,6 +43,7 @@ from arbora.messaging.models import InboundEvent, MediaAttachment, SendResult
 if TYPE_CHECKING:
     from arbora.messaging.base import MessagingBackend
 from arbora.core.environment import read_env
+from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
 
@@ -538,7 +539,9 @@ def reach_user_sync(text: str, **kwargs: Any) -> SendResult:
     import concurrent.futures
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        return pool.submit(lambda: asyncio.run(svc.reach_user(text, **kwargs))).result()
+        return pool.submit(
+            carry_errors(lambda: asyncio.run(svc.reach_user(text, **kwargs)))
+        ).result()
 
 
 class ReachNotifier:

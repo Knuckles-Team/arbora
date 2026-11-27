@@ -50,6 +50,7 @@ from arbora.deployment.certification_assets import (
 from arbora.deployment.certification_assets import (
     validated_token_ttl_seconds as _validated_token_ttl_seconds,
 )
+from arbora.security.error_surface import carry_errors
 
 _BIND_HOST = "127.0.0.1"
 _AUDIENCE = "arbora-skill-certification"
@@ -781,7 +782,7 @@ class EphemeralLoopbackOidcAuthority:
                         raise
 
             self._thread = threading.Thread(
-                target=serve,
+                target=carry_errors(serve),
                 name="graphos-skill-certification-oidc",
                 daemon=False,
             )

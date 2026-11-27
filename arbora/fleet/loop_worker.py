@@ -27,6 +27,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.engine_calls import decode
 from arbora.api.ops.pin_guards import refusal
 from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
+from arbora.security.error_surface import carry_errors
 
 __all__ = [
     "LOOP_RUN_QUEUE",
@@ -275,7 +276,7 @@ class LoopWorkerRunner:
             if self._thread is not None or self._stop.is_set():
                 return False
             self._thread = threading.Thread(
-                target=self._loop, name="arbora-loop-worker", daemon=True
+                target=carry_errors(self._loop), name="arbora-loop-worker", daemon=True
             )
             self._thread.start()
             return True

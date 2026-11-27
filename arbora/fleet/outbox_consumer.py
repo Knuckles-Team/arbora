@@ -26,6 +26,7 @@ from arbora.messaging.action_dispatch import (
     send_notification,
 )
 from arbora.pin_lag.medulla import OUTBOX_MODELS, PinLagUnavailable, require_models
+from arbora.security.error_surface import carry_errors
 
 __all__ = [
     "NoticeFailed",
@@ -238,7 +239,9 @@ class OutboxRunner:
             if self._thread is not None or self._stop.is_set():
                 return False
             self._thread = threading.Thread(
-                target=self._loop, name="arbora-outbox-consumers", daemon=True
+                target=carry_errors(self._loop),
+                name="arbora-outbox-consumers",
+                daemon=True,
             )
             self._thread.start()
             return True
