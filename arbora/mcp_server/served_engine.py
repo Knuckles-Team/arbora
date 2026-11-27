@@ -185,7 +185,7 @@ def _bind_parameters(query: str, params: Mapping[str, Any] | None) -> str:
     return _PARAMETER.sub(literal, query)
 
 
-def _run_blocking(coroutine_factory: Any) -> Any:
+def run_blocking(coroutine_factory: Any) -> Any:
     """Run one EG request to completion from synchronous code.
 
     Synchronous callers (the action-policy ledger) may run inside an event
@@ -212,7 +212,7 @@ class _BlockingWorkItems:
 
     :mod:`arbora.work_items` (A2A tasks, browser control, messaging leases)
     calls ``engine.work_items.<verb>(...)`` from synchronous code; each verb
-    runs the async EG method to completion through :func:`_run_blocking`.
+    runs the async EG method to completion through :func:`run_blocking`.
     """
 
     def __init__(self, routed: Any) -> None:
@@ -223,7 +223,7 @@ class _BlockingWorkItems:
         from arbora.native_run_admission import require_lookup
 
         method = require_lookup(self._routed)
-        return _run_blocking(lambda: method(tenant=tenant, run_id=run_id))
+        return run_blocking(lambda: method(tenant=tenant, run_id=run_id))
 
     def __getattr__(self, name: str) -> Any:
         if name.startswith("_"):
@@ -231,7 +231,7 @@ class _BlockingWorkItems:
         method = getattr(self._routed, name)
 
         def call(*args: Any, **kwargs: Any) -> Any:
-            return _run_blocking(lambda: method(*args, **kwargs))
+            return run_blocking(lambda: method(*args, **kwargs))
 
         return call
 
@@ -240,7 +240,7 @@ class _BlockingControlLeases:
     """EG's ``control_leases`` methods, called synchronously under one caller.
 
     The action policy and the fleet approval routes are synchronous; each
-    verb runs the async EG method to completion through :func:`_run_blocking`.
+    verb runs the async EG method to completion through :func:`run_blocking`.
     ``tenant`` is the verified session's tenant, which every control-lease
     request must carry (ARBORA-IDENTITY-R019.8).
     """
@@ -255,7 +255,7 @@ class _BlockingControlLeases:
         method = getattr(self._routed, name)
 
         def call(*args: Any, **kwargs: Any) -> Any:
-            return _run_blocking(lambda: method(*args, **kwargs))
+            return run_blocking(lambda: method(*args, **kwargs))
 
         return call
 
@@ -326,7 +326,7 @@ class ServedEngine:
             # blobs. Returning raw generated payload rows loses their names.
             return await client.query.cypher_read(bound)
 
-        return list(_run_blocking(run))
+        return list(run_blocking(run))
 
     async def query_cypher_async(
         self,
@@ -373,7 +373,7 @@ class ServedEngine:
                 idempotency_key=f"arbora:add-node:{node_id}",
             )
 
-        return str(_run_blocking(run))
+        return str(run_blocking(run))
 
     def create_node(
         self,
@@ -407,7 +407,7 @@ class ServedEngine:
                 idempotency_key=f"arbora:create-node:{node_id}",
             )
 
-        return bool(_run_blocking(run))
+        return bool(run_blocking(run))
 
     def compare_and_set_node(
         self,
@@ -441,7 +441,7 @@ class ServedEngine:
                 idempotency_key=idempotency_key,
             )
 
-        return bool(_run_blocking(run))
+        return bool(run_blocking(run))
 
 
 def process_engine_pool() -> Any:

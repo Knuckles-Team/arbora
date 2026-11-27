@@ -20,7 +20,7 @@ class LocalBrowserBoundary:
         await self._handler(scope, receive, send)
 
 
-def _issue_local_browser_boundary(handler: _Handler) -> LocalBrowserBoundary:
+def issue_local_browser_boundary(handler: _Handler) -> LocalBrowserBoundary:
     boundary = object.__new__(LocalBrowserBoundary)
     boundary._handler = handler
     return boundary

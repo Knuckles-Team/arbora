@@ -21,7 +21,7 @@ from arbora.api.ops._common import Params, bound_service, build_read_op
 from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.source import SourceReader
-from arbora.api.ops.workstreams import _props
+from arbora.api.ops.workstreams import workstream_props
 from arbora.api.registry import OpSpec, Verb
 from arbora.core.environment import read_env
 
@@ -150,7 +150,7 @@ def _articles(rows: list[Any]) -> list[dict[str, Any]]:
     found = []
     for row in rows:
         if isinstance(row, (list, tuple)) and len(row) == 2:
-            props = _props(row[1])
+            props = workstream_props(row[1])
             if props is not None:
                 found.append(_article(str(row[0]), props))
     return found

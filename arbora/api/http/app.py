@@ -20,7 +20,7 @@ from .checkout import make_checkout_endpoint
 from .git_bridge import mount_git_bridge
 from .lineage import mount_lineage_route
 from .openapi import document
-from .routes import _error, make_endpoint
+from .routes import error_response, make_endpoint
 from .scm_events import mount_scm_events_route
 from .sparql import mount_sparql_protocol
 
@@ -176,9 +176,13 @@ def create_api_application(
                     return result
             return await visible_for(request, await authenticate(request))
         except HTTPAuthenticationError:
-            return _error("UNAUTHENTICATED", digest=registry.digest, op="api.registry")
+            return error_response(
+                "UNAUTHENTICATED", digest=registry.digest, op="api.registry"
+            )
         except IdentityUnavailable:
-            return _error("UNAVAILABLE", digest=registry.digest, op="api.registry")
+            return error_response(
+                "UNAVAILABLE", digest=registry.digest, op="api.registry"
+            )
 
     @app.get("/registry", include_in_schema=False)
     async def registry_route(request: Request) -> JSONResponse:
@@ -211,7 +215,7 @@ def create_api_application(
                         "Cache-Control": "private, no-store",
                     },
                 )
-        return _error("UNKNOWN_OP", digest=registry.digest, op=op_id)
+        return error_response("UNKNOWN_OP", digest=registry.digest, op=op_id)
 
     @app.get("/openapi.json", include_in_schema=False)
     async def openapi_route(request: Request) -> JSONResponse:
@@ -297,7 +301,9 @@ def create_api_application(
     async def browser_checkout_unavailable(request: Request) -> JSONResponse:
         # A StreamingResponse executes outside the endpoint's task/lifetime.
         # Do not reuse HTTP-bound authority until a streaming contract exists.
-        return _error("UNAVAILABLE", digest=registry.digest, op="source.checkout")
+        return error_response(
+            "UNAVAILABLE", digest=registry.digest, op="source.checkout"
+        )
 
     app.add_api_route(
         "/source/checkout",

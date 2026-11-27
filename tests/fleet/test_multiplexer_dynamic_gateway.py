@@ -26,9 +26,9 @@ from arbora.fleet.multiplexer import (
     _fleet_required_capabilities,
     _make_forwarder,
     _register_forwarder,
-    _session_key,
     _tenant_local_discovery_binding,
     _tool_is_verbose,
+    ambient_session_key,
     get_server_prefix,
     require_fleet_capability,
 )
@@ -201,7 +201,7 @@ async def _reconnect_mounted(mux, server_name: str, generations: list):
 
 def _load_schema_fixture_tools(mux, tools):
     """Load mounted tools for this caller; host registration remains separate."""
-    mux.session_loaded(_session_key()).update(tool.name for tool in tools)
+    mux.session_loaded(ambient_session_key()).update(tool.name for tool in tools)
 
 
 async def _call_after_schema_recovery(mux, prefixed_name, recovered):
@@ -1653,7 +1653,7 @@ def test_local_session_meta_cannot_override_an_authenticated_http_session(
         lambda: mock_context,
     )
 
-    assert _session_key() == "real-authenticated-http-session"
+    assert ambient_session_key() == "real-authenticated-http-session"
 
 
 async def test_notify_tools_changed_returns_false_without_request_context():

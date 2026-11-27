@@ -4,7 +4,7 @@ from typing import Any
 
 from arbora.api.http.app import create_api_application
 from arbora.api.http.browser_auth import BoundBrowserHTTPAuthenticator
-from arbora.api.http.routes import _error
+from arbora.api.http.routes import error_response
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.engine import IdentityUnavailable
 
@@ -40,7 +40,9 @@ class BrowserOperationApplication:
             if admitted:
                 self._in_flight += 1
         if not admitted:
-            response = _error("UNAVAILABLE", digest=self.digest, op="api.browser")
+            response = error_response(
+                "UNAVAILABLE", digest=self.digest, op="api.browser"
+            )
             await response(scope, receive, send)
             return
         try:
@@ -84,13 +86,15 @@ class BrowserOperationApplication:
                     self.admission.request(scope)
                 )
             except PermissionError:
-                response = _error(
+                response = error_response(
                     "UNAUTHENTICATED", digest=self.digest, op="api.browser"
                 )
                 await response(scope, receive, send)
                 return
             except IdentityUnavailable:
-                response = _error("UNAVAILABLE", digest=self.digest, op="api.browser")
+                response = error_response(
+                    "UNAVAILABLE", digest=self.digest, op="api.browser"
+                )
                 await response(scope, receive, send)
                 return
             await self.app(forwarded, bounded_receive, send)

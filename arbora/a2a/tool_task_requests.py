@@ -15,7 +15,7 @@ from pydantic_core import to_jsonable_python
 
 from arbora import work_items
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
-from arbora.mcp_server.served_engine import _run_blocking
+from arbora.mcp_server.served_engine import run_blocking
 from arbora.security.session import resolve_session
 
 from .tool_task import (
@@ -83,12 +83,12 @@ class EgToolTaskRequestStore:
             allowed_tool_subset=(request.operation_id,),
         )
         blob = self._blob()
-        digest = _run_blocking(
+        digest = run_blocking(
             lambda: blob.store(_request_bytes(request), chunk_size=1 << 20)
         )
         if not isinstance(digest, str) or _BLOB_DIGEST.fullmatch(digest) is None:
             raise ToolTaskRefused("tool_task_blob_unavailable")
-        _run_blocking(lambda: blob.incref(digest))
+        run_blocking(lambda: blob.incref(digest))
         if self._caller(request.tenant, write=True) != request.principal:
             raise ToolTaskRefused("tool_task_caller_mismatch")
         item_id = tool_task_work_item_id(job_id)
@@ -149,7 +149,7 @@ class EgToolTaskRequestStore:
         digest = metadata.get("request_blob")
         if not isinstance(digest, str) or _BLOB_DIGEST.fullmatch(digest) is None:
             raise ToolTaskRefused("tool_task_blob_unavailable")
-        raw = _run_blocking(lambda: self._read_bounded(digest))
+        raw = run_blocking(lambda: self._read_bounded(digest))
         try:
             request = ToolTaskRequest.model_validate_json(raw)
         except ValueError:
@@ -196,10 +196,10 @@ class EgToolTaskRequestStore:
             allow_nan=False,
         ).encode("utf-8")
         blob = self._blob()
-        digest = _run_blocking(lambda: blob.store(raw, chunk_size=1 << 20))
+        digest = run_blocking(lambda: blob.store(raw, chunk_size=1 << 20))
         if not isinstance(digest, str) or _BLOB_DIGEST.fullmatch(digest) is None:
             raise ToolTaskRefused("tool_task_blob_unavailable")
-        _run_blocking(lambda: blob.incref(digest))
+        run_blocking(lambda: blob.incref(digest))
         return f"tool-task-result:sha256:{digest}"
 
     async def _read_bounded(self, digest: str) -> bytes:

@@ -20,10 +20,10 @@ class ServedBrowserState:
         required_scope: str,
         session: GraphSession | None = None,
     ) -> Any:
-        from arbora.mcp_server.served_engine import _run_blocking
+        from arbora.mcp_server.served_engine import run_blocking
 
         caller = resolve_session(session, required_scope=required_scope)
-        return _run_blocking(
+        return run_blocking(
             lambda: self._call_async(
                 operation, required_scope=required_scope, session=caller
             )

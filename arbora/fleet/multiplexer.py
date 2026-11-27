@@ -1989,17 +1989,17 @@ def _tasks_route_server(
 def _tasks_request_models(method: str) -> tuple[_typing.Any, _typing.Any]:
     """The ``(params, result)`` models for one Tasks method."""
     from arbora.mcp_server.backing.tasks_extension import (
-        _AckResult,
-        _CancelTaskParams,
-        _GetTaskParams,
-        _GetTaskResult,
-        _UpdateTaskParams,
+        AckResult,
+        CancelTaskParams,
+        GetTaskParams,
+        GetTaskResult,
+        UpdateTaskParams,
     )
 
     return {
-        "tasks/get": (_GetTaskParams, _GetTaskResult),
-        "tasks/update": (_UpdateTaskParams, _AckResult),
-        "tasks/cancel": (_CancelTaskParams, _AckResult),
+        "tasks/get": (GetTaskParams, GetTaskResult),
+        "tasks/update": (UpdateTaskParams, AckResult),
+        "tasks/cancel": (CancelTaskParams, AckResult),
     }[method]
 
 
@@ -2055,13 +2055,13 @@ def _build_task_request(
     from arbora.mcp_server.backing.tasks_extension import (
         TASKS_EXTENSION_ID,
         TASKS_EXTENSION_REVISION,
-        _channel_proof,
-        _mint_delegation_token,
+        channel_proof,
+        mint_delegation_token,
     )
 
     server_name = route["server"]
     try:
-        delegation_token = _mint_delegation_token(
+        delegation_token = mint_delegation_token(
             route["method"],
             params,
             server=server_name,
@@ -2093,7 +2093,7 @@ def _build_task_request(
                 "Authenticated stdio task channel is unavailable; "
                 "use portable rm_jobs tools"
             )
-        envelope["delegation"]["channel"] = _channel_proof(
+        envelope["delegation"]["channel"] = channel_proof(
             generation_secret, delegation_token
         )
     outgoing = dict(params)
@@ -2751,7 +2751,7 @@ class MCPMultiplexer:
         self, prefixed_name: str, session_key: str | None = None
     ) -> str | None:
         """The workflow binding refusal for a tool in a session (ARBORA-FLEET-R021.1)."""
-        key = _session_key() if session_key is None else session_key
+        key = ambient_session_key() if session_key is None else session_key
         return self.workflow_bindings.refusal(prefixed_name, key)
 
     def _require_workflow_binding(self, prefixed_name: str) -> None:
@@ -4747,7 +4747,7 @@ class MCPMultiplexer:
         refresh that arrives while the send awaits remains queued after this
         older revision is acknowledged.
         """
-        session_key = _session_key()
+        session_key = ambient_session_key()
         revision = self._session_notifications.pending_generation(session_key)
         if revision is None:
             return True
@@ -6912,7 +6912,7 @@ class MCPMultiplexer:
         if prefixed_name in self._global_visible:
             return True
         if prefixed_name in self._local_gated:
-            key = session_key if session_key is not None else _session_key()
+            key = session_key if session_key is not None else ambient_session_key()
             return prefixed_name in self._session_loaded.get(key, set())
         # ``_server_for_prefixed`` resolves ownership from the catalog's
         # collision-free prefix map, which works even BEFORE the owning child
@@ -6929,7 +6929,7 @@ class MCPMultiplexer:
             # any session had loaded it.
             if prefixed_name not in self._exposed:
                 return False
-            key = session_key if session_key is not None else _session_key()
+            key = session_key if session_key is not None else ambient_session_key()
             return prefixed_name in self._session_loaded.get(key, set())
         if not self.is_serving():
             return False
@@ -6942,7 +6942,7 @@ class MCPMultiplexer:
         # means nothing here can vouch for the name, so it is denied too.
         if self._host_mcp is None:
             return False
-        return prefixed_name in _provider_tools(self._host_mcp)
+        return prefixed_name in provider_tools(self._host_mcp)
 
     def prune_session_visibility(self, session_key: str) -> None:
         """Drop empty per-session visibility state after explicit retraction."""
@@ -7096,7 +7096,7 @@ class MCPMultiplexer:
         await self.exit_stack.aclose()
 
 
-def _tool_result_from_child(result: MCPCallToolResult) -> _fastmcp_tools.ToolResult:
+def tool_result_from_child(result: MCPCallToolResult) -> _fastmcp_tools.ToolResult:
     """Convert a child MCP call result into the host's ``_fastmcp_tools.ToolResult`` WITHOUT
     losing semantic parity with the upstream protocol (D-CDX-45).
 
@@ -7288,7 +7288,7 @@ def _explicit_local_session_key() -> str | None:
     low-level ``ServerSession``, and its ``Connection`` are all reconstructed
     fresh on EVERY single request, even within the same open client connection
     (verified empirically — not merely a docstring claim). That is why
-    :func:`_session_key`'s non-HTTP branch cannot derive an ambient per-connection
+    :func:`ambient_session_key`'s non-HTTP branch cannot derive an ambient per-connection
     key the way the HTTP branch does.
 
     Multiple logically-distinct local callers sharing ONE process (e.g. an
@@ -7304,7 +7304,7 @@ def _explicit_local_session_key() -> str | None:
     documented FastMCP mechanism for exactly this kind of contextual data —
     unlike ``Context.session_id`` it is NOT reconstructed per request, it is
     literally provided by the caller on each call). This is deliberately only
-    consulted from the non-HTTP branch of :func:`_session_key`: a real HTTP
+    consulted from the non-HTTP branch of :func:`ambient_session_key`: a real HTTP
     session's key is derived from the AUTHENTICATED connection/token, and must
     never be overridable by caller-declared request metadata (that would let
     one HTTP caller simply claim another's session id). Within a single
@@ -7358,7 +7358,7 @@ def _token_session_key(token: _typing.Any) -> str:
     return f"http_{digest}"
 
 
-def _session_key() -> str:
+def ambient_session_key() -> str:
     """Stable per-connection key for session-scoped tool visibility.
 
     On a shared streamable-http server every client gets its own
@@ -7403,7 +7403,7 @@ def _session_key() -> str:
     return _token_session_key(token)
 
 
-def _provider_tools(mcp: _typing.Any) -> dict[str, _typing.Any]:
+def provider_tools(mcp: _typing.Any) -> dict[str, _typing.Any]:
     """Return the FastMCP host's registered local tools."""
     components = getattr(getattr(mcp, "_local_provider", None), "_components", None)
     if not isinstance(components, dict):

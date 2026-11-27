@@ -1210,10 +1210,10 @@ _APPROVAL_TTL_SECONDS = 600.0
 
 def _approval_key(op_id: str) -> str:
     """Opaque key binding an approval to session, authority partition and op."""
-    from arbora.fleet.multiplexer import _session_key
+    from arbora.fleet.multiplexer import ambient_session_key
 
     payload = json.dumps(
-        [_session_key(), _outcome_scope_ref(), op_id], separators=(",", ":")
+        [ambient_session_key(), _outcome_scope_ref(), op_id], separators=(",", ":")
     )
     return persistence_reference("intent_approval", payload)
 

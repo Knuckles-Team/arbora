@@ -20,7 +20,7 @@ import pytest
 from arbora.fleet.multiplexer import (
     ToolResult,
     _make_forwarder,
-    _tool_result_from_child,
+    tool_result_from_child,
 )
 from tests.fleet.catalog_fixture import (
     bind_governed_forwarder_fixture,
@@ -153,8 +153,8 @@ def test_annotation_change_after_reconnect_is_visible_in_forwarded_results() -> 
         is_error=False,
     )
 
-    forwarded_before = _tool_result_from_child(before)
-    forwarded_after = _tool_result_from_child(after)
+    forwarded_before = tool_result_from_child(before)
+    forwarded_after = tool_result_from_child(after)
 
     before_annotations = forwarded_before.content[0].annotations
     after_annotations = forwarded_after.content[0].annotations
@@ -175,7 +175,7 @@ def test_fallback_still_forwards_meta_when_from_mcp_result_unavailable(
     monkeypatch.delattr(mux_module.ToolResult, "from_mcp_result", raising=True)
 
     result = _child_result_with_annotations_and_meta()
-    forwarded = _tool_result_from_child(result)
+    forwarded = tool_result_from_child(result)
 
     assert forwarded.meta == {"readOnlyHint": True, "child_trace_id": "abc123"}
     annotations = forwarded.content[0].annotations

@@ -16,9 +16,9 @@ from fastmcp.exceptions import ToolError
 
 from arbora.fleet.multiplexer import (
     MCPMultiplexer,
-    _provider_tools,
     assert_bounded_delegated_value,
     child_result_payload,
+    provider_tools,
     require_fleet_capability,
 )
 from arbora.fleet.shared_multiplexer import run_on_served_multiplexer
@@ -50,7 +50,7 @@ async def _native_server_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
             "description": getattr(tool, "description", "") or "",
             "inputSchema": getattr(tool, "parameters", None) or {},
         }
-        for name, tool in sorted(_provider_tools(host).items())
+        for name, tool in sorted(provider_tools(host).items())
         if name in runtime.REGISTERED_TOOLS or name in runtime.NATIVE_INTENT_TOOLS
     ]
 

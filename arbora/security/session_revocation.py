@@ -89,7 +89,7 @@ async def revoke_session(
     """The served operation: revoke a named session of the tenant (admin only)."""
     from arbora.api.invoke.pipeline import OperationRefused
     from arbora.api.ops.engine_calls import decode, engine_send
-    from arbora.api.ops.workstreams import _pack, _props
+    from arbora.api.ops.workstreams import pack, workstream_props
     from arbora.identity.client_session import session_node_id
 
     registry = registry or CALLER_REVOCATIONS
@@ -104,7 +104,7 @@ async def revoke_session(
     props = None
     for row in rows or ():
         if isinstance(row, (list, tuple)) and len(row) == 2 and row[0] == node:
-            props = _props(row[1])
+            props = workstream_props(row[1])
     if props is None or props.get("tenant") != tenant:
         raise OperationRefused(SessionNotOwned.code)
     principal = str(props.get("principal", ""))
@@ -113,8 +113,8 @@ async def revoke_session(
         "CompareAndSetNodeFields",
         {
             "node_id": node,
-            "conditions_msgpack": _pack({"principal": principal}),
-            "updates_msgpack": _pack({"ended_at_ms": int(time.time() * 1000)}),
+            "conditions_msgpack": pack({"principal": principal}),
+            "updates_msgpack": pack({"ended_at_ms": int(time.time() * 1000)}),
         },
     )
     stopped = registry.revoke_caller(tenant, principal, reason)

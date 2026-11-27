@@ -47,7 +47,7 @@ from arbora.agent_host.port_services import (
 )
 
 
-def _run_of(run_ref: str) -> Any:
+def run_of(run_ref: str) -> Any:
     from arbora.agent_runs import current_native_run
 
     return current_native_run(SimpleNamespace(run_id=run_ref))
@@ -61,7 +61,7 @@ def _run_key(op_id: str, params: Mapping[str, Any], run_ref: str) -> str:
 
 def run_principal_call(
     services: Any,
-    resolve_run: Callable[[str], Any] = _run_of,
+    resolve_run: Callable[[str], Any] = run_of,
 ) -> RunCall:
     """``RunCall`` over registry ``invoke`` as the executing run's verified principal."""
 
@@ -115,9 +115,9 @@ def run_principal_call(
 
 def active_run_ref() -> str:
     """The run id of the executing run scope, for ports that carry no run reference."""
-    from arbora.agent_runs import _NATIVE_RUN
+    from arbora.agent_runs import NATIVE_RUN
 
-    scope = _NATIVE_RUN.get()
+    scope = NATIVE_RUN.get()
     if scope is None or not scope.active:
         raise RuntimeError("no run is executing")
     return str(scope.ownership.run_id)
@@ -148,7 +148,7 @@ def compose_host_ports(
     wait: Callable[[float], Any],
     checkpoint_store: Any = None,
     events: Any = None,
-    resolve_run: Callable[[str], Any] = _run_of,
+    resolve_run: Callable[[str], Any] = run_of,
     method_op: Callable[[str], str | None] = lambda _: None,
     backends: PortBackends | None = None,
     seams: Any = None,

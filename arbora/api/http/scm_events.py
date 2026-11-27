@@ -22,7 +22,7 @@ from arbora.security.signed_ingress import (
     AdmittedIngress,
 )
 
-from .routes import _error, caller_session_scope
+from .routes import caller_session_scope, error_response
 
 SCM_EVENT_OP = "development.scm.event"
 
@@ -46,16 +46,16 @@ def mount_scm_events_route(
         admitted = (request.scope.get("state") or {}).get(ADMITTED_STATE_KEY)
         session = current_session()
         if not isinstance(admitted, AdmittedIngress) or session is None:
-            return _error("UNAUTHENTICATED", digest=digest, op=SCM_EVENT_OP)
+            return error_response("UNAUTHENTICATED", digest=digest, op=SCM_EVENT_OP)
         if admitted.source_id != connector:
-            return _error("UNAUTHENTICATED", digest=digest, op=SCM_EVENT_OP)
+            return error_response("UNAUTHENTICATED", digest=digest, op=SCM_EVENT_OP)
         request_id = request.headers.get("x-request-id", "")[:128] or token_hex(12)
         try:
             caller = caller_from_session(
                 session, credential_kind=SIGNED_CREDENTIAL_KIND, request_id=request_id
             )
         except PermissionError:
-            return _error("UNAUTHENTICATED", digest=digest, op=SCM_EVENT_OP)
+            return error_response("UNAUTHENTICATED", digest=digest, op=SCM_EVENT_OP)
         params = body_params(
             connector, admitted.delivery_id, dict(request.headers), await request.body()
         )

@@ -235,7 +235,7 @@ async def _resolve_op(
     return resolved_op, resolved_arguments, resolution, preview
 
 
-async def _invoke_and_render(
+async def invoke_and_render(
     projection: MCPProjection,
     caller: Any,
     op: str,
@@ -311,7 +311,7 @@ async def _dispatch_resolved_op(
             },
             projection.registry,
         )
-    return await _invoke_and_render(
+    return await invoke_and_render(
         projection,
         caller,
         op,

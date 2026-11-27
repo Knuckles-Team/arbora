@@ -232,10 +232,10 @@ def test_malformed_anonymous_variant_refused(local_mode, updates):
 
 
 def test_effect_journal_records_honest_anonymous_provenance(local_mode):
-    from arbora.mcp_server.effect_journal import _request_context
+    from arbora.mcp_server.effect_journal import request_context
 
     claims = anonymous.session_context(anonymous.session())
-    context = _request_context(
+    context = request_context(
         claims, SimpleNamespace(graph_name="__control__"), "local-key"
     )
     assert context["authentication_method"] == "none"

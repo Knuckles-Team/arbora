@@ -18,8 +18,8 @@ from arbora.api.mcp.resources import register_resources
 from arbora.api.mcp.verbs import (
     VERBS,
     MCPProjection,
-    _invoke_and_render,
     dispatch_verb,
+    invoke_and_render,
     make_verb,
 )
 from arbora.fleet.gateway_ops import native_dispatch_scope
@@ -57,7 +57,7 @@ def _tool_result(payload: dict[str, Any]) -> ToolResult:
 
 def _native_result(payload: dict[str, Any]) -> ToolResult:
     """Preserve the MCP wire result carried by the fleet operation result."""
-    from arbora.fleet.multiplexer import _tool_result_from_child, mcp_types
+    from arbora.fleet.multiplexer import mcp_types, tool_result_from_child
 
     result = payload["result"]
     child = result.get("value") if isinstance(result, Mapping) else None
@@ -67,7 +67,7 @@ def _native_result(payload: dict[str, Any]) -> ToolResult:
     error = getattr(wire, "is_error", None)
     if bool(error if error is not None else getattr(wire, "isError", False)):
         raise ToolError("delegated_child_tool_failed")
-    return _tool_result_from_child(wire)
+    return tool_result_from_child(wire)
 
 
 def make_fleet_tool(name: str, projection: MCPProjection) -> FunctionTool:
@@ -155,7 +155,7 @@ class FleetMCPBinding:
             await self.ops.redeliver_pending(grant.key)
             raise ToolError("UNKNOWN_TOOL")
         with native_dispatch_scope(self._dispatch_fence(grant, caller)):
-            payload = await _invoke_and_render(
+            payload = await invoke_and_render(
                 self.projection,
                 caller,
                 "fleet.call",

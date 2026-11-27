@@ -118,11 +118,11 @@ def _not_found() -> OperationRefused:
     return OperationRefused("WORKSTREAM_NOT_FOUND", {})
 
 
-def _pack(value: Mapping[str, Any]) -> bytes:
+def pack(value: Mapping[str, Any]) -> bytes:
     return msgpack.packb(dict(value), use_bin_type=True)
 
 
-def _props(blob: Any) -> dict[str, Any] | None:
+def workstream_props(blob: Any) -> dict[str, Any] | None:
     if blob is None:
         return None
     if isinstance(blob, Mapping):
@@ -139,7 +139,7 @@ async def _node(context: Any, node_id: str) -> dict[str, Any] | None:
     )
     for row in rows or ():
         if isinstance(row, (list, tuple)) and len(row) == 2 and row[0] == node_id:
-            return _props(row[1])
+            return workstream_props(row[1])
     return None
 
 
@@ -203,7 +203,7 @@ async def handle_attach(
             "AddNode",
             {
                 "node_id": key,
-                "properties_msgpack": _pack({"labels": ["Workstream"], **workstream}),
+                "properties_msgpack": pack({"labels": ["Workstream"], **workstream}),
             },
             idempotent=True,
         )
@@ -231,7 +231,7 @@ async def handle_attach(
             "AddNode",
             {
                 "node_id": session,
-                "properties_msgpack": _pack(
+                "properties_msgpack": pack(
                     {"labels": ["ClientSession"], **session_props}
                 ),
             },
@@ -243,7 +243,7 @@ async def handle_attach(
             {
                 "source_id": session,
                 "target_id": key,
-                "properties_msgpack": _pack(
+                "properties_msgpack": pack(
                     {"relationship": "attachedTo", "harness": params["harness"]}
                 ),
             },
@@ -255,8 +255,8 @@ async def handle_attach(
             "CompareAndSetNodeFields",
             {
                 "node_id": session,
-                "conditions_msgpack": _pack({"state": existing.get("state")}),
-                "updates_msgpack": _pack(
+                "conditions_msgpack": pack({"state": existing.get("state")}),
+                "updates_msgpack": pack(
                     {
                         k: session_props[k]
                         for k in (
@@ -307,10 +307,10 @@ async def handle_checkpoint(
         "CompareAndSetNodeFields",
         {
             "node_id": key,
-            "conditions_msgpack": _pack(
+            "conditions_msgpack": pack(
                 {"last_active_ms": workstream.get("last_active_ms")}
             ),
-            "updates_msgpack": _pack(
+            "updates_msgpack": pack(
                 {
                     _LAST: params["summary"],
                     "open_run_ids": list(params.get("run_ids", ())),
@@ -345,8 +345,8 @@ async def handle_detach(
         "CompareAndSetNodeFields",
         {
             "node_id": node_id,
-            "conditions_msgpack": _pack({"state": "attached"}),
-            "updates_msgpack": _pack(
+            "conditions_msgpack": pack({"state": "attached"}),
+            "updates_msgpack": pack(
                 {"state": "detached", "detached_at_ms": clock_ms()}
             ),
         },
@@ -396,7 +396,7 @@ async def handle_list(
         if not isinstance(row, (list, tuple)) or len(row) != 2:
             continue
         last = str(row[0])
-        node = _props(row[1])
+        node = workstream_props(row[1])
         if (
             node is not None
             and node.get("tenant") == str(caller.tenant)

@@ -16,9 +16,9 @@ import pytest
 from arbora.mcp_server import decide_wiring
 from arbora.mcp_server.decide_wiring import (
     _commit_context,
-    _mutation_context,
     _publish_context,
     install_decide_consumers,
+    mutation_context,
 )
 
 
@@ -102,7 +102,7 @@ def test_assembly_commits_and_publishes_with_session_context():
         assert context["policy_revision"] == "v7"
         assert context["trace_id"] == "trace-1"
     # Every context is single-use: a fresh nonce and idempotency key each time.
-    again = _mutation_context(session, "agent_library.assembly_commit")
+    again = mutation_context(session, "agent_library.assembly_commit")
     assert again["attempt_nonce"] != commit["attempt_nonce"]
     assert again["idempotency_key"] != commit["idempotency_key"]
 
