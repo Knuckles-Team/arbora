@@ -21,7 +21,12 @@ from pydantic import Field
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import Params, bound_service, build_read_op
+from arbora.api.ops._common import (
+    Params,
+    bound_service,
+    build_read_op,
+    build_write_op,
+)
 from arbora.api.ops._engine import engine_send
 from arbora.api.ops._nested import invoke_registered
 from arbora.api.ops.finance import _authority, _one
@@ -80,6 +85,62 @@ class DistributionShiftParams(Params):
     current: list[float] = _NUMBERS
     reference: list[float] = _NUMBERS
     threshold: float
+
+
+class ForecastSampleParams(Params):
+    series_ids: list[str] = Field(min_length=1, max_length=256)
+    model_revision: str = Field(min_length=1, max_length=256)
+    temperature: float
+    top_p: float
+    sample_count: int
+    seed: int = Field(ge=0)
+    source_id: str = Field(min_length=1, max_length=256)
+
+
+#: The venue tool the forecast provider adapter calls, through the governed fleet call.
+FORECAST_TOOL = "emerald_forecast_sample"
+
+
+async def handle_market_forecast_sample(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """One forecast sample, stored as a probabilistic record; never a raw sample as fact."""
+    from arbora.pin_lag.scion_sdk import PinLagUnavailable, require_forecast
+
+    try:
+        forecast = require_forecast()
+    except PinLagUnavailable as missing:
+        raise OperationRefused("UNAVAILABLE", {"missing": missing.missing}) from missing
+    guard("SourceIngest")
+
+    async def call(tool: str, arguments: dict[str, Any]) -> Any:
+        return await invoke_registered(
+            context,
+            "fleet.call",
+            {"server": VENUE_SERVER, "tool": tool, "arguments": arguments},
+        )
+
+    request = forecast.ForecastRequest(
+        series_ids=tuple(params["series_ids"]),
+        model_revision=params["model_revision"],
+        temperature=params["temperature"],
+        top_p=params["top_p"],
+        sample_count=params["sample_count"],
+        seed=params["seed"],
+    )
+    try:
+        response = await forecast.request_forecast(
+            forecast.forecast_provider(call, FORECAST_TOOL), request
+        )
+    except forecast.ForecastError as refused:
+        # The provider codes of the SDK pass through unchanged.
+        raise OperationRefused(str(refused.code.value)) from None
+    body = forecast.forecast_ingest_request(
+        response, tenant=str(context.caller.tenant), source_id=params["source_id"]
+    )
+    stored = await engine_send(context, "SourceIngest", body)
+    digest = stored.get("record_digest") if isinstance(stored, Mapping) else None
+    return {"value": {"record_digest": digest, "probabilistic": True}}
 
 
 async def _verified(context: Any) -> tuple[str, Any]:
@@ -258,6 +319,15 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.market_detail.handle_market_instrument_detail",
             scope=READ_SCOPE,
         ),
+        build_write_op(
+            op_id="market.forecast.sample",
+            summary="Sample a forecast and store it as a probabilistic record",
+            examples=("sample a forecast for these series",),
+            params=ForecastSampleParams,
+            result=InstrumentDetailResult,
+            handler="arbora.api.ops.market_detail.handle_market_forecast_sample",
+            scope="finance:track",
+        ),
         build_read_op(
             op_id="market.positions",
             summary="Read the account's positions with source, as-of and session",
@@ -300,6 +370,7 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "handle_market_forecast_sample",
     "handle_market_distribution_shift",
     "handle_market_instrument_detail",
     "handle_market_performance",

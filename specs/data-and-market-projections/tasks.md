@@ -31,12 +31,12 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T025 [P] [US3] ARBORA-DATA-MARKET-R007.5 Evidence.
 - [ ] T026 [P] [US3] ARBORA-DATA-MARKET-R007.6 Hot-path proof.
 - [ ] T027 [P] [US3] ARBORA-DATA-MARKET-R007.7 Order stage and confirm operations call the proposal door.
-- [ ] T028 [P] [US3] ARBORA-DATA-MARKET-R008 Served forecast operation `market.forecast.sample`.
+- [x] T028 [P] [US3] ARBORA-DATA-MARKET-R008 Served forecast operation `market.forecast.sample`.
 - [ ] T029 [P] [US3] ARBORA-DATA-MARKET-R009 Served reads and imports for the Markets app (rollup).
 - [x] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
 - [x] T031 [P] [US3] ARBORA-DATA-MARKET-R009.2 Instrument detail: rates and dividends.
 - [x] T032 [P] [US3] ARBORA-DATA-MARKET-R009.3 Strategy recommendation with evidence or an abstain reason.
 - [x] T033 [P] [US3] ARBORA-DATA-MARKET-R009.4 DCA and alert delivery receipts read.
-- [ ] T034 [P] [US3] ARBORA-DATA-MARKET-R009.5 CSV import preview.
-- [ ] T035 [P] [US3] ARBORA-DATA-MARKET-R009.6 CSV import commit with an idempotent receipt.
+- [x] T034 [P] [US3] ARBORA-DATA-MARKET-R009.5 CSV import preview.
+- [x] T035 [P] [US3] ARBORA-DATA-MARKET-R009.6 CSV import commit with an idempotent receipt.
 - [ ] T036 [P] [US3] ARBORA-DATA-MARKET-R009.7 Hot-path proof: the Markets reads over MCP and HTTP.

@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
+    "PREVIEW_NOT_FOUND": (404, False),
+    "PREVIEW_HAS_ERRORS": (409, False),
+    "LISTING_NOT_FOUND": (404, False),
+    "FORECAST_ADMISSION_DENIED": (403, False),
+    "DIGEST_MISMATCH": (400, False),
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),
     "ACCESS_DENIED": (403, False),
     "ARCHIVE_DIGEST_MISMATCH": (400, False),
