@@ -20,6 +20,7 @@ async def test_backing_surface_exposes_prompts_resources_and_templates() -> None
         mcp,
         action_policies=ActionPolicies(),
         approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
         intent_tools=False,
     )
     async with Client(backing) as client:

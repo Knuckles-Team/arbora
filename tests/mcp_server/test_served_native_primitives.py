@@ -69,6 +69,7 @@ def _started(policy: str | None) -> FastMCP:
         server,
         action_policies=ActionPolicies(),
         approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
         intent_tools=False,
     )
     return server

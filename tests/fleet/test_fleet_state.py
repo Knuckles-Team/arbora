@@ -89,8 +89,8 @@ async def test_two_fleet_states_share_no_registry(tmp_path) -> None:
 
 
 def test_the_host_context_builds_one_fleet_state_per_context() -> None:
-    one = build_host_context(lambda: None)
-    other = build_host_context(lambda: None)
+    one = build_host_context()
+    other = build_host_context()
     assert isinstance(one.fleet, FleetState)
     assert one.fleet is not other.fleet
     field = dataclasses.fields(FleetState)[0].name

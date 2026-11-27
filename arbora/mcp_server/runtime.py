@@ -706,11 +706,7 @@ _AGENT_ID = read_env("AGENT_ID", f"mcp-client-{uuid.uuid4().hex}")
 _SESSION_ID = read_env("SESSION_ID", uuid.uuid4().hex)
 
 
-_ENGINE_LOCK = threading.Lock()
-
-
 _ensure_process_authority_current = cast(Any, None)
-_get_engine = cast(Any, None)
 _mint_process_session = cast(Any, None)
 _release_readiness_authority = cast(Any, None)
 _set_readiness_authority = cast(Any, None)
@@ -725,7 +721,6 @@ import arbora.mcp_server.bootstrap as _bootstrap
 for _bootstrap_name in (
     "_AGENT_ID",
     "_AUTHORITY_KEEPALIVE_ACTIVE",
-    "_ENGINE_LOCK",
     "_PROCESS_AUTHORITY_STOP",
     "_PROCESS_AUTHORITY_THREAD",
     "_PROCESS_SESSION_REFRESH_LOCK",
@@ -798,6 +793,11 @@ def _build_server(
     """
     from arbora.mcp_server.backing.server_factory import create_mcp_server
 
+    if host is None:
+        # A headless build (no served process) owns a context of its own.
+        from arbora.mcp_server.host_context import build_host_context
+
+        host = build_host_context()
     is_readonly = False
 
     def _check_readonly():
@@ -822,6 +822,7 @@ def _build_server(
         ),
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),
+        engine_provider=host.engine.served,
     )
 
     # Unauthenticated liveness + readiness for HTTP deployments (CONCEPT:MERISTEM-OS.deployment.liveness-vs-readiness-split).
@@ -948,11 +949,6 @@ def _build_server(
         )
         return JSONResponse(result)
 
-    if host is None:
-        # A headless build (no served process) owns a context of its own.
-        from arbora.mcp_server.host_context import build_host_context
-
-        host = build_host_context(_get_engine)
     _register_graph_tool_surface(
         mcp,
         canonical=canonical_surface,
@@ -1036,6 +1032,7 @@ def _register_graph_tool_surface(
             mcp,
             action_policies=host.policy.action_policies,
             approvals=host.policy.approvals,
+            engine_provider=host.engine.served,
             canonical=canonical,
             intent_tools=False,
         )
@@ -1046,6 +1043,7 @@ def _register_graph_tool_surface(
             mcp,
             action_policies=host.policy.action_policies,
             approvals=host.policy.approvals,
+            engine_provider=host.engine.served,
             canonical=canonical,
         )
     register_browser_control_tools(backing)
@@ -1077,7 +1075,7 @@ def _register_graph_tool_surface(
 
         # ARBORA-A2A-R022.1: a finished run's reply becomes a held output.
         bind_held_output(host.runs.a2a.authority, invocation)
-    mount_sdk_a2a(mcp, stream_handler=rpc_handler)
+    mount_sdk_a2a(mcp, engine_provider=host.engine.served, stream_handler=rpc_handler)
 
 
 def _served_caller_session() -> Any:
@@ -1174,7 +1172,7 @@ def ensure_tools_registered() -> None:
     :func:`_execute_tool`. Building the MCP server populates that dict as a side
     effect; we discard the throwaway FastMCP instance and skip the engine
     bootstrap (``bootstrap=False``) because the gateway owns the engine/daemon
-    lifecycle and the handlers resolve the engine lazily via ``_get_engine()``.
+    lifecycle and the handlers resolve the engine lazily through the host.
     The throwaway ``mcp`` also gets the fleet loader
     (:func:`_attach_headless_fleet_loader`).
     """
@@ -1183,6 +1181,6 @@ def ensure_tools_registered() -> None:
     from arbora.mcp_server.host_context import build_host_context
 
     # A headless build (no served process) owns a context of its own.
-    host = build_host_context(_get_engine)
+    host = build_host_context()
     _args, mcp, _middlewares = _build_server(bootstrap=False, host=host)
     _attach_headless_fleet_loader(mcp, host.fleet)

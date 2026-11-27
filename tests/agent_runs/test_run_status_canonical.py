@@ -36,7 +36,7 @@ def test_each_canonical_status_is_accepted(status: str) -> None:
 def test_an_event_with_an_unknown_status_is_refused_before_it_is_stored() -> None:
     event = {"run_id": "r1", "type": "run.status", "step": 1, "status": "paused"}
     with pytest.raises(UnknownRunStatus):
-        agent_runs.record_run_event(event)
+        agent_runs.record_run_event(event, engine_provider=lambda: None)
 
 
 @pytest.mark.spec("ARBORA-OPS-R900")

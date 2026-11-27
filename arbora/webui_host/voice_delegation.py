@@ -18,6 +18,7 @@ not permanent graph evidence, so this call records no provenance.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import Any, Protocol, TypedDict
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,22 @@ class WebUiVoiceDelegation(TypedDict):
     transcribe_voice: _TranscribeVoice
 
 
-async def _transcribe_voice(*, content: bytes, content_type: str) -> dict[str, str]:
+def _transcribe_voice(
+    engine_provider: Callable[[], Any],
+) -> _TranscribeVoice:
+    """The ``transcribe_voice`` helper bound to the host's engine."""
+
+    async def transcribe(*, content: bytes, content_type: str) -> dict[str, str]:
+        return await _transcribe(
+            engine_provider, content=content, content_type=content_type
+        )
+
+    return transcribe
+
+
+async def _transcribe(
+    engine_provider: Callable[[], Any], *, content: bytes, content_type: str
+) -> dict[str, str]:
     """Transcribe one bounded dictation clip through the modality seam.
 
     ARBORA-OPS-R899.7: the clip goes to the fleet's speech-to-text capability
@@ -60,7 +76,9 @@ async def _transcribe_voice(*, content: bytes, content_type: str) -> dict[str, s
     part = MediaPart(
         media_type=content_type or "audio/webm", data=content, source="webui:voice"
     )
-    prompt = await prompt_normalizer().normalize("", [part], record=False)
+    prompt = await prompt_normalizer(engine_provider).normalize(
+        "", [part], record=False
+    )
     derivation = prompt.derivations[0]
     return {
         "text": derivation.text,
@@ -69,6 +87,8 @@ async def _transcribe_voice(*, content: bytes, content_type: str) -> dict[str, s
     }
 
 
-def webui_voice_delegation_helpers() -> WebUiVoiceDelegation:
+def webui_voice_delegation_helpers(
+    engine_provider: Callable[[], Any],
+) -> WebUiVoiceDelegation:
     """The ``transcribe_voice`` workspace helper."""
-    return WebUiVoiceDelegation(transcribe_voice=_transcribe_voice)
+    return WebUiVoiceDelegation(transcribe_voice=_transcribe_voice(engine_provider))

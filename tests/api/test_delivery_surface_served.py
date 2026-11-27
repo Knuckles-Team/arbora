@@ -95,7 +95,7 @@ def test_delivery_runs_from_slice_to_merge_over_mcp(
         }
 
     route_methods(
-        _engine_client(app),
+        engine,
         {"DeliveryOpen": open_delivery, "DeliveryFeedback": feedback},
         monkeypatch,
         {"fixture-verified": person("one", extra_scopes=("lifecycle:write",))},
@@ -177,10 +177,3 @@ def test_delivery_runs_from_slice_to_merge_over_mcp(
     )
     assert not any(tool == "merge" for tool, _ in off.calls + on.calls)
     bind_signed_ingress(None)
-
-
-def _engine_client(app: Any) -> Any:
-    """The loopback engine client behind the served app (the one ``served`` composed)."""
-    from arbora.mcp_server import runtime as mcp_runtime
-
-    return mcp_runtime._get_engine()

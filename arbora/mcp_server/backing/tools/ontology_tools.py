@@ -264,7 +264,9 @@ def _spec_ticket_link(
     )
 
 
-def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str | None]:
+def _source_sync_resolve_engine(
+    connection: str, graph: str, engine_provider: Callable[[], Any]
+) -> tuple[Any, str | None]:
     """Resolve the target engine for `source_sync` per the graph/connection
     selection rules (U-37/GOC-67): an explicit graph never defaults, never fans
     out, and an unknown/unauthorized graph fails closed with no partial sync
@@ -295,7 +297,7 @@ def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str |
         _sync_conn_name, engine = entries[0]
         return engine, None
     try:
-        engine = runtime._get_engine()
+        engine = engine_provider()
     except Exception:  # noqa: BLE001
         engine = None
     return engine, None
@@ -673,7 +675,7 @@ def _object_set_algebra(
     )
 
 
-def register_ontology_tools(mcp):
+def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
     """Register the ontology_tools group on the given FastMCP server."""
 
     @mcp.tool(
@@ -895,7 +897,7 @@ def register_ontology_tools(mcp):
         """Unified fail-closed write-back to any target system (dry-run-first)."""
         try:
             try:
-                engine = runtime._get_engine()
+                engine = engine_provider()
             except Exception:  # noqa: BLE001 - offline → no backend resolver
                 engine = None
             backend = getattr(engine, "backend", None) if engine is not None else None
@@ -961,7 +963,7 @@ def register_ontology_tools(mcp):
         """Spec↔ticket↔agent linking + assignment + assigned-items read."""
         try:
             try:
-                engine = runtime._get_engine()
+                engine = engine_provider()
             except Exception:  # noqa: BLE001
                 engine = None
             backend = getattr(engine, "backend", None) if engine is not None else None
@@ -1038,7 +1040,9 @@ def register_ontology_tools(mcp):
             # U-37/GOC-67: resolve `connection`/`graph` BEFORE touching the
             # engine or reading any watermark — exactly like `graph_query`/
             # `graph_write`/`graph_ingest`.
-            engine, resolve_error = _source_sync_resolve_engine(connection, graph)
+            engine, resolve_error = _source_sync_resolve_engine(
+                connection, graph, engine_provider
+            )
             if resolve_error is not None:
                 return resolve_error
             if engine is None:
@@ -1128,7 +1132,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Run / inspect a unified ETL flow over the canonical KG hub."""
         try:
-            engine = runtime._get_engine()
+            engine = engine_provider()
         except Exception:  # noqa: BLE001
             engine = None
 
@@ -1246,7 +1250,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Record / query / promote classification claims through the governed lifecycle."""
         try:
-            engine = runtime._get_engine()
+            engine = engine_provider()
         except Exception:  # noqa: BLE001
             engine = None
         if engine is None:
@@ -1338,7 +1342,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Record repository provenance (RepositorySnapshot/Branch/Tag/ChangeEvent) into the KG."""
         try:
-            engine = runtime._get_engine()
+            engine = engine_provider()
         except Exception:  # noqa: BLE001
             engine = None
         if engine is None:

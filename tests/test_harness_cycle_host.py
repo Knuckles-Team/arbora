@@ -229,7 +229,7 @@ async def test_cycle_provider_reads_the_library_and_writes_envelopes_as_the_run(
 def test_the_host_composes_both_providers_into_the_one_record() -> None:
     from arbora.agent_host import host_port_composition
 
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     bare = harness_ports.build_host_ports(host)
     assert isinstance(bare.probe, HostProbeProvider)
     assert bare.cycle is None  # no served engine, no run-principal call to read through

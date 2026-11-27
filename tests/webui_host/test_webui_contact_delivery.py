@@ -208,7 +208,6 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
 
     service = object()
     from arbora.browser_control import browser_control_service
-    from arbora.mcp_server import runtime
 
     def browser_control_factory_kwargs(
         app_factory: object,
@@ -230,7 +229,6 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         "browser_control_factory_kwargs",
         browser_control_factory_kwargs,
     )
-    monkeypatch.setattr(runtime, "_get_engine", lambda: "arbora-engine")
     import pydantic_ai
 
     def _agent(model: object) -> str:
@@ -251,6 +249,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     module.run_web_ui(
         stop_event,
         action_policies=policies,
+        engine="arbora-engine",
         host=listener,
         port=8181,
         session_boundary=boundary,

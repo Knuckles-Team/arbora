@@ -127,7 +127,7 @@ def _serve(monkeypatch, *, authenticated: bool = True):
 async def test_mapped_and_retired_actions_over_mcp(monkeypatch) -> None:
     served, audit = _serve(monkeypatch)
     server = FastMCP("legacy-action-served")
-    write_ingest_tools.register_write_ingest_tools(server)
+    write_ingest_tools.register_write_ingest_tools(server, lambda: None)
     async with Client(server) as client:
         mapped = await client.call_tool(
             "graph_ingest",
@@ -187,7 +187,7 @@ async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) ->
 async def test_an_unverified_caller_reaches_no_operation(monkeypatch) -> None:
     served, audit = _serve(monkeypatch, authenticated=False)
     server = FastMCP("legacy-action-unauthenticated")
-    write_ingest_tools.register_write_ingest_tools(server)
+    write_ingest_tools.register_write_ingest_tools(server, lambda: None)
     async with Client(server) as client:
         refused = await client.call_tool(
             "graph_ingest", {"action": "corpus"}, raise_on_error=False

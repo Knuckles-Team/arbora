@@ -1755,6 +1755,7 @@ class _LeaseClient:
 def served_invocation_from_settings(
     *,
     process_session: Callable[[], Any],
+    engine_pool: Callable[[], Any],
     action_policies: ActionPolicies,
     bindings: Mapping[str, Any],
     fleet_effect: Any,
@@ -1766,7 +1767,6 @@ def served_invocation_from_settings(
     serves no operation-invoke API.
     """
     from arbora.core.settings import runtime_config
-    from arbora.mcp_server.served_engine import process_engine_pool
     from arbora.mcp_server.task_plan import configured_task_plan
 
     task_plan_config = configured_task_plan()
@@ -1774,8 +1774,8 @@ def served_invocation_from_settings(
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None
-    # The one process pool: startup composition reads EG through it too.
-    pool = process_engine_pool()
+    # The host's one pool: startup composition reads EG through it too.
+    pool = engine_pool()
     raw_key = str(read_env("ARBORA_PLAN_SEAL_KEY_HEX") or "").strip()
     return compose_served_invocation(
         pool=pool,

@@ -1,3 +1,4 @@
+from arbora.mcp_server.served_engine import engine_unbound
 from arbora.security.anonymous import session_context
 
 #!/usr/bin/python
@@ -9,6 +10,8 @@ enhanced observability and authorization context during tool execution.
 """
 
 import time
+from collections.abc import Callable
+from typing import Any
 
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.utilities.logging import get_logger
@@ -160,8 +163,14 @@ class ActorContextMiddleware(Middleware):
       proceed").
     """
 
-    def __init__(self, *, require_verified_session: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        require_verified_session: bool = False,
+        engine_provider: Callable[[], Any] = engine_unbound,
+    ) -> None:
         self.require_verified_session = require_verified_session
+        self._engine_provider = engine_provider
 
     def _claims(self, context: MiddlewareContext) -> dict | None:
         auth = getattr(context, "auth", None)
@@ -213,7 +222,6 @@ class ActorContextMiddleware(Middleware):
         if not claims:
             return result
         from arbora.identity.ports import record_session_open
-        from arbora.mcp_server import runtime
         from arbora.security.request_identity import actor_from_claims
 
         await self._precheck_bearer()
@@ -224,7 +232,7 @@ class ActorContextMiddleware(Middleware):
         await record_session_open(
             actor,
             session_id=session_id,
-            engine=runtime._get_engine(),
+            engine=self._engine_provider(),
             client=str(claims.get("azp") or claims.get("client_id") or ""),
         )
         return result

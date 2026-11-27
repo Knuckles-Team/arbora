@@ -31,6 +31,7 @@ from scion_sdk.credentials.runtime_references import (
 from scion_sdk.utilities import to_boolean
 
 from arbora.core.environment import read_env, read_reference, write_env
+from arbora.mcp_server.served_engine import engine_unbound
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -1810,6 +1811,7 @@ def _append_optional_middlewares(
     middlewares: list[Any],
     server_name: str,
     optional_classes: tuple[Any, Any, Any, Any, Any],
+    engine_provider: Callable[[], Any] = engine_unbound,
 ) -> None:
     (
         UserTokenMiddleware,
@@ -1827,7 +1829,10 @@ def _append_optional_middlewares(
     # see ActorContextMiddleware/`_configure_middleware` docstrings).
     if ActorContextMiddleware is not None:
         middlewares.append(
-            ActorContextMiddleware(require_verified_session=(server_name == "arbora"))
+            ActorContextMiddleware(
+                require_verified_session=(server_name == "arbora"),
+                engine_provider=engine_provider,
+            )
         )
 
     # Per-tool Prometheus metrics (count/latency/error) for this server, scraped
@@ -1882,7 +1887,10 @@ def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
 
 
 def _configure_middleware(
-    args: argparse.Namespace, *, server_name: str = ""
+    args: argparse.Namespace,
+    *,
+    server_name: str = "",
+    engine_provider: Callable[[], Any] = engine_unbound,
 ) -> list[Any]:
     """Build the standard middleware stack for an MCP server.
 
@@ -1908,7 +1916,7 @@ def _configure_middleware(
         ),
     ]
     _append_optional_middlewares(
-        middlewares, server_name, _import_optional_middlewares()
+        middlewares, server_name, _import_optional_middlewares(), engine_provider
     )
 
     eunomia_mw = _configure_eunomia_middleware(args)
@@ -2282,7 +2290,9 @@ def _resolve_metrics_token() -> str | None:
         return None
 
 
-def _mount_tasks_extension_if_available(mcp: Any, name: str) -> None:
+def _mount_tasks_extension_if_available(
+    mcp: Any, name: str, engine_provider: Callable[[], Any] = engine_unbound
+) -> None:
     # CONCEPT:MERISTEM-ECO.mcp.tasks-workitem-bridge -- mount the native WorkItem-backed
     # Tasks extension (arbora/mcp_server/backing/tasks_extension/py), NOT
     # fastmcp_tasks.extension.TasksExtension: that package's engine is
@@ -2312,7 +2322,9 @@ def _mount_tasks_extension_if_available(mcp: Any, name: str) -> None:
         # metadata.  Arbora's multiplexer uses it to route follow-up
         # tasks/get/update/cancel requests without introducing another task
         # registry or scheduler.
-        mcp.add_extension(WorkItemTasksExtension(server_id=name))
+        mcp.add_extension(
+            WorkItemTasksExtension(server_id=name, engine_provider=engine_provider)
+        )
 
 
 def _register_operational_routes(
@@ -2392,6 +2404,7 @@ def create_mcp_server(
     *,
     lifespan_extension: Callable[[Any], Any] | None = None,
     manage_engine_shutdown: bool = True,
+    engine_provider: Callable[[], Any] = engine_unbound,
 ):
     """Initialize a FastMCP server with a standard middleware and auth stack.
 
@@ -2446,7 +2459,9 @@ def create_mcp_server(
     _validate_network_exposure(args)
 
     auth = _configure_auth(args)
-    middlewares = _configure_middleware(args, server_name=name)
+    middlewares = _configure_middleware(
+        args, server_name=name, engine_provider=engine_provider
+    )
 
     remote_network = _is_remote_network(args)
     metrics_token = _resolve_metrics_token()
@@ -2472,7 +2487,7 @@ def create_mcp_server(
         # default to apply to yet.
         tasks=False,
     )
-    _mount_tasks_extension_if_available(mcp, name)
+    _mount_tasks_extension_if_available(mcp, name, engine_provider)
     _register_operational_routes(mcp, remote_network, metrics_token)
 
     # Inject dynamic visibility transform for dynamic tag/tool filtering

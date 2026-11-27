@@ -24,7 +24,7 @@ server and are reached through ``act``.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import cache
 from types import MappingProxyType
@@ -223,43 +223,52 @@ def host_operations(mcp: Any) -> Mapping[str, tuple[str, str | None]]:
 
 
 def arbora_registrars(
-    action_policies: ActionPolicies, approvals: ApprovalDecisions
+    action_policies: ActionPolicies,
+    approvals: ApprovalDecisions,
+    engine_provider: Callable[[], Any],
 ) -> list[Any]:
     """The action-routed registrars that populate the dispatch core.
 
     The governed families (secret, config) gate through the host's
     ``action_policies``; approval decisions go through the host's ``approvals``.
+    Every family that reads the engine receives the host's ``engine_provider``.
     """
     from arbora.mcp_server.backing import tools as au_tools
 
     return [
-        au_tools.register_query_tools,
-        au_tools.register_write_ingest_tools,
+        lambda server: au_tools.register_query_tools(server, engine_provider),
+        lambda server: au_tools.register_write_ingest_tools(server, engine_provider),
         au_tools.register_analysis_tools,
         au_tools.register_analyze_suite_tools,
-        au_tools.register_state_tools,
-        au_tools.register_ontology_tools,
-        au_tools.register_reach_tools,
+        lambda server: au_tools.register_state_tools(server, engine_provider),
+        lambda server: au_tools.register_ontology_tools(server, engine_provider),
+        lambda server: au_tools.register_reach_tools(server, engine_provider),
         au_tools.register_candidate_claim_tools,
         (
             "secret",
             "SECRETTOOL",
-            lambda server: au_tools.register_secret_tools(server, action_policies),
+            lambda server: au_tools.register_secret_tools(
+                server, action_policies, engine_provider
+            ),
         ),
         (
             "config",
             "CONFIGTOOL",
-            lambda server: au_tools.register_config_tools(server, action_policies),
+            lambda server: au_tools.register_config_tools(
+                server, action_policies, engine_provider
+            ),
         ),
         au_tools.register_engine_tools,
         lambda server: au_tools.register_engine_surface_tools(
             server, include_unserved_mining=False
         ),
-        au_tools.register_domain_ops_tools,
-        lambda server: au_tools.register_governance_tools(server, approvals),
-        au_tools.register_audit_tools,
+        lambda server: au_tools.register_domain_ops_tools(server, engine_provider),
+        lambda server: au_tools.register_governance_tools(
+            server, approvals, engine_provider
+        ),
+        lambda server: au_tools.register_audit_tools(server, engine_provider),
         au_tools.register_epistemic_tools,
-        au_tools.register_compliance_tools,
+        lambda server: au_tools.register_compliance_tools(server, engine_provider),
     ]
 
 
@@ -292,6 +301,7 @@ def register_arbora_surface(
     *,
     action_policies: ActionPolicies,
     approvals: ApprovalDecisions,
+    engine_provider: Callable[[], Any],
     canonical: bool = False,
     intent_tools: bool = True,
 ) -> Any:
@@ -313,7 +323,7 @@ def register_arbora_surface(
     backing = FastMCP("arbora-backing")
     register_backing_tools(
         backing,
-        registrars=arbora_registrars(action_policies, approvals),
+        registrars=arbora_registrars(action_policies, approvals, engine_provider),
         force_registration=canonical,
     )
     register_native_primitives(backing)

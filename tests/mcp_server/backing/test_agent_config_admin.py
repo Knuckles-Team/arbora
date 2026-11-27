@@ -179,7 +179,10 @@ def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
         config_admin.set_value(
-            "NOT_A_REAL_SETTING", "x", action_policies=ActionPolicies()
+            "NOT_A_REAL_SETTING",
+            "x",
+            action_policies=ActionPolicies(),
+            engine_provider=lambda: None,
         )
 
     assert exc.value.code == "unknown_key"
@@ -198,6 +201,7 @@ def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
             "MCP_DYNAMIC_DISCOVERY_TIMEOUT",
             "not-a-number",
             action_policies=ActionPolicies(),
+            engine_provider=lambda: None,
         )
 
     assert exc.value.code == "validation_failed"
@@ -215,6 +219,7 @@ def test_set_refuses_an_inline_secret(monkeypatch):
             "OIDC_CLIENT_SECRET_REF",
             "aVeryRealClientSecret",
             action_policies=ActionPolicies(),
+            engine_provider=lambda: None,
         )
 
     assert exc.value.code == "inline_secret_refused"
@@ -230,13 +235,16 @@ def test_set_denies_when_the_policy_gate_denies(monkeypatch):
     monkeypatch.setattr(
         config_admin,
         "_gate",
-        lambda key, reason, _policies: (
+        lambda key, reason, _policies, _engine: (
             False,
             {"decision": "denied", "reason": "needs approval"},
         ),
     )
     result = config_admin.set_value(
-        "MCP_ALWAYS_LOAD", '["a-mcp"]', action_policies=ActionPolicies()
+        "MCP_ALWAYS_LOAD",
+        '["a-mcp"]',
+        action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert result["applied"] is False
@@ -254,7 +262,7 @@ def test_set_denies_when_the_policy_gate_itself_is_unavailable(monkeypatch):
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("engine down")),
     )
     allowed, info = config_admin._gate(
-        "MCP_ALWAYS_LOAD", "why", policy.ActionPolicies()
+        "MCP_ALWAYS_LOAD", "why", policy.ActionPolicies(), lambda: None
     )
 
     assert allowed is False
@@ -271,7 +279,7 @@ def _allow_and_record_writes(monkeypatch) -> list:
     monkeypatch.setattr(
         config_admin,
         "_gate",
-        lambda key, reason, _policies: (True, {"decision": "allow"}),
+        lambda key, reason, _policies, _engine: (True, {"decision": "allow"}),
     )
     return written
 
@@ -289,6 +297,7 @@ def test_set_writes_through_the_standard_precedence_and_records_provenance(monke
         '["tunnel-manager-mcp"]',
         reason="pin one server",
         action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert result["applied"] is True
@@ -312,7 +321,7 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     monkeypatch.setattr(
         config_admin,
         "_gate",
-        lambda key, reason, _policies: (True, {"decision": "allow"}),
+        lambda key, reason, _policies, _engine: (True, {"decision": "allow"}),
     )
     monkeypatch.setattr(config_admin, "_record_provenance", lambda key, **kw: None)
     monkeypatch.setattr(
@@ -320,7 +329,10 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     )
 
     result = config_admin.set_value(
-        "MCP_ALWAYS_LOAD", '["tunnel-manager-mcp"]', action_policies=ActionPolicies()
+        "MCP_ALWAYS_LOAD",
+        '["tunnel-manager-mcp"]',
+        action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert "applied_live" not in result
@@ -339,7 +351,7 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
     monkeypatch.setattr(
         config_admin,
         "_gate",
-        lambda key, reason, _policies: (True, {"decision": "allow"}),
+        lambda key, reason, _policies, _engine: (True, {"decision": "allow"}),
     )
     monkeypatch.setattr(config_admin, "_record_provenance", lambda key, **kw: None)
 
@@ -347,6 +359,7 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
         "MCP_ALWAYS_LOAD_TOOLS",
         '["github-mcp:github_issues"]',
         action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert written["MCP_ALWAYS_LOAD_TOOLS"] == ["github-mcp:github_issues"]
@@ -357,7 +370,10 @@ def test_a_failed_provenance_write_does_not_undo_an_applied_change(monkeypatch):
     a change the operator was authorised to make and which is already durable."""
     written = _allow_and_record_writes(monkeypatch)
     result = config_admin.set_value(
-        "MCP_ALWAYS_LOAD", '["a-mcp"]', action_policies=ActionPolicies()
+        "MCP_ALWAYS_LOAD",
+        '["a-mcp"]',
+        action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert result["applied"] is True
@@ -386,7 +402,9 @@ def test_reload_names_the_fields_that_still_need_a_restart(monkeypatch):
 async def test_dispatch_refuses_an_unknown_action():
     with pytest.raises(config_admin.ConfigAdminError) as exc:
         await config_admin.dispatch(
-            "delete_everything", action_policies=ActionPolicies()
+            "delete_everything",
+            action_policies=ActionPolicies(),
+            engine_provider=lambda: None,
         )
     assert exc.value.code == "unknown_action"
 
@@ -407,7 +425,9 @@ async def test_dispatch_reload_notifies_the_served_catalog_authority(monkeypatch
 
     monkeypatch.setattr(shared_multiplexer, "run_on_served_multiplexer", run_on)
 
-    result = await config_admin.dispatch("reload", action_policies=ActionPolicies())
+    result = await config_admin.dispatch(
+        "reload", action_policies=ActionPolicies(), engine_provider=lambda: None
+    )
 
     assert result["catalog"] == {
         "request_id": "graph-config-reload",
@@ -429,7 +449,9 @@ async def test_dispatch_reload_reports_no_reconcile_without_a_served_authority(
     )
     shared_multiplexer._reset_served_multiplexer_for_tests()
 
-    result = await config_admin.dispatch("reload", action_policies=ActionPolicies())
+    result = await config_admin.dispatch(
+        "reload", action_policies=ActionPolicies(), engine_provider=lambda: None
+    )
 
     assert result["catalog"]["reconciled"] is False
 

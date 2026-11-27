@@ -19,6 +19,8 @@ CONCEPT:MERISTEM-OS.identity.encrypted-secret-store — Engine-backed encrypted 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import Field
 
@@ -27,12 +29,16 @@ from arbora.mcp_server import runtime
 
 
 def _gate(
-    kind: str, target: str, reason: str, action_policies: ActionPolicies
+    kind: str,
+    target: str,
+    reason: str,
+    action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
 ) -> tuple[bool, dict]:
     """Run the ActionPolicy gate for a secret mutation. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store."""
     from arbora.access.action_policy import ActionRequest
 
-    decision = action_policies.for_engine(runtime._get_engine()).decide(
+    decision = action_policies.for_engine(engine_provider()).decide(
         ActionRequest(
             kind=kind,
             target=target,
@@ -49,7 +55,9 @@ def _gate(
     return decision.allowed, info
 
 
-def register_secret_tools(mcp, action_policies: ActionPolicies):
+def register_secret_tools(
+    mcp, action_policies: ActionPolicies, engine_provider: Callable[[], Any]
+):
     """Register the ``graph_secret`` tool onto the MCP server. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store"""
 
     @mcp.tool(
@@ -87,7 +95,9 @@ def register_secret_tools(mcp, action_policies: ActionPolicies):
         if action == "set":
             if not key:
                 return json.dumps({"error": "set requires key"})
-            allowed, info = _gate("secret.set", key, reason, action_policies)
+            allowed, info = _gate(
+                "secret.set", key, reason, action_policies, engine_provider
+            )
             if not allowed:
                 return json.dumps({"error": "policy_denied", **info})
             client.set(key, value, **(metadata or {}))
@@ -101,7 +111,9 @@ def register_secret_tools(mcp, action_policies: ActionPolicies):
         if action == "delete":
             if not key:
                 return json.dumps({"error": "delete requires key"})
-            allowed, info = _gate("secret.delete", key, reason, action_policies)
+            allowed, info = _gate(
+                "secret.delete", key, reason, action_policies, engine_provider
+            )
             if not allowed:
                 return json.dumps({"error": "policy_denied", **info})
             return json.dumps({"deleted": client.delete(key), "key": key, **info})

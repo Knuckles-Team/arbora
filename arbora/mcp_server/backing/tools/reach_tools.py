@@ -11,13 +11,15 @@ CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool — graph_reach MCP tool and REST 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import Field
 
 from arbora.mcp_server import runtime
 
 
-def register_reach_tools(mcp):
+def register_reach_tools(mcp, engine_provider: Callable[[], Any]):
     """Register the ``graph_reach`` tool onto the MCP server. CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool"""
 
     @mcp.tool(
@@ -58,7 +60,7 @@ def register_reach_tools(mcp):
     ) -> str:
         from arbora.messaging.service import MessagingService
 
-        engine = runtime._get_engine()
+        engine = engine_provider()
         svc = MessagingService.instance(engine)
 
         if action == "reach_user":

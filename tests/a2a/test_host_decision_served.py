@@ -105,7 +105,7 @@ class Engine:
 
 
 def _host(engine: Engine | None) -> tuple[Any, RecordingAuthority]:
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     if engine is not None:
         bind_a2a_decision(
             host,

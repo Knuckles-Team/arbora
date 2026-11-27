@@ -17,7 +17,6 @@ from arbora.mcp_server.composition import (
 
 @pytest.fixture(autouse=True)
 def _fresh_pool(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    served_engine.reset_process_engine()
     for name in ("GRAPH_SERVICE_AUTH_SECRET", "MEDULLA_SIGNER_KEYS_JSON"):
         monkeypatch.delenv(name, raising=False)
 
@@ -26,7 +25,6 @@ def _fresh_pool(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
     monkeypatch.setattr(composition, "ensure_local_engine", forbidden)
     yield
-    served_engine.reset_process_engine()
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R018.6")
@@ -46,12 +44,13 @@ def test_remote_url_starts_nothing_locally_and_missing_credential_refuses(
         "graph_service_endpoints",
         ["tcp://engine.example.com:4000"],
     )
+    handles = served_engine.EngineHandles()
     before = composition.engine_spawn_count()
     with pytest.raises(EngineRefusal) as refused:
-        served_engine.process_engine_pool()
+        handles.pool()
     assert refused.value.code == "ENGINE_CREDENTIAL_MISSING"
 
     monkeypatch.setenv("GRAPH_SERVICE_AUTH_SECRET", "a-credential")  # nosec B105
-    pool = served_engine.process_engine_pool()
-    assert pool is served_engine.process_engine_pool()
+    pool = handles.pool()
+    assert pool is handles.pool()
     assert composition.engine_spawn_count() == before

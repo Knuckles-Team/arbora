@@ -112,7 +112,7 @@ def test_served_start_composes_the_record_or_names_the_pin_gap(
     from arbora.mcp_server.harness_ports import bind_host_ports_of
     from arbora.mcp_server.host_context import build_host_context
 
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     bind_host_ports_of(host, services=captured["invocation"].services)
     binding = host.runs.ports.binding
     if hasattr(host_ports, "HostPorts"):

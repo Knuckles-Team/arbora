@@ -42,11 +42,11 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
     monkeypatch.setattr(
         host_bindings,
         "mount_sdk_a2a",
-        lambda mcp: calls.append(("sdk_a2a", mcp, None)),
+        lambda mcp, *, engine_provider: calls.append(("sdk_a2a", mcp, None)),
     )
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
 
-    runtime._register_graph_tool_surface(served, host=build_host_context(lambda: None))
+    runtime._register_graph_tool_surface(served, host=build_host_context())
 
     assert calls == [
         ("surface", served, None),

@@ -39,7 +39,6 @@ def test_bootstrap_exports_bind_runtime_host_state() -> None:
         ]
         is runtime._AUTHORITY_KEEPALIVE_ACTIVE
     )
-    assert runtime._get_engine.__globals__["_ENGINE_LOCK"] is runtime._ENGINE_LOCK
 
 
 @pytest.mark.asyncio
@@ -54,7 +53,7 @@ async def test_installed_gateway_port_dispatches_native_runtime(
 
     monkeypatch.setattr(runtime, "_execute_tool", execute)
     application = install_gateway_application(
-        fleet=FleetState(), approvals=ApprovalDecisions()
+        fleet=FleetState(), approvals=ApprovalDecisions(), engine_provider=lambda: None
     )
 
     assert gateway_application() is application
@@ -83,11 +82,12 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr("arbora.mcp_server.composition.CoServiceSupervisor", Supervisor)
 
     policies = ActionPolicies()
-    start_composed_services(object(), object(), action_policies=policies)
+    engine = object()
+    start_composed_services(object(), engine, action_policies=policies)
 
     assert started[0][0] == "overstory"
     assert started[0][1].func.__module__ == "arbora.webui_host.webui_co_service"
-    assert started[0][1].keywords == {"action_policies": policies}
+    assert started[0][1].keywords == {"action_policies": policies, "engine": engine}
 
 
 # spec: ARBORA-HOST-R011
@@ -162,7 +162,11 @@ def test_gateway_adapter_satisfies_runtime_protocol() -> None:
     from arbora.gateway.ports import GatewayApplicationPort
 
     assert isinstance(
-        NativeGatewayApplication(fleet=FleetState(), approvals=ApprovalDecisions()),
+        NativeGatewayApplication(
+            fleet=FleetState(),
+            approvals=ApprovalDecisions(),
+            engine_provider=lambda: None,
+        ),
         GatewayApplicationPort,
     )
 
@@ -179,7 +183,7 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
     )
 
     application = NativeGatewayApplication(
-        fleet=FleetState(), approvals=ApprovalDecisions()
+        fleet=FleetState(), approvals=ApprovalDecisions(), engine_provider=lambda: None
     )
     assert application.remote_oauth_grant_bindings(actor) is expected
 

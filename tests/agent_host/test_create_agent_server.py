@@ -128,7 +128,10 @@ from arbora.agent_host.terminal_http import (  # noqa: E402
     TerminalHttpHosts,
 )
 from arbora.mcp_server.composition import CoServiceSupervisor  # noqa: E402
-from tests.agent_host._terminal_owner import launch_arguments, terminal_owner  # noqa: E402
+from tests.agent_host._terminal_owner import (  # noqa: E402
+    launch_arguments,
+    terminal_owner,
+)
 
 
 @pytest.mark.spec("ARBORA-HOST-R009.2")

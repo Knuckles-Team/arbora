@@ -77,10 +77,15 @@ def graph_write_and_engine(tmp_path, monkeypatch):
         "arbora.mcp_server.backing.server_factory.create_mcp_server",
         return_value=(None, mock_mcp, []),
     ):
-        with patch("arbora.mcp_server.runtime._get_engine", return_value=engine):
-            from arbora.mcp_server.runtime import _build_server
+        from arbora.mcp_server.host_context import (
+            compose_host_context,
+        )
+        from arbora.mcp_server.runtime import _build_server
+        from tests._support import FixedEngineHandles
 
-            _build_server(bootstrap=False)
+        _build_server(
+            bootstrap=False, host=compose_host_context(FixedEngineHandles(engine))
+        )
 
     from arbora.mcp_server import runtime
     from arbora.mcp_server.backing import engine_routing

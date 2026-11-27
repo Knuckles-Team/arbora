@@ -39,13 +39,23 @@ def terminal(output: str = "reply", status: str = "completed") -> dict[str, Any]
     }
 
 
-def sink(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    engine = SimpleNamespace(
+class Records(list):
+    """The properties written by one engine, and the engine that wrote them."""
+
+    engine: Any
+
+
+def sink(monkeypatch: pytest.MonkeyPatch) -> Records:
+    records = Records()
+    records.engine = SimpleNamespace(
         create_node=lambda node_id, label, properties: records.append(properties)
     )
-    monkeypatch.setattr(agent_runs, "_engine", lambda: engine)
     return records
+
+
+def emit(records: Records, event: Any) -> None:
+    """Record one run event on the engine behind ``records``."""
+    agent_runs.record_run_event(event, engine_provider=lambda: records.engine)
 
 
 def read(records: list[dict[str, Any]], status: str = "succeeded") -> Any:
@@ -67,7 +77,7 @@ def test_maximum_reply_roundtrips_without_mutating_event(
     output = character * 65_536
     event = terminal(output, status)
     original = deepcopy(event)
-    agent_runs.record_run_event(event)
+    emit(records, event)
     assert event == original
     assert len(records) == 1
     payload = records[0]["payload"]
@@ -94,7 +104,7 @@ def at_limit(extra: int = 0) -> dict[str, Any]:
 def test_exact_serialized_limit_is_preserved(monkeypatch: pytest.MonkeyPatch) -> None:
     records = sink(monkeypatch)
     event = at_limit()
-    agent_runs.record_run_event(event)
+    emit(records, event)
     assert (
         len(records[0]["payload"].encode("utf-8"))
         == agent_runs.MAX_RUN_EVENT_PAYLOAD_BYTES
@@ -109,7 +119,7 @@ def test_one_byte_over_limit_keeps_completion_and_marks_body_unavailable(
     records = sink(monkeypatch)
     event = at_limit(1)
     event["other_event_field"] = "private" + event["other_event_field"][7:]
-    agent_runs.record_run_event(event)
+    emit(records, event)
     assert len(records) == 1
     marker = json.loads(records[0]["payload"])
     assert marker == {
@@ -139,8 +149,8 @@ def test_serialization_failure_keeps_identity_without_private_diagnostics(
             raise RuntimeError("private error value")
 
     records = sink(monkeypatch)
-    agent_runs.record_run_event({**terminal(), "extra": Unserializable()})
-    agent_runs.record_run_event({**terminal(), "extra": float("nan")})
+    emit(records, {**terminal(), "extra": Unserializable()})
+    emit(records, {**terminal(), "extra": float("nan")})
     assert len(records) == 2
     for record in records:
         marker = json.loads(record["payload"])
@@ -157,7 +167,7 @@ def test_larger_output_is_preserved_as_event_but_never_claimed_complete(
     records = sink(monkeypatch)
     output = "a" * 65_537
     event = terminal(output)
-    agent_runs.record_run_event(event)
+    emit(records, event)
     assert json.loads(records[0]["payload"]) == event
     remember_task_output(TASK, "old reply")
     remember_task_output(TASK, output)
@@ -171,7 +181,7 @@ def test_failed_run_never_exposes_partial_output(
 ) -> None:
     records = sink(monkeypatch)
     event = {**terminal("partial", "failed"), "type": "error"}
-    agent_runs.record_run_event(event)
+    emit(records, event)
     assert json.loads(records[0]["payload"]) == event
     assert read(records, status="failed") is None
 
@@ -195,7 +205,7 @@ async def test_task_read_preserves_completion_with_typed_unavailable_reply(
         event = {**terminal(), "extra": float("nan")}
     else:
         event = terminal("a" * 65_537)
-    agent_runs.record_run_event(event)
+    emit(records, event)
     assert len(records) == 1
     authority = WorkItemA2AAuthority(
         lambda: SimpleNamespace(
@@ -227,7 +237,7 @@ def test_malformed_payload_error_marker_refuses(
     monkeypatch: pytest.MonkeyPatch, change: str
 ) -> None:
     records = sink(monkeypatch)
-    agent_runs.record_run_event(at_limit(1))
+    emit(records, at_limit(1))
     marker = json.loads(records[0]["payload"])
     if change == "run_id":
         marker["run_id"] = "foreign"

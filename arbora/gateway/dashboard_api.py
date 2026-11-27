@@ -232,11 +232,10 @@ async def health_check() -> JSONResponse:
 
 
 def _engine_probe() -> dict[str, Any]:
-    from arbora.mcp_server import runtime
+    from arbora.gateway.ports import gateway_application
     from arbora.observability.readiness import check
 
-    get_engine = runtime._get_engine
-    if callable(get_engine) and get_engine() is not None:
+    if gateway_application().engine() is not None:
         return check("ready")
     return check("unavailable", reason="no active engine")
 

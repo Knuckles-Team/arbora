@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlencode
 
@@ -158,7 +159,7 @@ def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
     raise not_served("knowledge_graph.core.source_sync", "MEDULLA-INGEST-WORKER-R605")
 
 
-def register_state_tools(mcp):
+def register_state_tools(mcp, engine_provider: Callable[[], Any]):
     """Register the state_tools group on the given FastMCP server."""
 
     @mcp.tool(
@@ -222,7 +223,7 @@ def register_state_tools(mcp):
         import json as _json
 
         try:
-            engine = runtime._get_engine()
+            engine = engine_provider()
             if action == "sync":
                 return _feeds_sync_action(engine, url, mode)
             return _json.dumps({"error": f"unknown action {action!r}"})

@@ -29,6 +29,7 @@ compliance/redaction logic):
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import Field
@@ -174,8 +175,8 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
     )
 
 
-def _posture() -> dict[str, Any]:
-    engine = runtime._get_engine()
+def _posture(engine_provider: Callable[[], Any]) -> dict[str, Any]:
+    engine = engine_provider()
 
     # X4: policy version + auth/secrets posture reuse the existing
     # arbora-doctor checks and need no KG engine at all — computed
@@ -195,7 +196,7 @@ def _posture() -> dict[str, Any]:
 
     from arbora.mcp_server.backing.tools.audit_tools import _verify
 
-    audit = _verify()
+    audit = _verify(engine_provider)
 
     node_counts: dict[str, int] = {}
     status_breakdown: dict[str, dict[str, int]] = {}
@@ -227,9 +228,15 @@ def _posture() -> dict[str, Any]:
 
 
 def _export(
-    *, cypher: str, node_ids_json: str, disclosure_level: str, as_of: str, limit: int
+    engine_provider: Callable[[], Any],
+    *,
+    cypher: str,
+    node_ids_json: str,
+    disclosure_level: str,
+    as_of: str,
+    limit: int,
 ) -> dict[str, Any]:
-    engine = runtime._get_engine()
+    engine = engine_provider()
     if engine is None:
         return {
             "surface": "compliance",
@@ -307,7 +314,7 @@ def _export(
     }
 
 
-def register_compliance_tools(mcp: Any) -> None:
+def register_compliance_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
     """Register the ``graph_compliance`` group on the given FastMCP server."""
 
     @mcp.tool(
@@ -370,11 +377,12 @@ def register_compliance_tools(mcp: Any) -> None:
         """Compliance posture rollup + redacted bulk subgraph export."""
         action_key = (action or "posture").strip().lower()
         if action_key == "posture":
-            result = await run_blocking_ordered(_posture)
+            result = await run_blocking_ordered(_posture, engine_provider)
             return json.dumps(result, default=str)
         if action_key == "export":
             result = await run_blocking_ordered(
                 _export,
+                engine_provider,
                 cypher=cypher,
                 node_ids_json=node_ids,
                 disclosure_level=disclosure_level,

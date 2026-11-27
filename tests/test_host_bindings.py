@@ -53,7 +53,7 @@ def test_decision_is_a_frozen_record_and_the_fleet_toolset_has_two_tools():
 @pytest.mark.spec("ARBORA-HOST-R008.1000")
 @pytest.mark.spec("ARBORA-HOST-R008.1003")
 def test_bind_messaging_ports_binds_all_four_ports():
-    hb.bind_messaging_ports()
+    hb.bind_messaging_ports(lambda: None)
     ports = host_ports()
     assert ports.turn_handler is hb.turn_handler
     assert ports.action_gate is hb.action_gate

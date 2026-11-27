@@ -21,24 +21,10 @@ logger = logging.getLogger(__name__)
 # state injection explicit avoids an eager bootstrap↔runtime import cycle.
 _AGENT_ID = cast(Any, None)
 _AUTHORITY_KEEPALIVE_ACTIVE = cast(Any, None)
-_ENGINE_LOCK = cast(Any, None)
 _PROCESS_AUTHORITY_STOP = cast(Any, None)
 _PROCESS_AUTHORITY_THREAD = cast(Any, None)
 _PROCESS_SESSION_REFRESH_LOCK = cast(Any, None)
 _SESSION_ID = cast(Any, None)
-
-
-def _get_engine():
-    """The process engine handle over the one served EG client pool.
-
-    The same :func:`~arbora.mcp_server.served_engine.process_engine_pool`
-    backs the operation-invoke API, so startup composition and served
-    operations share one set of EG transports. Every request through the
-    handle runs under the ambient verified session.
-    """
-    from arbora.mcp_server.served_engine import served_engine
-
-    return served_engine()
 
 
 def _set_readiness_authority(session: Any) -> object:
@@ -911,7 +897,7 @@ def _engine_ready_timeout_seconds() -> float:
     return float(getattr(runtime_config, "arbora_engine_ready_timeout", 1500.0))
 
 
-def _start_engine_bootstrap(session: Any) -> None:
+def _start_engine_bootstrap(engine: Any, session: Any) -> None:
     """Prove the engine answers under the process authority before serving.
 
     EG owns its workers, materialization and durable state
@@ -922,7 +908,6 @@ def _start_engine_bootstrap(session: Any) -> None:
     """
     from arbora.security.session import use_session
 
-    engine = _get_engine()
     graph = str(session.graph)
     deadline = time.monotonic() + _engine_ready_timeout_seconds()
     while True:

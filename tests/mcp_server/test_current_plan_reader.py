@@ -236,9 +236,7 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     # Use the real configuration input and verify later reads remain live.
     with monkeypatch.context() as config_patch:
         config_patch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///test-only")
-        invocation, session = server._served_invocation(
-            host=build_host_context(lambda: None)
-        )
+        invocation, session = server._served_invocation(host=build_host_context())
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://192.0.2.1:80")
     assert runtime_config.graph_service_endpoints == ["tcp://192.0.2.1:80"]
     assert invocation is not None and session is not None

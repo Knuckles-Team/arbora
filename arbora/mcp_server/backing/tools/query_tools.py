@@ -442,7 +442,10 @@ def _run_graph_query_sparql(sparql: str, connection: str, graph: str) -> str:
 
 
 def _run_graph_query_federated(
-    query: str, reference_id: str, parsed_params: dict[str, Any]
+    query: str,
+    reference_id: str,
+    parsed_params: dict[str, Any],
+    engine_provider: Callable[[], Any],
 ) -> str:
     """``scope=='federated'`` branch of ``_run_graph_query``."""
     if not reference_id:
@@ -455,7 +458,7 @@ def _run_graph_query_federated(
         from arbora.security.session import resolve_session
 
         resolve_session(required_scope="kg:read")
-        engine = runtime._get_engine()
+        engine = engine_provider()
         registry = engine_routing.get_connection_registry()
         results = engine.execute_federated_query(
             reference_id, query, parsed_params, registry=registry
@@ -1051,6 +1054,7 @@ def _run_graph_query_local(
     include_epistemic_flag: bool,
     connection: str,
     graph: str,
+    engine_provider: Callable[[], Any],
 ) -> str:
     """Resolve and execute the fall-through local Cypher query path.
 
@@ -1081,7 +1085,12 @@ def _run_graph_query_local(
     # canonical default graph only — control-plane/aggregate reads resolve there.
     if union_read and is_aggregation_cypher(cypher):
         return _run_graph_query_union_aggregate(
-            cypher, parsed_params, as_of, include_epistemic_flag, graph
+            cypher,
+            parsed_params,
+            as_of,
+            include_epistemic_flag,
+            graph,
+            engine_provider,
         )
 
     if not fanout:
@@ -1110,11 +1119,12 @@ def _run_graph_query_union_aggregate(
     as_of: str,
     include_epistemic_flag: bool,
     graph: str,
+    engine_provider: Callable[[], Any],
 ) -> str:
     """CONCEPT:MERISTEM-KG.query.query-aggregation — an aggregation under the implicit content-graph
     union runs against the canonical default graph only (see the caller for why).
     """
-    engine = runtime._get_engine()
+    engine = engine_provider()
     try:
         if include_epistemic_flag:
             results = engine.query_cypher(
@@ -2186,6 +2196,7 @@ async def _graph_catalog_response(
     ids_json: str,
     connection: str,
     graph: str,
+    engine_provider: Callable[[], Any],
 ) -> str:
     normalized_action = action if isinstance(action, str) else "list"
     normalized_action = normalized_action.strip().lower()
@@ -2211,7 +2222,7 @@ async def _graph_catalog_response(
             code="invalid_request",
         )
     try:
-        runtime._get_engine()
+        engine_provider()
     except Exception as exc:  # noqa: BLE001
         return public_error_json(exc, code="dependency_unavailable")
     catalog = await _build_graph_catalog()
@@ -2348,7 +2359,7 @@ async def _graph_context_list(engine: Any, session_id: str) -> str:
         return public_error_json(exc)
 
 
-def register_query_tools(mcp):
+def register_query_tools(mcp, engine_provider: Callable[[], Any]):
     """Register the query_tools group on the given FastMCP server."""
 
     def _run_graph_query(
@@ -2478,7 +2489,9 @@ def register_query_tools(mcp):
             return _run_graph_query_sparql(query, connection, graph)
 
         if scope == "federated":
-            return _run_graph_query_federated(query, reference_id, parsed_params)
+            return _run_graph_query_federated(
+                query, reference_id, parsed_params, engine_provider
+            )
 
         # Local reads use each backend's server-enforced read-only transaction.
         # The native engine requires an explicit read mode and validates it with
@@ -2492,6 +2505,7 @@ def register_query_tools(mcp):
             include_epistemic_flag,
             connection,
             graph,
+            engine_provider,
         )
 
     @mcp.tool(
@@ -2944,6 +2958,7 @@ def register_query_tools(mcp):
             ids_json=ids_json,
             connection=connection,
             graph=graph,
+            engine_provider=engine_provider,
         )
 
     runtime.REGISTERED_TOOLS["graph_catalog"] = graph_catalog
@@ -2977,7 +2992,7 @@ def register_query_tools(mcp):
             default=0, description="Optional time-to-live in seconds (0 = persistent)."
         ),
     ) -> str:
-        engine = runtime._get_engine()
+        engine = engine_provider()
         if not engine:
             return json.dumps({"error": "IntelligenceGraphEngine not active."})
         if action == "put":
@@ -3231,7 +3246,7 @@ def register_query_tools(mcp):
         limit: int = Field(default=200, description="Max rows to return."),
     ) -> str:
         """Templated code-symbol navigation over the resolved KG code graph."""
-        engine = runtime._get_engine()
+        engine = engine_provider()
         if not engine:
             return json.dumps({"error": "IntelligenceGraphEngine not active"})
 
@@ -3474,7 +3489,7 @@ def register_query_tools(mcp):
         ),
     ) -> str:
         """Map-then-fetch + tree-navigation retrieval over a document section tree."""
-        engine = runtime._get_engine()
+        engine = engine_provider()
 
         if action == "build":
             return _graph_document_tree_build(

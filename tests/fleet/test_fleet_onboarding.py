@@ -693,6 +693,7 @@ def test_cli_runs_one_full_pass_and_fails_on_any_server(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     from arbora.mcp_server import bootstrap, runtime
+    from arbora.mcp_server.served_engine import EngineHandles
 
     async def capture(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
         if endpoint is BETA:
@@ -700,7 +701,7 @@ def test_cli_runs_one_full_pass_and_fails_on_any_server(
         return await _served_pack(endpoint, auth=auth)
 
     monkeypatch.setattr(runtime, "_mint_process_session", lambda _t: _session())
-    monkeypatch.setattr(runtime, "_get_engine", lambda: eg)
+    monkeypatch.setattr(EngineHandles, "served", lambda _self: eg)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(
         onboarding, "configured_fleet_endpoints", lambda **_kwargs: (ALPHA, BETA)

@@ -41,14 +41,13 @@ class _FakeEngine:
 
 def _register(monkeypatch, engine):
     mcp = _CollectingMCP()
-    register_audit_tools(mcp)
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    register_audit_tools(mcp, lambda: engine)
     return mcp.tools["graph_audit"]
 
 
 def test_registered_on_arbora_tool_table():
     mcp = _CollectingMCP()
-    register_audit_tools(mcp)
+    register_audit_tools(mcp, lambda: None)
     assert "graph_audit" in mcp.tools
     assert runtime.REGISTERED_TOOLS.get("graph_audit") is not None
     assert runtime.ACTION_TOOL_ROUTES.get("graph_audit") == "/audit"

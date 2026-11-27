@@ -31,6 +31,7 @@ from arbora.api.registry import Registry, Surface
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.run_origin import RunOriginRegistry
+from tests._support import FixedEngineHandles, run_events
 from tests.a2a._route_support import bind_route_decision
 from tests.a2a._support import streaming_model
 from tests.a2a.test_operation_bridge import session
@@ -184,13 +185,12 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
     monkeypatch.setitem(runtime_config._overrides, "model_registry_path", str(registry))
     fake = FakeEngine()
-    monkeypatch.setattr(mcp_runtime, "_get_engine", lambda: fake)
     PORTS.bind(
         HostPortsBinding(
             HostPorts(
                 decide=agent_runs.decide_run,
                 models=agent_runs.resolve_model,
-                events=agent_runs.record_run_event,
+                events=run_events(fake),
             ),
             None,
         )
@@ -362,15 +362,15 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         parts.extend({"kind": "file", "file": file} for _ in range(count))
 
     bind_route_decision(monkeypatch)
-    from arbora.mcp_server.host_context import build_host_context
+    from arbora.mcp_server.host_context import compose_host_context
 
-    host = build_host_context(mcp_runtime._get_engine)
+    host = compose_host_context(FixedEngineHandles(engine))
     host.runs.ports.bind(
         HostPortsBinding(
             HostPorts(
                 decide=agent_runs.decide_run,
                 models=lambda _id: streaming_model(model),
-                events=agent_runs.record_run_event,
+                events=run_events(engine),
             ),
             None,
         )
