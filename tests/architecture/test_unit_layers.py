@@ -193,6 +193,13 @@ def test_every_unit_is_named_in_exactly_one_layer() -> None:
     assert misnamed == []
 
 
+@pytest.mark.spec("ARBORA-HOST-R038.12")
+def test_unit_imports_follow_layers_and_no_cycle_remains() -> None:
+    """The whole policy at once: no finding of any rule, with no expected failure."""
+    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
+    assert [f"{f.rule} {f.location} {f.detail}" for f in findings] == []
+
+
 def _write(root: Path, relative: str, text: str = "") -> None:
     path = root / relative
     path.parent.mkdir(parents=True, exist_ok=True)
