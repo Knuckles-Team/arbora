@@ -21,8 +21,14 @@ The checklist is read from the engine's ``held_item_admission`` answer. The engi
 records ``critique_ref``, ``critique_digest`` and ``critique_verdict`` in its own
 decision record and on the proposal node; arbora never writes them.
 
+When a critic's answers are available, the engine records the critique: arbora sends
+``DecisionEval`` ``held_item_critique`` with the answers and the engine derives the
+verdict and writes the critique fields onto the proposal node. The later admission then
+answers ``admitted`` or ``rejected`` rather than abstaining ``CRITIQUE_MISSING``.
+
 PIN-LAG: until the pinned engine's answer carries a checklist, no block is produced and
-the gate holds every output.
+the gate holds every output; until it declares ``held_item_critique`` no critique is
+recorded.
 """
 
 from __future__ import annotations
@@ -31,7 +37,7 @@ import asyncio
 import hashlib
 import json
 import logging
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
 from arbora.unique_records import create_record
@@ -85,14 +91,98 @@ def _answer_value(record: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
     return value if isinstance(value, Mapping) else None
 
 
+Send = Callable[[str, dict[str, Any], str], Awaitable[Any]]
+#: ``critic(checklist, text)`` answers each question ``{id, passed}``, or ``None``.
+Critic = Callable[
+    [Sequence[Mapping[str, str]], str], Awaitable[Sequence[Mapping[str, Any]] | None]
+]
+
+
+def _recorded(reply: Any) -> Mapping[str, Any] | None:
+    """The ``HeldItemCritiqueRecorded`` of an engine reply, plain or under its body."""
+    for candidate in (reply, reply.get("body") if isinstance(reply, Mapping) else None):
+        if isinstance(candidate, Mapping) and "critique_ref" in candidate:
+            return candidate
+    return None
+
+
+def _critique_op(
+    tenant: str,
+    graph: str,
+    item_ref: str,
+    digest: str,
+    checklist: Sequence[Mapping[str, str]],
+    answers: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """The ``held_item_critique`` op; the answers must be one boolean per checklist id."""
+    typed = [{"id": str(a["id"]), "passed": a["passed"]} for a in answers]
+    ids = sorted(item["id"] for item in checklist)
+    if sorted(a["id"] for a in typed) != ids or not all(
+        isinstance(a["passed"], bool) for a in typed
+    ):
+        raise ValueError("answers do not match the checklist")
+    request = {
+        "tenant_id": tenant,
+        "graph": graph,
+        "item_ref": item_ref,
+        "content_digest": digest,
+        "answers": typed,
+    }
+    return {"op": {"op": "held_item_critique", "request": request}}
+
+
 class HeldOutputSource:
     """Produce the held-output refs of one finished run from engine methods."""
 
-    def __init__(self, ask: AskDecide) -> None:
+    def __init__(
+        self, ask: AskDecide, send: Send | None = None, critic: Critic | None = None
+    ) -> None:
         self._ask = ask
+        self._send = send
+        self._critic = critic
+
+    async def _record_critique(
+        self,
+        tenant: str,
+        item_ref: str,
+        digest: str,
+        checklist: list[dict[str, str]],
+        text: str,
+        graph: str,
+    ) -> None:
+        """Have the engine record the critic's answers; arbora writes no critique field.
+
+        Raises when the answers do not match the checklist or the engine does not
+        confirm the recording, so the caller holds the output.
+        """
+        if self._critic is None or self._send is None:
+            return
+        answers = await self._critic(checklist, text)
+        if answers is None:
+            return
+        from arbora.pin_lag.medulla import guard_held_item_critique
+
+        guard_held_item_critique()
+        reply = await self._send(
+            "DecisionEval",
+            _critique_op(tenant, graph, item_ref, digest, checklist, answers),
+            tenant,
+        )
+        recorded = _recorded(reply) or {}
+        if (recorded.get("item_ref"), recorded.get("content_digest")) != (
+            item_ref,
+            digest,
+        ):
+            raise RuntimeError("critique not recorded")
 
     async def produce(
-        self, engine: Any, *, tenant: str, task_id: str, text: str
+        self,
+        engine: Any,
+        *,
+        tenant: str,
+        task_id: str,
+        text: str,
+        graph: str = "",
     ) -> dict[str, Any] | None:
         """Write the held node, ask the engine, store the refs; ``None`` holds the output."""
         digest = hashlib.sha256(reply_bytes(task_id, text)).hexdigest()
@@ -124,6 +214,9 @@ class HeldOutputSource:
             decision = None if value is None else value.get("verdict_ref")
             if not (isinstance(decision, str) and decision and checklist):
                 return None
+            await self._record_critique(
+                tenant, item_ref, digest, checklist, text, graph
+            )
             block = {
                 "item_ref": item_ref,
                 "content_digest": digest,
@@ -187,7 +280,9 @@ def held_block(
     return lift_held_output(result) or stored(engine, task_id)
 
 
-def bind_held_output(authority: Any, invocation: Any) -> bool:
+def bind_held_output(
+    authority: Any, invocation: Any, *, critic: Critic | None = None
+) -> bool:
     """Bind the source to ``authority`` once the host has the engine ``Decide`` seam.
 
     ``invocation`` is the served invocation: its engine sender, decision graph, tenant
@@ -209,6 +304,9 @@ def bind_held_output(authority: Any, invocation: Any) -> bool:
             graph=getattr(invocation, "decision_graph", ""),
             feature_schema=schema,
             principal=principal,
-        )
+        ),
+        send,
+        critic,
     )
+    authority.held_output_graph = getattr(invocation, "decision_graph", "")
     return True

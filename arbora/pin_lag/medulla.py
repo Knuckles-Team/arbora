@@ -354,6 +354,18 @@ def guard_certification_read() -> None:
     )
 
 
+def guard_held_item_critique() -> None:
+    """Refuse ``UNAVAILABLE`` naming what recording a critique needs (ARBORA-A2A-R022.1).
+
+    PIN-LAG: the ``DecisionEval`` op ``held_item_critique`` is an engine ``main`` shape
+    (MEDULLA-DECISION-ENGINE-R038.6); the pinned release may not declare it.
+    """
+    guard(
+        "DecisionEval",
+        models=("DecisionEvalOpHeldItemCritique", "HeldItemCritiqueRequest"),
+    )
+
+
 def _literal_members(annotation: Any) -> set[str]:
     """Every string a (possibly nested) ``Literal`` union names."""
     import typing
