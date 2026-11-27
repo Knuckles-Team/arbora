@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from arbora.security.bearer import BearerRefusal, BearerRefused, precheck_bearer
+from arbora.security.key_cache import JwksCache
 from tests.identity._bearer_fixture import (
     AUDIENCE,
     ISSUER,
@@ -29,16 +30,30 @@ def test_audit_event_fields_and_no_token_text(monkeypatch: pytest.MonkeyPatch) -
         ),
     )
 
-    async def fetch(_uri: str) -> dict:
+    async def fetch(_keys: JwksCache, _uri: str) -> dict:
         return JWKS
 
     monkeypatch.setattr("arbora.security.auth._fetch_jwks", fetch)
     events: list[dict[str, str]] = []
     good, bad = mint(), mint(aud="other")
-    asyncio.run(precheck_bearer(good, emit=events.append, request_id="req-1", now=NOW))
+    asyncio.run(
+        precheck_bearer(
+            good,
+            key_cache=JwksCache(),
+            emit=events.append,
+            request_id="req-1",
+            now=NOW,
+        )
+    )
     with pytest.raises(BearerRefused):
         asyncio.run(
-            precheck_bearer(bad, emit=events.append, request_id="req-2", now=NOW)
+            precheck_bearer(
+                bad,
+                key_cache=JwksCache(),
+                emit=events.append,
+                request_id="req-2",
+                now=NOW,
+            )
         )
     verified, refused = events
     assert verified["source"] == "bearer" and verified["result_status"] == "verified"

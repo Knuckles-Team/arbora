@@ -27,6 +27,7 @@ from arbora.mcp_server.served_invocation import (
 )
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.key_cache import JwksCache
 from tests.test_served_operation_api import FakeClient, FakePool
 
 CI_TOOL = {"server": "ci", "tool": "ci_status"}
@@ -78,6 +79,7 @@ def _compose(
     )
     process = request_identity.mint_graph_session(actor)
     return compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

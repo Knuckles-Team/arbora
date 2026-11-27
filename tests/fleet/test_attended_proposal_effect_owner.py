@@ -27,6 +27,7 @@ from arbora.mcp_server.served_invocation import (
 from arbora.run_origin import RunOriginRegistry, native_call_origin_scope
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
+from arbora.security.key_cache import JwksCache
 from arbora.security.session import use_session
 from tests.browser_control.test_browser_control_service import _setup
 from tests.browser_control.test_browser_proposals import (
@@ -151,6 +152,7 @@ def _composed_authority(
     )
     client = EffectClient()
     invocation = compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,

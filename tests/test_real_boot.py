@@ -38,6 +38,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
+from arbora.security.key_cache import JwksCache
 from tests._boot_diagnostics import BootDiagnostics
 
 #: Bounds of one native boot, each failing with its own reason. The slot wait,
@@ -988,7 +989,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         monkeypatch.setattr(runtime_config, "auth_jwt_issuer", ISSUER)
         monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
         monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
-        actor = asyncio.run(actor_from_bearer_token(stack["token"]))
+        actor = asyncio.run(actor_from_bearer_token(stack["token"], keys=JwksCache()))
         session = mint_graph_session(actor).with_graph(CONTROL_GRAPH)
         pool = EpistemicClientPool(
             cast(ConnectClient, MedullaClient.connect),
@@ -997,6 +998,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         )
         engine = ServedEngine(pool)
         invocation = compose_served_invocation(
+            keys=JwksCache(),
             pool=pool,
             graph=CONTROL_GRAPH,
             process_session=lambda: session,
@@ -1386,7 +1388,9 @@ def test_a_held_pack_import_queues_an_approval_lease(
     monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
     monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
     monkeypatch.delenv("ACTION_POLICY_PATH", raising=False)
-    session = mint_graph_session(asyncio.run(actor_from_bearer_token(stack["token"])))
+    session = mint_graph_session(
+        asyncio.run(actor_from_bearer_token(stack["token"], keys=JwksCache()))
+    )
     engine = ServedEngine(
         EpistemicClientPool(
             cast(ConnectClient, MedullaClient.connect),

@@ -23,6 +23,7 @@ from arbora.mcp_server.served_invocation import (
     refused_fleet_effect,
 )
 from arbora.security import request_identity
+from arbora.security.key_cache import JwksCache
 from tests.test_served_operation_api import FakeClient, FakePool, _actor, _call, _value
 
 _DIGEST = "0" * 64
@@ -115,7 +116,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedCli
     base_actor = _actor()
     actor = replace(base_actor, roles=(*base_actor.roles, "query:nl"))
 
-    async def credential_owner(credential: str) -> Any:
+    async def credential_owner(credential: str, **_kw) -> Any:
         assert credential == "fixture-verified"
         return actor
 
@@ -123,6 +124,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedCli
     client = _FederatedClient()
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
@@ -151,7 +153,7 @@ def _served_native_app(
     base_actor = _actor()
     actor = replace(base_actor, roles=(*base_actor.roles, "query:nl"))
 
-    async def credential_owner(credential: str) -> Any:
+    async def credential_owner(credential: str, **_kw) -> Any:
         assert credential == "fixture-verified"
         return actor
 
@@ -159,6 +161,7 @@ def _served_native_app(
     client = _NativeOnlyClient()
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

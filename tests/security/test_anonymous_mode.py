@@ -1,3 +1,5 @@
+from functools import partial
+
 """Explicit anonymous admission never establishes credential authentication."""
 
 from argparse import Namespace
@@ -8,6 +10,7 @@ import pytest
 
 from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.security import anonymous
+from arbora.security.key_cache import JwksCache
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.3")
 
@@ -135,7 +138,7 @@ async def test_real_asgi_admission_projects_anonymous_caller(local_mode):
 
     app = FastAPI()
     auth = AmbientHTTPAuthenticator(
-        session_for_request=verified_bearer_session_for_request
+        session_for_request=partial(verified_bearer_session_for_request, JwksCache())
     )
 
     @app.get("/probe")
@@ -148,7 +151,7 @@ async def test_real_asgi_admission_projects_anonymous_caller(local_mode):
         }
 
     transport = httpx.ASGITransport(
-        app=ActorIdentityMiddleware(app), client=("127.0.0.1", 1234)
+        app=ActorIdentityMiddleware(app, JwksCache()), client=("127.0.0.1", 1234)
     )
     async with httpx.AsyncClient(
         transport=transport, base_url="http://127.0.0.1:18765"
@@ -344,7 +347,7 @@ async def test_real_fastmcp_outer_http_boundary_covers_public_routes(local_mode)
         Namespace(transport="streamable-http", host="127.0.0.1", port=18765)
     )
     assert network is not None
-    kwargs = anonymous.network_run_kwargs(network.fastmcp_run_kwargs())
+    kwargs = anonymous.network_run_kwargs(network.fastmcp_run_kwargs(), JwksCache())
     app = mcp.http_app(path="/mcp", middleware=kwargs["middleware"])
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://127.0.0.1:18765"

@@ -10,6 +10,8 @@ import ipaddress
 from typing import Any
 from urllib.parse import urlsplit
 
+from arbora.security.key_cache import JwksCache
+
 PRINCIPAL = "anonymous"
 TENANT = "local"
 POLICY = "no-auth"
@@ -273,7 +275,7 @@ def client_scope(client: Any, context: Any) -> Any:
     return client.use_verified_context(context)
 
 
-def network_run_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+def network_run_kwargs(kwargs: dict[str, Any], keys: JwksCache) -> dict[str, Any]:
     """Compose Arbora admission around the SDK-owned network boundary."""
     if not enabled():
         return kwargs
@@ -284,7 +286,7 @@ def network_run_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
     return {
         **kwargs,
         "middleware": [
-            Middleware(ActorIdentityMiddleware),
+            Middleware(ActorIdentityMiddleware, keys=keys),
             *kwargs.get("middleware", ()),
         ],
     }

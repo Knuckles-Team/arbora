@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator, Callable, Coroutine, Mapping, Sequence
 from contextlib import asynccontextmanager
+from functools import partial
 from typing import Any
 
 from arbora.access.action_policy import ActionPolicies, ActionPolicy
@@ -30,6 +31,7 @@ from arbora.api.registry import EgSchemaRef
 from arbora.core.environment import read_env
 from arbora.identity.ports import BrowserBoundaryFactory
 from arbora.mcp_server.served_engine import no_process_session
+from arbora.security.key_cache import JwksCache
 
 __all__ = [
     "PoolLeases",
@@ -1121,6 +1123,7 @@ def _schema_bindings(
 
 def compose_served_invocation(
     *,
+    keys: JwksCache,
     pool: Any,
     graph: str,
     process_session: Callable[[], Any],
@@ -1450,7 +1453,7 @@ def compose_served_invocation(
             principal=confirm_principal,
         ),
         authenticator=AmbientHTTPAuthenticator(
-            session_for_request=verified_bearer_session_for_request
+            session_for_request=partial(verified_bearer_session_for_request, keys)
         ),
     )
 
@@ -1759,6 +1762,7 @@ class _LeaseClient:
 
 def served_invocation_from_settings(
     *,
+    keys: JwksCache,
     process_session: Callable[[], Any],
     engine_pool: Callable[[], Any],
     action_policies: ActionPolicies,
@@ -1783,6 +1787,7 @@ def served_invocation_from_settings(
     pool = engine_pool()
     raw_key = str(read_env("ARBORA_PLAN_SEAL_KEY_HEX") or "").strip()
     return compose_served_invocation(
+        keys=keys,
         pool=pool,
         # Callers are admitted only on the process authority's own graph (the
         # tenant graph minted with the session) unless a deployment pins one.

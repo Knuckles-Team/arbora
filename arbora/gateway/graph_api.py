@@ -148,9 +148,11 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # Validates ``Authorization: Bearer`` via
     # the existing JWKS machinery, scopes the request to an authenticated
     # ActorContext + GraphSession, and rejects unauthenticated requests with 401.
+    from arbora.security.key_cache import JwksCache
     from arbora.security.request_identity import ActorIdentityMiddleware
 
-    app.add_middleware(ActorIdentityMiddleware)
+    # The embedded application has no host; its identity middleware owns its keys.
+    app.add_middleware(ActorIdentityMiddleware, keys=JwksCache())
 
     # Python-tier Prometheus metrics
     # (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). Added LAST so the

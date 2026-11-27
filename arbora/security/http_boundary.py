@@ -17,6 +17,8 @@ from urllib.parse import urlsplit
 
 import anyio
 
+from arbora.security.key_cache import JwksCache
+
 _MAX_HEADER_VALUE_BYTES = 16_384
 
 
@@ -376,8 +378,11 @@ class TrustedProxyPeerMiddleware:
 class AuthenticationBoundaryMiddleware:
     """Authenticate every route and mounted ASGI app at the outer boundary."""
 
-    def __init__(self, app: Any, exempt_paths: Iterable[str] = ()) -> None:
+    def __init__(
+        self, app: Any, keys: JwksCache, exempt_paths: Iterable[str] = ()
+    ) -> None:
         self.app = app
+        self._keys = keys
         self.exempt_paths = frozenset(str(path) for path in exempt_paths)
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
@@ -403,6 +408,7 @@ class AuthenticationBoundaryMiddleware:
 
         try:
             identity = await authenticate_header_values(
+                self._keys,
                 authorization=_header_values(scope, b"authorization"),
             )
         except PermissionError:

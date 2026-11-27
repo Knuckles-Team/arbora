@@ -3,6 +3,8 @@
 import asyncio
 from typing import Any
 
+from arbora.security.key_cache import JwksCache
+
 from .engine import IdentityUnavailable
 
 
@@ -10,7 +12,13 @@ class ConfiguredBrowserBroker:
     """Never provision a broker, reuse System authority, or cache token material."""
 
     def __init__(
-        self, reference: str, *, tenant: str, audience: str, process_claims: Any
+        self,
+        reference: str,
+        *,
+        tenant: str,
+        audience: str,
+        process_claims: Any,
+        keys: JwksCache,
     ):
         from scion_sdk.credentials.runtime_references import (
             validate_runtime_secret_reference,
@@ -24,6 +32,7 @@ class ConfiguredBrowserBroker:
             ) from None
         self._tenant, self._audience = tenant, audience
         self._process_claims = process_claims
+        self._keys = keys
 
     async def __call__(self) -> dict[str, Any]:
         from scion_sdk.credentials.runtime_references import (
@@ -40,7 +49,9 @@ class ConfiguredBrowserBroker:
             token = await asyncio.to_thread(
                 resolve_runtime_secret_reference, self._reference
             )
-            actor = await actor_from_bearer_token(token, require_direct_service=True)
+            actor = await actor_from_bearer_token(
+                token, keys=self._keys, require_direct_service=True
+            )
             del token
             if actor.actor_type != ActorType.AUTOMATED_SERVICE:
                 raise PermissionError("service broker required")

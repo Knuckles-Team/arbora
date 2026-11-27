@@ -6,6 +6,7 @@ import pytest
 from starlette.requests import Request
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
+from arbora.security.key_cache import JwksCache
 
 NOW_MS = 2_000_000
 ORIGIN = "https://console.example.test"
@@ -530,14 +531,14 @@ def test_http_local_bearer_bridge_passes_exact_token_to_owner(monkeypatch):
     )
     seen = []
 
-    async def verify(token):
+    async def verify(token, **_kw):
         seen.append(token)
         return result
 
     monkeypatch.setattr(request_identity, "verify_local_bearer_token", verify)
     req = bearer_request((b"authorization", b"Bearer exact-synthetic-token"))
     req.scope["state"] = {"principal": "spoofed", "tenant": "spoofed"}
-    assert asyncio.run(verify_local_bearer_request(req)) is result
+    assert asyncio.run(verify_local_bearer_request(JwksCache(), req)) is result
     assert seen == ["exact-synthetic-token"]
     assert result.principal == "fixture-principal"
 
@@ -551,7 +552,7 @@ def test_http_local_bearer_bridge_rejects_ambiguous_credentials(monkeypatch):
     )
     from arbora.security import request_identity
 
-    async def unexpected(token):
+    async def unexpected(token, **_kw):
         raise AssertionError("ambiguous credentials must not reach verification")
 
     monkeypatch.setattr(request_identity, "verify_local_bearer_token", unexpected)
@@ -559,7 +560,7 @@ def test_http_local_bearer_bridge_rejects_ambiguous_credentials(monkeypatch):
         (b"authorization", b"Bearer first"), (b"authorization", b"Bearer second")
     )
     with pytest.raises(HTTPAuthenticationError):
-        asyncio.run(verify_local_bearer_request(req))
+        asyncio.run(verify_local_bearer_request(JwksCache(), req))
 
 
 def test_bound_browser_verifier_calls_actual_webui_exporter(monkeypatch):

@@ -9,6 +9,7 @@ import pytest
 from arbora.identity.client_session import ClientSessionRefused, record_session_open
 from arbora.mcp_server.backing.middlewares import ActorContextMiddleware
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.key_cache import JwksCache
 from tests.identity._session_fakes import Engine
 
 
@@ -38,4 +39,8 @@ def test_open_stores_one_record_per_session() -> None:
         )
     assert len(engine.nodes) == 1
     # The MCP initialize hook of the served server is the caller of the write.
-    assert callable(ActorContextMiddleware(require_verified_session=True).on_initialize)
+    assert callable(
+        ActorContextMiddleware(
+            keys=JwksCache(), require_verified_session=True
+        ).on_initialize
+    )

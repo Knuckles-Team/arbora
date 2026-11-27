@@ -12,6 +12,7 @@ from arbora.a2a.models import A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
+from arbora.security.key_cache import JwksCache
 
 
 class _Mcp:
@@ -52,7 +53,9 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
     mcp = _Mcp()
     table = ToolTable()
     try:
-        a2a_mcp.register_a2a_tools(mcp, service=service, tool_table=table)
+        a2a_mcp.register_a2a_tools(
+            mcp, service=service, tool_table=table, keys=JwksCache()
+        )
         assert table["graph_a2a"] is mcp.tools["graph_a2a"]
         assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
         assert set(mcp.routes) == {

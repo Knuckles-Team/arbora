@@ -779,6 +779,7 @@ def _build_server(
         ),
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),
+        keys=host.caches.jwks,
         engine_provider=host.engine.served,
         process_session=host.authority.session,
     )
@@ -1008,7 +1009,11 @@ def _register_graph_tool_surface(
     register_browser_control_tools(backing, host.caches.tools, host.browser)
     if invocation is None:
         rpc_handler = register_a2a_tools(
-            mcp, service=host.runs.a2a, tools=backing, tool_table=host.caches.tools
+            mcp,
+            service=host.runs.a2a,
+            tools=backing,
+            tool_table=host.caches.tools,
+            keys=host.caches.jwks,
         )
     else:
         rpc_handler = register_a2a_tools(
@@ -1017,6 +1022,7 @@ def _register_graph_tool_surface(
             tools=backing,
             tool_table=host.caches.tools,
             anonymous=anonymous,
+            keys=host.caches.jwks,
             operation_services=invocation.services,
             operation_authenticator=invocation.authenticator,
             task_plan_config=invocation.task_plan_config,
@@ -1042,6 +1048,7 @@ def _register_graph_tool_surface(
         host.caches.tools,
         engine_provider=host.engine.served,
         stream_handler=rpc_handler,
+        keys=host.caches.jwks,
     )
 
 

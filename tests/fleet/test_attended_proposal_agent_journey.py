@@ -49,6 +49,7 @@ from arbora.mcp_server.server import _attach_fleet_runtime
 from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
+from arbora.security.key_cache import JwksCache
 from arbora.security.session import use_session
 from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests._support import FixedEngineHandles
@@ -99,6 +100,7 @@ async def _served(
     _isolate_registration(monkeypatch, client)
     host = compose_host_context(FixedEngineHandles(client))
     invocation = compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,

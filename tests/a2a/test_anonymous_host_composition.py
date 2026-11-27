@@ -16,6 +16,7 @@ from arbora.a2a.anonymous_host import anonymous_a2a_provider
 from arbora.a2a.mcp import register_a2a_tools
 from arbora.a2a.service import A2AService
 from arbora.security import anonymous
+from arbora.security.key_cache import JwksCache
 from tests.a2a.test_anonymous_native_reads import RUN, response
 from tests.a2a.test_anonymous_task_reads_served import ORIGIN, _client
 
@@ -36,6 +37,7 @@ def _host(client: Any) -> FastMCP:
         mcp,
         service=A2AService(authority=None, router=None),  # type: ignore[arg-type]
         tool_table={},
+        keys=JwksCache(),
         anonymous=anonymous_a2a_provider(
             origin=ORIGIN, graph="control", revision="test", connect=connect
         ),

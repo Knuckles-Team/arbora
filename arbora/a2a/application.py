@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator, Callable, Iterator, Mapping
 from contextlib import contextmanager
+from functools import partial
 from secrets import token_hex
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
@@ -15,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from arbora.api.http.auth import HTTPAuthenticationError
 from arbora.modality.models import ModalityRefused
+from arbora.security.key_cache import JwksCache
 
 from .authority import (
     A2AContextUnavailable,
@@ -67,19 +69,22 @@ class A2AAuthenticator(Protocol):
 class AmbientA2AAuthenticator:
     """Resolve each HTTP request through AU's verified bearer/session flow."""
 
+    def __init__(self, keys: JwksCache) -> None:
+        self._keys = keys
+
     async def authenticate(self, request: Request, *, scope: str) -> RequestCaller:
-        caller = await _request_caller(request)
+        caller = await _request_caller(self._keys, request)
         return _require_caller_scope(caller, scope)
 
 
-async def _request_caller(request: Request) -> RequestCaller:
+async def _request_caller(keys: JwksCache, request: Request) -> RequestCaller:
     from arbora.api.http.auth import (
         AmbientHTTPAuthenticator,
         verified_bearer_session_for_request,
     )
 
     return await AmbientHTTPAuthenticator(
-        session_for_request=verified_bearer_session_for_request
+        session_for_request=partial(verified_bearer_session_for_request, keys)
     ).authenticate(request)
 
 

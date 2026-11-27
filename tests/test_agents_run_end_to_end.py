@@ -302,7 +302,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         runtime_config._overrides, "kg_policy_version", "policy:fixture"
     )
 
-    async def credential_owner(credential: str) -> ActorContext:
+    async def credential_owner(credential: str, **_kw) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic
         return ActorContext(
             actor_id="person:one",

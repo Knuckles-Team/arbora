@@ -17,6 +17,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
@@ -32,6 +33,8 @@ from infrastructure import (
     private_write,
     vault,
 )
+
+from arbora.security.key_cache import JwksCache
 
 
 def admin_claims(scope: str) -> dict[str, Any]:
@@ -165,7 +168,9 @@ async def prepare(
         context["env"]["QUALIFICATION_BROKER_TOKEN"] = broker_token
         os.environ["QUALIFICATION_BROKER_TOKEN"] = broker_token
         del broker_token
-        process_actor = await actor_from_bearer_token(context["process_token"])
+        process_actor = await actor_from_bearer_token(
+            context["process_token"], keys=JwksCache()
+        )
         process_session = mint_graph_session(process_actor)
 
         async def borrowed_client():
@@ -176,6 +181,7 @@ async def prepare(
             tenant=boot.TENANT,
             audience=boot.AUDIENCE,
             process_claims=process_session.engine_verified_context,
+            keys=JwksCache(),
         )
         context["fixture_step"] = "configured_broker_verification"
         await broker_authority()
@@ -197,7 +203,9 @@ async def prepare(
             backend, IssuerSettings(boot.ISSUER, boot.AUDIENCE, boot.TENANT), authority
         )
         caller = BrowserCallerResolver(
-            authority, verify_local_bearer_token, graph="__control__"
+            authority,
+            partial(verify_local_bearer_token, keys=JwksCache()),
+            graph="__control__",
         )
         context["fixture_step"] = "native_primary_authentication"
         session, credential = await native.authenticate_seed_session(
@@ -226,6 +234,7 @@ async def prepare(
         del denied_credential
         engine = ServedEngine(pool)
         invocation = compose_served_invocation(
+            keys=JwksCache(),
             pool=pool,
             graph="__control__",
             process_session=lambda: session,

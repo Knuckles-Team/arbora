@@ -30,6 +30,7 @@ from arbora.mcp_server.served_invocation import (
 )
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.key_cache import JwksCache
 from tests.test_served_operation_api import FakeClient, FakePool
 
 USER = {
@@ -100,6 +101,7 @@ def _compose(monkeypatch: pytest.MonkeyPatch, admin: _Admin, **changes: Any) -> 
     )
     process = request_identity.mint_graph_session(actor)
     return compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(FakeClient()),
         graph=process.graph,
         process_session=lambda: process,

@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Any, Literal
 
+from arbora.security.key_cache import JwksCache
+
 from .application import AmbientA2AAuthenticator, create_a2a_handlers
 from .authority import WorkItemA2AAuthority
 from .service import A2AService
@@ -15,6 +17,7 @@ if TYPE_CHECKING:
 
 
 def _admitted_handlers(
+    keys: JwksCache,
     service: A2AService,
     operation_services: InvokeServices | None,
     operation_authenticator: AmbientHTTPAuthenticator | None,
@@ -23,7 +26,7 @@ def _admitted_handlers(
     """Validate composition and provider admission before exposing routes."""
     handlers = create_a2a_handlers(
         service=service,
-        authenticator=AmbientA2AAuthenticator(),
+        authenticator=AmbientA2AAuthenticator(keys),
         operation_services=operation_services,
         operation_authenticator=operation_authenticator,
         approvals=approvals,
@@ -43,6 +46,7 @@ def register_a2a_tools(
     hosted_invocation: Any = None,
     approval_chain: Any = None,
     anonymous: Any = None,
+    keys: JwksCache,
 ) -> Any:
     """Register one action router and the protocol-native routes.
 
@@ -60,6 +64,7 @@ def register_a2a_tools(
         authority.task_plan_config = task_plan_config
         authority.hosted_invocation = hosted_invocation
     card_handler, rpc_handler = _admitted_handlers(
+        keys,
         service,
         operation_services,
         operation_authenticator,

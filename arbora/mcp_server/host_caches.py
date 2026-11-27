@@ -13,9 +13,16 @@ from collections.abc import Iterator, MutableMapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
-__all__ = ["AnalysisCore", "HostCaches", "IntentCache", "ToolTable", "WarmupSlot"]
+__all__ = [
+    "AnalysisCore",
+    "HostCaches",
+    "IntentCache",
+    "ToolTable",
+    "WarmupSlot",
+]
 
 
 def _authority_or_new(authority: ProcessAuthority | None) -> ProcessAuthority:
@@ -231,3 +238,4 @@ class HostCaches:
     warmup: WarmupSlot = field(default_factory=WarmupSlot)
     analysis: AnalysisCore = field(default_factory=AnalysisCore)
     intent: IntentCache = field(default_factory=IntentCache)
+    jwks: JwksCache = field(default_factory=JwksCache)

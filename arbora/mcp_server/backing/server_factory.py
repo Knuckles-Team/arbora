@@ -32,6 +32,7 @@ from scion_sdk.utilities import to_boolean
 
 from arbora.core.environment import read_env, read_reference, write_env
 from arbora.mcp_server.served_engine import engine_unbound, no_process_session
+from arbora.security.key_cache import JwksCache
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -449,13 +450,16 @@ def _hardened_jwt_verifier(**kwargs: Any) -> Any:
     """Build FastMCP's verifier with pinned JWKS I/O and privacy-safe logging."""
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
+    # The verifier owns the key sets it fetches; no other component shares them.
+    owned_keys = JwksCache()
+
     class _Verifier(JWTVerifier):
         async def _fetch_jwks(self) -> dict[str, Any]:
             if not self.jwks_uri:
                 raise ValueError("JWKS URI is not configured")
             from arbora.security.auth import _fetch_jwks
 
-            document = await _fetch_jwks(str(self.jwks_uri))
+            document = await _fetch_jwks(owned_keys, str(self.jwks_uri))
             return dict(document)
 
         async def verify_token(self, token: str) -> Any:
@@ -1811,6 +1815,7 @@ def _append_optional_middlewares(
     middlewares: list[Any],
     server_name: str,
     optional_classes: tuple[Any, Any, Any, Any, Any],
+    keys: JwksCache,
     engine_provider: Callable[[], Any] = engine_unbound,
     process_session: Callable[[], Any] = no_process_session,
 ) -> None:
@@ -1831,6 +1836,7 @@ def _append_optional_middlewares(
     if ActorContextMiddleware is not None:
         middlewares.append(
             ActorContextMiddleware(
+                keys=keys,
                 require_verified_session=(server_name == "arbora"),
                 engine_provider=engine_provider,
                 process_session=process_session,
@@ -1890,6 +1896,7 @@ def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
 
 def _configure_middleware(
     args: argparse.Namespace,
+    keys: JwksCache,
     *,
     server_name: str = "",
     engine_provider: Callable[[], Any] = engine_unbound,
@@ -1922,6 +1929,7 @@ def _configure_middleware(
         middlewares,
         server_name,
         _import_optional_middlewares(),
+        keys,
         engine_provider,
         process_session,
     )
@@ -2409,6 +2417,7 @@ def create_mcp_server(
     command_args: list[str] | None = None,
     transport_choices: tuple[str, ...] = _ALL_TRANSPORTS,
     *,
+    keys: JwksCache,
     lifespan_extension: Callable[[Any], Any] | None = None,
     manage_engine_shutdown: bool = True,
     engine_provider: Callable[[], Any] = engine_unbound,
@@ -2469,6 +2478,7 @@ def create_mcp_server(
     auth = _configure_auth(args)
     middlewares = _configure_middleware(
         args,
+        keys,
         server_name=name,
         engine_provider=engine_provider,
         process_session=process_session,

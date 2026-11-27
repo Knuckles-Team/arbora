@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import HTTPException, Request
 
 from arbora.api.mcp.caller import caller_from_session
+from arbora.security.key_cache import JwksCache
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +135,9 @@ class AmbientHTTPAuthenticator:
             raise HTTPAuthenticationError("Verified identity required") from None
 
 
-async def verified_bearer_session_for_request(request: Request) -> GraphSession:
+async def verified_bearer_session_for_request(
+    keys: JwksCache, request: Request
+) -> GraphSession:
     """Verify this exact request through AU's public served-session flow.
 
     Each resolution verifies the presented credential afresh. Ambient sessions
@@ -149,14 +152,16 @@ async def verified_bearer_session_for_request(request: Request) -> GraphSession:
     scope = request.scope
     headers = tuple(scope.get("headers", ()))
     try:
-        actor = await _verify_bearer_headers(headers)
+        actor = await _verify_bearer_headers(keys, headers)
         _require_request_snapshot(request, scope, headers)
         return _mint_verified_session(actor)
     except PermissionError:
         raise HTTPAuthenticationError("Verified request session required") from None
 
 
-async def _verify_bearer_headers(headers: tuple[tuple[bytes, bytes], ...]) -> Any:
+async def _verify_bearer_headers(
+    keys: JwksCache, headers: tuple[tuple[bytes, bytes], ...]
+) -> Any:
     """Verify one presented credential while preserving infrastructure faults."""
     from arbora.security.auth import (
         HTTP_401_UNAUTHORIZED,
@@ -171,7 +176,7 @@ async def _verify_bearer_headers(headers: tuple[tuple[bytes, bytes], ...]) -> An
     if token is None:
         raise HTTPAuthenticationError("Presented bearer required")
     try:
-        return await actor_from_bearer_token(token)
+        return await actor_from_bearer_token(token, keys=keys)
     except HTTPException as error:
         if error.status_code != 401:
             raise
@@ -204,7 +209,9 @@ def _mint_verified_session(actor: Any) -> GraphSession:
     return session
 
 
-async def verify_local_bearer_request(request: Request) -> VerifiedLocalBearer:
+async def verify_local_bearer_request(
+    keys: JwksCache, request: Request
+) -> VerifiedLocalBearer:
     """Verify this request's exact local token; do not manufacture a caller.
 
     The result lacks current policy/delegation/engine authority. Composition
@@ -227,8 +234,8 @@ async def verify_local_bearer_request(request: Request) -> VerifiedLocalBearer:
             raise PermissionError("Presented bearer required")
 
         # The token's own checks first (ARBORA-IDENTITY-R017.5), then engine authority.
-        await precheck_bearer(token)
-        return await verify_local_bearer_token(token)
+        await precheck_bearer(token, key_cache=keys)
+        return await verify_local_bearer_token(token, keys=keys)
     except BearerRefused as refused:
         error = HTTPAuthenticationError("Verified local bearer required")
         #: 401 for every credential refusal, 503 while the authority is unreadable.

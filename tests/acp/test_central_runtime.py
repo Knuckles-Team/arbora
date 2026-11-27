@@ -1,3 +1,5 @@
+from functools import partial
+
 from arbora.run_origin import RunOriginRegistry
 
 """Actual governed ACP path; model and EG/effect owners are controlled test ports."""
@@ -32,6 +34,7 @@ from arbora.api.mcp.caller import caller_from_session
 from arbora.api.ops.agents import operations
 from arbora.api.registry import Registry
 from arbora.mcp_server import task_plan_runtime
+from arbora.security.key_cache import JwksCache
 from tests.a2a.test_operation_bridge import SessionRuntime
 from tests.acp.test_http_transport import connected
 from tests.acp.test_http_transport import http_server as http_server
@@ -125,7 +128,9 @@ async def central(http_server, chain, monkeypatch):
             external_effect_operations=frozenset({"agents.tasks.cancel"}),
         ),
         authenticator=AmbientHTTPAuthenticator(
-            session_for_request=verified_bearer_session_for_request
+            session_for_request=partial(
+                verified_bearer_session_for_request, JwksCache()
+            )
         ),
     )
     authority.hosted_invocation = host

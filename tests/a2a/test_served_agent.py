@@ -20,6 +20,7 @@ from arbora.a2a.storage import (
     A2AContextNotFound,
     EngineA2AStorage,
 )
+from arbora.security.key_cache import JwksCache
 
 TENANT = "tenant:one"
 
@@ -154,7 +155,7 @@ def test_the_host_mounts_engine_storage_not_process_memory(
     mcp = SimpleNamespace(
         custom_route=lambda *a, **k: lambda fn: fn, add_extension=lambda e: None
     )
-    host_bindings.mount_sdk_a2a(mcp, {}, engine_provider=lambda: None)
+    host_bindings.mount_sdk_a2a(mcp, {}, engine_provider=lambda: None, keys=JwksCache())
     assert isinstance(captured["storage"], EngineA2AStorage)
 
 
@@ -279,5 +280,5 @@ def test_the_host_hands_the_storage_list_to_the_served_app(
     mcp = SimpleNamespace(
         custom_route=lambda *a, **k: lambda fn: fn, add_extension=lambda e: None
     )
-    host_bindings.mount_sdk_a2a(mcp, {}, engine_provider=lambda: None)
+    host_bindings.mount_sdk_a2a(mcp, {}, engine_provider=lambda: None, keys=JwksCache())
     assert captured["list_contexts"].__self__ is captured["storage"]

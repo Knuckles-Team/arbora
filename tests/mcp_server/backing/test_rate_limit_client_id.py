@@ -19,6 +19,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 from arbora.mcp_server.backing import server_factory
+from arbora.security.key_cache import JwksCache
 
 
 def _token(client_id=None, sub=None, tenant_id=None):
@@ -90,7 +91,9 @@ async def test_configure_middleware_keys_rate_limiter_per_caller_not_one_shared_
     mock_args.auth_type = "none"
     mock_args.eunomia_type = "none"
 
-    middlewares = server_factory._configure_middleware(mock_args, server_name="arbora")
+    middlewares = server_factory._configure_middleware(
+        mock_args, JwksCache(), server_name="arbora"
+    )
 
     rate_limiters = [m for m in middlewares if isinstance(m, RateLimitingMiddleware)]
     assert len(rate_limiters) == 1

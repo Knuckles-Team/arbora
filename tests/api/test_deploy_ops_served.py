@@ -185,7 +185,7 @@ def test_feature_absent_engine_refuses_over_http(
 ) -> None:
     app, client = served
 
-    async def credential_owner(_credential: str) -> Any:
+    async def credential_owner(_credential: str, **_kw) -> Any:
         return _reader()
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)

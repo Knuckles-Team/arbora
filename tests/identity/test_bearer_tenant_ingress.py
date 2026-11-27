@@ -21,6 +21,7 @@ from arbora.security.bearer import (
     precheck_bearer,
     verify_bearer,
 )
+from arbora.security.key_cache import JwksCache
 from tests.identity._bearer_fixture import (
     AUDIENCE,
     ISSUER,
@@ -57,12 +58,12 @@ class Host:
             ),
         )
 
-        async def fetch(_uri: str) -> dict[str, Any]:
+        async def fetch(_keys: JwksCache, _uri: str) -> dict[str, Any]:
             if not self.up:
                 raise RuntimeError("key authority down")
             return JWKS
 
-        async def engine_authority(token: str) -> Any:
+        async def engine_authority(token: str, **_kw: Any) -> Any:
             self.handler_calls += 1  # reached only after the token checks passed
             return SimpleNamespace(token=token)
 
@@ -74,7 +75,7 @@ class Host:
         )
 
     def call(self, *headers: str) -> Any:
-        return asyncio.run(verify_local_bearer_request(_request(*headers)))
+        return asyncio.run(verify_local_bearer_request(JwksCache(), _request(*headers)))
 
 
 def _status(error: HTTPAuthenticationError) -> int:
@@ -109,7 +110,10 @@ def test_served_stateless_bearer_requires_tenant(
     with pytest.raises(HTTPAuthenticationError):
         host.call(f"Bearer {mint()}", f"Bearer {mint()}")
     assert host.handler_calls == before
-    assert asyncio.run(precheck_bearer(mint())).tenant == "tenant:one"  # type: ignore[union-attr]
+    assert (
+        asyncio.run(precheck_bearer(mint(), key_cache=JwksCache())).tenant
+        == "tenant:one"
+    )  # type: ignore[union-attr]
     # An unreadable key authority keeps the ingress unavailable (503), never open.
     down = Host(monkeypatch, authority_up=False)
     with pytest.raises(HTTPAuthenticationError) as caught:

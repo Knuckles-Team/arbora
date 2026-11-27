@@ -1273,7 +1273,7 @@ def _prometheus_http_query(
 _MEMORY_CRUD_ACTIONS = ("recall", "store", "link")
 
 
-def _memory_crud(action: str, params: dict[str, Any]) -> str:
+def _memory_crud(tools: ToolTable, action: str, params: dict[str, Any]) -> str:
     """Dispatch recall/store/link into the shared ``graph_write`` memory core."""
     if action == "store":
         call = dict(
@@ -1308,7 +1308,7 @@ def _memory_crud(action: str, params: dict[str, Any]) -> str:
             properties=json.dumps(params.get("properties", {})),
         )
     try:
-        result = _run_coro(runtime._execute_tool("graph_write", **call))
+        result = _run_coro(runtime._execute_tool(tools, "graph_write", **call))
     except Exception as exc:  # noqa: BLE001 — surface engine/core errors as data
         return _surface_error(exc, surface="memory", action=action)
     return json.dumps(
@@ -1459,11 +1459,16 @@ def _feature_limit(source: dict[str, Any]) -> int:
     return limit
 
 
-def _feature_query_rows(cypher: str, graph: str) -> list[Any]:
+def _feature_query_rows(tools: ToolTable, cypher: str, graph: str) -> list[Any]:
     """Run one read-only projection through ``graph_query`` and validate its shape."""
     raw = _run_coro(
         runtime._execute_tool(
-            "graph_query", query=cypher, params="{}", scope="local", graph=graph or ""
+            tools,
+            "graph_query",
+            query=cypher,
+            params="{}",
+            scope="local",
+            graph=graph or "",
         )
     )
     payload = json.loads(raw) if isinstance(raw, str) else raw
@@ -1477,7 +1482,7 @@ def _feature_query_rows(cypher: str, graph: str) -> list[Any]:
 
 
 def _gather_kg_feature_rows(
-    source: dict[str, Any], graph: str
+    tools: ToolTable, source: dict[str, Any], graph: str
 ) -> tuple[list[str], list[list[float]]]:
     """Gather a feature-row RowSet from the KG for a ``{node_label, fields, limit}`` source spec.
 
@@ -1494,7 +1499,7 @@ def _gather_kg_feature_rows(
     limit = _feature_limit(source)
     projections = ", ".join(f"n.{f} AS f{i}" for i, f in enumerate(fields))
     cypher = f"MATCH (n:{node_label}) RETURN n.id AS id, {projections} LIMIT {limit}"
-    payload = _feature_query_rows(cypher, graph)
+    payload = _feature_query_rows(tools, cypher, graph)
     node_ids = [str(row.get("id")) for row in payload]
     rows = [
         [float(row.get(f"f{i}") or 0.0) for i in range(len(fields))] for row in payload
@@ -1502,7 +1507,9 @@ def _gather_kg_feature_rows(
     return node_ids, rows
 
 
-def _deep_write_node(node_type: str, properties: dict[str, Any], graph: str) -> str:
+def _deep_write_node(
+    tools: ToolTable, node_type: str, properties: dict[str, Any], graph: str
+) -> str:
     """Materialize one delegated-deep-mining result row as a typed KG node
     (CONCEPT:MERISTEM-KG.mining.foldback-typed-nodes). Best-effort — never raises, since a foldback
     failure must not fail the already-completed delegated call. Returns the new node id."""
@@ -1510,6 +1517,7 @@ def _deep_write_node(node_type: str, properties: dict[str, Any], graph: str) -> 
     try:
         _run_coro(
             runtime._execute_tool(
+                tools,
                 "graph_write",
                 action="add_node",
                 node_id=node_id,
@@ -1523,12 +1531,15 @@ def _deep_write_node(node_type: str, properties: dict[str, Any], graph: str) -> 
     return node_id
 
 
-def _deep_write_edge(source_id: str, target_id: str, rel_type: str, graph: str) -> None:
+def _deep_write_edge(
+    tools: ToolTable, source_id: str, target_id: str, rel_type: str, graph: str
+) -> None:
     """Link a delegated-deep-mining node back to the KG node it was derived from
     (best-effort — see :func:`_deep_write_node`)."""
     try:
         _run_coro(
             runtime._execute_tool(
+                tools,
                 "graph_write",
                 action="add_edge",
                 source_id=source_id,
@@ -1542,13 +1553,13 @@ def _deep_write_edge(source_id: str, target_id: str, rel_type: str, graph: str) 
 
 
 def _deep_series_params(
-    params: dict[str, Any], source: Any, graph: str
+    tools: ToolTable, params: dict[str, Any], source: Any, graph: str
 ) -> tuple[dict[str, Any], list[str]]:
     """``deep_forecast`` — a 1-D series, gathered from the KG when not given directly."""
     node_ids: list[str] = []
     values = params.pop("values", None)
     if values is None and source:
-        node_ids, rows = _gather_kg_feature_rows(source, graph)
+        node_ids, rows = _gather_kg_feature_rows(tools, source, graph)
         values = [row[0] for row in rows]
     if not values:
         raise ValueError("provide 'values' (a 1-D series) or a 'source'")
@@ -1556,14 +1567,14 @@ def _deep_series_params(
 
 
 def _deep_supervised_params(
-    params: dict[str, Any], source: Any, graph: str
+    tools: ToolTable, params: dict[str, Any], source: Any, graph: str
 ) -> tuple[dict[str, Any], list[str]]:
     """``deep_classify``/``xgboost`` — a labelled matrix (+ an optional predict set)."""
     node_ids: list[str] = []
     x = params.pop("x", None)
     y = params.pop("y", None)
     if x is None and source:
-        node_ids, x = _gather_kg_feature_rows(source, graph)
+        node_ids, x = _gather_kg_feature_rows(tools, source, graph)
     if x is None or y is None:
         raise ValueError("provide 'x' + 'y', or a 'source' + 'y'")
     tool_params = {"x_json": json.dumps(x), "y_json": json.dumps(y)}
@@ -1574,20 +1585,20 @@ def _deep_supervised_params(
 
 
 def _deep_matrix_params(
-    params: dict[str, Any], source: Any, graph: str
+    tools: ToolTable, params: dict[str, Any], source: Any, graph: str
 ) -> tuple[dict[str, Any], list[str]]:
     """``autoencoder_anomaly``/``embed`` — an unlabelled feature matrix."""
     node_ids: list[str] = []
     x = params.pop("x", None)
     if x is None and source:
-        node_ids, x = _gather_kg_feature_rows(source, graph)
+        node_ids, x = _gather_kg_feature_rows(tools, source, graph)
     if x is None:
         raise ValueError("provide 'x' or a 'source'")
     return {"x_json": json.dumps(x)}, node_ids
 
 
 def _prepare_deep_delegation(
-    action: str, params: dict[str, Any], graph: str
+    tools: ToolTable, action: str, params: dict[str, Any], graph: str
 ) -> tuple[dict[str, Any], list[str]]:
     """Marshal ``params`` into the ``deep_train_predict`` kwargs for ``action``.
 
@@ -1598,11 +1609,11 @@ def _prepare_deep_delegation(
     algo = _DEEP_ALGO_BY_ACTION[action]
     source = params.pop("source", None)
     if action == "deep_forecast":
-        extra, node_ids = _deep_series_params(params, source, graph)
+        extra, node_ids = _deep_series_params(tools, params, source, graph)
     elif action in ("deep_classify", "xgboost"):
-        extra, node_ids = _deep_supervised_params(params, source, graph)
+        extra, node_ids = _deep_supervised_params(tools, params, source, graph)
     else:  # autoencoder_anomaly, embed
-        extra, node_ids = _deep_matrix_params(params, source, graph)
+        extra, node_ids = _deep_matrix_params(tools, params, source, graph)
     tool_params: dict[str, Any] = {"algo": algo, **extra}
     tool_params["params_json"] = json.dumps(params)
     return tool_params, node_ids
@@ -2029,6 +2040,7 @@ def _deep_call_delegate(
 
 
 def _deep_writeback(
+    tools: ToolTable,
     action: str,
     result: dict[str, Any],
     node_ids: list[str],
@@ -2045,16 +2057,16 @@ def _deep_writeback(
     algo = _DEEP_ALGO_BY_ACTION[action]
     if action == "deep_forecast":
         props = {"provider": _DSM_SERVER_NAME, "algo": algo, **result}
-        node_id = _deep_write_node(node_type, props, graph)
+        node_id = _deep_write_node(tools, node_type, props, graph)
         if series_id:
-            _deep_write_edge(node_id, series_id, "FORECAST_OF", graph)
+            _deep_write_edge(tools, node_id, series_id, "FORECAST_OF", graph)
         return [node_id]
     written: list[str] = []
     for i, row in enumerate(result.get("rows") or []):
         props = {"provider": _DSM_SERVER_NAME, "algo": algo, **row}
-        node_id = _deep_write_node(node_type, props, graph)
+        node_id = _deep_write_node(tools, node_type, props, graph)
         if i < len(node_ids):
-            _deep_write_edge(node_id, node_ids[i], "DEEP_RESULT_OF", graph)
+            _deep_write_edge(tools, node_id, node_ids[i], "DEEP_RESULT_OF", graph)
         written.append(node_id)
     return written
 
@@ -2800,7 +2812,7 @@ def register_engine_surface_tools(
         # to the shared graph_write memory core (same as REST + harness), not the
         # engine MEDULLA-318 surface.
         if action in _MEMORY_CRUD_ACTIONS:
-            return _memory_crud(action, params)
+            return _memory_crud(tools, action, params)
         candidates = _MEMORY_ACTION_CANDIDATES.get(
             action,
             (("memory", action), ("scene", action), ("trajectory", action)),
@@ -3165,7 +3177,9 @@ def register_engine_surface_tools(
         series_id = str(params.pop("series_id", "") or "")
 
         try:
-            tool_params, node_ids = _prepare_deep_delegation(action, params, graph)
+            tool_params, node_ids = _prepare_deep_delegation(
+                tools, action, params, graph
+            )
         except Exception as exc:  # noqa: BLE001 — bad input / feature-gathering failure is data
             return _surface_error(exc, surface="mining_deep", action=action)
 
@@ -3175,7 +3189,7 @@ def register_engine_surface_tools(
 
         result = raw.get("result") or {}
         written = (
-            _deep_writeback(action, result, node_ids, series_id, graph)
+            _deep_writeback(tools, action, result, node_ids, series_id, graph)
             if writeback
             else []
         )
