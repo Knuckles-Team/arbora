@@ -171,9 +171,17 @@ def read_held_refs(engine: Any, task_id: str) -> dict[str, Any] | None:
     return {**{name: row[name] for name in fields}, "checklist": items}
 
 
-def held_block(result: Any, engine: Any, task_id: str) -> dict[str, Any] | None:
+def _no_refs(engine: Any, task_id: str) -> None:
+    """A host without a composed source stores no refs, so it makes no read."""
+    return None
+
+
+def held_block(
+    result: Any, engine: Any, task_id: str, source: Any
+) -> dict[str, Any] | None:
     """The run's held-output block: the harness's own, else the stored refs."""
-    return lift_held_output(result) or read_held_refs(engine, task_id)
+    stored = (_no_refs, read_held_refs)[source is not None]
+    return lift_held_output(result) or stored(engine, task_id)
 
 
 def bind_held_output(authority: Any, invocation: Any) -> bool:

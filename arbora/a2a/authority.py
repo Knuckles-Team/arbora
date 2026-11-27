@@ -27,7 +27,7 @@ from .models import (
     A2ATaskStatus,
     A2ATextPart,
 )
-from .routing import A2AAssemblyUnavailable
+from .tool_subset import require_carrier as require_tool_subset_carrier
 
 __all__ = [
     "A2AContextUnavailable",
@@ -663,6 +663,17 @@ class WorkItemA2AAuthority:
         provider = self._held_output_refs
         return None if provider is None else provider(task_id, session)
 
+    async def _selected_tools(self, work_engine: Any, item_id: str) -> tuple[str, ...]:
+        """The tool subset the routing decision selected, read from the durable item."""
+        from arbora import work_items
+
+        from .tool_subset import carrier_available, selected_tools_of
+
+        if not carrier_available():
+            return ()  # PIN-LAG: dispatch refused any selected subset at admission
+        item = await asyncio.to_thread(work_items.get_work_item, work_engine, item_id)
+        return selected_tools_of(item or {})
+
     async def _execute_claimed_run(
         self,
         work_engine: Any,
@@ -697,6 +708,7 @@ class WorkItemA2AAuthority:
         from arbora.host_bindings import preloaded_agent_tools
 
         run_session, acting_scope = _acting_scope(session, acting_session)
+        subset = await self._selected_tools(work_engine, item_id)
         with (
             acting_scope,
             native_run_scope(
@@ -713,6 +725,7 @@ class WorkItemA2AAuthority:
                 ),
                 hosted_invocation=self.hosted_invocation,
                 held_output=self._held_refs(task_id, session),
+                tool_subset=subset,
             ),
             (
                 bind_admitted_claim(
@@ -1333,12 +1346,9 @@ class WorkItemA2AAuthority:
         media: dict[str, Any] | None = None,
         harness: Any = None,
     ) -> A2ATask:
-        if decision.selected_tools:
-            # Refuse before durable admission: the current signed AU dispatch
-            # carrier cannot enforce this allowlist at execution time.
-            raise A2AAssemblyUnavailable(
-                "canonical agent dispatch cannot yet enforce an assembled tool subset"
-            )
+        # Refuse before durable admission unless the harness carries and enforces
+        # the subset at execution time (ARBORA-A2A-R002.1, R002.2.1).
+        require_tool_subset_carrier(decision.selected_tools)
         session = self._session("kg:write")
         _engine, work_engine = self._engine()
         owner_ref = self._owner_ref(session)
@@ -1664,7 +1674,7 @@ class WorkItemA2AAuthority:
         from .held_output import reply_artifact
         from .held_output_source import held_block
 
-        held = held_block(event.get("result"), engine, task_id)
+        held = held_block(event.get("result"), engine, task_id, self.held_output_source)
         return [reply_artifact(task_id, text)], held
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:

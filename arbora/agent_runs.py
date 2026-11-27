@@ -76,6 +76,8 @@ class NativeRunContext:
     hosted_invocation: Any = field(default=None, repr=False)
     #: The received refs that make this run's output a held output (R022); host-only.
     held_output: Any = field(default=None, repr=False)
+    #: The tool subset the routing decision selected, carried to the harness (R002.2.1).
+    tool_subset: tuple[str, ...] = field(default=(), repr=False)
     planning_usage: dict[str, int] = field(default_factory=dict, repr=False)
 
 
@@ -271,6 +273,7 @@ def native_run_scope(
     owner_graph: str | None = None,
     hosted_invocation: Any = None,
     held_output: Any = None,
+    tool_subset: tuple[str, ...] = (),
 ) -> Iterator[None]:
     """Bind only a claim obtained by the trusted A2A authority for this run."""
     if not _valid_owner_graph(owner_graph) or not _valid_native_claim(claim, session):
@@ -288,6 +291,7 @@ def native_run_scope(
             owner_graph,
             hosted_invocation,
             held_output,
+            tool_subset,
         )
     )
     token = _NATIVE_RUN.set(scope)
@@ -388,8 +392,10 @@ def decide_run(request: Any) -> Any:
     owner = current_native_run(request)
     plan = default_run_plan(request, run_config())
     from arbora.a2a.held_output import plan_for_owner
+    from arbora.a2a.tool_subset import plan_with_subset
 
     plan = plan_for_owner(plan, owner)  # ARBORA-A2A-R022: the held-output block
+    plan = plan_with_subset(plan, owner)  # ARBORA-A2A-R002.2.1: the enforced subset
     if owner is not None and owner.hosted_invocation is not None:
         from arbora.mcp_server.task_plan_runtime import admitted_run_plan
 
