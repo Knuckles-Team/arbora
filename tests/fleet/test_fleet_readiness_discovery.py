@@ -48,6 +48,9 @@ class _Resolver:
             SimpleNamespace(descriptor=SimpleNamespace(id=item["op"])) for item in items
         ]
 
+    async def arrange_sourced(self, verb, intent, items, *, scope_ref=None, top_k=20):
+        return self.rank(verb, intent, items, scope_ref=scope_ref, top_k=top_k), None
+
 
 def _find(**kwargs: Any) -> dict[str, Any]:
     return asyncio.run(
