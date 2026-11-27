@@ -252,38 +252,58 @@ def test_request_checks_fail_closed_while_expired_or_revoked(
 _REPO = Path(__file__).resolve().parents[2]
 
 
-@pytest.mark.spec("ARBORA-IDENTITY-R027.7")
-def test_only_apply_writes_state() -> None:
-    """Source search: nothing outside ``CredentialLease.apply`` assigns ``state``."""
+_ASSIGNS = (ast.Assign, ast.AugAssign, ast.AnnAssign)
+
+
+def _state_targets(node: ast.AST) -> list[ast.expr]:
+    """The ``<x>.state`` targets one assignment statement writes."""
+    if not isinstance(node, _ASSIGNS):
+        return []
+    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+    return [t for t in targets if isinstance(t, ast.Attribute) and t.attr == "state"]
+
+
+def _state_writes(tree: ast.AST) -> list[tuple[str, int]]:
+    """``(enclosing function, line)`` of each ``<lease>.state = ...`` in ``tree``."""
+    found: list[tuple[str, int]] = []
+    for fn in ast.walk(tree):
+        if not isinstance(fn, ast.FunctionDef):
+            continue
+        for node in ast.walk(fn):
+            if any(
+                "lease" in ast.unparse(t.value).lower() for t in _state_targets(node)
+            ):
+                found.append((fn.name, node.lineno))
+    return found
+
+
+def _credential_lease_writers() -> set[str]:
     module = ast.parse((_REPO / "arbora/security/actor_context.py").read_text())
     lease_class = next(
         node
         for node in module.body
         if isinstance(node, ast.ClassDef) and node.name == "CredentialLease"
     )
-    writers = {
-        method.name
-        for method in lease_class.body
-        if isinstance(method, ast.FunctionDef)
-        for node in ast.walk(method)
-        if isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign))
-        for target in (node.targets if isinstance(node, ast.Assign) else [node.target])
-        if isinstance(target, ast.Attribute) and target.attr == "state"
-    }
-    assert writers == {"__init__", "apply"}
+    methods = [m for m in lease_class.body if isinstance(m, ast.FunctionDef)]
+    return {m.name for m in methods if any(_state_targets(n) for n in ast.walk(m))}
 
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027.7")
+def test_only_apply_writes_state() -> None:
+    """Source search: nothing outside ``CredentialLease.apply`` assigns ``state``."""
+    assert _credential_lease_writers() == {"__init__", "apply"}
+
+    # The messaging intake lease is a different machine (ARBORA-MESSAGING-R800.1003) whose
+    # single writer is ``transition``; every other writer in the package is an offender.
+    intake = "arbora/messaging/lease.py"
+    intake_writers: list[str] = []
     offenders: list[str] = []
     for path in sorted((_REPO / "arbora").rglob("*.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
-                continue
-            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            for target in targets:
-                if (
-                    isinstance(target, ast.Attribute)
-                    and target.attr == "state"
-                    and "lease" in ast.unparse(target.value).lower()
-                ):
-                    offenders.append(f"{path.relative_to(_REPO)}:{node.lineno}")
+        rel = path.relative_to(_REPO).as_posix()
+        writes = _state_writes(ast.parse(path.read_text(encoding="utf-8")))
+        if rel == intake:
+            intake_writers.extend(name for name, _line in writes)
+        else:
+            offenders.extend(f"{rel}:{line}" for _name, line in writes)
     assert offenders == []
+    assert intake_writers == ["transition"]
