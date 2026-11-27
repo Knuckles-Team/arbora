@@ -68,7 +68,7 @@ def _resolve(mux: MCPMultiplexer, actor: ActorContext) -> dict | None:
         audience="test",
     )
     with use_actor(actor), use_session(session):
-        return asyncio.run(mux._resolve_actor_exchange_bearer(dict(CFG)))
+        return asyncio.run(mux.transport._resolve_actor_exchange_bearer(dict(CFG)))
 
 
 def _configure(monkeypatch: pytest.MonkeyPatch) -> None:

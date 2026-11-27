@@ -154,7 +154,7 @@ async def test_multiplexer_start_child_timeout():
         except asyncio.CancelledError:
             raise
 
-    with patch("arbora.fleet.multiplexer.stdio_client", side_effect=slow_connect):
+    with patch("arbora.fleet.child_transport.stdio_client", side_effect=slow_connect):
         result = await multiplexer._start_child("slow-server", cfg)
 
     assert result is None

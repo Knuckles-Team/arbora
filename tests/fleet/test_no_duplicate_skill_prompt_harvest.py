@@ -8,8 +8,8 @@ and discovery (``arbora-repository-development`` skill, "arbora.fleet |
 MCP child lifecycle, catalog discovery..."); its served package must never
 import that legacy path, and
 must define the skill/prompt catalog functions
-(:func:`~arbora.fleet.multiplexer._bounded_skill_catalog`,
-:func:`~arbora.fleet.multiplexer._bounded_prompt_catalog`) in exactly one
+(:func:`~arbora.fleet.child_payload_bounds._bounded_skill_catalog`,
+:func:`~arbora.fleet.child_payload_bounds._bounded_prompt_catalog`) in exactly one
 module. This is a static, source-level absence check: what the package's
 own source never imports can never load as a side effect of running it.
 """
@@ -90,6 +90,6 @@ def test_skill_and_prompt_body_harvest_has_exactly_one_owner_module() -> None:
         )
         if defined:
             owners[path.relative_to(_package_root()).as_posix()] = defined
-    assert owners == {"fleet/multiplexer.py": list(_HARVEST_FUNCTIONS)}, (
+    assert owners == {"fleet/child_payload_bounds.py": list(_HARVEST_FUNCTIONS)}, (
         f"expected exactly one skill/prompt harvest owner, found: {owners}"
     )

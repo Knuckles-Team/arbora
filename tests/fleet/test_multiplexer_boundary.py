@@ -7,14 +7,16 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from arbora.core.settings import RuntimeConfig
-from arbora.fleet.multiplexer import (
+from arbora.fleet.child_payload_bounds import (
     _bounded_tool_catalog,
+    assert_bounded_delegated_value,
+)
+from arbora.fleet.child_runtime_policy import (
     _runtime_materialized,
     _selected_child_provider_profile,
-    assert_bounded_delegated_value,
     attest_runtime_child_config,
-    resolve_runtime_value,
 )
+from arbora.fleet.child_transport import resolve_runtime_value
 from tests.fleet.catalog_fixture import fleet_config, multiplexer_from_fixture
 
 
@@ -26,7 +28,7 @@ def test_noncredential_field_cannot_expand_secret_environment_name() -> None:
 def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
 
     monkeypatch.setattr(
-        "arbora.fleet.multiplexer.read_reference",
+        "arbora.fleet.child_transport.read_reference",
         lambda alias, default="": (
             "direct-runtime-material" if alias == "CHILD_TOKEN_ALIAS" else default
         ),
@@ -49,7 +51,8 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
 ) -> None:
 
     monkeypatch.setattr(
-        "arbora.fleet.multiplexer.read_reference", lambda _alias, default="": default
+        "arbora.fleet.child_transport.read_reference",
+        lambda _alias, default="": default,
     )
     config = fleet_config(
         mcp_fleet_secret_refs={"CHILD_TOKEN_ALIAS": "secret://fleet/child/token"}
@@ -77,7 +80,8 @@ def test_fleet_runtime_alias_fails_closed_without_direct_or_mapped_value(
 ) -> None:
 
     monkeypatch.setattr(
-        "arbora.fleet.multiplexer.read_reference", lambda _alias, default="": default
+        "arbora.fleet.child_transport.read_reference",
+        lambda _alias, default="": default,
     )
     config = fleet_config(mcp_fleet_secret_refs={})
 

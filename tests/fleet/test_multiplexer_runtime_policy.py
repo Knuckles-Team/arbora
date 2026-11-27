@@ -10,6 +10,8 @@ import pytest
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
+from arbora.fleet import child_runtime_policy as _mod_child_runtime_policy
+from arbora.fleet import child_transport as _mod_child_transport
 from arbora.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
@@ -98,7 +100,7 @@ async def test_runtime_policy_owns_spawn_catalog_call_and_teardown(
         return policy
 
     monkeypatch.setattr(
-        mod,
+        _mod_child_runtime_policy,
         "_load_runtime_child_policy_factory",
         lambda name: factory if name == "official-provider" else None,
     )
@@ -114,7 +116,7 @@ async def test_runtime_policy_owns_spawn_catalog_call_and_teardown(
         finally:
             events.append("child-close")
 
-    monkeypatch.setattr(mod, "stdio_client", stdio_client)
+    monkeypatch.setattr(_mod_child_transport, "stdio_client", stdio_client)
     monkeypatch.setattr(
         mod,
         "ClientSession",
@@ -168,7 +170,9 @@ async def test_runtime_policy_rejects_persistent_transport_overrides(
         nonlocal called
         called = True
 
-    monkeypatch.setattr(mod, "_load_runtime_child_policy_factory", load)
+    monkeypatch.setattr(
+        _mod_child_runtime_policy, "_load_runtime_child_policy_factory", load
+    )
     mux = multiplexer_from_fixture(tmp_path / "mcp_config.json")
 
     result = await mux._start_child(

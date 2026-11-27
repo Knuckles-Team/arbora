@@ -184,7 +184,9 @@ def _compose(
 
 def _connect(mux: MCPMultiplexer) -> tuple[Any, Any]:
     with use_actor(_actor()):
-        return asyncio.run(mux._apply_remote_child_oauth_grant(dict(CFG), URL, None))
+        return asyncio.run(
+            mux.transport._apply_remote_child_oauth_grant(dict(CFG), URL, None)
+        )
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R023.2")

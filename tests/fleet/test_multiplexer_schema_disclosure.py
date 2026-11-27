@@ -312,7 +312,7 @@ def setup_oauth_sessions(
         opened.append(session)
         return session
 
-    monkeypatch.setattr(mux, "_open_one_session", open_one)
+    monkeypatch.setattr(mux.transport, "_open_one_session", open_one)
     return mux, cfg, opened
 
 

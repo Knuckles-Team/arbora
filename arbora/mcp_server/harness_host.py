@@ -71,7 +71,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
     from meristem.host_ports import FleetServer
 
     def view() -> dict[str, FleetServer]:
-        from arbora.fleet.multiplexer import resolve_runtime_value
+        from arbora.fleet.child_transport import resolve_runtime_value
 
         servers: dict[str, FleetServer] = {}
         for name, config in dict(multiplexer.load_catalog()).items():

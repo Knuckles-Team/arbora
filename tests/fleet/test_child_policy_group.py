@@ -6,7 +6,7 @@ import importlib.metadata
 
 import pytest
 
-from arbora.fleet import multiplexer
+from arbora.fleet import child_runtime_policy as _multiplexer_child_runtime_policy
 
 
 class _FakePolicyFactory:
@@ -26,8 +26,14 @@ def test_policies_load_from_arbora_group(monkeypatch: pytest.MonkeyPatch) -> Non
         return (_EntryPoint(),) if group == "arbora.mcp_child_policies" else ()
 
     monkeypatch.setattr(importlib.metadata, "entry_points", entry_points)
-    assert multiplexer._RUNTIME_CHILD_POLICY_GROUP == "arbora.mcp_child_policies"
-    assert multiplexer._load_runtime_child_policy_factory("fake") is _FakePolicyFactory
+    assert (
+        _multiplexer_child_runtime_policy._RUNTIME_CHILD_POLICY_GROUP
+        == "arbora.mcp_child_policies"
+    )
+    assert (
+        _multiplexer_child_runtime_policy._load_runtime_child_policy_factory("fake")
+        is _FakePolicyFactory
+    )
     assert asked == [("arbora.mcp_child_policies", "fake")]
 
 
@@ -35,4 +41,4 @@ def test_policies_load_from_arbora_group(monkeypatch: pytest.MonkeyPatch) -> Non
 def test_an_absent_policy_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(importlib.metadata, "entry_points", lambda **_: ())
     with pytest.raises(RuntimeError, match="unavailable"):
-        multiplexer._load_runtime_child_policy_factory("missing")
+        _multiplexer_child_runtime_policy._load_runtime_child_policy_factory("missing")

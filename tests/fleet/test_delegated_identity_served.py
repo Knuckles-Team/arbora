@@ -58,9 +58,9 @@ def test_actor_required_tools_succeed_for_a_user() -> None:
     assert headers == {"Authorization": "Bearer tok.en.sig"}
     assert per_call_ms < 50
     # The multiplexer holds the only exchange call site.
-    from arbora.fleet.multiplexer import MCPMultiplexer
+    from arbora.fleet.child_transport import ChildTransport
 
-    assert callable(MCPMultiplexer._resolve_actor_exchange_bearer)
+    assert callable(ChildTransport._resolve_actor_exchange_bearer)
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R028.4")

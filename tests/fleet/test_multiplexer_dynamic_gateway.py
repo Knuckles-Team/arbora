@@ -192,7 +192,7 @@ async def _reconnect_mounted(mux, server_name: str, generations: list):
     async def fake_open_one_session(*_args):
         return generations.pop(0)
 
-    mux._open_one_session = AsyncMock(side_effect=fake_open_one_session)
+    mux.transport._open_one_session = AsyncMock(side_effect=fake_open_one_session)
     host = FastMCP("schema-refresh-host")
     mux._host_mcp = host
     mounted = await mux.mount_child(server_name)
@@ -608,7 +608,7 @@ async def _mount_schema_child(tmp_path):
     async def fake_open_one_session(*_args):
         return original
 
-    mux._open_one_session = AsyncMock(side_effect=fake_open_one_session)
+    mux.transport._open_one_session = AsyncMock(side_effect=fake_open_one_session)
     host = FastMCP("schema-refresh-host")
     mux._host_mcp = host
     mounted = await mux.mount_child(_SCHEMA_SERVER)
@@ -991,7 +991,7 @@ async def test_concurrent_probes_honor_their_own_per_server_deadline(tmp_path):
             await asyncio.sleep(0.1)  # comfortably inside its OWN 5s deadline
         return _fake_session([("op", "does a thing")])
 
-    mux._open_one_session = AsyncMock(side_effect=_open)
+    mux.transport._open_one_session = AsyncMock(side_effect=_open)
 
     # Initialize the real authority modules before measuring remote concurrency.
     _tenant_local_discovery_binding()
@@ -1091,7 +1091,7 @@ async def test_probe_server_success_and_caches(tmp_path):
     async def _open(server, cfg, stack):
         return _fake_session([(CNT_TOOL, "manage containers")])
 
-    mux._open_one_session = AsyncMock(side_effect=_open)
+    mux.transport._open_one_session = AsyncMock(side_effect=_open)
     info = await mux.probe_server(CNT)
     assert info["error"] is None
     assert info["tools"][0]["name"] == CNT_TOOL
@@ -1104,7 +1104,7 @@ async def test_probe_server_records_unreachable(tmp_path):
     async def _boom(server, cfg, stack):
         raise OSError("connection refused")
 
-    mux._open_one_session = AsyncMock(side_effect=_boom)
+    mux.transport._open_one_session = AsyncMock(side_effect=_boom)
     info = await mux.probe_server(CNT, timeout=1)
     assert info["tools"] == []
     assert info["error"] == "OSError: connection refused"
@@ -1114,7 +1114,9 @@ async def test_probe_server_uses_live_tools_when_mounted(tmp_path):
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "containers")]})
     await mux.mount_child(CNT)
     # Should NOT reconnect for an already-mounted child.
-    mux._open_one_session = AsyncMock(side_effect=AssertionError("must not reconnect"))
+    mux.transport._open_one_session = AsyncMock(
+        side_effect=AssertionError("must not reconnect")
+    )
     info = await mux.probe_server(CNT)
     assert info["error"] is None
     assert info["tools"][0]["name"] == CNT_TOOL
@@ -1143,7 +1145,9 @@ async def test_probe_server_preserves_an_mcp_apps_tool_descriptor_meta(tmp_path)
 
     mux._start_child = AsyncMock(side_effect=fake_start_child)
     await mux.mount_child(CNT)
-    mux._open_one_session = AsyncMock(side_effect=AssertionError("must not reconnect"))
+    mux.transport._open_one_session = AsyncMock(
+        side_effect=AssertionError("must not reconnect")
+    )
 
     info = await mux.probe_server(CNT)
 
@@ -1171,7 +1175,9 @@ async def test_probe_server_keeps_a_mounted_tools_annotations(tmp_path):
 
     mux._start_child = AsyncMock(side_effect=fake_start_child)
     await mux.mount_child(CNT)
-    mux._open_one_session = AsyncMock(side_effect=AssertionError("must not reconnect"))
+    mux.transport._open_one_session = AsyncMock(
+        side_effect=AssertionError("must not reconnect")
+    )
 
     info = await mux.probe_server(CNT)
 

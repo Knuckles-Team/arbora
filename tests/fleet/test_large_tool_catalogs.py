@@ -19,7 +19,7 @@ from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.catalog_composition import probe_primer
 from arbora.fleet.catalog_items import CatalogItem
-from arbora.fleet.multiplexer import (
+from arbora.fleet.child_payload_bounds import (
     FleetCatalogPageError,
     _bounded_tool_catalog,
     _list_all_tools,
@@ -389,7 +389,7 @@ class _PagedPrompts:
 
 @pytest.mark.spec("ARBORA-FLEET-R068.1")
 def test_prompts_resources_and_templates_page_like_tools() -> None:
-    from arbora.fleet.multiplexer import _list_all
+    from arbora.fleet.child_payload_bounds import _list_all
 
     prompts = asyncio.run(_list_all(_PagedPrompts(25, 10), "list_prompts", "prompts"))
     assert [p.name for p in prompts] == [f"p{i}" for i in range(25)]

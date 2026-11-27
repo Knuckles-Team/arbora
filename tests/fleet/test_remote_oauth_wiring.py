@@ -28,6 +28,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from arbora.fleet import child_transport as _mod_child_transport
 from arbora.fleet import multiplexer as mod
 from arbora.fleet.discovery_authority import (
     OAuthGrantBinding,
@@ -354,7 +355,7 @@ def remote_transport(monkeypatch):
     def _client(*args, **kwargs):
         return _streams_cm(("r", "w"))
 
-    monkeypatch.setattr(mod, "streamable_http_client", _client)
+    monkeypatch.setattr(_mod_child_transport, "streamable_http_client", _client)
     monkeypatch.setattr(mod, "ClientSession", _FakeSessionCM)
     return recorded_clients
 

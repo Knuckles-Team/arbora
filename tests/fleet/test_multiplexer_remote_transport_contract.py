@@ -26,14 +26,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from arbora.fleet import child_transport as _mod_child_transport
 from arbora.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 
 def test_multiplexer_imports_the_sdk_v2_transport_names() -> None:
     """Both remote transports are hard imports, not ``None`` fallbacks."""
-    assert callable(mod.streamable_http_client)
-    assert callable(mod.sse_client)
+    assert callable(_mod_child_transport.streamable_http_client)
+    assert callable(_mod_child_transport.sse_client)
     assert not hasattr(mod, "streamablehttp_client")
 
 
@@ -69,8 +70,8 @@ def recorded_http(monkeypatch):
         # SDK v2 yields (read, write) — the v1 third `get_session_id` is gone.
         yield ("r", "w")
 
-    monkeypatch.setattr(mod, "streamable_http_client", _fake)
-    monkeypatch.setattr(mod, "ClientSession", _FakeSessionCM)
+    monkeypatch.setattr(_mod_child_transport, "streamable_http_client", _fake)
+    monkeypatch.setattr(_mod_child_transport, "ClientSession", _FakeSessionCM)
     return calls
 
 
@@ -94,7 +95,10 @@ async def test_remote_child_uses_v2_http_client_keyword(recorded_http, tmp_path)
     assert call["args"] == ("http://fleet.example/mcp",)
     assert set(call["kwargs"]) == {"http_client", "max_sse_event_size"}
     # ARBORA-OPS-R020.6.8: a child event may hold twice the delegated value bound.
-    assert call["kwargs"]["max_sse_event_size"] == mod._MAX_CHILD_SSE_EVENT_BYTES
+    assert (
+        call["kwargs"]["max_sse_event_size"]
+        == _mod_child_transport._MAX_CHILD_SSE_EVENT_BYTES
+    )
     # v1-only keywords must not be resurrected — SDK v2 rejects them.
     assert "httpx_client_factory" not in call["kwargs"]
 
