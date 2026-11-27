@@ -34,8 +34,8 @@ async def invoke(monkeypatch, execute, *, commit_error=False):
     authority = WorkItemA2AAuthority(
         lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
     )
-    monkeypatch.setattr(authority, "_execute_claimed_run", execute)
-    usage = await authority._run(
+    monkeypatch.setattr(authority.runs, "_execute_claimed_run", execute)
+    usage = await authority.runs._run(
         object(),
         item_id="work",
         session=SESSION,
@@ -147,10 +147,12 @@ async def test_cancel_does_not_commit(monkeypatch):
         lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
     )
     monkeypatch.setattr(
-        authority, "_execute_claimed_run", AsyncMock(side_effect=asyncio.CancelledError)
+        authority.runs,
+        "_execute_claimed_run",
+        AsyncMock(side_effect=asyncio.CancelledError),
     )
     with pytest.raises(asyncio.CancelledError):
-        await authority._run(
+        await authority.runs._run(
             object(),
             item_id="work",
             session=SESSION,

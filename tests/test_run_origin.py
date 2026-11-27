@@ -151,7 +151,7 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
     if native:
         item["metadata"]["a2a_run_id"] = run_id
     monkeypatch.setattr(work_items, "get_work_item", lambda *_: {**item, **durable})
-    monkeypatch.setattr(authority, "_project", lambda value, **_: value)
+    monkeypatch.setattr(authority.projection, "_project", lambda value, **_: value)
 
     def cancel(*args: object) -> bool:
         durable["status"] = "cancelled"

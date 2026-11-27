@@ -522,7 +522,7 @@ async def test_foreign_run_result_never_projects_usage(
         origins=RunOriginRegistry(),
         config=RuntimeConfig(),
     )
-    usage = await authority._run(
+    usage = await authority.runs._run(
         object(),
         item_id="native-item",
         session=object(),

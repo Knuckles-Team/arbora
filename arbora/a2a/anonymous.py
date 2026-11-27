@@ -117,7 +117,7 @@ class AnonymousTaskStatus:
         WorkItemA2AAuthority._work_item_id(self.run_id)
         from arbora.api.domain.a2a.models import A2ATaskStatus
 
-        from .authority import _STATE_MAP
+        from .task_projection import _STATE_MAP
 
         if self.status not in _STATE_MAP or self.authority_mode not in {
             "none",
@@ -371,7 +371,7 @@ class AnonymousTaskReadOwner:
             return None
         from arbora.api.domain.a2a.models import A2ATaskStatus
 
-        from .authority import _STATE_MAP
+        from .task_projection import _STATE_MAP
 
         state = _STATE_MAP.get(item.status)
         if state is None:

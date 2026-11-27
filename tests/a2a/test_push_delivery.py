@@ -41,7 +41,7 @@ def _register(
 async def _terminal(host: Any) -> None:
     host.items.rows[ITEM_ID]["status"] = "succeeded"
     with use_session(host.who):
-        await host.authority._publish(
+        await host.authority.runs._publish(
             ITEM_ID,
             None,
             task_id=TASK_ID,

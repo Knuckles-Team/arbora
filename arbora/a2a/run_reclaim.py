@@ -135,7 +135,7 @@ class A2ARunReclaimConsumer:
         low, high = _POLL_RANGE
         if not low <= poll_interval_s <= high:
             raise ValueError(f"poll_interval_s must be within [{low}, {high}]")
-        from .authority import _RUN_LEASE_SECONDS
+        from .run_lifecycle import _RUN_LEASE_SECONDS
 
         self._authority = authority
         self._candidates = candidates

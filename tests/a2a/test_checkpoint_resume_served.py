@@ -17,10 +17,11 @@ from typing import Any
 import pytest
 
 from arbora import agent_runs
-from arbora.a2a.authority import _RUN_LEASE_SECONDS, WorkItemA2AAuthority
+from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.checkpoint import EngineHostCheckpoint
 from arbora.a2a.event_log import A2AEventLog, A2AEventStreams
 from arbora.a2a.run_delegation import EngineRunDelegations
+from arbora.a2a.run_lifecycle import _RUN_LEASE_SECONDS
 from arbora.a2a.run_reclaim import A2ARunReclaimConsumer, ExpiredLeaseCandidates
 from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.core.settings import RuntimeConfig

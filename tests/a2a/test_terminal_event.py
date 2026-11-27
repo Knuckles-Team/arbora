@@ -138,7 +138,7 @@ def authority(monkeypatch: pytest.MonkeyPatch) -> WorkItemA2AAuthority:
     monkeypatch.setattr(instance, "_owner_ref", lambda _session: OWNER)
     # These fixtures isolate the opt-in committed receipt, not RunEvent replies.
     monkeypatch.setattr(
-        instance, "_persisted_reply", lambda *args, **kwargs: (None, None)
+        instance.projection, "_persisted_reply", lambda *args, **kwargs: (None, None)
     )
     return instance
 

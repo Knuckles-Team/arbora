@@ -23,7 +23,7 @@ def projection(monkeypatch, *, native):
         config=RuntimeConfig(),
     )
     task = SimpleNamespace(id="task", metadata={"arbora": {"runId": "run"}})
-    monkeypatch.setattr(authority, "_project", Mock(return_value=task))
+    monkeypatch.setattr(authority.projection, "_project", Mock(return_value=task))
     attach = AsyncMock()
     monkeypatch.setattr(authority, "_attach_run_usage", attach)
     return authority, task, attach
@@ -38,7 +38,7 @@ async def test_legacy_snapshot_keeps_absence_and_empty_distinct(monkeypatch, usa
         item, task_id="task", context_id="context", session=session, usage=usage
     )
     assert result is task
-    authority._project.assert_called_once_with(item, task_id="task")
+    authority.projection._project.assert_called_once_with(item, task_id="task")
     attach.assert_not_awaited()
     if usage is None:
         assert "usage" not in task.metadata["arbora"]

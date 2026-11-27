@@ -290,7 +290,7 @@ async def test_admission_callback_receives_owner_id_before_execution(
 
     monkeypatch.setattr(work_items, "submit_work_item_atomic", submit)
     monkeypatch.setattr(authority, "_resolve_context_id", lambda *args: context_id)
-    monkeypatch.setattr(authority, "_run", run)
+    monkeypatch.setattr(authority.runs, "_run", run)
     monkeypatch.setattr(
         authority, "_project_dispatch_task", AsyncMock(return_value=None)
     )

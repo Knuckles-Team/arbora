@@ -354,7 +354,7 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
     )
     monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: "committed")
     asyncio.run(
-        auth._run(
+        auth.runs._run(
             object(),
             item_id="workitem:orchestrator:" + task_id,
             session=SimpleNamespace(tenant="t"),

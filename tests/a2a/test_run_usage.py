@@ -12,8 +12,9 @@ from unittest.mock import AsyncMock
 import pytest
 from medulla.generated.models import RunWorkItemView
 
-from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.a2a.authority import TaskOutputs, WorkItemA2AAuthority
 from arbora.a2a.run_usage import project_run_usage
+from arbora.a2a.task_projection import TaskProjection
 from arbora.api.contracts.agent_control_contracts import AgentExecutionResult
 from tests.test_native_run_admission import request
 from tests.test_native_run_scope import CLAIM, SESSION
@@ -71,11 +72,17 @@ def record(outcome="succeeded", counts=COUNTS):
     }
 
 
+_PROJECTION = TaskProjection(
+    work_item_id=WorkItemA2AAuthority._work_item_id,
+    engine=lambda *a, **k: None,
+    held_output_source=lambda: None,
+    outputs=TaskOutputs(),
+)
+
+
 def project(value, item=None):
     item = item or value["work_item"]
-    task = WorkItemA2AAuthority._project(
-        item, task_id=("work-item:" + "a" * 64), artifacts=None
-    )
+    task = _PROJECTION._project(item, task_id=("work-item:" + "a" * 64), artifacts=None)
     return project_run_usage(
         value,
         session=SimpleNamespace(tenant="tenant"),
@@ -93,7 +100,7 @@ def test_restart_projection_keeps_exact_snapshot(outcome, counts):
     assert project(value)["counts"] == counts
     if outcome == "failed":
         assert (
-            WorkItemA2AAuthority._project(
+            _PROJECTION._project(
                 value["work_item"], task_id=("work-item:" + "a" * 64), artifacts=None
             ).artifacts
             is None
@@ -150,11 +157,11 @@ async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     if failed:
         authority.outputs.remember("task", "stale answer")
         execute.side_effect = failure(usage=counts)
-    monkeypatch.setattr(authority, "_execute_claimed_run", execute)
+    monkeypatch.setattr(authority.runs, "_execute_claimed_run", execute)
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: CLAIM)
     commits = []
     monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: commits.append(k))
-    await authority._run(
+    await authority.runs._run(
         object(),
         item_id="work",
         session=SESSION,
@@ -216,9 +223,7 @@ async def test_get_run_uses_owner_graph_and_caller_tenant():
     )
     value = record()
     item = value["work_item"]
-    task = WorkItemA2AAuthority._project(
-        item, task_id=item["work_item_id"], artifacts=None
-    )
+    task = _PROJECTION._project(item, task_id=item["work_item_id"], artifacts=None)
     result = await read_run_usage(
         engine,
         session=SimpleNamespace(tenant="tenant"),
@@ -293,14 +298,16 @@ async def test_cancelled_native_run_is_not_wrapped_or_committed(monkeypatch):
         config=RuntimeConfig(),
     )
     monkeypatch.setattr(
-        authority, "_execute_claimed_run", AsyncMock(side_effect=asyncio.CancelledError)
+        authority.runs,
+        "_execute_claimed_run",
+        AsyncMock(side_effect=asyncio.CancelledError),
     )
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: CLAIM)
     monkeypatch.setattr(
         work_items, "commit_result", lambda *a, **k: pytest.fail("commit after cancel")
     )
     with pytest.raises(asyncio.CancelledError):
-        await authority._run(
+        await authority.runs._run(
             object(),
             item_id="work",
             session=SESSION,

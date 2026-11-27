@@ -63,7 +63,7 @@ def read(records: list[dict[str, Any]], status: str = "succeeded") -> Any:
         origins=RunOriginRegistry(),
         config=RuntimeConfig(),
     )
-    return authority._persisted_artifacts(TASK, item={"status": status})
+    return authority.projection._persisted_artifacts(TASK, item={"status": status})
 
 
 @pytest.mark.parametrize("character", ["a", "漢", "\x00", "😀", '"'])

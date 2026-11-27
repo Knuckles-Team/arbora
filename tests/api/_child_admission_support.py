@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.a2a.run_lifecycle import RunLifecycle
 from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
@@ -114,7 +115,7 @@ def install_engine(
     async def run(_self: Any, _work_engine: Any, **fields: Any) -> None:
         engine.runs.append(fields)
 
-    monkeypatch.setattr(WorkItemA2AAuthority, "_run", run)
+    monkeypatch.setattr(RunLifecycle, "_run", run)
 
 
 def authority(

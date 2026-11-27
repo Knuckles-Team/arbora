@@ -21,13 +21,13 @@ def _authority(**kwargs: object) -> WorkItemA2AAuthority:
 def test_authority_never_default_constructs_a_run_port() -> None:
     """Without a composed run port the authority refuses; it builds none of its own."""
     with pytest.raises(RuntimeError, match="not composed"):
-        _authority()._agent_executor()
+        _authority().runs._agent_executor()
     port = object()
-    assert _authority(executor=port)._agent_executor() is port
+    assert _authority(executor=port).runs._agent_executor() is port
 
 
 @pytest.mark.spec("ARBORA-HOST-R038.3")
 def test_the_host_context_hands_one_run_port_to_the_authority() -> None:
     """The host context composes the run port once and the A2A authority runs through it."""
     host = compose_host_context(EngineHandles(config=RuntimeConfig()))
-    assert host.runs.a2a.authority._agent_executor() is host.runs.run_port
+    assert host.runs.a2a.authority.runs._agent_executor() is host.runs.run_port

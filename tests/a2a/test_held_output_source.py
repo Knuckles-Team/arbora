@@ -129,7 +129,7 @@ def _served(engine: Engine, decide: Decide) -> TestClient:
         lambda: engine, origins=RunOriginRegistry(), config=RuntimeConfig()
     )
     reader.held_output_source = HeldOutputSource(decide)
-    artifacts, held = reader._persisted_reply(
+    artifacts, held = reader.projection._persisted_reply(
         TASK, item={"status": "succeeded", "metadata": {"a2a_run_id": TASK}}
     )
     authority = Authority()
