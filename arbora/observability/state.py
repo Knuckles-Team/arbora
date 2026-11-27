@@ -242,6 +242,11 @@ class Slot:
             return value
 
 
+#: The environment key of the OAuth client contract: a JSON object that the identity
+#: unit parses and the readiness report only tests for presence.
+IDENTITY_CONTRACT_KEY = "ARBORA_IDENTITY_CLIENT_CONTRACT"
+
+
 class IdentityContract:
     """The OAuth client contract reconciler and its config-invalid flag."""
 

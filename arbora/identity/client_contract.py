@@ -32,13 +32,10 @@ from types import MappingProxyType
 from typing import Any
 
 from arbora.core.harness_profiles import native_redirect_uris
-from arbora.observability.state import IdentityContract
+from arbora.observability.state import IDENTITY_CONTRACT_KEY, IdentityContract
 from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
-
-#: The configuration key: a JSON object (see :class:`ContractConfig`).
-CONFIG_KEY = "ARBORA_IDENTITY_CLIENT_CONTRACT"
 
 #: The default loopback callbacks of the native coding clients: the callback of each
 #: harness profile (``arbora/core/harness_profiles.py``). Configuration replaces
@@ -142,7 +139,7 @@ class ContractConfig:
         required = ("admin_url", "realm", "admin_client_id", "admin_client_secret_ref")
         missing = [name for name in required if not str(raw.get(name) or "").strip()]
         if missing:
-            raise ValueError(f"{CONFIG_KEY} lacks {', '.join(missing)}")
+            raise ValueError(f"{IDENTITY_CONTRACT_KEY} lacks {', '.join(missing)}")
         redirects = raw.get("native_redirect_uris") or DEFAULT_NATIVE_REDIRECT_URIS
         if isinstance(redirects, str) or not all(
             isinstance(uri, str) and _is_loopback(uri) for uri in redirects
@@ -191,12 +188,12 @@ def configured_contract_config() -> ContractConfig | None:
     """The configured contract, or ``None`` when the feature is not configured."""
     from arbora.core.environment import read_env
 
-    raw = read_env(CONFIG_KEY, "")
+    raw = read_env(IDENTITY_CONTRACT_KEY, "")
     if not raw:
         return None
     mapping = json.loads(raw) if isinstance(raw, str) else raw
     if not isinstance(mapping, Mapping):
-        raise ValueError(f"{CONFIG_KEY} must be a JSON object")
+        raise ValueError(f"{IDENTITY_CONTRACT_KEY} must be a JSON object")
     return ContractConfig.from_mapping(mapping)
 
 
@@ -807,7 +804,7 @@ def reconcile_command(argv: Sequence[str]) -> int:
         return declared_command(list(argv))
     config = configured_contract_config()
     if config is None:
-        print(json.dumps({"status": "not_configured", "config": CONFIG_KEY}))
+        print(json.dumps({"status": "not_configured", "config": IDENTITY_CONTRACT_KEY}))
         return 2
     reconciler, result = reconcile_now(config)
     print(
