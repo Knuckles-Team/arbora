@@ -478,7 +478,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R869` | Test: `tests/api/test_generated_code_admission_gate.py::test_write_refuses_without_matching_admission` (served). It asserts both refusals and one admitted commit. |
 | `ARBORA-OPS-R870` | Test: `tests/api/test_changeset_review_op.py::test_op_calls_decide_and_returns_the_record_digest` (served). |
 | `ARBORA-OPS-R871` | Test: `tests/api/test_playbook_step_requires_decision.py::test_action_refuses_without_a_committed_record` (served). It also runs one admitted step. |
-| `ARBORA-OPS-R872` | Test: `tests/api/test_certification_gate_served.py::test_each_attestation_case_refuses_without_effect` (served). The exact current attestation admits the run. |
+| `ARBORA-OPS-R872` | Test: `tests/api/test_certification_gate_served.py::test_each_attestation_case_refuses_without_effect` (served). The exact current attestation admits the run. `tests/api/test_agents_certify_served.py::test_certify_stamps_the_verified_tenant_and_key_and_forwards_one_job` covers `agents.certify`. |
 | `ARBORA-OPS-R873` | Test: `tests/control_plane/test_workflow_host_lazy_start.py::test_start_counter_zero_then_one` (served). Counter is 0 before first use, 1 after repeats, 0 after an unknown id. |
 | `ARBORA-OPS-R874` | Test: `tests/control_plane/test_workflow_match_identity.py::test_entry_resolves_registered_record_and_unknown_refuses` (served). |
 | `ARBORA-OPS-R875` | Test: `tests/api/test_certification_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
