@@ -70,7 +70,7 @@ def _summary(info: Mapping[str, Any] | None) -> dict[str, Any]:
     if not isinstance(info, Mapping):
         return {"tools": 0, "error": "refresh failed"}
     return {
-        "tools": len(info.get("tools") or ()),
+        "tools": int(info.get("tool_count", len(info.get("tools") or ()))),
         "error": info.get("error"),
         "probed_at": info.get("probed_at"),
     }

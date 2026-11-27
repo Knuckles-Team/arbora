@@ -336,6 +336,15 @@ def world_view_layout_rules() -> Any | None:
         return None
 
 
+def component_search_filters_served() -> bool:
+    """Whether the installed engine's component search filters by server and name."""
+    try:
+        require_component_search_filters()
+    except PinLagUnavailable:
+        return False
+    return True
+
+
 def agent_run_delegation_served() -> bool:
     """Whether the installed engine serves agent-run delegations."""
     try:

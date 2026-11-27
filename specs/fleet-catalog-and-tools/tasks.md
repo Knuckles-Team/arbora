@@ -508,7 +508,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T237 ARBORA-FLEET-R070 Refresh a connector's catalog on list_changed, on probe TTL and by an explicit op, without a restart.
 - [x] T238 ARBORA-FLEET-R071 Re-read a server once before refusing a fleet.call tool the cached catalog lacks.
 - [x] T239 ARBORA-FLEET-R072 Serve each tool's schema and behaviour hints from the engine catalog.
-- [ ] T240 ARBORA-FLEET-R073.2 Keep only digests in process; read tool pages from the engine by server and name.
+- [x] T240 ARBORA-FLEET-R073.2 Keep only digests in process; read tool pages from the engine by server and name.
 - [x] T283 ARBORA-FLEET-R073.1 Page one server's tools, or one named tool, from the engine behind the pin-lag guard.
 - [x] T241 ARBORA-FLEET-R068.1 Page resources, resource templates and prompts like tools.
 - [x] T242 ARBORA-FLEET-R070.1 Drop tools, prompts and skills a good probe no longer lists.

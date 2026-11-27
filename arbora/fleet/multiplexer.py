@@ -5094,6 +5094,10 @@ class MCPMultiplexer:
             return []
         return self._register_child_result(s_name, payload, tools, r_cfg)
 
+    def bind_tool_rows(self, reader: ToolRowReader) -> None:
+        """Bind the one reader every tool-row site goes through (ARBORA-FLEET-R073.2)."""
+        self._tool_rows = reader
+
     async def delegated_server_tools(
         self, server_name: str
     ) -> list[dict[str, _typing.Any]]:
@@ -5330,7 +5334,7 @@ class MCPMultiplexer:
         cfg = self.load_catalog().get(server_name)
         if cfg is not None and oauth_gated(cfg):
             return info
-        self._probe_cache[server_name] = info
+        self._probe_cache[server_name] = self._tool_rows.resident(info)
         return info
 
     def _record_discovery_binding(
@@ -6525,7 +6529,7 @@ class MCPMultiplexer:
         self, server: str, prefix: str, info: dict
     ) -> list[dict]:
         """One drilled-down server's client-visible tool rows."""
-        tools = await self._tool_rows.rows(server, info)
+        tools = await self._tool_rows.rows(server, info, schemas=True)
         return [
             {
                 "prefixed_name": prefixed_name,

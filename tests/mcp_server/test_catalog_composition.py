@@ -40,6 +40,9 @@ class Multiplexer:
         self.refreshes = 0
         self.fail = fail
 
+    def bind_tool_rows(self, reader: Any) -> None:
+        self.tool_rows = reader
+
     async def refresh_engine_catalog(self) -> None:
         self.refreshes += 1
         if self.fail:
