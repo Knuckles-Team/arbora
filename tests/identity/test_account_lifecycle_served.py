@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 from arbora.identity.account_ceremonies import (
-    PASSWORD_CHANGE,
+    CHANGE_ROUTE,
     REGISTER,
     RESET_CONFIRM,
     RESET_REQUEST,
@@ -155,16 +155,16 @@ def test_register_login_change_reset_logout(world: SimpleNamespace) -> None:
 
     # Change: needs the session and its proof, acts as the session, and keeps the rules.
     body = {"current": "old-secret-1", "new": "fresh-secret-3"}
-    assert _post(world, PASSWORD_CHANGE, body)[0] == 401
-    assert _post(world, PASSWORD_CHANGE, body, session=True, csrf=False)[0] == 401
-    assert _post(world, PASSWORD_CHANGE, body, session=True)[0] == 204
+    assert _post(world, CHANGE_ROUTE, body)[0] == 401
+    assert _post(world, CHANGE_ROUTE, body, session=True, csrf=False)[0] == 401
+    assert _post(world, CHANGE_ROUTE, body, session=True)[0] == 204
     assert engine.users["ann"] == "fresh-secret-3"
     assert engine.acted_as[-1] == "acting:usr:fixture"
-    wrong = _post(world, PASSWORD_CHANGE, body, session=True)
+    wrong = _post(world, CHANGE_ROUTE, body, session=True)
     assert wrong[0] == 401
     weak_change = {"current": "old-secret-1", "new": "x"}
     engine.users["ann"] = "old-secret-1"
-    assert _post(world, PASSWORD_CHANGE, weak_change, session=True) == (
+    assert _post(world, CHANGE_ROUTE, weak_change, session=True) == (
         422,
         {"error": "PASSWORD_POLICY_FAILED"},
     )

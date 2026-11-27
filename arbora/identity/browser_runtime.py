@@ -216,13 +216,13 @@ class BrowserAuthApplication:
 
     async def _account(self, scope: Any, receive: Any) -> Any:
         """Register, password change, reset request and reset confirm (R005.2)."""
-        from .account_ceremonies import PASSWORD_CHANGE, REGISTER, RESET_REQUEST
+        from .account_ceremonies import CHANGE_ROUTE, REGISTER, RESET_REQUEST
 
         path = scope["path"]
         body = await self.accounts.body(scope, receive, path)
         if isinstance(body, JSONResponse):
             return body
-        if path == PASSWORD_CHANGE:
+        if path == CHANGE_ROUTE:
             return await self._password_change(scope, body)
         if path == REGISTER:
             return await self.accounts.register(body)

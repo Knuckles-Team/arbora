@@ -26,15 +26,15 @@ from .mfa_ceremonies import ceremony_body
 from .mfa_totp import MfaBodyInvalid
 
 REGISTER = "/auth/register"
-PASSWORD_CHANGE = "/auth/password/change"
+CHANGE_ROUTE = "/auth/password/change"
 RESET_REQUEST = "/auth/password/reset/request"
 RESET_CONFIRM = "/auth/password/reset/confirm"
-ACCOUNT_ROUTES = frozenset({REGISTER, PASSWORD_CHANGE, RESET_REQUEST, RESET_CONFIRM})
+ACCOUNT_ROUTES = frozenset({REGISTER, CHANGE_ROUTE, RESET_REQUEST, RESET_CONFIRM})
 #: Reset tokens live fifteen minutes at the engine.
 RESET_TTL_MS = 900_000
 _FIELDS = {
     REGISTER: frozenset({"username", "password"}),
-    PASSWORD_CHANGE: frozenset({"current", "new"}),
+    CHANGE_ROUTE: frozenset({"current", "new"}),
     RESET_REQUEST: frozenset({"username"}),
     RESET_CONFIRM: frozenset({"token", "new_password"}),
 }
