@@ -19,7 +19,7 @@ from arbora import work_items
 from arbora.a2a import tool_task_dispatch, tool_task_requests
 from arbora.a2a.tool_task import ToolTaskRequest, tool_task_work_item_id
 from arbora.a2a.tool_task_requests import EgToolTaskRequestStore
-from arbora.mcp_server.served_invocation import _tool_task_service
+from arbora.mcp_server.served_background import _tool_task_service
 from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
 from arbora.security.operation_result import OpError, OpResult
 from arbora.security.session import GraphSession, use_session

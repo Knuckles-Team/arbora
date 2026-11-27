@@ -15,7 +15,7 @@ from arbora.finance.wallet_port import (
     FleetFinanceChangePort,
     reservation_id,
 )
-from arbora.mcp_server.served_invocation import _with_finance_change_ports
+from arbora.mcp_server.served_finance import _with_finance_change_ports
 
 PROJECTION = {
     "tenant_id": "t1",

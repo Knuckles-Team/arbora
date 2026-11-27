@@ -16,7 +16,7 @@ import pytest
 
 from arbora.a2a.run_lifecycle import _RUN_LEASE_SECONDS
 from arbora.a2a.run_reclaim import A2ARunReclaimService
-from arbora.mcp_server.served_invocation import _background_services, _reclaim_service
+from arbora.mcp_server.served_background import _background_services, _reclaim_service
 from arbora.security.session import use_session
 from tests.a2a.test_checkpoint_resume_served import (  # noqa: F401
     START,

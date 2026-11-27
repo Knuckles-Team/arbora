@@ -126,7 +126,7 @@ def _pipeline():
     from arbora.api.ops import get_registry
     from arbora.api.ops.fleet import _plan_confirmed
     from arbora.api.registry import Confirm, Effect, Executor, PrincipalRule
-    from arbora.mcp_server.served_invocation import validate_provider_schema
+    from arbora.mcp_server.served_schema import validate_provider_schema
     from tests.api.test_invoke_contract import setup_services
 
     async def destructive(op, params, supplied):

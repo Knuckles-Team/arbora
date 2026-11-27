@@ -176,7 +176,7 @@ def test_the_runner_ticks_back_to_back_then_waits_and_a_failed_tick_retries() ->
 
 @pytest.mark.spec("ARBORA-OPS-R022.2.13")
 def test_the_host_starts_the_worker_only_when_a_loop_body_is_bound() -> None:
-    from arbora.mcp_server.served_invocation import _with_loop_worker
+    from arbora.mcp_server.served_background import _with_loop_worker
 
     unbound, startup = _with_loop_worker({"x": 1}, object(), "g", lambda t: t, object)
     assert unbound == {"x": 1} and startup is None

@@ -22,7 +22,8 @@ pytest.importorskip("medulla.decision_stat")
 from arbora.access import action_policy  # noqa: E402
 from arbora.api import task_plan_schema  # noqa: E402
 from arbora.epistemic import ClientContext  # noqa: E402
-from arbora.mcp_server import served_engine, served_invocation  # noqa: E402
+from arbora.mcp_server import served_engine  # noqa: E402
+from arbora.mcp_server import served_schema as _served_schema
 from arbora.security.actor_context import (  # noqa: E402
     ActorContext,
     ActorType,
@@ -153,13 +154,13 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
             policy_version=str(sessions[0].policy_version),
         )
 
-    bindings, startup = served_invocation._with_task_plan_schema(
+    bindings, startup = _served_schema._with_task_plan_schema(
         {}, pool, "tenant-a", connect_context, process_session, policies
     )
     assert bindings is not None and startup is not None
     pins = bindings["task_plan_schema_pins"]
     yield SimpleNamespace(
-        publish=served_invocation._task_plan_schema_publisher(
+        publish=_served_schema._task_plan_schema_publisher(
             pool, "tenant-a", connect_context, process_session, policies
         ),
         startup=startup,
@@ -190,7 +191,7 @@ def test_schema_publication_uses_new_exact_durable_policy_receipt(fixture: Any) 
     ):
         request = sent["op"]["request"]
         context = request["context"]
-        intent = served_invocation._schema_action(bound, "tenant-a", fixture.pin)
+        intent = _served_schema._schema_action(bound, "tenant-a", fixture.pin)
         assert (
             label == "ActionDecision"
             and record["decision"] == action_policy.DECISION_ALLOW_NOTIFY
@@ -221,9 +222,7 @@ def test_schema_publication_uses_native_opaque_principal_shape(
 def test_schema_policy_override_is_exact_kind_and_target(fixture: Any) -> None:
     """The deployment opt-in cannot widen to neighboring publication targets."""
     policy = fixture.policies.for_engine(fixture.audit)
-    intent = served_invocation._schema_action(
-        fixture.sessions[0], "tenant-a", fixture.pin
-    )
+    intent = _served_schema._schema_action(fixture.sessions[0], "tenant-a", fixture.pin)
 
     assert policy.classify(intent) == action_policy.TIER_AUTO_NOTIFY
     assert policy.classify(replace(intent, target="arbora.agents.plan_run.other")) == (
@@ -314,7 +313,7 @@ def test_schema_refuses_an_older_same_intent_receipt(
     fixture: Any, monkeypatch: pytest.MonkeyPatch, fresh: str
 ) -> None:
     policy = fixture.policies.for_engine(fixture.audit)
-    request = served_invocation._schema_action(
+    request = _served_schema._schema_action(
         fixture.sessions[0], "tenant-a", fixture.pin
     )
     with use_session(fixture.sessions[0]):
