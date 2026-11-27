@@ -424,7 +424,7 @@ def _fleet_dotted_tool_name(mcp: Any, action: str) -> str | None:
     if mux is None or "." not in action:
         return None
     prefixed = action.replace(".", "__", 1)
-    return prefixed if mux.server_for_prefixed(prefixed) is not None else None
+    return prefixed if mux.mounts.server_for_prefixed(prefixed) is not None else None
 
 
 def _fleet_dispatch_params(tool: str, params: dict[str, Any]) -> dict[str, Any]:
