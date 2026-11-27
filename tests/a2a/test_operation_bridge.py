@@ -15,6 +15,7 @@ import httpx
 import pytest
 from eunomia_core import schemas
 from fastapi import FastAPI
+from starlette.routing import Route
 
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.application import create_a2a_application
@@ -243,6 +244,10 @@ def test_missing_composition_still_refuses_without_effects() -> None:
                 "pendingCallId": "pending:one",
                 "planRef": "plan:one",
                 "signature": "fixture-signature",
+                "confirmationKind": "tool_action",
+                "paramsDigest": "0" * 64,
+                "trustMarkRef": "trust:one",
+                "actionClass": "egress",
             },
         ),
         (
@@ -296,7 +301,7 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
     assert table["graph_a2a"] is registrar.tools["graph_a2a"]
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():
-        app.add_api_route(path, handler, methods=list(methods))
+        app.router.routes.append(Route(path, handler, methods=list(methods)))
     response = post(app)
     assert response.status_code == 200
     assert response.json()["result"]["result"] == {"value": 7}

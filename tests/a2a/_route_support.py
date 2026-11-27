@@ -24,8 +24,8 @@ def bind_route_decision(monkeypatch: pytest.MonkeyPatch) -> None:
 
     build = host_context.build_host_context
 
-    def build_bound(engine_provider: Any) -> Any:
-        host = build(engine_provider)
+    def build_bound() -> Any:
+        host = build()
         host_context.bind_a2a_decision(
             host,
             SimpleNamespace(
@@ -53,8 +53,8 @@ def bind_run_models(monkeypatch: pytest.MonkeyPatch, provider: Any) -> None:
 
     build = host_context.build_host_context
 
-    def build_bound(engine_provider: Any) -> Any:
-        host = build(engine_provider)
+    def build_bound() -> Any:
+        host = build()
         host.runs.ports.bind(HostPortsBinding(HostPorts(models=provider), None))
         return host
 

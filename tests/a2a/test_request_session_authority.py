@@ -14,6 +14,7 @@ from typing import Any
 import httpx
 import pytest
 from fastapi import FastAPI, HTTPException
+from starlette.routing import Route
 
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.application import AmbientA2AAuthenticator
@@ -281,7 +282,7 @@ def registered_unary(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
     )
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():
-        app.add_api_route(path, handler, methods=list(methods))
+        app.router.routes.append(Route(path, handler, methods=list(methods)))
     return app, authority, observed, verified
 
 
@@ -413,6 +414,10 @@ def test_default_registered_plan_confirm_stays_unavailable(
             "pendingCallId": "pending:one",
             "planRef": "plan:one",
             "signature": "fixture-signature",
+            "confirmationKind": "tool_action",
+            "paramsDigest": "0" * 64,
+            "trustMarkRef": "trust:one",
+            "actionClass": "egress",
         },
     )
     assert response.status_code == 501
