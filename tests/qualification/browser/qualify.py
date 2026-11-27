@@ -105,10 +105,10 @@ async def prepare(
     from arbora.core.settings import runtime_config
     from arbora.epistemic import EpistemicClient, EpistemicClientPool
     from arbora.identity.browser_broker import ConfiguredBrowserBroker
-    from arbora.identity.browser_composition import _IdentityClient
     from arbora.identity.browser_runtime import BrowserCallerResolver
     from arbora.identity.engine_ports import EngineSessionAuthority
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
+    from arbora.mcp_server.browser_composition import _IdentityClient
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.served_engine import ServedEngine
     from arbora.mcp_server.served_invocation import (

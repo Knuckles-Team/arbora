@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.api.mcp.registration import FLEET_OPERATIONS, RESIDENT_NAMES
 from arbora.api.ops.fleet import FleetPinParams, FleetPinsListParams, operations
 from arbora.api.registry import AuditClass, Effect, Registry, Surface, Verb
+from arbora.mcp_server.registration import FLEET_OPERATIONS, RESIDENT_NAMES
 
 
 @pytest.mark.spec("ARBORA-FLEET-R059.4")

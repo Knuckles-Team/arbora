@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.identity.browser_composition import configured_browser_boundary
 from arbora.identity.engine import IdentityUnavailable
+from arbora.mcp_server.browser_composition import configured_browser_boundary
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 
@@ -73,7 +73,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     [[], ["identity:admin"], ["kg:admin"], ["identity:*"], "identity:authenticate"],
 )
 def test_broker_exact_scope_is_never_implied(scopes):
-    from arbora.identity.browser_composition import _require_broker_claims
+    from arbora.mcp_server.browser_composition import _require_broker_claims
 
     with pytest.raises(PermissionError):
         _require_broker_claims({"scopes": scopes, "delegation": []})
@@ -82,7 +82,7 @@ def test_broker_exact_scope_is_never_implied(scopes):
 def test_broker_scope_revocation_after_connection_await_stops_dispatch():
     import asyncio
 
-    from arbora.identity.browser_composition import _IdentityClient
+    from arbora.mcp_server.browser_composition import _IdentityClient
 
     async def scenario():
         claims = {"scopes": ["identity:authenticate"], "delegation": []}
@@ -105,8 +105,7 @@ def test_packaged_console_injects_exact_identity_factory(monkeypatch):
     import tomllib
     from pathlib import Path
 
-    from arbora.identity import browser_composition
-    from arbora.mcp_server import server
+    from arbora.mcp_server import browser_composition, server
 
     calls = []
     monkeypatch.setattr(sys, "argv", ["arbora", "--transport", "stdio"])
@@ -206,7 +205,7 @@ def test_root_builds_ports_once_and_injects_boundary():
         for name, text in sources.items()
         if "build_engine_identity_ports(" in text and name != "identity/composition.py"
     ]
-    assert builders == ["identity/browser_composition.py"]
+    assert builders == ["mcp_server/browser_composition.py"]
     constructors = [
         name
         for name, text in sources.items()

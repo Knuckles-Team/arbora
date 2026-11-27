@@ -7146,7 +7146,7 @@ def make_governed_tool_mount(mcp, mux: MCPMultiplexer, native_name):
     Non-tool native mounts need their own verified read adapter. The process
     owner composes that adapter rather than pretending a resource is a tool.
     """
-    from arbora.api.mcp.registration import RESIDENT_NAMES
+    from arbora.mcp_server.registration import RESIDENT_NAMES
 
     async def mount(item, _forwarder):
         if item.kind != "tool":

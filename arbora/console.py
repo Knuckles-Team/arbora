@@ -94,12 +94,12 @@ def main() -> None:
         raise SystemExit(plugin_main(sys.argv[2:]))
     from functools import partial
 
-    from arbora.identity.browser_composition import configured_browser_boundary
     from arbora.identity.client_contract import (
         start_client_contract_supervisor,
         stop_client_contract_supervisor,
     )
     from arbora.identity.ports import IdentityLifecycle
+    from arbora.mcp_server.browser_composition import configured_browser_boundary
     from arbora.mcp_server.browser_dispatch import dispatch_browser_request
     from arbora.mcp_server.server import mcp_server
 

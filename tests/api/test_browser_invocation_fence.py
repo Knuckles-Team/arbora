@@ -402,9 +402,9 @@ def test_actual_asgi_dispatch_requires_binding_after_mount_routing(outer_mount):
 def test_mounted_browser_composition_uses_real_admission_and_same_owner(transition):
     from fastapi import FastAPI
 
-    from arbora.api.http.browser_app import create_browser_api_application
     from arbora.identity.admission import BrowserAdmission
     from arbora.identity.issuer import LocalIssuer
+    from arbora.mcp_server.browser_app import create_browser_api_application
     from tests.api._support import identity_read_op
 
     async def scenario():

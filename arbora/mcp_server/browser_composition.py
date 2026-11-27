@@ -44,6 +44,37 @@ class _ActingClient(_IdentityClient):
         return None
 
 
+def _origin_is_exact_https(origin: str | None) -> bool:
+    """An ASCII ``https`` origin with a host and no credentials, path, query or fragment."""
+    parsed = urlsplit(origin or "")
+    return bool(
+        origin
+        and origin.isascii()
+        and parsed.scheme == "https"
+        and parsed.hostname
+        and not (
+            parsed.username
+            or parsed.password
+            or parsed.path
+            or parsed.query
+            or parsed.fragment
+        )
+    )
+
+
+def _deployment_is_configured(config: Any) -> bool:
+    """The JWT verifier and the vault-backed signing store are both configured."""
+    from arbora.core.environment import read_env
+
+    return bool(
+        config.auth_jwt_jwks_uri
+        and config.auth_jwt_issuer
+        and config.auth_jwt_audience
+        and read_env("SECRETS_VAULT_URL")
+        and read_env("SECRETS_BACKEND", "vault") == "vault"
+    )
+
+
 def configured_browser_boundary(
     invocation: Any,
     client_factory: Any,
@@ -54,7 +85,6 @@ def configured_browser_boundary(
     request_dispatch: Any,
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
-    from arbora.core.environment import read_env
     from arbora.core.settings import runtime_config
     from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.settings import security_settings
@@ -63,27 +93,11 @@ def configured_browser_boundary(
         return None
     config = security_settings()
     origin = runtime_config.webui_origin
-    parsed = urlsplit(origin or "")
-    if (
-        not origin
-        or parsed.scheme != "https"
-        or not parsed.hostname
-        or parsed.username
-        or parsed.password
-        or parsed.path
-        or parsed.query
-        or parsed.fragment
-        or not origin.isascii()
-        or not config.auth_jwt_jwks_uri
-        or not config.auth_jwt_issuer
-        or not config.auth_jwt_audience
-        or not read_env("SECRETS_VAULT_URL")
-        or read_env("SECRETS_BACKEND", "vault") != "vault"
-    ):
+    if not _origin_is_exact_https(origin) or not _deployment_is_configured(config):
         raise IdentityUnavailable(
             "EG browser requires configured HTTPS origin, JWT verifier and signing store"
         )
-    from .browser_broker import ConfiguredBrowserBroker
+    from arbora.identity.browser_broker import ConfiguredBrowserBroker
 
     broker = ConfiguredBrowserBroker(
         runtime_config.webui_broker_token_ref or "",
@@ -120,10 +134,6 @@ def build_browser_boundary(
     request_dispatch: Any,
 ) -> Any:
     """One runtime, issuer and exact caller fence around the shared pipeline."""
-    from arbora.api.http.browser_app import (
-        create_browser_api_application,
-        create_webui_session_boundary,
-    )
     from arbora.api.invoke.pipeline import invoke
     from arbora.identity.admission import BrowserAdmission
     from arbora.identity.broker import ArboraBrowserAuthority
@@ -135,6 +145,10 @@ def build_browser_boundary(
     from arbora.identity.federated import federation_from_settings
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
     from arbora.identity.issuer_discovery import IssuerDiscovery
+    from arbora.mcp_server.browser_app import (
+        create_browser_api_application,
+        create_webui_session_boundary,
+    )
     from arbora.security.request_identity import verify_local_bearer_token
 
     ports = build_engine_identity_ports(client, graph=graph, refresh=False)

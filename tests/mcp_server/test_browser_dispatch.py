@@ -8,7 +8,7 @@ from contextlib import contextmanager
 import pytest
 
 from arbora.epistemic import ClientContext, EpistemicClientPool
-from arbora.identity.browser_composition import _IdentityClient
+from arbora.mcp_server.browser_composition import _IdentityClient
 from arbora.mcp_server.browser_dispatch import _on_owner
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")

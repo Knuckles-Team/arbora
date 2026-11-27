@@ -8,8 +8,8 @@ from typing import Any
 import pytest
 from fastmcp.exceptions import ToolError
 
-from arbora.api.mcp.registration import register_mcp_tools
 from arbora.fleet.multiplexer import _make_forwarder
+from arbora.mcp_server.registration import register_mcp_tools
 from tests.api.test_mcp_shared_path import surface  # noqa: F401 - the served fixture
 
 __all__ = ["surface"]

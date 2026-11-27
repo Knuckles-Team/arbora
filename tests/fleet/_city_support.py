@@ -8,10 +8,10 @@ from typing import Any
 from arbora.api.invoke import invoke
 from arbora.api.invoke.executor import BoundOperationRuntime
 from arbora.api.mcp.resolve import IntentResolver
-from arbora.api.mcp.serving import MCPProjection
 from arbora.api.ops import fleet_city as fleet_city_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry
+from arbora.mcp_server.serving import MCPProjection
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import setup_services
 

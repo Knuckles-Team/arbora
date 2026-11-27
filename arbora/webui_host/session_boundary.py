@@ -27,7 +27,7 @@ class WebUISessionBoundary:
     downstream WebUI independently verifies its forwarded bearer.
 
     Build it with the composition root's
-    :func:`arbora.api.http.browser_app.create_webui_session_boundary`, which
+    :func:`arbora.mcp_server.browser_app.create_webui_session_boundary`, which
     refuses any admission that is not the qualified concrete one. This package
     holds only the :class:`~arbora.identity.ports.BrowserAdmissionPort`.
     """
@@ -50,7 +50,7 @@ class WebUISessionBoundary:
         self.request_dispatch = request_dispatch
 
     def __call__(self, app: Any) -> None:
-        from arbora.api.http.browser_app import BrowserOperationApplication
+        from arbora.mcp_server.browser_app import BrowserOperationApplication
 
         if (
             not isinstance(

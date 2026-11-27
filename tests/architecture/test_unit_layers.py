@@ -235,3 +235,40 @@ def test_scan_reports_each_rule_with_its_location(tmp_path: Path) -> None:
     assert ("import-cycle", "arbora/core", "core <-> host") in by_rule
     # A downward import and an import inside the own unit are not findings.
     assert not any(detail.startswith("host ->") for _, _, detail in by_rule)
+
+
+HOST_UNITS = {
+    "client",
+    "console",
+    "host_bindings",
+    "local_browser_boundary",
+    "local_browser_channel",
+    "webui_host",
+}
+MOVED_COMPOSITION = {"registration", "serving", "browser_app", "browser_composition"}
+
+
+def _units_imported(unit: str) -> set[str]:
+    """Every dotted ``arbora`` target the files of ``unit`` import, function-local too."""
+    imported: set[str] = set()
+    for path in sorted((PACKAGE / unit).rglob("*.py")):
+        for _line, target, name in _imports(PACKAGE, path):
+            if target[0] == "arbora" and len(target) > 1:
+                imported.add(".".join(target[1:3]))
+                if name and len(target) == 2:
+                    imported.add(name)
+    return imported
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.5")
+def test_api_and_identity_import_no_subsystem_or_host() -> None:
+    """``api`` and ``identity`` import no host unit and none of the moved composition modules."""
+    offenders = []
+    for unit in ("api", "identity"):
+        for target in sorted(_units_imported(unit)):
+            top, _, second = target.partition(".")
+            if top in HOST_UNITS or (
+                top == "mcp_server" and second in MOVED_COMPOSITION
+            ):
+                offenders.append(f"{unit} -> {target}")
+    assert offenders == []

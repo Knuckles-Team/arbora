@@ -21,7 +21,6 @@ from arbora.api.invoke import InvokeServices, invoke
 from arbora.api.invoke.audit import EffectReservation
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.mcp.resolve import IntentResolver
-from arbora.api.mcp.serving import register_intent_surface
 from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import (
@@ -34,6 +33,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.mcp_server.serving import register_intent_surface
 from tests.api._support import make_verified_caller
 
 #: The agent runtime's previously served contract (``register_intent_tools``

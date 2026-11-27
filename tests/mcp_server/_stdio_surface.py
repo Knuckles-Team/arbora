@@ -3,8 +3,8 @@
 from fastmcp import FastMCP
 
 from arbora.api.mcp.resolve import IntentResolver
-from arbora.api.mcp.serving import register_intent_surface
 from arbora.api.policy.eunomia import PolicyGate
+from arbora.mcp_server.serving import register_intent_surface
 
 
 async def _unused_invoke(*_args, **_kwargs):

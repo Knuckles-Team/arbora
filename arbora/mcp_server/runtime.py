@@ -1090,7 +1090,7 @@ def _register_served_intent_surface(
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.caller import VerifiedMCPCaller
     from arbora.api.mcp.resolve import IntentResolver
-    from arbora.api.mcp.serving import register_intent_surface
+    from arbora.mcp_server.serving import register_intent_surface
 
     services = invocation.services
     caller = VerifiedMCPCaller(
