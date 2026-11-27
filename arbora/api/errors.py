@@ -157,7 +157,6 @@ class ArboraErrorCode(StrEnum):
     SECRET_INLINE_REFUSED = (
         "SECRET_INLINE_REFUSED"  # sanitizer:ignore - refusal code name  # nosec B105
     )
-    SOURCES_BLOCK_MISSING = "SOURCES_BLOCK_MISSING"
     STEWARD_ROLE_MISSING = "STEWARD_ROLE_MISSING"
     TASK_PLAN_CONFLICT = "TASK_PLAN_CONFLICT"
     TASK_PLAN_INVALID = "TASK_PLAN_INVALID"
@@ -310,7 +309,6 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.SCOPE_DENIED: 403,
     ArboraErrorCode.SCOPE_MISSING: 403,
     ArboraErrorCode.SECRET_INLINE_REFUSED: 422,
-    ArboraErrorCode.SOURCES_BLOCK_MISSING: 422,
     ArboraErrorCode.STEWARD_ROLE_MISSING: 403,
     ArboraErrorCode.TASK_PLAN_CONFLICT: 409,
     ArboraErrorCode.TASK_PLAN_INVALID: 400,
@@ -912,7 +910,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.SCOPE_DENIED: -32003,
     ArboraErrorCode.SCOPE_MISSING: -32003,
     ArboraErrorCode.SECRET_INLINE_REFUSED: -32602,
-    ArboraErrorCode.SOURCES_BLOCK_MISSING: -32602,
+    ArboraErrorCode.SOURCES_BLOCK_MISSING: -32603,
     ArboraErrorCode.STEWARD_ROLE_MISSING: -32003,
     ArboraErrorCode.TASK_PLAN_CONFLICT: -32009,
     ArboraErrorCode.TASK_PLAN_INVALID: -32602,
