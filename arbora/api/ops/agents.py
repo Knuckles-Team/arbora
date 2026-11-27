@@ -13,6 +13,7 @@ from arbora.api.contracts.provisioning_capacity import ProvisionRequest
 from arbora.api.invoke.certification_gate import MAX_RUN_SKILLS, SkillRef
 from arbora.api.ops._common import Params, bound_service
 from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.ports import port_of
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -413,13 +414,16 @@ async def handle_rlm(
     action = op.id.rsplit(".", 1)[-1]
     if request.action != action:
         raise ValueError("RLM action does not match operation")
+    origins = bound_service(
+        context, "run_origins", reason="run origin registry is not composed"
+    )
+    ports = context.services.get("run_ports")
     control_plane = compose_agent_control_plane(
         context.client,
         context.caller.session,
-        origins=bound_service(
-            context, "run_origins", reason="run origin registry is not composed"
-        ),
-        ports=context.services.get("run_ports"),
+        origins=origins,
+        agent_executor=port_of(context, "run_executors")(origins=origins, ports=ports),
+        ports=ports,
     )
     result = await control_plane.graph_rlm(request)
     return {"value": result.model_dump(mode="json")}

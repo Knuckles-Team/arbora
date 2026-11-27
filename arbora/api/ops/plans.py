@@ -954,14 +954,13 @@ def _plan_model(context: Any) -> Any:
     model = context.services.get("task_plan_model")
     if model is not None:
         return model
-    from arbora.agent_runs import resolve_model, run_config
-
-    model_id = run_config().get("agent_model")
+    settings = port_of(context, "run_settings")
+    model_id = settings.run_config().get("agent_model")
     if not model_id:
         raise OperationRefused(
             "UNAVAILABLE", {"reason": "no agent model is configured for task plans"}
         )
-    return resolve_model(model_id)
+    return settings.resolve_model(model_id)
 
 
 async def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
@@ -1102,7 +1101,7 @@ async def _submit_through_policy(
     caller's ``policy_guard`` reads its refusals as ``POLICY_DENIED`` and
     ``POLICY_UNAVAILABLE``.
     """
-    import arbora.work_items as work_items
+    work_items = port_of(context, "work_items")
 
     async def _submit(subject: object, _now: int) -> Any:
         item_id, _created = await asyncio.to_thread(
@@ -1123,9 +1122,9 @@ async def _admit_native_plan_run(
     served invocation.  The engine assigns the opaque WorkItem identity; this
     function never accepts a caller-selected native id or manufactures a lease.
     """
-    import arbora.work_items as work_items
     from arbora.security.session import use_session
 
+    work_items = port_of(context, "work_items")
     identity = port_of(context, "run_identity")
     engine = context.services.get("task_plan_work_engine")
     if engine is None:
@@ -1279,8 +1278,9 @@ async def _commit_native_plan_run(
     """Commit exactly one native terminal outcome under the returned fence."""
     from scion_sdk.privacy import persistence_reference
 
-    import arbora.work_items as work_items
     from arbora.security.session import use_session
+
+    work_items = port_of(context, "work_items")
 
     if admission.claim is None:
         raise RuntimeError("native plan terminal commit has no claim")
@@ -1360,11 +1360,12 @@ async def _publish_and_execute_native_plan(
     parsed: PlanRunParams,
 ) -> tuple[Mapping[str, Any], dict[str, Any]]:
     """Run native plans through the existing publication/owner scopes."""
-    import arbora.work_items as work_items
-    from arbora import agent_runs
     from arbora.api.domain.mcp_server import task_plan_runtime
-    from arbora.current_plan_publication import bind_admitted_claim
     from arbora.security.session import use_session
+
+    work_items = port_of(context, "work_items")
+    agent_runs = port_of(context, "run_settings")
+    bind_admitted_claim = port_of(context, "plan_publication").bind_admitted_claim
 
     try:
         eg = import_module("medulla.generated.coordination")

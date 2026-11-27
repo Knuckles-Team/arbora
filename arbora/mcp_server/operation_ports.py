@@ -7,6 +7,7 @@ implements it, and the host composes the one record that every handler reads fro
 
 from __future__ import annotations
 
+from arbora import agent_runs, current_plan_publication, work_items
 from arbora.a2a.run_identity import A2ARunIdentity
 from arbora.api.ops.ports import OperationPorts
 from arbora.control_plane.admission.port import ControlPlaneAppAdmission
@@ -21,4 +22,8 @@ def build_operation_ports() -> OperationPorts:
         apps=ControlPlaneAppAdmission(),
         fleet_acceptance=OnboardingAcceptance(),
         run_identity=A2ARunIdentity(),
+        work_items=work_items,
+        run_settings=agent_runs,
+        plan_publication=current_plan_publication,
+        run_executors=agent_runs.AgentRunPort,
     )

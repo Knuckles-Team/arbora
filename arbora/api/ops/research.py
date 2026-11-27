@@ -41,6 +41,7 @@ from pydantic import Field, model_validator
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params
+from arbora.api.ops.ports import port_of
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -727,8 +728,7 @@ async def _open_work_item(
     context: Any, key: str, deadline_s: int
 ) -> tuple[Any, str, Mapping[str, Any]]:
     """Submit and claim the ``research_web`` work item (``submit_work_item_atomic``)."""
-    from arbora import work_items
-
+    work_items = port_of(context, "work_items")
     engine = context.services.get("task_plan_work_engine")
     if engine is None:
         raise OperationRefused("UNAVAILABLE", {"reason": "work_item_unavailable"})
@@ -756,10 +756,9 @@ async def _open_work_item(
 
 
 async def _commit_work_item(
-    engine: Any, item_id: str, claim: Mapping[str, Any], outcome: str
+    context: Any, engine: Any, item_id: str, claim: Mapping[str, Any], outcome: str
 ) -> None:
-    from arbora import work_items
-
+    work_items = port_of(context, "work_items")
     await asyncio.to_thread(
         work_items.commit_result, engine, item_id, claim, outcome=outcome
     )
@@ -887,10 +886,10 @@ async def handle_research_web(
             receipt = await writer.commit(documents)
             enriched = await _enrich_all(enrich, documents, deadline)
     except BaseException:
-        await _commit_work_item(engine, item_id, claim, "failed")
+        await _commit_work_item(context, engine, item_id, claim, "failed")
         raise
     if enriched:
-        await _commit_work_item(engine, item_id, claim, "succeeded")
+        await _commit_work_item(context, engine, item_id, claim, "succeeded")
     state = (
         "enriching"
         if not enriched

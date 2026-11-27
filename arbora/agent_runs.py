@@ -407,7 +407,13 @@ def decide_run(
     if owner is not None and owner.hosted_invocation is not None:
         from arbora.api.domain.mcp_server.task_plan_runtime import admitted_run_plan
 
-        return admitted_run_plan(request, plan, owner)
+        return admitted_run_plan(
+            request,
+            plan,
+            owner,
+            current_native_run=current_native_run,
+            resolve_model=resolve_model,
+        )
     return plan
 
 

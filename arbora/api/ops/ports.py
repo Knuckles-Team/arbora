@@ -10,7 +10,8 @@ construction of a subsystem.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -22,6 +23,10 @@ __all__ = [
     "FleetAcceptance",
     "NativeRunIdentity",
     "OperationPorts",
+    "PlanPublication",
+    "RunExecutors",
+    "RunSettings",
+    "WorkItems",
     "configured_connectors",
     "port_if_composed",
     "port_of",
@@ -67,6 +72,52 @@ class NativeRunIdentity(Protocol):
     def owned(self, item: Any, owner_ref: str) -> bool: ...
 
 
+class WorkItems(Protocol):
+    """The durable work item store a plan or research run submits to, claims and commits."""
+
+    TERMINAL_WORK_ITEM_STATUSES: Collection[str]
+
+    def submit_work_item_atomic(
+        self, engine: Any, /, **submission: Any
+    ) -> tuple[str, bool]: ...
+
+    def get_work_item(self, engine: Any, item_id: str, /) -> Any: ...
+
+    def claim_specific(
+        self, engine: Any, item_id: str, /, **claim: Any
+    ) -> Mapping[str, Any] | None: ...
+
+    def commit_result(
+        self, engine: Any, item_id: str, claim: Any, /, **outcome: Any
+    ) -> str: ...
+
+    def native_owner_graph(self, engine: Any, /) -> str | None: ...
+
+
+class RunSettings(Protocol):
+    """The agent run bindings a plan run reads: the model registry and the native run scope."""
+
+    def run_config(self) -> Mapping[str, Any]: ...
+
+    def resolve_model(self, model_id: str, /) -> Any: ...
+
+    def native_run_scope(self, **scope: Any) -> AbstractContextManager[Any]: ...
+
+
+class RunExecutors(Protocol):
+    """The factory of the agent execution port a control plane runs agents through."""
+
+    def __call__(self, *, origins: Any, ports: Any) -> Any: ...
+
+
+class PlanPublication(Protocol):
+    """The publication scope that binds an admitted claim around a plan run."""
+
+    def bind_admitted_claim(
+        self, engine: Any, /, **claim: Any
+    ) -> AbstractContextManager[Any]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class OperationPorts:
     """One field per port; the host composes the fields it serves and leaves the rest unbound."""
@@ -74,6 +125,10 @@ class OperationPorts:
     apps: AppAdmission | None = None
     fleet_acceptance: FleetAcceptance | None = None
     run_identity: NativeRunIdentity | None = None
+    work_items: WorkItems | None = None
+    run_settings: RunSettings | None = None
+    plan_publication: PlanPublication | None = None
+    run_executors: RunExecutors | None = None
 
     @classmethod
     def unbound(cls) -> OperationPorts:
