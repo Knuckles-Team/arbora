@@ -15,6 +15,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from arbora.core.settings import RuntimeConfig
 from arbora.gateway import dashboard_api
 from arbora.gateway.models import DashboardLayout, WidgetData
 from arbora.gateway.state import GatewayState
@@ -34,6 +35,7 @@ def _app() -> FastAPI:
     app.state.host = SimpleNamespace(
         gateway=_GATEWAY,
         observability=SimpleNamespace(health=build_health_state()),
+        config=RuntimeConfig(),
     )
     return app
 

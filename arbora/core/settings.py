@@ -41,6 +41,7 @@ __all__ = [
     "mcp_config_path",
     "platform_config_file",
     "read_config_document",
+    "RuntimeConfig",
     "runtime_config",
     "save_config_item",
     "CONFIG_FIELDS",
@@ -1188,35 +1189,40 @@ def read_field_text(alias: str, text: str) -> Any:
     return _adapter(name).validate_python(_structured_text(info.annotation, text))
 
 
-class _LiveConfig:
-    """Attribute view over :class:`ArboraConfig` that reads at call time.
+class RuntimeConfig:
+    """Attribute view over :class:`ArboraConfig` that reads at call time (ARBORA-HOST-R039.11).
 
-    An attribute set on the view (a test override) wins until it is deleted.
+    The ``config`` field of the host context. An attribute set on the view (a test
+    override) wins until it is deleted; each view owns its overrides and its lock.
     """
 
     def __init__(self) -> None:
         object.__setattr__(self, "_overrides", {})
+        object.__setattr__(self, "_lock", threading.Lock())
 
     def __getattr__(self, name: str) -> Any:
         overrides = object.__getattribute__(self, "_overrides")
-        if name in overrides:
-            return overrides[name]
+        with object.__getattribute__(self, "_lock"):
+            if name in overrides:
+                return overrides[name]
         if name in ArboraConfig.model_fields:
             return read_field(name)
         raise AttributeError(name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        self._overrides[name] = value
+        with self._lock:
+            self._overrides[name] = value
 
     def __delattr__(self, name: str) -> None:
-        self._overrides.pop(name, None)
+        with self._lock:
+            self._overrides.pop(name, None)
 
 
 #: The typed, declared settings (alias to field), read by the environment manifest.
 CONFIG_FIELDS = ArboraConfig.model_fields
 
 #: The live settings view every Arbora module reads.
-runtime_config: Any = _LiveConfig()
+runtime_config: Any = RuntimeConfig()
 
 
 def _config_file() -> Path:
