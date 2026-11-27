@@ -52,7 +52,8 @@ def test_module_declares_every_operation_with_scopes_and_effects() -> None:
     for op in registry:
         assert op.id.startswith("identity.")
         assert op.examples
-        if op.id.startswith("identity.self."):
+        if op.id.startswith(("identity.self.", "identity.clients.")):
+            # The caller's own records (ARBORA-IDENTITY-R018.2, R026.5): self scope, read only.
             assert op.scopes == frozenset({"identity:self"})
             assert op.effect is Effect.READ
             continue

@@ -58,7 +58,7 @@ class EngineIdentityAdmin:
                     )
             decode_identity(response)
         except EngineResponseError as error:
-            if str(error.code).startswith("IDENTITY_") or error.code in {
+            if str(error.code).startswith(("IDENTITY_", "MFA_")) or error.code in {
                 "ACCESS_DENIED",
                 "CONFLICT",
             }:
