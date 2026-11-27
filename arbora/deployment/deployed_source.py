@@ -745,15 +745,13 @@ def main(argv: list[str] | None = None) -> int:
             result = initialize(source, worktree, args.initial_sha)
         elif args.action == "promote":
             result = promote(source, worktree, args.target_sha)
-        elif args.action == "rollback":
+        else:
             result = rollback(
                 source,
                 worktree,
                 args.target_sha,
                 confirmed=args.confirm_rollback,
             )
-        else:  # pragma: no cover - argparse enforces the subcommands
-            raise OperatorError(f"unknown action: {args.action}")
     except (OperatorError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -761,5 +759,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == "__main__":  # pragma: no cover - exercised by the CLI tests
+if __name__ == "__main__":
     raise SystemExit(main())

@@ -78,9 +78,7 @@ def _reference(path: str) -> str:
 def _replace(config: Mapping[str, Any], path: str, reference: str) -> dict[str, Any]:
     head, _, rest = path.partition(".")
     out = dict(config)
-    out[head] = (
-        _replace(config[head], rest, reference) if rest else reference  # type: ignore[arg-type]
-    )
+    out[head] = _replace(config[head], rest, reference) if rest else reference
     return out
 
 

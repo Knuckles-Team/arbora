@@ -109,7 +109,8 @@ def execute_redeploy(
         }
     try:
         restart_fn(service)
-    except Exception as exc:  # pragma: no cover - depends on injected fn
+    except Exception as exc:
+        logger.warning("self_deploy restart raised", exc_info=True)
         return {
             "status": "failed",
             "executed": True,
@@ -122,9 +123,9 @@ def execute_redeploy(
     if callable(health_fn):
         try:
             healthy = bool(health_fn(service))
-        except Exception as exc:  # pragma: no cover
+        except Exception:
             healthy = False
-            logger.warning("self_deploy health check raised: %s", exc)
+            logger.warning("self_deploy health check raised", exc_info=True)
     return {
         "status": "deployed" if healthy else "unhealthy",
         "executed": True,

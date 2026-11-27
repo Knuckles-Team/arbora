@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
@@ -10,6 +11,8 @@ from arbora.core.environment import read_env
 from arbora.deployment.doctor_support import PROBE_FAULTS
 
 from .doctor_support import _result
+
+logger = logging.getLogger(__name__)
 
 
 def _require_observability_imports() -> None:
@@ -270,6 +273,7 @@ def _probe_langfuse_mcp_visibility(_cfg: Any) -> bool:
     try:
         return bool(_run_async_doctor_probe(probe))
     except Exception:
+        logger.warning("langfuse mcp visibility probe failed", exc_info=True)
         return False
 
 

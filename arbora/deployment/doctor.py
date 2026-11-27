@@ -2496,7 +2496,7 @@ def _print_human(report: dict[str, Any], title: str = "arbora-doctor") -> None:
     print(f"\n{report['summary']}")
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     import sys
 
     sys.exit(main())
