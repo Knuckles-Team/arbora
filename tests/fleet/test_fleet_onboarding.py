@@ -624,6 +624,7 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
     assert started is None
 
 
+@pytest.mark.spec("ARBORA-FLEET-R002.5")
 def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
