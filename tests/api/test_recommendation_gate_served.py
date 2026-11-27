@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.api.invoke.recommendation_gate import gate_recommendation, gate_result
-from arbora.api.invoke.steps import OpError, OpResult
+from arbora.security.operation_result import OpError, OpResult
 
 
 @pytest.mark.spec("ARBORA-OPS-R862")

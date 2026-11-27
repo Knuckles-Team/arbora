@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from pydantic import BaseModel, ValidationError
 
 from arbora.api.registry import EgSchemaRef, PrincipalRule
 from arbora.core.claims import freeze_claims
+from arbora.security.operation_result import OpError
 
 _logger = logging.getLogger(__name__)
 #: Bound on a logged diagnostic line (it may quote request content).
@@ -18,15 +19,6 @@ _LOG_DETAIL_CHARS = 300
 
 FORBIDDEN_AUTHORITY = frozenset({"_actor", "_roles", "_tenant", "principal", "tenant"})
 FORBIDDEN_OWNER = frozenset({"owner", "owner_ref"})
-
-
-def claim_values(value: Any) -> Any:
-    """Copy frozen authority into the public client's JSON carrier."""
-    if isinstance(value, Mapping):
-        return {key: claim_values(child) for key, child in value.items()}
-    if isinstance(value, (tuple, frozenset)):
-        return [claim_values(child) for child in value]
-    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,20 +54,6 @@ class AnonymousCaller(_CallerFacts):
 
 
 type RequestCaller = VerifiedCaller | AnonymousCaller
-
-
-@dataclass(frozen=True, slots=True)
-class OpError:
-    code: str
-    details: Mapping[str, Any] = field(default_factory=dict)
-    source: Literal["arbora", "engine", "fleet"] = "arbora"
-
-
-@dataclass(frozen=True, slots=True)
-class OpResult:
-    value: Any = None
-    code: str = "OK"
-    details: Mapping[str, Any] = field(default_factory=dict)
 
 
 SchemaValidate = Callable[[EgSchemaRef, Mapping[str, Any]], Mapping[str, Any]]

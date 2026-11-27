@@ -14,7 +14,7 @@ import logging
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from arbora.api.invoke.steps import OpError
+from arbora.security.operation_result import OpError
 
 #: ``(action class, tenant, irreversible) -> the engine verdict``: ``allow`` or
 #: ``require_confirmation`` (the typed ``AutonomyReading`` wire values).

@@ -11,9 +11,9 @@ from types import SimpleNamespace
 from medulla import MedullaClient
 
 from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal, request_context
-from arbora.api.invoke.steps import OpResult
 from arbora.core.settings import RuntimeConfig, load_config
 from arbora.security.anonymous import session, session_context, validate_startup
+from arbora.security.operation_result import OpResult
 
 
 async def main():

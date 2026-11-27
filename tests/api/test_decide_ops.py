@@ -7,9 +7,9 @@ import asyncio
 import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.plan import params_digest
 from arbora.api.invoke.steps import principal_rule
 from arbora.api.ops import decide
+from arbora.core.claims import params_digest
 from tests.api._ops_support import service_context
 from tests.api._support import make_verified_caller
 

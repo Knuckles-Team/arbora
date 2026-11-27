@@ -9,7 +9,8 @@ import pytest
 
 from arbora.a2a.approval import PendingCallBinding
 from arbora.a2a.grant_store import GrantError, GrantRefusal, HumanGrantStore
-from arbora.api.invoke.plan import PLAN_TTL_MS, PlanBinding, params_digest
+from arbora.api.invoke.plan import PLAN_TTL_MS, PlanBinding
+from arbora.core.claims import params_digest
 
 pytestmark = pytest.mark.spec("ARBORA-A2A-R005.2.1")
 

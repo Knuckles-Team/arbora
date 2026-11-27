@@ -53,7 +53,6 @@ from arbora.api.invoke.certification_gate import (
     require_run_attestation,
 )
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params
 from arbora.api.ops.policy import policy_guard
 from arbora.api.ops.run_capacity import (
@@ -69,6 +68,7 @@ from arbora.api.registry import (
     OpSpec,
     Verb,
 )
+from arbora.core.claims import claim_values
 
 #: The engine release that serves ``TaskPlan``. Arbora's floor moves to it once
 #: it is on PyPI (ARBORA-RELEASE-R003.4.3).
@@ -530,7 +530,7 @@ class FleetStepTools:
     async def _invoke(
         self, entry: dict[str, Any], key: str, guard: Any
     ) -> dict[str, Any]:
-        from arbora.api.invoke.steps import OpError
+        from arbora.security.operation_result import OpError
 
         await self._decide(entry, guard)
         outcome = await self.context.services["plan_step_invoke"](

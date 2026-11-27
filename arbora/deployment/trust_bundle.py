@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError
+from arbora.security.operation_result import OpError
 
 #: A key that names a secret; its string value is never stored inline.
 SECRET_KEY = re.compile(

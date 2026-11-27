@@ -96,7 +96,7 @@ class InvokeRunStarter:
         self._caller = caller
 
     async def start(self, context: Mapping[str, Any], hold: Mapping[str, Any]) -> str:
-        from arbora.api.invoke.steps import OpError
+        from arbora.security.operation_result import OpError
 
         message = {
             "role": "user",

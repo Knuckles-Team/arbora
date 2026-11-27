@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.access.resource_gate import PUBLIC_DENIAL, ResourceGate
-from arbora.api.invoke.steps import OpError
+from arbora.security.operation_result import OpError
 
 NOW = 1_800_000_000.0
 CALLER = SimpleNamespace(

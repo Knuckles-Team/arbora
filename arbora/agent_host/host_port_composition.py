@@ -72,9 +72,9 @@ def run_principal_call(
         plan_ref: str | None = None,
     ) -> Mapping[str, Any]:
         from arbora.api.invoke.pipeline import invoke
-        from arbora.api.invoke.steps import OpError
         from arbora.api.mcp.caller import caller_from_session
         from arbora.api.registry import Surface
+        from arbora.security.operation_result import OpError
 
         try:
             owner = resolve_run(run_ref)

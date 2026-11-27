@@ -14,9 +14,9 @@ from typing import Any
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops import engine_calls as _engine
 from arbora.api.ops.pin_guards import refusal
+from arbora.core.claims import claim_values
 from arbora.pin_lag.medulla import PinLagUnavailable, require_question_kind
 
 #: One in the engine's Q32 fixed-point scale; a chosen advisory option scores it.

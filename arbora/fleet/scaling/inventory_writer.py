@@ -23,8 +23,8 @@ from pydantic import BaseModel, ValidationError
 from arbora.api.domain.fleet.scaling.scaling_authority import ScaleAuthority
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.engine_calls import decode, send_on_client
+from arbora.core.claims import claim_values
 from arbora.fleet.scaling.graph_authority import (
     INVENTORY,
     REVISION_FIELD,

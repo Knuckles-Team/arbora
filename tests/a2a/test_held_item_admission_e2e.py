@@ -56,7 +56,7 @@ def _params(
 @pytest.fixture(autouse=True)
 def no_operator_elevation(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     """Operator elevation is a different authority surface: fail loudly if reached."""
-    import arbora.access.service as access
+    import arbora.api.ops.access_service as access
 
     calls: list[str] = []
 

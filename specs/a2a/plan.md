@@ -252,7 +252,7 @@ The source of `priority` and the field names inside the `resolve_capability` res
 
 Consumers: the meristem tool-guard approval row (id unassigned). Moves from meristem: the meristem tool guard.
 
-Existing code: `arbora/a2a/application.py:140` (fail-closed confirm stub), `arbora/a2a/models.py:104` (`A2APlanConfirmParams`), `arbora/api/invoke/pipeline.py:641` (`_confirmation_gate`). `arbora/access/service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
+Existing code: `arbora/a2a/application.py:140` (fail-closed confirm stub), `arbora/a2a/models.py:104` (`A2APlanConfirmParams`), `arbora/api/invoke/pipeline.py:641` (`_confirmation_gate`). `arbora/api/ops/access_service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
 
 Data flow: `POST /a2a` `arbora.plan/confirm` → `_invoke_method` (`application.py:157`) → async confirmation_kind dispatcher → shared invoke with Surface.A2A and verified signed authority → `ToolActionAdmitter.admit` (new) → one engine verdict → audit reservation (`ARBORA-A2A-R007`) → `ToolActionApproval` in the response → harness applies it.
 
@@ -270,7 +270,7 @@ Cross-repository: `MEDULLA-DECISION-ENGINE` (verdict on a tool action after untr
 
 Consumers: the meristem held-proposal apply row (id unassigned), the meristem harness verdict-apply row (id unassigned). Moves from meristem: the meristem writeback approval module.
 
-Existing code: `arbora/a2a/application.py:140`, `arbora/a2a/models.py:104`, `arbora/access/service.py:54`, the meristem writeback approval module (`approve_proposal`, called from the meristem ontology tools). Reachable today: no for arbora; yes for the harness-side function. Search terms: `admit`, `proposal`, `verdict`, `approve_proposal`, `stored program`.
+Existing code: `arbora/a2a/application.py:140`, `arbora/a2a/models.py:104`, `arbora/api/ops/access_service.py:54`, the meristem writeback approval module (`approve_proposal`, called from the meristem ontology tools). Reachable today: no for arbora; yes for the harness-side function. Search terms: `admit`, `proposal`, `verdict`, `approve_proposal`, `stored program`.
 
 Data flow: `POST /a2a` `arbora.plan/confirm` → `_invoke_method` (`application.py:157`) → shared invoke with verified caller and Surface.A2A → `HeldItemAdmitter.admit` (new) → dedicated engine held-item verdict port (new).
 A program also passes a verification record check. A dedicated engine held-item admission port records the verdict through shared invoke with the verified caller and Surface.A2A, retaining signed human approval, grant/plan fences, scope/policy checks and audit reservation. This port and adapter are new; `approve_elevation` accepts ElevationApproval and hardcodes OPERATOR_CONSOLE, so it cannot authorize held items. Missing ports or full signed-chain/verified-caller prerequisites keep the stub refused. The harness then applies the `HeldItemVerdict` or leaves the item held.

@@ -171,7 +171,7 @@ async def _chunk_bytes(context: Any, cursor: int, index: int) -> bytes:
 
     from arbora.api.engine_errors import ENGINE_ERRORS
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
-    from arbora.api.invoke.steps import claim_values
+    from arbora.core.claims import claim_values
     from arbora.security.anonymous import client_scope
 
     graph = await caller_dispatch_graph(context)

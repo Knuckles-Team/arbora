@@ -26,7 +26,7 @@ pytest.importorskip(
     reason="meristem.graph ships from meristem 6.0.0; the pinned meristem lacks it",
 )
 
-from arbora.api.invoke.steps import OpResult  # noqa: E402
+from arbora.security.operation_result import OpResult
 from tests.api._loopback_engine import PRINCIPAL, Loopback, loopback  # noqa: E402,F401
 from tests.api._served_support import McpAsk, person  # noqa: E402
 from tests.api.test_plan_run_ops import (  # noqa: E402

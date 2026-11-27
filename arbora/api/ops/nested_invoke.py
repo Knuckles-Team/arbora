@@ -12,9 +12,9 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused, invoke
-from arbora.api.invoke.steps import OpError
 from arbora.api.ops.engine_calls import unavailable
 from arbora.api.registry import OpSpec, Surface
+from arbora.security.operation_result import OpError
 
 
 def registered(context: Any, op_id: str) -> OpSpec | None:

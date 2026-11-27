@@ -11,8 +11,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from arbora.api.invoke.executor import ClientFactory
-from arbora.api.invoke.steps import RequestCaller, claim_values
+from arbora.api.invoke.steps import RequestCaller
 from arbora.api.registry import AuditClass
+from arbora.core.claims import claim_values
 
 _REQUEST_ID = re.compile(r"[A-Za-z0-9._:/-]{1,128}\Z")
 _DIGEST = re.compile(r"[0-9a-fA-F]{64}\Z")

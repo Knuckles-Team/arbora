@@ -10,9 +10,9 @@ import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import approval_id_for
-from arbora.api.invoke.steps import OpResult
 from arbora.api.ops import promote
 from arbora.deployment.assembly import choices_digest, graph_digest  # noqa: F401
+from arbora.security.operation_result import OpResult
 
 DIGEST = "sha256:" + "a" * 64
 ARTIFACT = "registry.example/app/api@" + DIGEST
@@ -62,7 +62,7 @@ class Pipeline:
         if params["tool"] == "ci_status":
             return OpResult({"value": self.ci})
         if params["tool"] == self.fail:
-            from arbora.api.invoke.steps import OpError
+            from arbora.security.operation_result import OpError
 
             return OpError("DEPENDENCY_FAILED")
         return OpResult({"value": "done"})

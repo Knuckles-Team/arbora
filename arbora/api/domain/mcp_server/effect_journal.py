@@ -27,8 +27,8 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from arbora.api.invoke.audit import EffectReservation
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.security.anonymous import client_scope
+from arbora.security.operation_result import OpError, OpResult
 
 __all__ = ["EFFECT_KIND", "EgEffectJournal", "effect_work_item_id"]
 

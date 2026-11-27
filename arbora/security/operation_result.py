@@ -7,11 +7,13 @@ shape, and request DTOs that must refuse unknown fields extend
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-__all__ = ["OperationError", "OperationResult", "ProtocolModel"]
+__all__ = ["OpError", "OpResult", "OperationError", "OperationResult", "ProtocolModel"]
 
 
 class ProtocolModel(BaseModel):
@@ -39,3 +41,17 @@ class OperationResult(ProtocolModel):
     result_ref: Annotated[str, Field(min_length=1)] | None
     error: OperationError | None
     redirect: dict[str, Any] | None
+
+
+@dataclass(frozen=True, slots=True)
+class OpError:
+    code: str
+    details: Mapping[str, Any] = field(default_factory=dict)
+    source: Literal["arbora", "engine", "fleet"] = "arbora"
+
+
+@dataclass(frozen=True, slots=True)
+class OpResult:
+    value: Any = None
+    code: str = "OK"
+    details: Mapping[str, Any] = field(default_factory=dict)

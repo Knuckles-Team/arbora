@@ -16,8 +16,9 @@ from pydantic_ai.usage import RunUsage, UsageLimits
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import execution_context
 from arbora.api.invoke.pipeline import OperationRefused, authorize
-from arbora.api.invoke.steps import OpError, claim_values
 from arbora.api.mcp.caller import caller_from_session
+from arbora.core.claims import claim_values
+from arbora.security.operation_result import OpError
 
 
 class ProposedTask(BaseModel):

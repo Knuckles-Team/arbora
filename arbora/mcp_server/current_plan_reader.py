@@ -17,8 +17,8 @@ from scion_sdk.current_plan import (
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.runs import UNAVAILABLE
+from arbora.core.claims import claim_values
 from arbora.security.anonymous import client_scope
 
 

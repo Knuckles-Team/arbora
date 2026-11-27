@@ -67,7 +67,7 @@ class ContextAcceptancePorts:
         }
 
     async def read_call(self, connector: str) -> bool | None:
-        from arbora.api.invoke.steps import OpError
+        from arbora.security.operation_result import OpError
 
         probe = self._probes.get(connector)
         invoke = self._context.services.get("plan_step_invoke")

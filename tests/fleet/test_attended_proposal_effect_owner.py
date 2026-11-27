@@ -13,7 +13,6 @@ import pytest
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal
 from arbora.api.invoke import invoke
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.registry import Surface
 from arbora.browser_control.browser_control_client import ControlResultMessage
@@ -28,6 +27,7 @@ from arbora.run_origin import RunOriginRegistry, native_call_origin_scope
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
 from arbora.security.key_cache import JwksCache
+from arbora.security.operation_result import OpError, OpResult
 from arbora.security.session import use_session
 from tests.browser_control.test_browser_control_service import _setup
 from tests.browser_control.test_browser_proposals import (

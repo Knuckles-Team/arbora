@@ -17,11 +17,11 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.ops import delivery_ports
 from arbora.api.ops import development_scm as scm_intake
 from arbora.api.ops.plans import LateStepInvoke
 from arbora.identity.signed_ingress import ScmSignedIngress, scm_sources
+from arbora.security.operation_result import OpError, OpResult
 from arbora.security.signed_ingress import bind_signed_ingress
 from tests.api._served_support import McpAsk, person, route_methods
 from tests.api.test_development_surface_served import (  # noqa: F401

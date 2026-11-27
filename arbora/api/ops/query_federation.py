@@ -244,7 +244,7 @@ class NativeNlQueryPlanPlanner:
     async def prepare_for(
         self, *, text: str, graph: str, context: ExecutionContext
     ) -> PreparedFederatedQuery:
-        from arbora.api.invoke.steps import claim_values
+        from arbora.core.claims import claim_values
         from arbora.security.anonymous import client_scope
 
         # The generated method carries graph in both its typed params and its

@@ -170,9 +170,9 @@ async def handle_capacity_adjust_apply(
     from arbora.api.errors import EngineRefusal
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.api.invoke.steps import claim_values
     from arbora.api.ops.deploy import deploy_config_of, feature_schema_of
     from arbora.api.ops.engine_calls import refusal_code
+    from arbora.core.claims import claim_values
     from arbora.deployment.assembly import require_confirmed_plan
     from arbora.security.anonymous import client_scope
 

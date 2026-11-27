@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke.steps import OpResult
 from arbora.api.ops import fleet as fleet_ops
 from arbora.fleet import acceptance
+from arbora.security.operation_result import OpResult
 
 GOOD_DIGEST = "a" * 64
 STALE_DIGEST = "b" * 64

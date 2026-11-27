@@ -20,8 +20,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError
 from arbora.api.ops.security_eval import EvaluationCatalog, ProbeRun
+from arbora.security.operation_result import OpError
 
 __all__ = ["HarnessProbeRunner", "SandboxProcessTerminator"]
 

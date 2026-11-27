@@ -964,7 +964,6 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     from arbora import current_plan_publication, work_items
     from arbora.a2a.authority import WorkItemA2AAuthority
     from arbora.api.invoke.pipeline import invoke
-    from arbora.api.invoke.steps import OpResult
     from arbora.api.mcp.caller import caller_from_session
     from arbora.api.registry import Surface
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
@@ -975,6 +974,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         compose_served_invocation,
         refused_fleet_effect,
     )
+    from arbora.security.operation_result import OpResult
     from arbora.security.request_identity import (
         actor_from_bearer_token,
         mint_graph_session,

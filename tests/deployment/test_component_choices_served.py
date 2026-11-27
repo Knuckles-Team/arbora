@@ -18,7 +18,6 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpResult
 from arbora.deployment.assembly import graph_digest, run_confirmed_steps
 from arbora.deployment.component_choices import (
     ChoiceInventory,
@@ -31,6 +30,7 @@ from arbora.deployment.genesis_environments import (
     RUNTIMES,
     target_cell_refusal,
 )
+from arbora.security.operation_result import OpResult
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R013.6")
 

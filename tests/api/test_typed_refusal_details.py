@@ -88,7 +88,7 @@ def test_an_engine_refusal_keeps_its_reason_code_not_its_text() -> None:
 
 
 def test_unreviewed_detail_keys_never_reach_the_envelope() -> None:
-    from arbora.api.invoke.steps import OpError
+    from arbora.security.operation_result import OpError
 
     error = _envelope(
         OpError("INVALID_ARGUMENT", {"field": "x", "value": "secret", "reason": "r"})

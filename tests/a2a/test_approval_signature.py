@@ -18,7 +18,8 @@ from arbora.a2a.approval import (
     verify_pending_signature,
 )
 from arbora.a2a.models import A2APlanConfirmParams
-from arbora.api.invoke.plan import PlanBinding, params_digest
+from arbora.api.invoke.plan import PlanBinding
+from arbora.core.claims import params_digest
 from tests.a2a.test_application import _app
 from tests.api._support import make_verified_caller
 

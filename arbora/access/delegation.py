@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any
 
-from arbora.api.invoke.audit import audit_event
+from arbora.security.audit_event import audit_event
 
 logger = logging.getLogger(__name__)
 

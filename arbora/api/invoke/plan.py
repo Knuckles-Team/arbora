@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import secrets
 import time
@@ -18,7 +17,9 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from arbora.access.approval_leases import ACTION_APPROVAL_KIND, APPROVAL_ID_PREFIX
 from arbora.api.invoke.gate_class import GateResolution
-from arbora.api.invoke.steps import OpError, RequestCaller, claim_values
+from arbora.api.invoke.steps import RequestCaller
+from arbora.core.claims import claim_values, params_digest
+from arbora.security.operation_result import OpError
 
 PLAN_TTL_MS = 600_000
 
@@ -110,17 +111,6 @@ def approval_ref_of(idempotency_key: str | None) -> str:
 
 
 MAX_SEALED_PLAN_BYTES = 16_384
-
-
-def params_digest(params: Mapping[str, Any]) -> str:
-    raw = json.dumps(
-        claim_values(params),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
-    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)

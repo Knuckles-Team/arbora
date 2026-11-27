@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from arbora.api.invoke.steps import OpError, OpResult
+from arbora.security.operation_result import OpError, OpResult
 
 DECIDE_OPS = frozenset({"eg.query.Decide", "eg.query.DecideText"})
 

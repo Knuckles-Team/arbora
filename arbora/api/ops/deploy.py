@@ -19,10 +19,10 @@ from arbora.api.domain.deployment.assembly_view import render_graph
 from arbora.api.domain.deployment.placement import ask_placement, chosen_target
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.engine_calls import engine_send, refusal_code
 from arbora.api.registry import Confirm, Effect, OpSpec
+from arbora.core.claims import claim_values
 from arbora.deployment.assembly import (
     artifact_digest,
     assemble_deployment,

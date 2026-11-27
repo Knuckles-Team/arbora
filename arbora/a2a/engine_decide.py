@@ -18,12 +18,9 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from .engine_deciders import (
-    CREDENTIAL_REUSE_KIND,
-    HELD_ITEM_KIND,
-    TOOL_ACTION_KIND,
-    AskDecide,
-)
+from arbora.access.credential_reuse_decider import CREDENTIAL_REUSE_KIND, AskDecide
+
+from .engine_deciders import HELD_ITEM_KIND, TOOL_ACTION_KIND
 
 #: The one option both admission families declare.
 ADMISSION_OPTION = "admission"

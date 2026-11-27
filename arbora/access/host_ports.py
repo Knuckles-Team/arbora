@@ -123,7 +123,7 @@ class CredentialPorts:
         Only an ``admit`` verdict allows; deny and abstain refuse. The vault reference is
         Arbora's own path of the owner's credential for this provider.
         """
-        from arbora.a2a.engine_deciders import EngineCredentialReuseDecider
+        from arbora.access.credential_reuse_decider import EngineCredentialReuseDecider
 
         verdict = await EngineCredentialReuseDecider(self._ask).decide(
             request, tenant=request.tenant

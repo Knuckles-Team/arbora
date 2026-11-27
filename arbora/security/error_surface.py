@@ -18,11 +18,10 @@ from contextvars import ContextVar, Token
 from functools import lru_cache, wraps
 from importlib.resources import files
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Protocol
 
 from scion_sdk.privacy import sanitize_for_persistence
 
-from arbora.observability.state import Errors
 from arbora.security.actor_context import ActorContext, current_actor
 from arbora.security.operation_result import OperationError, OperationResult
 
@@ -257,30 +256,42 @@ _FAILING_LAYER_PREFIXES: tuple[tuple[str, str], ...] = (
     ("medulla", "engine"),
 )
 
-#: The one scope that holds the host's :class:`Errors` for code outside a request. It has
+
+class ErrorStore(Protocol):
+    """The bounded error store the host binds (the observability ``Errors``)."""
+
+    @property
+    def sink(self) -> Any: ...
+
+    def keep(self, correlation_id: str, record: dict[str, Any]) -> None: ...
+
+    def detail(self, correlation_id: str) -> dict[str, Any] | None: ...
+
+
+#: The one scope that holds the host's :class:`ErrorStore` for code outside a request. It has
 #: no default: a read before an entry point set it refuses and never falls back to a
 #: global. A request reads the host it is served by; the host's entry points (composition
 #: start, each background service run, each command-line root) set it with
 #: :func:`bind_errors`.
-_ERRORS: ContextVar[Errors] = ContextVar("arbora_errors")
+_ERRORS: ContextVar[ErrorStore] = ContextVar("arbora_errors")
 
 
 class ErrorsNotBound(RuntimeError):
     """A failure was reported before any host entry point bound the error store."""
 
 
-def bind_errors(errors: Errors) -> Token[Errors]:
+def bind_errors(errors: ErrorStore) -> Token[ErrorStore]:
     """Bind the host's error store for this context; return the reset token."""
     return _ERRORS.set(errors)
 
 
-def unbind_errors(token: Token[Errors]) -> None:
+def unbind_errors(token: Token[ErrorStore]) -> None:
     """Restore the scope :func:`bind_errors` replaced."""
     _ERRORS.reset(token)
 
 
 @contextmanager
-def bound_errors(errors: Errors) -> Iterator[Errors]:
+def bound_errors(errors: ErrorStore) -> Iterator[ErrorStore]:
     """Run a block with ``errors`` bound, then restore the scope it replaced."""
     token = bind_errors(errors)
     try:
@@ -309,7 +320,7 @@ def carry_errors[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
     return rooted
 
 
-def current_errors() -> Errors:
+def current_errors() -> ErrorStore:
     """The error store bound by the entry point, or refuse with :class:`ErrorsNotBound`."""
     try:
         return _ERRORS.get()

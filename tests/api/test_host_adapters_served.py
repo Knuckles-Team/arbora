@@ -15,12 +15,12 @@ import pytest
 from arbora.agent_host.port_backends import PROCESS_TABLE
 from arbora.agent_host.port_services import SandboxProcess, SandboxProcessTable
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.ops import ops as ops_admin
 from arbora.api.ops.host_adapters import HarnessProbeRunner, SandboxProcessTerminator
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.ops.security_eval import handle_security_evaluate
 from arbora.mcp_server.served_invocation import _with_host_adapters
+from arbora.security.operation_result import OpError, OpResult
 from tests.api._security_eval_support import evaluation_context
 from tests.api.test_ops_admin_ops import _decided, _process_params
 

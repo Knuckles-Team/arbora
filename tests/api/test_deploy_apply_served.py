@@ -7,7 +7,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke.steps import OpResult
 from arbora.deployment.artifacts import select_artifact
 from arbora.deployment.assembly import (
     artifact_digest,
@@ -15,6 +14,7 @@ from arbora.deployment.assembly import (
     config_digest,
     graph_digest,
 )
+from arbora.security.operation_result import OpResult
 from tests.api._served_support import confirmable_invocation, person, route_methods
 from tests.test_served_operation_api import _call, _value, served  # noqa: F401
 
