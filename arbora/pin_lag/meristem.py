@@ -232,3 +232,15 @@ def require_submit_field(name: str) -> None:
         ) from None
     if name not in SubmitWorkItemRequest.model_fields:
         raise PinLagUnavailable(f"medulla SubmitWorkItemRequest.{name}")
+
+
+def environment_declarations() -> tuple[Any, ...]:
+    """The harness's public environment declarations, or refuse naming the export.
+
+    ``MERISTEM-HARNESS-CYCLE-R058``: a pinned release without it leaves the host
+    environment manifest unavailable; Arbora declares none of the harness's reads.
+    """
+    export = getattr(_host_ports_module(), "environment_declarations", None)
+    if export is None:
+        raise PinLagUnavailable("meristem.host_ports.environment_declarations")
+    return tuple(export())

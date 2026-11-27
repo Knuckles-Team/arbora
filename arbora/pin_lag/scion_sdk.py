@@ -22,6 +22,7 @@ __all__ = [
     "SCM_LISTING_SYMBOL",
     "require_credential_binding",
     "require_desktop",
+    "require_environment_declarations",
     "require_scm_event_listing",
     "require_provisioning",
 ]
@@ -108,4 +109,22 @@ def require_desktop() -> ModuleType:
     ):
         if not hasattr(module, name):
             raise PinLagUnavailable(f"scion_sdk.desktop.{name}")
+    return module
+
+
+ENVIRONMENT_SYMBOL = "scion_sdk.environment.environment_declarations"
+
+
+def require_environment_declarations() -> ModuleType:
+    """The SDK environment export (``SCION-CONNECTOR-CONTROL-R908``), or refuse.
+
+    A pinned release without it leaves the host environment manifest unavailable,
+    naming the symbol; Arbora copies none of the SDK's names to stand in.
+    """
+    try:
+        module = importlib.import_module("scion_sdk.environment")
+    except ImportError:
+        raise PinLagUnavailable(ENVIRONMENT_SYMBOL) from None
+    if not hasattr(module, "environment_declarations"):
+        raise PinLagUnavailable(ENVIRONMENT_SYMBOL)
     return module
