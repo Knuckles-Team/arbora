@@ -27,6 +27,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import OpSpec, Surface
+from arbora.core.environment import read_env
 from arbora.security.signed_ingress import SIGNED_CREDENTIAL_KIND
 
 WRITE_SCOPE = "lifecycle:write"
@@ -291,12 +292,11 @@ async def handle_scm_poll(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Read each quiet followed proposal's events through the connector list tool."""
-    from arbora.core.settings import setting
     from arbora.pin_lag.scion_sdk import require_scm_event_listing
 
     require_scm_event_listing()
     interval_ms = 1000 * int(
-        str(setting("ARBORA_DEVELOPMENT_SCM_POLL_INTERVAL_S", DEFAULT_POLL_INTERVAL_S))
+        str(read_env("ARBORA_DEVELOPMENT_SCM_POLL_INTERVAL_S", DEFAULT_POLL_INTERVAL_S))
     )
     now = context_now_ms(context)
     polled = delivered = 0

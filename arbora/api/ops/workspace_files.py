@@ -26,6 +26,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.registry import OpSpec, Verb
+from arbora.core.environment import read_env
 
 READ_SCOPE = "workspace:read"
 WRITE_SCOPE = "workspace:write"
@@ -54,9 +55,8 @@ class FilesWriteParams(Params):
 
 def configured_root() -> Path:
     """The workspace root, or ``UNAVAILABLE`` when none is configured."""
-    from arbora.core.settings import setting
 
-    raw = str(setting("ARBORA_WORKSPACE_ROOT", "") or "").strip()
+    raw = str(read_env("ARBORA_WORKSPACE_ROOT") or "").strip()
     if not raw:
         raise OperationRefused(
             "UNAVAILABLE", {"reason": "the workspace root is not configured"}

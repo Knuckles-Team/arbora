@@ -29,6 +29,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import OpSpec, PrincipalRule, Verb
+from arbora.core.environment import read_env
 
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "lifecycle:write"
@@ -175,12 +176,10 @@ def _assignment_ports(context: Any) -> tuple[Any, Any, int, Any]:
     import time
 
     from arbora.api.ops.development_assignments import MAX_PARALLEL_DEFAULT
-    from arbora.core.settings import setting
 
     cap = int(
         str(
-            setting("ARBORA_DEVELOPMENT_DELIVERY_MAX_PARALLEL", "")
-            or MAX_PARALLEL_DEFAULT
+            read_env("ARBORA_DEVELOPMENT_DELIVERY_MAX_PARALLEL") or MAX_PARALLEL_DEFAULT
         )
     )
     from arbora.api.ops.delivery_ports import delivery_port
