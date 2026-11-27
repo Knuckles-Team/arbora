@@ -11,6 +11,7 @@ from arbora.fleet.scaling import (
     resource_reservation,
     scaling_intent_reconciler,
     scaling_signal_authority,
+    service_scale_evaluation,
     service_scale_units,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "scaling_authority",
     "scaling_intent_reconciler",
     "scaling_signal_authority",
+    "service_scale_evaluation",
     "service_scale_units",
 ]
