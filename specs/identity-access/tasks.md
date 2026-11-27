@@ -127,7 +127,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 ## Additional owner requirements
 
 - [ ] T004 ARBORA-IDENTITY-R026.8 Deliver every requirement in requirements.md.
-- [x] T005 ARBORA-IDENTITY-R002.1 scope registry generated from the engine's run-time method catalog scopes. Evidence: `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry`.
+- [x] T005 ARBORA-IDENTITY-R002.1 scope registry read from the engine's run-time method catalog scopes. Evidence: `tests/security/test_scope_registry.py::test_the_registry_is_the_installed_engine_catalog_scopes`.
 - [x] T006 ARBORA-IDENTITY-R027 Process authority renews indefinitely; failures log their cause and readiness names the reason. Evidence: `tests/mcp_server/test_process_authority_renewal.py`.
 - [x] T007 ARBORA-IDENTITY-R029 A run renews its caller's authority while active, bounded and audited; stops on end, cancel or revocation; fan-out inherits. Evidence: `tests/mcp_server/test_caller_run_authority.py`.
 - [ ] T008 ARBORA-IDENTITY-R029.4 Issued bearers carry the opaque session-reference claim.
@@ -187,7 +187,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T027 ARBORA-IDENTITY-R004.9.3.2 Qualify installed host and native restart recovery.
 - [ ] T028 ARBORA-IDENTITY-R001 Elevation request, approve and revoke operations on every surface.
 - [ ] T029 ARBORA-IDENTITY-R002 Domain scopes consume the generated scope registry.
-- [ ] T030 ARBORA-IDENTITY-R002.2 The scope registry is ingested from the handshake.
+- [x] T030 ARBORA-IDENTITY-R002.2 The scope registry is ingested from the handshake.
 - [ ] T031 ARBORA-IDENTITY-R003 Persistent local token issuer with secret-backed key.
 - [ ] T032 ARBORA-IDENTITY-R004.1 Typed bootstrap-principal model.
 - [ ] T033 ARBORA-IDENTITY-R004.2 Unsecured-mode indicators.

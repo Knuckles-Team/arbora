@@ -47,9 +47,42 @@ class _ClaimResultDouble:
     model_fields = {"claimed": _Field(), "delegation_id": _Field()}
 
 
+class _ClaimsDouble:
+    model_fields = {
+        name: _Field()
+        for name in ("agent_id", "audience", "delegation", "delegation_id", "principal")
+    }
+
+
+def install_delegated_identity(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The engine ``main`` acting identity: the envelope claim and the host scope."""
+    from medulla.generated import models
+
+    from arbora.security import scope_registry
+
+    monkeypatch.setattr(models, "RequestContextClaims", _ClaimsDouble, raising=False)
+    served = scope_registry.session_scopes() | {"identity:delegate"}
+    monkeypatch.setattr(scope_registry, "session_scopes", lambda: served)
+
+
+def install_pinned_claims(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The pinned release: an envelope claim shape without ``delegation_id``."""
+    from medulla.generated import models
+
+    from arbora.security import scope_registry
+
+    class _Pinned:
+        model_fields = {name: _Field() for name in ("agent_id", "principal")}
+
+    monkeypatch.setattr(models, "RequestContextClaims", _Pinned, raising=False)
+    monkeypatch.setattr(scope_registry, "session_scopes", lambda: frozenset())
+
+
 def install_agent_run_models(monkeypatch: pytest.MonkeyPatch) -> None:
     """The engine ``main`` shape of the agent-run delegation."""
     from medulla.generated import models
+
+    install_delegated_identity(monkeypatch)
 
     monkeypatch.setattr(models, "DelegationKind", object, raising=False)
     monkeypatch.setattr(

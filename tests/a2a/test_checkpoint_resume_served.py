@@ -52,9 +52,11 @@ class SteppedExecutor:
         self.die_after = die_after
         self.effects: list[str] = []
         self.requests: list[Any] = []
+        self.sessions: list[Any] = []
 
     async def execute_agent(self, request: Any, *, session: Any) -> Any:
         self.requests.append(request)
+        self.sessions.append(session)
         owner = agent_runs.current_native_run(request)
         assert owner is not None
         port = EngineHostCheckpoint(self.checkpoints, owner)
@@ -171,7 +173,7 @@ def test_run_resumes_after_restart_with_same_cursor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     engine, store, checkpoints, clock = _world(monkeypatch)
-    who = session(frozenset({"kg:read", "kg:write"}))
+    who = session(frozenset({"kg:read", "kg:write", "identity:delegate"}))
 
     async def scenario() -> dict[str, Any]:
         with use_session(who):
@@ -231,7 +233,7 @@ def test_revoked_delegation_fails_the_run_with_a_final_failed_frame(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     engine, store, checkpoints, clock = _world(monkeypatch)
-    who = session(frozenset({"kg:read", "kg:write"}))
+    who = session(frozenset({"kg:read", "kg:write", "identity:delegate"}))
 
     async def scenario() -> dict[str, Any]:
         with use_session(who):
@@ -280,10 +282,11 @@ def _reclaim_after_expiry(
     tamper: Any,
     *,
     reader: Any = "store",
+    scopes: frozenset[str] = frozenset({"kg:read", "kg:write", "identity:delegate"}),
 ) -> dict[str, Any]:
     """Interrupt a run, let ``tamper(engine, store, item_id)`` change its delegation, reclaim."""
     engine, store, checkpoints, clock = _world(monkeypatch)
-    who = session(frozenset({"kg:read", "kg:write"}))
+    who = session(scopes)
 
     async def scenario() -> dict[str, Any]:
         with use_session(who):
@@ -304,6 +307,7 @@ def _reclaim_after_expiry(
                 "outcomes": [o.outcome for o in outcomes],
                 "effects": second.executor.effects,
                 "requests": second.executor.requests,
+                "sessions": second.executor.sessions,
                 "states": [e["state"] for e in events if e["kind"] == "status-update"],
                 "status": engine.work_items.rows[item_id]["status"],
             }
@@ -370,3 +374,67 @@ def test_reclaim_refuses_when_the_host_cannot_read_delegations(
 
     assert out["outcomes"] == ["failed"]
     assert out["effects"] == []
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2.2.1")
+def test_reclaimed_run_sends_the_delegation_claim_as_the_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    out = _reclaim_after_expiry(monkeypatch, lambda *_: None)
+
+    assert out["outcomes"] == ["resumed"]
+    [acting] = out["sessions"]
+    claims = acting.engine_verified_context()
+    assert claims["delegation_id"] == acting.delegation_id
+    assert claims["delegation_id"].startswith("a2a-run:")
+    # The envelope still names the host as the principal; the engine resolves the owner.
+    assert claims["principal"] == "person:one"
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2.2.1")
+def test_a_first_run_carries_no_delegation_claim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, store, checkpoints, clock = _world(monkeypatch)
+    who = session(frozenset({"kg:read", "kg:write", "identity:delegate"}))
+
+    async def scenario() -> Any:
+        with use_session(who):
+            host = Host(engine, store, checkpoints, "write", clock)
+            await _interrupted_run(host)
+            return host.executor.sessions
+
+    [first] = asyncio.run(scenario())
+    assert first.delegation_id is None
+    assert "delegation_id" not in first.engine_verified_context()
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2.2.1")
+def test_reclaim_refuses_a_host_without_the_delegate_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    out = _reclaim_after_expiry(
+        monkeypatch, lambda *_: None, scopes=frozenset({"kg:read", "kg:write"})
+    )
+
+    assert out["outcomes"] == ["failed"]
+    assert out["effects"] == []
+    assert out["sessions"] == []
+    assert out["status"] == "cancelled"
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2.2.1")
+def test_reclaim_refuses_on_a_release_without_the_acting_delegation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def pinned_claims(*_: Any) -> None:
+        from tests.a2a._agent_run_delegation import install_pinned_claims
+
+        install_pinned_claims(monkeypatch)
+
+    out = _reclaim_after_expiry(monkeypatch, pinned_claims)
+
+    assert out["outcomes"] == ["failed"]
+    assert out["effects"] == []
+    assert out["sessions"] == []
+    assert out["status"] == "cancelled"

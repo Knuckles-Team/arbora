@@ -96,10 +96,10 @@ def test_three_refusal_causes_have_distinct_text(tmp_path, caplog):
     texts = [_refusal(limited), _refusal(unreadable)]
     with caplog.at_level(logging.WARNING, logger="arbora.access.action_policy"):
         texts.append(_refusal(unrecorded))
-    assert "rate limit exceeded" in texts[0]
+    assert "PROVISIONING_RATE_LIMITED: 6 runs per 3600s" in texts[0]
     assert "ledger unreadable: 273 rows lack label ActionDecision" in texts[1]
     assert texts[2].endswith(REASON_AUDIT_UNRECORDED)
-    assert "rate limit" not in texts[2]
+    assert "RATE_LIMITED" not in texts[2]
     assert len(set(texts)) == 3
 
     warnings = [r for r in caplog.records if r.levelno == logging.WARNING]

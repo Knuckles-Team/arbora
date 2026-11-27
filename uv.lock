@@ -283,6 +283,7 @@ dependencies = [
     { name = "filelock" },
     { name = "httpx" },
     { name = "joserfc" },
+    { name = "ldap3" },
     { name = "mcp" },
     { name = "medulla" },
     { name = "meristem" },
@@ -496,6 +497,7 @@ requires-dist = [
     { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.4.0" },
     { name = "irc", marker = "extra == 'messaging-irc'", specifier = ">=20.5.0" },
     { name = "joserfc", specifier = ">=1.8.0" },
+    { name = "ldap3", specifier = ">=2.9.1" },
     { name = "line-bot-sdk", marker = "extra == 'messaging-line'", specifier = ">=3.27.0" },
     { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
@@ -2122,6 +2124,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/37/b3/65dbc94d809676053b65e89fda729ef7d8a1d13bbb89f2ab407639f631f2/langfuse-5.2.0.tar.gz", hash = "sha256:8cde9e91b44b53444906af9b37efa9c29c647a9f45f9f8435a638026cb3d4693", size = 383092, upload-time = "2026-11-05T09:53:48.439Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f0/48/715e2b612d5d20989e4a338c27d78bef43de327f2192c9b20421f5648868/langfuse-5.2.0-py3-none-any.whl", hash = "sha256:4763cbad358960f1036078a4c6e9f86f04690ea566541709c2c40aa1998e2b0f", size = 660151, upload-time = "2026-11-05T09:53:49.817Z" },
+]
+
+[[package]]
+name = "ldap3"
+version = "2.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyasn1" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/43/ac/96bd5464e3edbc61595d0d69989f5d9969ae411866427b2500a8e5b812c0/ldap3-2.9.1.tar.gz", hash = "sha256:f3e7fc4718e3f09dda568b57100095e0ce58633bcabbed8667ce3f8fbaa4229f", size = 398830, upload-time = "2021-07-18T06:34:21.786Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/f6/71d6ec9f18da0b2201287ce9db6afb1a1f637dedb3f0703409558981c723/ldap3-2.9.1-py2.py3-none-any.whl", hash = "sha256:5869596fc4948797020d3f03b7939da938778a0f9e2009f7a072ccf92b8e8d70", size = 432192, upload-time = "2021-07-18T06:34:12.905Z" },
 ]
 
 [[package]]

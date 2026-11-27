@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import inspect
 from contextlib import nullcontext
 from types import SimpleNamespace
 from typing import Any
@@ -78,34 +78,109 @@ def test_the_grant_is_part_of_the_request_identity() -> None:
     assert grants.bound_source_grant() is None
 
 
-@pytest.mark.spec("ARBORA-OPS-R894")
-@pytest.mark.asyncio
-async def test_resolution_reads_the_engine_entry_of_the_verified_principal(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    sent: list[tuple[str, dict[str, Any]]] = []
-    entry: dict[str, Any] = {"value": json.dumps(GRANT).encode(), "version": 1}
+def _served(monkeypatch: pytest.MonkeyPatch, answer: dict[str, Any]) -> list[Any]:
+    """The engine ``main`` shape of ``ListPathGrants``, structurally, with ``answer``."""
+    from medulla.generated import METHOD_IDS, models
+
+    sent: list[Any] = []
 
     async def fake_send(context: Any, method: str, params: dict[str, Any], **_: Any):
         sent.append((method, params))
-        return entry
+        return answer
 
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", fake_send)
+    monkeypatch.setattr("arbora.pin_lag.medulla.engine_send", fake_send)
+    monkeypatch.setattr(models, "ListPathGrantsRequest", object, raising=False)
+    monkeypatch.setattr(models, "PathGrantList", object, raising=False)
+    monkeypatch.setattr("medulla.generated.METHOD_IDS", {*METHOD_IDS, "ListPathGrants"})
+    return sent
+
+
+def _path_grant(
+    prefix: str, *, write: bool = True, repo: str = "repo-a"
+) -> dict[str, Any]:
+    return {
+        "repo": repo,
+        "principal": "user:1",
+        "prefix": prefix,
+        "read": True,
+        "write": write,
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R894")
+@pytest.mark.asyncio
+async def test_resolution_lists_the_path_grants_of_the_verified_principal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    answer = {
+        "grants": [
+            _path_grant("src"),
+            _path_grant("docs"),
+            _path_grant("src/secret", write=False),
+            _path_grant(""),
+        ]
+    }
+    sent = _served(monkeypatch, answer)
     caller = SimpleNamespace(principal="user:1")
     composed = SimpleNamespace(
-        caller=caller, services={"source_grants": grants.EngineSourceGrants()}
+        caller=caller,
+        services={"source_grants": grants.EngineSourceGrants("feature")},
     )
-    assert await grants.resolve_verified_grant(composed) == GRANT
-    assert sent == [("KvGet", {"namespace": "source_grants", "key": "user:1"})]
+    assert await grants.resolve_verified_grant(composed) == {
+        "repository": "repo-a",
+        "branch": "feature",
+        "prefixes": ["docs", "src"],
+    }
+    assert sent == [("ListPathGrants", {"request": {"principal": "user:1"}})]
     # A host that composes no grant service grants nothing, and no engine call is made.
     bare = SimpleNamespace(caller=caller, services={})
     assert await grants.resolve_verified_grant(bare) is None
     assert len(sent) == 1
-    # A malformed or absent entry is no grant.
-    entry["value"] = b"{not json"
+    # Read-only grants, stored denies and an empty answer are no grant.
+    for none in (
+        {"grants": [_path_grant("src", write=False)]},
+        {"grants": []},
+        {},
+    ):
+        answer.clear()
+        answer.update(none)
+        assert await grants.resolve_verified_grant(composed) is None
+    # Write grants on two repositories make the target ambiguous: no grant.
+    answer.clear()
+    answer["grants"] = [_path_grant("src"), _path_grant("src", repo="repo-b")]
     assert await grants.resolve_verified_grant(composed) is None
-    entry.clear()
+
+
+@pytest.mark.spec("ARBORA-OPS-R894")
+@pytest.mark.asyncio
+async def test_the_pinned_release_grants_nothing_and_names_the_missing_method() -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import send_main
+
+    caller = SimpleNamespace(principal="user:1")
+    composed = SimpleNamespace(
+        caller=caller,
+        services={"source_grants": grants.EngineSourceGrants("feature")},
+    )
+    # The pinned release lacks the method: the run carries no grant and its changeset
+    # ports refuse closed; nothing reads a process copy or a key-value entry.
     assert await grants.resolve_verified_grant(composed) is None
+    with pytest.raises(OperationRefused) as refused:
+        await send_main(
+            composed,
+            "ListPathGrants",
+            {"request": {"principal": "user:1"}},
+            models=grants.LIST_PATH_GRANTS_MODELS,
+        )
+    assert refused.value.code == "UNAVAILABLE"
+    assert refused.value.details["missing"] == "ListPathGrants"
+
+
+@pytest.mark.spec("ARBORA-OPS-R894")
+def test_no_key_value_grant_path_remains() -> None:
+    assert not hasattr(grants, "NAMESPACE")
+    source = inspect.getsource(grants)
+    assert "KvGet" not in source and 'source_grants"' not in source.split("service")[0]
 
 
 @pytest.mark.spec("ARBORA-OPS-R894")
@@ -130,6 +205,7 @@ async def test_agents_run_binds_the_resolved_grant_for_the_admission(
     context = SimpleNamespace(
         caller=SimpleNamespace(session=object(), principal="user:1"),
         idempotency_key="key",
+        operation_services=None,
         services={"a2a": _A2A(), "source_grants": _Source()},
     )
     monkeypatch.setattr(

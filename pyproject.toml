@@ -73,6 +73,8 @@ dependencies = [
     # moves to the first release that declares it once that release ships.
     "universal-skills>=1.6.2,<2.0.0",
     "cryptography>=50.0.2",
+    # The LDAPS transport of the directory sync job (arbora/identity/ldap_directory.py).
+    "ldap3>=2.9.1",
 ]
 
 [[project.authors]]
@@ -166,7 +168,7 @@ messaging = [
 [project.scripts]
 arbora = "arbora.console:main"
 arbora-acp = "arbora.acp.local_runtime:main"
-arbora-identity = "arbora.identity.cli:main"
+arbora-identity = "arbora.identity_cli:main"
 arbora-release-canary = "arbora.deployment.release_canary:main"
 arbora-production-ops = "arbora.deployment.production_ops:main"
 arbora-image-digests = "arbora.deployment.image_digests:main"
@@ -336,7 +338,7 @@ units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connec
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "host"
-units = ["__init__", "client", "console", "host_bindings", "local_browser_boundary", "local_browser_channel", "mcp_server", "webui_host"]
+units = ["__init__", "client", "console", "host_bindings", "identity_cli", "local_browser_boundary", "local_browser_channel", "mcp_server", "webui_host"]
 
 # State-machine census (PIPE-GATES-R086.7, R086.8): adopted in mode `staged`,
 # which prints findings and exits 0; it moves to `blocking` in the PR that

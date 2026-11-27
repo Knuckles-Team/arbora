@@ -137,6 +137,10 @@ class GraphSession:
         continuity_expires_at: A monotonic, process-local expiry for the
             discovered route. It deliberately is not durable session state;
             a restarted pod must perform authenticated discovery again.
+        delegation_id: The engine delegation this session acts under
+            (``MEDULLA-IDENTITY-R744``). The envelope carries it as the
+            ``delegation_id`` claim; the engine then runs the call as the
+            delegation's principal. ``None`` means the session acts as itself.
     """
 
     actor: ActorContext
@@ -154,6 +158,7 @@ class GraphSession:
     membership_epoch: int | None = None
     certificate_rotation_epoch: int | None = None
     continuity_expires_at: float | None = None
+    delegation_id: str | None = None
 
     def __post_init__(self) -> None:
         actor_id = str(getattr(self.actor, "actor_id", "") or "").strip()
@@ -199,6 +204,10 @@ class GraphSession:
     def with_graph(self, graph: str) -> GraphSession:
         """Return a copy of this session targeting a different named graph."""
         return replace(self, graph=graph)
+
+    def with_delegation(self, delegation_id: str) -> GraphSession:
+        """Return a copy that acts under the engine delegation ``delegation_id``."""
+        return replace(self, delegation_id=delegation_id)
 
     def with_txn(self, txn: Any) -> GraphSession:
         """Return a copy of this session bound to a live transaction/snapshot handle."""
@@ -248,6 +257,14 @@ class GraphSession:
             ),
             continuity_expires_at=continuity_expires_at,
         )
+
+    def _join_optional_claims(self, context: dict[str, Any]) -> None:
+        """Join the optional ``priority`` and ``delegation_id`` claims, only when applicable."""
+        priority = current_priority()
+        if priority is not None:
+            context["priority"] = priority.value
+        if self.delegation_id:
+            context["delegation_id"] = self.delegation_id
 
     def engine_verified_context(self) -> dict[str, Any]:
         """Return the current engine authority claims for this immutable session.
@@ -318,9 +335,7 @@ class GraphSession:
         # an older engine's `#[serde(deny_unknown_fields)]` rejects the whole
         # request on an unrecognized field, not just this one. See the
         # docstring above and this wave's runbook notes (W2.4-2).
-        priority = current_priority()
-        if priority is not None:
-            context["priority"] = priority.value
+        self._join_optional_claims(context)
         # GOC-15 carrier contract (CONCEPT:MERISTEM-OS.identity.verified-carrier-contract,
         # docs/architecture/verified-identity-carrier-contract.md): this dict IS
         # the wire carrier every `eg2.` call sends. Self-check its shape against

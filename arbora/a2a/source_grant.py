@@ -2,16 +2,17 @@
 
 A run's work item carries ``metadata.source_grant {repository, branch, prefixes[]}`` and
 the changeset ports read their target from it. The grant is **never** taken from request
-text: the ``agents.run`` admission resolves it from the engine-held grant entry of the
-verified caller (KV namespace ``source_grants``, key the caller's principal, one entry per
-tenant) and binds it for the one admission with :func:`source_grant_scope`. A caller with
-no entry, or with a malformed one, gets no grant, so the run's changeset ports stay unbound
-and submission refuses closed.
+text: the ``agents.run`` admission resolves it from the engine's path grants of the
+verified caller (``ListPathGrants``, MEDULLA-SCM-R007.1) and binds it for the one admission
+with :func:`source_grant_scope`. The repository is the one repository the caller may write,
+the prefixes are its write grants, and the branch is the host's configured run branch. A
+caller with no write grant, with write grants on more than one repository, or on a release
+that lacks the method, gets no grant, so the run's changeset ports stay unbound and
+submission refuses closed.
 """
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -19,8 +20,8 @@ from typing import Any
 
 #: The work-item metadata key the changeset seams read.
 SOURCE_GRANT_KEY = "source_grant"
-#: The engine KV namespace holding one grant entry per principal.
-NAMESPACE = "source_grants"
+#: The engine request shapes the grant read needs (PIN-LAG: engine ``main``, unreleased).
+LIST_PATH_GRANTS_MODELS: tuple[str, ...] = ("ListPathGrantsRequest", "PathGrantList")
 
 _bound: ContextVar[Mapping[str, Any] | None] = ContextVar(
     "arbora_verified_source_grant", default=None
@@ -66,8 +67,11 @@ def work_item_grant_metadata() -> dict[str, Any]:
 class EngineSourceGrants:
     """The composed ``source_grants`` service: reads the verified caller's grant."""
 
+    def __init__(self, branch: str) -> None:
+        self._branch = branch
+
     async def resolve(self, context: Any) -> dict[str, Any] | None:
-        return await read_engine_grant(context)
+        return await read_engine_grant(context, branch=self._branch)
 
 
 async def resolve_verified_grant(context: Any) -> dict[str, Any] | None:
@@ -82,21 +86,54 @@ async def resolve_verified_grant(context: Any) -> dict[str, Any] | None:
     return normalized(await service.resolve(context))
 
 
-async def read_engine_grant(context: Any) -> dict[str, Any] | None:
-    """Read the grant entry of ``context.caller.principal``; absent or malformed is ``None``."""
-    from arbora.api.ops._engine import engine_send
+def grant_from_path_grants(grants: Any, *, branch: str) -> dict[str, Any] | None:
+    """The run grant the caller's path grants amount to, or ``None``.
 
-    entry = await engine_send(
-        context,
-        "KvGet",
-        {"namespace": NAMESPACE, "key": str(context.caller.principal)},
+    Only write grants count. The caller must hold them on exactly one repository: two
+    repositories make the target ambiguous and bind none. A whole-repository grant
+    (empty prefix) names no path prefix and adds none. A stored deny (both bits false)
+    is never a write grant; the engine still enforces it on every path.
+    """
+    prefixes = _write_prefixes(grants)
+    if len(prefixes) != 1:
+        return None
+    ((repository, held),) = prefixes.items()
+    return normalized(
+        {
+            "repository": repository,
+            "branch": branch,
+            "prefixes": sorted(prefix for prefix in held if prefix),
+        }
     )
-    raw = entry.get("value") if isinstance(entry, Mapping) else None
-    if isinstance(raw, (list, tuple)):
-        raw = bytes(raw)
-    if isinstance(raw, (bytes, bytearray, memoryview)):
-        try:
-            raw = json.loads(bytes(raw))
-        except ValueError:
+
+
+def _write_prefixes(grants: Any) -> dict[str, set[str]]:
+    """The write-granted prefixes of each repository the path grants name."""
+    prefixes: dict[str, set[str]] = {}
+    for entry in grants if isinstance(grants, (list, tuple)) else ():
+        if not isinstance(entry, Mapping) or entry.get("write") is not True:
+            continue
+        repo, prefix = entry.get("repo"), entry.get("prefix")
+        if isinstance(repo, str) and repo and isinstance(prefix, str):
+            prefixes.setdefault(repo, set()).add(prefix)
+    return prefixes
+
+
+async def read_engine_grant(context: Any, *, branch: str) -> dict[str, Any] | None:
+    """List the verified principal's path grants; a release without the method is no grant."""
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import send_main
+
+    try:
+        answer = await send_main(
+            context,
+            "ListPathGrants",
+            {"request": {"principal": str(context.caller.principal)}},
+            models=LIST_PATH_GRANTS_MODELS,
+        )
+    except OperationRefused as refused:
+        if refused.code == "UNAVAILABLE":
             return None
-    return normalized(raw)
+        raise
+    grants = answer.get("grants") if isinstance(answer, Mapping) else None
+    return grant_from_path_grants(grants, branch=branch)

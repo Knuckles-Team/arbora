@@ -23,12 +23,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from arbora.api.registry.eg_binding import load_generated_scopes
-from arbora.security import scope_registry
 
 #: The five scope classes the engine's generated registry recognizes.
 SCOPE_CLASSES = frozenset({"user", "domain", "service-only", "approver", "admin"})
-if not set(scope_registry.SCOPE_CLASSES.values()) <= SCOPE_CLASSES:
-    raise RuntimeError("the generated scope registry names an unknown scope class")
 
 
 @dataclass(frozen=True, slots=True)

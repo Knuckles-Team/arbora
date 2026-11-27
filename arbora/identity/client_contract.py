@@ -212,6 +212,9 @@ def build_contract(config: ContractConfig) -> ClientContract:
         ScopeSpec(name, audience if name == AUDIENCE_SCOPE else None)
         for name in REQUIRED_SCOPES
     ]
+    # The native client's default scopes name the workstream scopes too, so they exist
+    # whether or not a hosted client is configured.
+    scopes += [ScopeSpec(name, None) for name in WORKSTREAM_SCOPES]
     if config.hosted_redirect_uris:
         clients.append(
             ClientSpec(
@@ -222,7 +225,6 @@ def build_contract(config: ContractConfig) -> ClientContract:
                 public=False,
             )
         )
-        scopes += [ScopeSpec(name, None) for name in WORKSTREAM_SCOPES]
     return ClientContract(clients=tuple(clients), scopes=tuple(scopes))
 
 

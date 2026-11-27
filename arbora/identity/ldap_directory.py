@@ -2,9 +2,9 @@
 
 :class:`LdapDirectory` is the production :class:`~arbora.identity.directory_sync.Directory`:
 ``bind`` opens one TLS connection with the service account and ``snapshot`` reads every
-person entry with its group DNs and disabled flag. The connection library is loaded on first
-bind, so a host without the optional ``ldap3`` package refuses ``IdentityUnavailable`` (the
-sync run skips and keeps the prior state) and nothing falls back to a plaintext bind.
+person entry with its group DNs and disabled flag. The connection library (``ldap3``, a
+package dependency) is loaded on first bind, and the bind is always TLS: nothing falls back to
+a plaintext bind.
 """
 
 from __future__ import annotations
@@ -23,10 +23,8 @@ _ATTRIBUTES = ("sAMAccountName", "uid", "memberOf", "userAccountControl")
 
 
 def _default_connection(config: LdapBindConfig, password: str) -> Any:
-    try:
-        import ldap3  # type: ignore[import-not-found,unused-ignore]
-    except ImportError:
-        raise IdentityUnavailable("the LDAP transport is not installed") from None
+    import ldap3  # type: ignore[import-untyped,unused-ignore]
+
     server = ldap3.Server(config.host, port=config.port, use_ssl=True)
     return ldap3.Connection(
         server, user=config.bind_dn, password=password, auto_bind=True, read_only=True

@@ -340,8 +340,8 @@ Each test below is named by its requirement row, has no running implementation y
 | Test | Requirements | Level and fixture | Positive result | Negative / boundary result |
 |---|---|---|---|---|
 | PT-001 | ARBORA-IDENTITY-R001 | `tests/api/test_access_ops.py::test_elevation_ops_reach_engine_on_http_and_mcp` (planned) | The result the row states holds. | Each refusal the row states is returned. |
-| PT-002 | ARBORA-IDENTITY-R002.1 | `tests/security/test_scope_registry.py::test_the_generated_module_is_the_installed_eg_registry` | The result the row states holds. | Each refusal the row states is returned. |
-| PT-003 | ARBORA-IDENTITY-R002.2 | `tests/security/test_scope_registry.py::test_handshake_scopes_form_the_session_allowlist` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-002 | ARBORA-IDENTITY-R002.1 | `tests/security/test_scope_registry.py::test_the_registry_is_the_installed_engine_catalog_scopes` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-003 | ARBORA-IDENTITY-R002.2 | `tests/security/test_scope_registry.py::test_handshake_scopes_form_the_session_allowlist`, `::test_a_class_conflict_refuses_the_server_and_registers_none_of_it`, `::test_a_served_connector_scope_reaches_the_session_allowlist_and_a_conflict_refuses` and `::test_no_packaged_scope_file_or_generator_remains` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-004 | ARBORA-IDENTITY-R003 | `tests/identity/test_issuer.py::test_discovery_jwks_stable_subject_and_bounded_overlap_rotation` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-005 | ARBORA-IDENTITY-R004 | `tests/identity/test_anonymous_none_mode_served.py::test_none_mode_serves_loopback_only` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-006 | ARBORA-IDENTITY-R004.2 | `tests/identity/test_anonymous_none_mode_served.py::test_indicators_appear_in_initialize_and_doctor` (planned) | The result the row states holds. | Each refusal the row states is returned. |
