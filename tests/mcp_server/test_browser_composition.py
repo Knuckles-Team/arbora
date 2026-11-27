@@ -6,6 +6,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.browser_control.browser_state import BrowserState
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.engine import IdentityUnavailable
 from arbora.mcp_server.browser_composition import configured_browser_boundary
 from arbora.mcp_server.host_caches import ToolTable
@@ -40,6 +41,7 @@ def test_missing_secure_deployment_prerequisites_refuse(monkeypatch, origin):
             request_dispatch=object(),
             browser=BrowserState(),
             keys=JwksCache(),
+            settings=RuntimeConfig(),
         )
 
 
@@ -80,6 +82,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
         telemetry=telemetry,
         host=host,
         session_boundary=boundary,
+        settings=RuntimeConfig(),
     )
     assert calls == [
         (
@@ -195,11 +198,12 @@ def test_settings_composition_forwards_factory_without_constructing_it(monkeypat
 
     factory, pool, calls = object(), object(), []
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///fixture")
-    monkeypatch.setattr(task_plan, "configured_task_plan", lambda: None)
+    monkeypatch.setattr(task_plan, "configured_task_plan", lambda _settings: None)
     monkeypatch.setattr(
         served_invocation, "compose_served_invocation", lambda **kw: calls.append(kw)
     )
     served_invocation.served_invocation_from_settings(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         process_session=lambda: SimpleNamespace(graph="fixture-graph"),
         engine_pool=lambda: pool,
@@ -306,6 +310,7 @@ def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
         telemetry=Telemetry(),
         host=object(),
         session_boundary=boundary,
+        settings=RuntimeConfig(),
     )
     assert handed == [boundary] and handed[0] is boundary
     for name, text in _production_sources().items():

@@ -14,6 +14,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.browser_control.browser_state import BrowserState
 from arbora.content import register_installed_content
 from arbora.core.environment import read_env, write_env
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.identity.ports import BrowserBoundaryFactory, IdentityLifecycle
 from arbora.mcp_server import runtime
@@ -174,10 +175,15 @@ def _attach_fleet_runtime(
 
 
 def _with_browser(
-    factory: BrowserBoundaryFactory | None, browser: BrowserState, keys: JwksCache
+    factory: BrowserBoundaryFactory | None,
+    browser: BrowserState,
+    keys: JwksCache,
+    settings: RuntimeConfig,
 ) -> BrowserBoundaryFactory | None:
-    """The browser boundary factory handed the host's browser state and key cache."""
-    return partial(factory, browser=browser, keys=keys) if factory is not None else None
+    """The browser boundary factory handed the host's browser state, keys and settings."""
+    if factory is None:
+        return None
+    return partial(factory, browser=browser, keys=keys, settings=settings)
 
 
 def _served_invocation(
@@ -191,11 +197,10 @@ def _served_invocation(
     principal and scopes are that authority's. Without ``GRAPH_SERVICE_ENDPOINTS``
     the process has no engine and mounts no operation-invoke API.
     """
-    from arbora.core.settings import runtime_config
     from arbora.mcp_server.task_plan import configured_task_plan
 
-    task_plan_config = configured_task_plan()
-    if not runtime_config.graph_service_endpoints:
+    task_plan_config = configured_task_plan(host.config)
+    if not host.config.graph_service_endpoints:
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None, None
@@ -216,7 +221,7 @@ def _served_invocation(
 
     args, _unknown = create_mcp_parser().parse_known_args()
     session = runtime._mint_process_session(
-        str(getattr(args, "transport", "stdio")), host.caches.jwks
+        str(getattr(args, "transport", "stdio")), host.caches.jwks, host.config
     )
     from arbora.browser_control.browser_control_runtime import (
         dispatch_browser_operation,
@@ -224,6 +229,7 @@ def _served_invocation(
 
     fleet = LateFleetGateway()
     invocation = served_invocation_from_settings(
+        config=host.config,
         keys=host.caches.jwks,
         process_session=lambda: session,
         engine_pool=host.engine.pool,
@@ -246,14 +252,14 @@ def _served_invocation(
             "browser_control": partial(dispatch_browser_operation, host.browser),
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
-            "source_grants": EngineSourceGrants(runtime_config.source_run_branch),
+            "source_grants": EngineSourceGrants(host.config.source_run_branch),
             "run_trace_reader": NativeRunReader(
                 host.engine.served, origins=host.runs.origins
             ),
         },
         fleet_effect=fleet.effect,
         browser_boundary_factory=_with_browser(
-            browser_boundary_factory, host.browser, host.caches.jwks
+            browser_boundary_factory, host.browser, host.caches.jwks, host.config
         ),
     )
     return invocation, session
@@ -390,6 +396,19 @@ def _start_catalog_warmup(
     return start_catalog_warmup(slot, compose, after=onboard, reestablish=reestablish)
 
 
+def _require_browser_identity_factory(
+    config: RuntimeConfig, browser_boundary_factory: Any, invocation: Any
+) -> None:
+    """Refuse an EG browser deployment that arrives without its identity factory."""
+    if (
+        config.enable_web_ui
+        and config.webui_auth_mode == "eg"
+        and browser_boundary_factory is None
+        and invocation is None
+    ):
+        raise RuntimeError("EG browser requires the process-root identity factory")
+
+
 def mcp_server(
     *,
     invocation: HostedInvocation | None = None,
@@ -412,15 +431,6 @@ def mcp_server(
     from arbora.core.settings import load_config
 
     load_config()  # resolve settings through the one shared XDG config.json
-    from arbora.core.settings import runtime_config
-
-    if (
-        runtime_config.enable_web_ui
-        and runtime_config.webui_auth_mode == "eg"
-        and browser_boundary_factory is None
-        and invocation is None
-    ):
-        raise RuntimeError("EG browser requires the process-root identity factory")
     from arbora.core.environment_manifest import enforce_startup
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.serving_options import parse_serving_options
@@ -433,6 +443,9 @@ def mcp_server(
     from arbora.mcp_server.host_context import build_host_context
 
     host_context = build_host_context()
+    _require_browser_identity_factory(
+        host_context.config, browser_boundary_factory, invocation
+    )
     from arbora.security.error_surface import bind_errors
 
     bind_errors(host_context.observability.errors)
@@ -542,7 +555,7 @@ def mcp_server(
     network_serving = build_network_serving_config(args)
 
     bootstrap_session = early_session or runtime._mint_process_session(
-        transport, host_context.caches.jwks
+        transport, host_context.caches.jwks, host_context.config
     )
     host_context.authority.bind_session(
         bootstrap_session if transport == "stdio" else None
@@ -603,7 +616,7 @@ def mcp_server(
         # authority before engine bootstrap. An explicit client role remains a
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
-        from arbora.core.settings import runtime_config as config
+        config = host_context.config
         from arbora.security.actor_context import use_actor
         from arbora.security.session import use_session
 
@@ -702,6 +715,7 @@ def mcp_server(
                 browser=host_context.browser,
                 telemetry=host_context.observability.telemetry,
                 host=host_context,
+                settings=config,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",
                 session_boundary=invocation.browser_boundary if invocation else None,

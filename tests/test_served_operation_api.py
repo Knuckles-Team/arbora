@@ -31,7 +31,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.invoke.privacy import mask_persisted_arguments
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
@@ -209,6 +209,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         router=OrchestratorA2ARouter(lambda: client),
     )
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,

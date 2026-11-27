@@ -224,7 +224,9 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     )
     monkeypatch.setattr(server_factory, "create_mcp_parser", lambda: parser)
     monkeypatch.setattr(
-        server.runtime, "_mint_process_session", lambda transport, _keys: object()
+        server.runtime,
+        "_mint_process_session",
+        lambda transport, _keys, _config: object(),
     )
 
     def compose(**kwargs):

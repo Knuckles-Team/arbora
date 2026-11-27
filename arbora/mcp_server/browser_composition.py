@@ -5,6 +5,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from arbora.browser_control.browser_state import BrowserState
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.engine import IdentityUnavailable
 from arbora.security.key_cache import JwksCache
 
@@ -88,16 +89,16 @@ def configured_browser_boundary(
     request_dispatch: Any,
     browser: BrowserState,
     keys: JwksCache,
+    settings: RuntimeConfig,
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
-    from arbora.core.settings import runtime_config
     from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.settings import security_settings
 
-    if not runtime_config.enable_web_ui or runtime_config.webui_auth_mode != "eg":
+    if not settings.enable_web_ui or settings.webui_auth_mode != "eg":
         return None
     config = security_settings()
-    origin = runtime_config.webui_origin
+    origin = settings.webui_origin
     if not _origin_is_exact_https(origin) or not _deployment_is_configured(config):
         raise IdentityUnavailable(
             "EG browser requires configured HTTPS origin, JWT verifier and signing store"
@@ -105,7 +106,7 @@ def configured_browser_boundary(
     from arbora.identity.browser_broker import ConfiguredBrowserBroker
 
     broker = ConfiguredBrowserBroker(
-        runtime_config.webui_broker_token_ref or "",
+        settings.webui_broker_token_ref or "",
         tenant=tenant,
         audience=config.auth_jwt_audience,
         process_claims=broker_claims,

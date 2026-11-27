@@ -20,7 +20,7 @@ from fastapi import FastAPI
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.http.sparql import RDF_GRAPH_WRITE_EVENT, SPARQL_UPDATE_EVENT
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -113,6 +113,7 @@ def _app(monkeypatch: pytest.MonkeyPatch, roles: tuple[str, ...]) -> Any:
     client = _RecordingEngine()
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,

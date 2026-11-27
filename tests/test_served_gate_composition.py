@@ -19,7 +19,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke.gate_class import NO_APPROVAL, STRICT_DEFAULT, resolve_gate
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.mcp_server.served_invocation import (
     _promotion_ci_tool,
     compose_served_invocation,
@@ -79,6 +79,7 @@ def _compose(
     )
     process = request_identity.mint_graph_session(actor)
     return compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,

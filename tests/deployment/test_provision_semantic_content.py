@@ -159,7 +159,7 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     engine = _Engine(registered=set(), graphs=set())
     session = _session()
     monkeypatch.setattr(
-        runtime, "_mint_process_session", lambda transport, _keys: session
+        runtime, "_mint_process_session", lambda transport, _keys, _config: session
     )
     monkeypatch.setattr(EngineHandles, "served", lambda _self: engine)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)

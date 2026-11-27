@@ -52,6 +52,7 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.observability.state import SubsystemWindows
@@ -920,14 +921,14 @@ def _build_server(
         canonical=canonical_surface,
         invocation=invocation,
         host=host,
-        anonymous=_anonymous_a2a(args, invocation),
+        anonymous=_anonymous_a2a(args, invocation, host.config),
     )
 
     host.caches.tools.mark_complete()
     return args, mcp, middlewares
 
 
-def _anonymous_a2a(args: Any, invocation: Any) -> Any:
+def _anonymous_a2a(args: Any, invocation: Any, settings: RuntimeConfig) -> Any:
     """The provider of the none-mode anonymous ``/a2a`` application, or ``None``."""
     from arbora.security.anonymous import enabled
 
@@ -936,12 +937,9 @@ def _anonymous_a2a(args: Any, invocation: Any) -> Any:
         return None
     from arbora import __version__
     from arbora.a2a.anonymous_host import anonymous_a2a_provider
-    from arbora.core.settings import runtime_config
     from arbora.mcp_server.composition import parse_engine_endpoint
 
-    endpoint = parse_engine_endpoint(
-        (runtime_config.graph_service_endpoints or [""])[0]
-    )
+    endpoint = parse_engine_endpoint((settings.graph_service_endpoints or [""])[0])
 
     async def connect() -> Any:
         from medulla import MedullaClient

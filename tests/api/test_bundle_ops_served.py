@@ -25,7 +25,7 @@ from arbora.api.ops.bundle import (
     BundleImportParams,
     BundleImportResult,
 )
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -168,6 +168,7 @@ def _app(
     engine = _Engine(store, tenant)
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(engine),
         graph=process.graph,

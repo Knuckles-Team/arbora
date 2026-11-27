@@ -21,10 +21,12 @@ _CHILD = textwrap.dedent(
     """
     import json, sys
     from pathlib import Path
+    from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server.composition import (
         ensure_local_engine, engine_spawn_count, local_engine_config,
     )
     config = local_engine_config(
+        RuntimeConfig(),
         port=int(sys.argv[1]), persist_dir=Path(sys.argv[2]),
         extra_args=("--auth-mode", "none"), start_timeout_s=90, stop_grace_s=20,
     )

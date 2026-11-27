@@ -17,7 +17,7 @@ from arbora.api.ops.query_federation import (
     NaturalLanguageResult,
     PreparedFederatedQuery,
 )
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -124,6 +124,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedCli
     client = _FederatedClient()
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,
@@ -161,6 +162,7 @@ def _served_native_app(
     client = _NativeOnlyClient()
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,

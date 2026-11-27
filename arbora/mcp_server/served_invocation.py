@@ -29,6 +29,7 @@ from typing import Any
 from arbora.access.action_policy import ActionPolicies, ActionPolicy
 from arbora.api.registry import EgSchemaRef
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.ports import BrowserBoundaryFactory
 from arbora.mcp_server.served_engine import no_process_session
 from arbora.security.key_cache import JwksCache
@@ -1138,6 +1139,7 @@ def compose_served_invocation(
     scim_store: Any = None,
     directory_factory: Callable[[], Any] | None = None,
     scheduler_clock: Any = None,
+    config: RuntimeConfig,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -1463,10 +1465,8 @@ def compose_served_invocation(
 
     from dataclasses import replace
 
-    from arbora.core.settings import runtime_config
-
     if browser_boundary_factory is None:
-        if runtime_config.enable_web_ui and runtime_config.webui_auth_mode == "eg":
+        if config.enable_web_ui and config.webui_auth_mode == "eg":
             raise RuntimeError("EG browser requires the process-root identity factory")
         return invocation
 
@@ -1774,17 +1774,17 @@ def served_invocation_from_settings(
     bindings: Mapping[str, Any],
     fleet_effect: Any,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
+    config: RuntimeConfig,
 ) -> Any:
     """The served invocation from the deployment settings, or ``None``.
 
     Without ``GRAPH_SERVICE_ENDPOINTS`` the process has no engine to bind and
     serves no operation-invoke API.
     """
-    from arbora.core.settings import runtime_config
     from arbora.mcp_server.task_plan import configured_task_plan
 
-    task_plan_config = configured_task_plan()
-    if not runtime_config.graph_service_endpoints:
+    task_plan_config = configured_task_plan(config)
+    if not config.graph_service_endpoints:
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None
@@ -1807,6 +1807,7 @@ def served_invocation_from_settings(
         task_plan_config=task_plan_config,
         browser_boundary_factory=browser_boundary_factory,
         promotion_ci_tool=_promotion_ci_tool(),
+        config=config,
     )
 
 

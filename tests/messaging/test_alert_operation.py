@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 from arbora.api.http.auth import HTTPAuthenticationError
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import messaging as alert_ops
+from arbora.core.settings import RuntimeConfig
 from arbora.messaging.models import InboundEvent, SendResult
 from tests._eg_fakes import service_session
 
@@ -266,7 +267,10 @@ def test_the_served_network_host_owns_intake_only_on_an_explicit_true(
 
     def plan(flag: Any, served: bool) -> bool:
         return composition.detect_composition(
-            None, messaging_intake_enabled=flag, served_network=served
+            None,
+            settings=RuntimeConfig(),
+            messaging_intake_enabled=flag,
+            served_network=served,
         ).messaging_intake_configured
 
     assert plan("true", True) is True

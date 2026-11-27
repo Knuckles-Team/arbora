@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.core.settings import ArboraConfig, runtime_config
+from arbora.core.settings import ArboraConfig, RuntimeConfig
 from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.task_plan import configured_task_plan
 from arbora.security.key_cache import JwksCache
@@ -22,7 +22,7 @@ CONFIG = {
 
 def test_default_disabled(monkeypatch):
     monkeypatch.delenv("ARBORA_TASK_PLAN", raising=False)
-    assert configured_task_plan() is None
+    assert configured_task_plan(RuntimeConfig()) is None
 
 
 def test_config_model_accepts_missing_static_schema_pin():
@@ -36,12 +36,12 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch):
     from arbora.mcp_server import served_invocation
 
     monkeypatch.setenv("ARBORA_TASK_PLAN", json.dumps(CONFIG))
-    monkeypatch.setitem(
-        runtime_config._overrides, "graph_service_endpoints", ["unix:///fixture"]
-    )
+    config = RuntimeConfig()
+    config.graph_service_endpoints = ["unix:///fixture"]
     compose = Mock(return_value=object())
     monkeypatch.setattr(served_invocation, "compose_served_invocation", compose)
     served_invocation.served_invocation_from_settings(
+        config=config,
         keys=JwksCache(),
         process_session=lambda: SimpleNamespace(graph="fixture"),
         engine_pool=lambda: object(),
@@ -71,7 +71,7 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch):
 def test_malformed_settings_fail_closed(monkeypatch, change):
     monkeypatch.setenv("ARBORA_TASK_PLAN", json.dumps({**CONFIG, **change}))
     with pytest.raises((TypeError, ValueError)):
-        configured_task_plan()
+        configured_task_plan(RuntimeConfig())
     with pytest.raises((TypeError, ValueError)):
         ArboraConfig(ARBORA_TASK_PLAN=json.dumps({**CONFIG, **change}))
 
@@ -80,7 +80,7 @@ def test_malformed_settings_fail_closed(monkeypatch, change):
 def test_bad_json_never_silently_disables_feature(monkeypatch, raw):
     monkeypatch.setenv("ARBORA_TASK_PLAN", raw)
     with pytest.raises(ValueError):
-        configured_task_plan()
+        configured_task_plan(RuntimeConfig())
 
 
 def test_content_digest_pin_refuses_before_process_authority(monkeypatch):

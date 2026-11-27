@@ -12,6 +12,7 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
 from arbora.security.run_token import RunTokenSigner, token_secret_from_config
 
@@ -20,6 +21,10 @@ __all__ = ["ProcessAuthority"]
 
 def _keys_or_new(keys: JwksCache | None) -> JwksCache:
     return keys if keys is not None else JwksCache()
+
+
+def _config_or_new(config: RuntimeConfig | None) -> RuntimeConfig:
+    return config if config is not None else RuntimeConfig()
 
 
 class ProcessAuthority:
@@ -33,6 +38,7 @@ class ProcessAuthority:
 
     __slots__ = (
         "_lock",
+        "config",
         "_session",
         "_thread",
         "keys",
@@ -45,7 +51,10 @@ class ProcessAuthority:
         self,
         keys: JwksCache | None = None,
         token_secret: Callable[[], str | None] = token_secret_from_config,
+        config: RuntimeConfig | None = None,
     ) -> None:
+        #: The host's settings view; renewal reads its identity settings from it.
+        self.config = _config_or_new(config)
         #: The host's key cache; boot and renewal validate the process token against it.
         self.keys = _keys_or_new(keys)
         self.signer = RunTokenSigner(token_secret)

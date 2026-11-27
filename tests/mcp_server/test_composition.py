@@ -12,6 +12,7 @@ import pytest
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.browser_control.browser_state import BrowserState
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.state import FleetState
 from arbora.gateway.state import GatewayState
@@ -117,6 +118,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
         browser=browser,
         telemetry=telemetry,
         host=host,
+        settings=RuntimeConfig(),
     )
 
     assert started[0][0] == "overstory"
@@ -170,6 +172,7 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
         browser=BrowserState(),
         telemetry=Telemetry(),
         host=object(),
+        settings=RuntimeConfig(),
     )
 
     assert calls == [(engine, session, ("telegram",))]
@@ -198,12 +201,16 @@ def test_messaging_intake_requires_gateway_daemon_role(
 
     monkeypatch.setenv("MESSAGING_INTAKE_PLATFORMS", "telegram")
     monkeypatch.setenv("KG_DAEMON_ROLE", "client")
-    client_plan = composition.detect_composition(None, messaging_intake_enabled=True)
+    client_plan = composition.detect_composition(
+        None, settings=RuntimeConfig(), messaging_intake_enabled=True
+    )
     assert client_plan.messaging_configured is True
     assert client_plan.messaging_intake_configured is False
 
     monkeypatch.setenv("KG_DAEMON_ROLE", "host")
-    daemon_plan = composition.detect_composition(None, messaging_intake_enabled=True)
+    daemon_plan = composition.detect_composition(
+        None, settings=RuntimeConfig(), messaging_intake_enabled=True
+    )
     assert daemon_plan.messaging_intake_configured is True
 
 
