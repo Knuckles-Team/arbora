@@ -162,7 +162,7 @@ The current intent projection remains authoritative; this extension adds no resi
 | arbora/api/http/routes.py:113 endpoint; arbora/api/mcp/verbs.py:377 dispatch_verb | Served adapters. | Certification and provisioning gates. |
 | arbora/api/invoke/pipeline.py:810 invoke; :641 _confirmation_gate; :444 _dispatch | Authority, confirmation, effect journal and dispatch | Bind the full workflow snapshot before any effect |
 | arbora/api/ops/agents.py:43 handle_agent; :97 operations | A2A delegation. | Provisioning and local-model orchestration. |
-| arbora/control_plane/runs/admission.py:108 NativeWorkItemAdmissionProtocol | Exact persisted run admission | Durable producer adapter and runtime allocation receipt |
+| arbora/api/ops/plans.py _admit_native_plan_run | Exact persisted run admission | Durable producer adapter and runtime allocation receipt |
 | arbora/control_plane/runs/capacity.py:53 CapacityLedger | Bounded acquisition | Fleet measurement, budget reservation and release integration |
 | arbora/fleet/catalog_items.py:208 compute_schema_fingerprint | Real served schema digest | Versioned nested definitions and compatibility gate |
 | arbora/fleet/onboarding.py:236 FleetOnboarding.onboard | SDK capture, EG attestation and import | Independent ingested identity read and provisioned-agent consumption |

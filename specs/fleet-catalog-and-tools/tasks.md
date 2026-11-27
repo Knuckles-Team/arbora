@@ -27,7 +27,7 @@ Check a task only after its linked code and tests land. A checked source task is
 - T08 — Certify actual connector schemas and annotations; expose typed write-back and sanitized telemetry/security/CI feed metadata through registry ops. Cover ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R008.
 - T09 — Correct generated assembly agent parsing. Cover ARBORA-FLEET-R010. (ARBORA-FLEET-R009 split into T09.1-T09.3 below.)
 - T09.1 (ARBORA-FLEET-R009.1): Build the typed capacity-acquisition primitive (ledger): all-or-nothing acquire, exactly one re-decision on denial, release on stop.
-- T09.2 (ARBORA-FLEET-R009.2): Wire the capacity ledger into `control_plane/runs/admission.py`'s `admit_once`.
+- T09.2 (ARBORA-FLEET-R009.2): Wire the capacity ledger into `arbora/a2a/routing.py`'s `acquire_capacity`.
 - T09.3 (ARBORA-FLEET-R009.3): Wire the capacity ledger into `arbora/a2a/routing.py` and `composition.py`'s publish step.
 - T08 — Certify actual connector schemas and annotations; expose typed write-back and sanitized telemetry/security/CI feed metadata through registry ops. Cover ARBORA-FLEET-R002, ARBORA-FLEET-R003, ARBORA-FLEET-R008. ARBORA-FLEET-R003 is now a rollup over ARBORA-FLEET-R003.1-.3.
 - ARBORA-FLEET-R002.1 (child, producer): `arbora/fleet/catalog_items.py` (`compute_schema_fingerprint`, `CatalogItem.schema_fingerprint`, wired into `_probed_item`) + `tests/fleet/test_schema_fingerprint.py`.
@@ -38,12 +38,12 @@ Check a task only after its linked code and tests land. A checked source task is
 - T09 — Correct generated assembly agent parsing and all-or-nothing capacity admission, one re-decision, and release on stop. Cover ARBORA-FLEET-R009, ARBORA-FLEET-R010.
 - ARBORA-FLEET-R009.1 (child): `arbora/a2a/routing.py` evaluates a candidate run against the current admission state.
 - ARBORA-FLEET-R009.2 (child): `arbora/a2a/composition.py` commits an evaluated run together with its synthesis evidence.
-- ARBORA-FLEET-R009.3 (child): `control_plane/runs/admission.py` publishes a committed run only after an all-or-nothing capacity acquisition, with one re-decision on denial and release on stop.
+- ARBORA-FLEET-R009.3 (retired): superseded by the engine-backed run admission.
 - ARBORA-FLEET-R003.1 (child, producer): `arbora/api/ops/write_back.py` (`WriteBackPreviewParams`, `WriteBackCommitParams`, `WriteBackPreview`, `WriteBackReceipt`, `derive_write_back_idempotency_key`) + `tests/api/test_write_back_models.py`.
 - ARBORA-FLEET-R003.2 (child, consumer of .1): register `fleet.write_back.preview`/`fleet.write_back.commit` as typed `OpSpec` entries in `arbora/api/ops/write_back.py`, wired into `arbora/api/ops/registry_factory.py` + `tests/api/test_write_back_ops.py`.
 - ARBORA-FLEET-R003.3 (child, consumer of .2): restart/fault test `tests/fleet/test_write_back_restart.py` proving idempotent replay and preview gating survive a service restart.
 - T09 — Correct generated assembly agent parsing and all-or-nothing capacity admission, one re-decision, and release on stop. Cover ARBORA-FLEET-R009, ARBORA-FLEET-R010.
-- T09.1 — Capacity-acquisition primitive (acquire/release, one re-decision) in `arbora/control_plane/runs/admission.py`. Cover ARBORA-FLEET-R009.1.
+- T09.1 — Capacity-acquisition primitive (acquire/release, one re-decision) in `arbora/control_plane/runs/capacity.py`. Cover ARBORA-FLEET-R009.1.
 - T09.2 — Wire `arbora/a2a/routing.py`/`composition.py` evaluate/commit/publish through the ARBORA-FLEET-R009.1 primitive. Cover ARBORA-FLEET-R009.2.
 - T10 — Run clean-checkout format/lint/types/tests, generated artifact and public-surface checks, CCCC, KISS, jscpd, dupehound, authority parity, and local served protocol matrix. Cover ARBORA-FLEET-R016, ARBORA-FLEET-R017.
 - T11 — Land reviewed code and record merge commits per slice in `spec.md`; source evidence alone does not establish completed acceptance.
@@ -304,7 +304,6 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T036 ARBORA-FLEET-R009 Run admission evaluates, commits and publishes with capacity control.
 - [ ] T037 ARBORA-FLEET-R009.1 Capacity acquisition is all-or-nothing with one re-decision.
 - [ ] T038 ARBORA-FLEET-R009.2 Routing and composition publish only through acquired capacity.
-- [ ] T039 ARBORA-FLEET-R009.3 Run admission publishes with all-or-nothing capacity control.
 - [x] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
 - [x] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
 - [x] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.

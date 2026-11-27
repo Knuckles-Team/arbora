@@ -314,7 +314,7 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R001.2.5` | `tests/test_agent_runs_engine_port.py::test_bound_port_invokes_registry_with_run_principal` | Planned, not yet written |
 | `ARBORA-HOST-R007.3` | `tests/observability/test_gateway_metrics.py::test_no_series_uses_the_retired_prefix` | Planned, not yet written |
 | `ARBORA-HOST-R007.3` | `tests/gateway/test_rate_limit.py::test_rate_limit_counter_renamed` | Planned, not yet written |
-| `ARBORA-HOST-R031.1` | `arbora/control_plane/runs/admission.py::NativeWorkItemAdmissionProtocol` | Planned, not yet written |
+| `ARBORA-HOST-R031.1` | `arbora/api/ops/plans.py::_admit_native_plan_run` | Planned, not yet written |
 | `ARBORA-HOST-R031.1` | `tests/control_plane/test_sandbox_admission_served.py::test_agents_run_admits_and_records_allocation` | Planned, not yet written |
 | `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Planned, not yet written |
 | `ARBORA-HOST-R034` | `tests/mcp_server/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |

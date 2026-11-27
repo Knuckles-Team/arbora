@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 from typing import Literal
 
@@ -22,16 +21,15 @@ from arbora.control_plane.runs import (
     ArtifactRef,
     AuditChain,
     EngineRunPolicy,
-    InMemoryNativeAdmission,
     InMemoryObservationLedger,
     InvocationRef,
     JobRef,
-    NativeAdmissionError,
     NativeAdmissionRequest,
     NativeWorkItemAdmission,
     ObservationDiscontinuityError,
     RelationalObservation,
-    ReplayDriftError,
+    RunPolicyDenied,
+    RunPolicyUnavailable,
     RunResolution,
     TaskRef,
     ToolBindingRef,
@@ -217,68 +215,19 @@ def test_policy_pins_exact_versions_and_rejects_budget_or_privilege_escalation()
         )
 
 
-def _request_and_admission(
-    engine: EngineDouble,
-) -> tuple[NativeAdmissionRequest, InMemoryNativeAdmission]:
-    request_digest = _digest("q")
-    resolution = _resolution(request_digest=request_digest)
-    admission = InMemoryNativeAdmission(
-        audit=AuditChain(max_events=8),
-        clock=lambda: 100,
-        policy=_engine_policy(engine),
-    )
-    return _admission_request(resolution), admission
-
-
 @pytest.mark.spec("ARBORA-OPS-R050.3")
-async def test_admission_is_one_run_one_work_item_and_duplicate_delivery_is_idempotent() -> (
-    None
-):
+async def test_port_returns_the_engine_answer_once_per_decision() -> None:
     engine = EngineDouble()
-    request, admission = _request_and_admission(engine)
-    resolution = request.resolution
+    answers: list[object] = []
 
-    first = await admission.admit_once(request)
-    second = await admission.admit_once(request)
-    assert first.created is True
-    assert second.created is False
-    record = admission.read(resolution.run_id)
-    assert record is not None
-    assert record.resolution == resolution
-    # The engine decided once; the replay never asks again.
-    assert len(engine.asked) == 1
+    async def ask(subject: object, now: int) -> str:
+        answers.append(subject)
+        return "admitted"
 
-    # Drift the request digest COHERENTLY: RunResolution's own validator
-    # requires authorization.request_digest == request_digest, so update both so
-    # the object is valid but genuinely differs from the stored one.
-    drifted_digest = _digest("d")
-    altered = resolution.model_copy(
-        update={
-            "request_digest": drifted_digest,
-            "authorization": resolution.authorization.model_copy(
-                update={"request_digest": drifted_digest}
-            ),
-        }
-    )
-    altered_item = request.work_item.model_copy(
-        update={
-            "request_digest": altered.request_digest,
-            "resolution_digest": altered.resolution_digest,
-        }
-    )
-    with pytest.raises(ReplayDriftError, match="replay_or_body_drift"):
-        await admission.admit_once(
-            NativeAdmissionRequest(resolution=altered, work_item=altered_item)
-        )
-
-
-@pytest.mark.spec("ARBORA-OPS-R050.3")
-async def test_concurrent_duplicate_delivery_admits_once() -> None:
-    engine = EngineDouble()
-    request, admission = _request_and_admission(engine)
-    receipts = await asyncio.gather(*map(admission.admit_once, [request] * 4))
-    assert [receipt.created for receipt in receipts].count(True) == 1
-    assert len(engine.asked) == 1
+    policy = EngineRunPolicy(ask)
+    assert await policy.decide({"run": "r1"}, now=100) == "admitted"
+    assert answers == [{"run": "r1"}]
+    assert engine.asked == []
 
 
 @pytest.mark.spec("ARBORA-OPS-R050.3")
@@ -291,27 +240,29 @@ async def test_concurrent_duplicate_delivery_admits_once() -> None:
         "REVIEW_NOT_INDEPENDENT",
     ],
 )
-async def test_admission_refuses_when_the_engine_denies(code: str) -> None:
+async def test_port_refuses_when_the_engine_denies(code: str) -> None:
     engine = EngineDouble(deny=code)
-    request, admission = _request_and_admission(engine)
-    with pytest.raises(NativeAdmissionError, match="policy_denied") as refused:
-        await admission.admit_once(request)
-    assert code in str(refused.value)
-    # A denied run records nothing: no run, no work item, no audit event.
-    assert admission.read(request.resolution.run_id) is None
-    assert admission.audit is not None and len(admission.audit._events) == 0
+    with pytest.raises(RunPolicyDenied) as refused:
+        await _engine_policy(engine).decide(object(), now=100)
+    assert refused.value.engine_code == code
+    assert len(engine.asked) == 1
 
 
 @pytest.mark.spec("ARBORA-OPS-R050.3")
-async def test_admission_fails_closed_when_the_engine_is_unreachable() -> None:
+async def test_port_passes_other_engine_refusals_through() -> None:
+    with pytest.raises(EngineRefusal) as refused:
+        await _engine_policy(EngineDouble(deny="NOT_FOUND")).decide(object(), now=1)
+    assert refused.value.code == "NOT_FOUND"
+
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+async def test_port_fails_closed_when_the_engine_is_unreachable() -> None:
     class Down(EngineDouble):
         async def ask(self, authorization: object, now: int) -> None:
             raise TimeoutError
 
-    request, admission = _request_and_admission(Down())
-    with pytest.raises(NativeAdmissionError, match="policy_unavailable"):
-        await admission.admit_once(request)
-    assert admission.read(request.resolution.run_id) is None
+    with pytest.raises(RunPolicyUnavailable, match="engine_unreachable"):
+        await _engine_policy(Down()).decide(object(), now=100)
 
 
 @pytest.mark.spec("ARBORA-OPS-R050.3")
@@ -321,6 +272,10 @@ def test_arbora_keeps_no_local_policy_authority() -> None:
     import arbora.control_plane.policy as policy_package
 
     assert not hasattr(policy_package, "PolicyAuthority")
+    # The unreachable in-memory admission is gone: production admission decides
+    # through the one RunPolicyDecision port (plans.py), with no local store.
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("arbora.control_plane.runs.admission")
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("arbora.control_plane.policy.repository")
 
@@ -398,8 +353,8 @@ def test_audit_chain_and_observations_fail_on_discontinuity_or_regression() -> N
 def test_definition_side_objects_do_not_claim_or_complete_work() -> None:
     policy = _policy()
     approval = _approval(policy, request_digest=_digest("q"))
-    admission = InMemoryNativeAdmission(policy=_engine_policy(EngineDouble()))
-    assert not hasattr(admission, "claim_work_item")
-    assert not hasattr(admission, "renew_work_item_lease")
-    assert not hasattr(admission, "commit_work_item_result")
+    policy_port = _engine_policy(EngineDouble())
+    assert not hasattr(policy_port, "claim_work_item")
+    assert not hasattr(policy_port, "renew_work_item_lease")
+    assert not hasattr(policy_port, "commit_work_item_result")
     assert not hasattr(approval, "result")

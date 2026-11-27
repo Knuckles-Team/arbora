@@ -57,6 +57,7 @@ from arbora.api.registry import (
     OpSpec,
     Verb,
 )
+from arbora.control_plane.runs.engine_policy import EngineRunPolicy
 
 #: The engine release that serves ``TaskPlan``. Arbora's floor moves to it once
 #: it is on PyPI (ARBORA-RELEASE-R003.4.3).
@@ -988,6 +989,27 @@ def _native_plan_host(context: Any) -> Any:
     return SimpleNamespace(services=services, task_plan_config=config)
 
 
+async def _submit_through_policy(
+    context: Any, engine: Any, submission: Mapping[str, Any]
+) -> Any:
+    """Submit one native plan WorkItem; the engine's active policy decides it.
+
+    The decision is the one ``RunPolicyDecision`` port (ARBORA-OPS-R050.3); the
+    caller's ``policy_guard`` reads its refusals as ``POLICY_DENIED`` and
+    ``POLICY_UNAVAILABLE``.
+    """
+    import arbora.work_items as work_items
+
+    async def _submit(subject: object, _now: int) -> Any:
+        item_id, _created = await asyncio.to_thread(
+            work_items.submit_work_item_atomic, engine, **submission
+        )
+        return item_id
+
+    policy = context.services.get("run_policy") or EngineRunPolicy(_submit)
+    return await policy.decide(submission, now=int(time.time() * 1000))
+
+
 async def _admit_native_plan_run(
     context: Any, plan: Mapping[str, Any]
 ) -> _NativePlanAdmission:
@@ -1041,20 +1063,22 @@ async def _admit_native_plan_run(
     idempotency_key = run_id
     worker_id: str | None = None
     with use_session(session):
-        item_id, _created = await asyncio.to_thread(
-            work_items.submit_work_item_atomic,
+        item_id = await _submit_through_policy(
+            context,
             engine,
-            kind="orchestrator_task",
-            queue="orchestrator_task",
-            payload_ref=run_id,
-            tenant=session.tenant,
-            work_item_id=None,
-            run_id=run_id,
-            idempotency_key=idempotency_key,
-            created_by=owner_ref,
-            description="agents.plan_run",
-            resource_class="agent_dispatch",
-            metadata=metadata,
+            {
+                "kind": "orchestrator_task",
+                "queue": "orchestrator_task",
+                "payload_ref": run_id,
+                "tenant": session.tenant,
+                "work_item_id": None,
+                "run_id": run_id,
+                "idempotency_key": idempotency_key,
+                "created_by": owner_ref,
+                "description": "agents.plan_run",
+                "resource_class": "agent_dispatch",
+                "metadata": metadata,
+            },
         )
         if not isinstance(item_id, str) or not item_id.strip():
             raise OperationRefused(

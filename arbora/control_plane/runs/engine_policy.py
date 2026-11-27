@@ -48,8 +48,8 @@ class RunPolicyUnavailable(ValueError):
 class RunPolicyDecision(Protocol):
     """The one seam run admission decides through: the engine's active policy."""
 
-    async def decide(self, authorization: object, *, now: int) -> None:
-        """Return when the engine admits the run; raise when it denies."""
+    async def decide(self, subject: object, *, now: int) -> Any:
+        """Return the engine's answer when it admits the run; raise when it denies."""
 
 
 class EngineRunPolicy:
@@ -58,9 +58,9 @@ class EngineRunPolicy:
     def __init__(self, ask: Callable[[object, int], Awaitable[Any]]) -> None:
         self._ask = ask
 
-    async def decide(self, authorization: object, *, now: int) -> None:
+    async def decide(self, subject: object, *, now: int) -> Any:
         try:
-            await self._ask(authorization, now)
+            return await self._ask(subject, now)
         except EngineRefusal as refused:
             if refused.code in ENGINE_POLICY_DENIALS:
                 raise RunPolicyDenied(refused.code) from refused
