@@ -507,13 +507,9 @@ def _strip_block(text: str) -> str:
     return "".join(out)
 
 
-TRIGGER_BACKENDS: dict[str, TriggerBackend] = {"git-hook": GitHookTrigger()}
-
-
-def register_trigger_backend(backend: TriggerBackend) -> None:
-    """Register an alternative observer (a watcher, an IDE integration, …)."""
-
-    TRIGGER_BACKENDS[backend.name] = backend
+TRIGGER_BACKENDS: Mapping[str, TriggerBackend] = MappingProxyType(
+    {"git-hook": GitHookTrigger()}
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

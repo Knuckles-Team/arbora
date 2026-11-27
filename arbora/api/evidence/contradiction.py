@@ -9,8 +9,9 @@ score, so the detector needs no embeddings, model or network.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 
 __all__ = [
     "Claim",
@@ -86,11 +87,17 @@ _ANTONYM_PAIRS: tuple[tuple[str, str], ...] = (
     ("positive", "negative"),
 )
 
-# Build the bidirectional lookup once at import time (deterministic).
-_ANTONYMS: dict[str, frozenset[str]] = {}
-for _a, _b in _ANTONYM_PAIRS:
-    _ANTONYMS[_a] = _ANTONYMS.get(_a, frozenset()) | {_b}
-    _ANTONYMS[_b] = _ANTONYMS.get(_b, frozenset()) | {_a}
+
+def _antonym_lookup() -> Mapping[str, frozenset[str]]:
+    """The bidirectional antonym lookup built from the pair list."""
+    built: dict[str, frozenset[str]] = {}
+    for first, second in _ANTONYM_PAIRS:
+        built[first] = built.get(first, frozenset()) | {second}
+        built[second] = built.get(second, frozenset()) | {first}
+    return MappingProxyType(built)
+
+
+_ANTONYMS = _antonym_lookup()
 
 _NUM = re.compile(r"-?\d+(?:\.\d+)?")
 

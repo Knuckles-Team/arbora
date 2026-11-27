@@ -15,6 +15,7 @@ import threading
 from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
@@ -1265,7 +1266,7 @@ class RuntimeConfig:
 
 
 #: The typed, declared settings (alias to field), read by the environment manifest.
-CONFIG_FIELDS = ArboraConfig.model_fields
+CONFIG_FIELDS = MappingProxyType(ArboraConfig.model_fields)
 
 
 def _config_file() -> Path:
