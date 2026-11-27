@@ -187,3 +187,44 @@ async def test_adapter_rejects_cross_tenant_and_non_commons_reads() -> None:
         await port.current_component(
             tenant_id="tenant-b", component_id="component:server"
         )
+
+
+@pytest.mark.asyncio
+async def test_search_by_server_and_name_is_unavailable_until_the_engine_serves_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ARBORA-FLEET-R073 (unbound): a filtered search never falls back to a process copy."""
+    from medulla.generated.agent_component import AgentComponentSearchRequest
+
+    from arbora.pin_lag.medulla import (
+        COMPONENT_SEARCH_FILTER_FIELDS,
+        PinLagUnavailable,
+        require_component_search_filters,
+    )
+
+    sent: list[Any] = []
+
+    async def search(client: Any, request: Any, graph: str | None) -> Any:
+        sent.append(request)
+        return SimpleNamespace(entries=(), next_cursor=None)
+
+    monkeypatch.setattr(adapter, "send_agent_component_search", search)
+    port = make_port()
+    unfiltered = ComponentSearchRequest(tenant_id="tenant-a", kinds=("tool",), limit=8)
+    await port.search_components(unfiltered)  # the unfiltered read is unchanged
+    served = all(
+        field in AgentComponentSearchRequest.model_fields
+        for field in COMPONENT_SEARCH_FILTER_FIELDS
+    )
+    filtered = ComponentSearchRequest(
+        tenant_id="tenant-a", kinds=("tool",), limit=8, server_name="github"
+    )
+    if served:  # pragma: no cover - the re-pin carries the filters; bind R073 then
+        await port.search_components(filtered)
+        assert sent[-1].server_name == "github"
+        return
+    with pytest.raises(PinLagUnavailable):
+        require_component_search_filters()
+    with pytest.raises(PinLagUnavailable):
+        await port.search_components(filtered)
+    assert len(sent) == 1  # nothing reached the engine

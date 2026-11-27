@@ -696,7 +696,10 @@ class FleetOnboarding:
         as a ``catalog`` surface gap.
         """
 
-        from arbora.deployment.semantic_provisioning import bind_session_graph
+        from arbora.deployment.semantic_provisioning import (
+            bind_session_graph,
+            catalog_content_digest,
+        )
         from arbora.fleet.catalog_graph import write_catalog
 
         report = self.surfaces.setdefault(endpoint.name, {})
@@ -704,7 +707,13 @@ class FleetOnboarding:
             graph = str(self.session.graph)
             with bind_session_graph(graph):
                 count = await write_catalog(
-                    self.tenant_client, graph, endpoint.name, pack
+                    self.tenant_client,
+                    graph,
+                    endpoint.name,
+                    pack,
+                    tenant=self._tenant(),
+                    importer=str(getattr(self.session.actor, "actor_id", "")),
+                    version=catalog_content_digest(pack),
                 )
         except Exception as exc:  # noqa: BLE001 - reported, never fatal
             logger.warning("%s: catalog write failed: %s", endpoint.name, exc)

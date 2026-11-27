@@ -49,6 +49,9 @@ class CatalogItem:
     #: The connector declared an acting user is required (``tools/list`` ``_meta`` key
     #: ``team.knuckles/requires_actor``); never read from a connector manifest.
     requires_actor: bool = field(default=False, repr=False)
+    #: The tenant a feed-event item belongs to (ARBORA-FLEET-R008.2); ``None``
+    #: for fleet-wide items. A caller of another tenant never sees the item.
+    tenant: str | None = field(default=None, repr=False)
 
     def public(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -129,6 +132,22 @@ async def _order_from_port(
     return port.rank("catalog.catalog_item_rank", query, candidates)
 
 
+def _tenant_sees(item: CatalogItem, caller: Any) -> bool:
+    """A tenant-bound item is visible only to its own tenant (ARBORA-FLEET-R008.2)."""
+    if item.tenant is None:
+        return True
+    return item.tenant == (
+        getattr(caller, "tenant", None) or getattr(caller, "tenant_id", None)
+    )
+
+
+def _tenant_scoped(visible: Visible) -> Visible:
+    async def scoped(item: CatalogItem, caller: Any) -> bool:
+        return _tenant_sees(item, caller) and await visible(item, caller)
+
+    return scoped
+
+
 class FleetCatalog:
     """Merge EG, child and SDK descriptors through one visibility decision."""
 
@@ -142,7 +161,7 @@ class FleetCatalog:
         self._sources = tuple(sources)
         #: The host's ranking port (ARBORA-FLEET-R083.3); unbound it answers the floor.
         self._ranking: RankingPort = ranking
-        self._visible = visible
+        self._visible = _tenant_scoped(visible)
         #: Per-connector source-approval evidence (ARBORA-FLEET-R042.5).
         self._source_approvals = source_approvals
 
@@ -580,6 +599,7 @@ def connector_items(entries: Iterable[Mapping[str, Any]]) -> tuple[CatalogItem, 
                 params=entry.get("params", {}),
                 required_scopes=frozenset(entry.get("required_scopes", ())),
                 annotations=_pack_annotations(entry),
+                tenant=entry.get("tenant"),
             )
         )
     return tuple(items)

@@ -236,6 +236,21 @@ def require_pack_import_seed() -> None:
         raise PinLagUnavailable("MedullaSink.import_pack.seed")
 
 
+#: The request fields an engine component search needs to page one server's tools
+#: by name without reading content (ARBORA-FLEET-R073; engine ``main`` lacks both).
+COMPONENT_SEARCH_FILTER_FIELDS: tuple[str, ...] = ("server_name", "upstream_name")
+
+
+def require_component_search_filters() -> None:
+    """Return once the engine component search filters by server and name.
+
+    Refuses ``UNAVAILABLE`` naming ``AgentComponentSearchRequest.<field>`` until
+    the pinned engine carries it; nothing pages the catalog from a process copy.
+    """
+    for field in COMPONENT_SEARCH_FILTER_FIELDS:
+        require_model_field("AgentComponentSearchRequest", field)
+
+
 def agent_run_delegation_served() -> bool:
     """Whether the installed engine serves agent-run delegations."""
     try:

@@ -88,6 +88,9 @@ class _Engine(FakeEgEngine):
     def _on_catalog_authority_status(self, _params: Any, _key: Any) -> Any:
         return None
 
+    def _on_AgentComponent(self, _params: Any, _key: Any) -> Any:
+        return {"entries": [], "next_cursor": None}
+
     def _on_attest_self_served_catalog(self, params: Any, key: Any) -> Any:
         request = params["op"]["request"]
         assert key == request["context"]["idempotency_key"]

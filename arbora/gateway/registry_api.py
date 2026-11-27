@@ -1378,6 +1378,74 @@ async def _list_kind(
     )
 
 
+_SERVERS_REFUSAL_STATUS = {
+    "PRINCIPAL_REQUIRED": 401,
+    "TENANT_MISMATCH": 403,
+    "SCOPE_DENIED": 403,
+}
+
+
+def _servers_caller(request: Request) -> Any:
+    """The verified caller of a ``servers`` read (ARBORA-FLEET-R033.1)."""
+    from arbora.gateway.servers_reader import (
+        REQUIRED_SCOPE,
+        ServersCaller,
+        ServersRefused,
+    )
+    from arbora.security.anonymous import admitted_actor
+    from arbora.security.session import ScopeError, resolve_session
+
+    try:
+        session = resolve_session()
+    except PermissionError as exc:
+        raise ServersRefused("PRINCIPAL_REQUIRED") from exc
+    actor = session.actor
+    tenant = str(session.tenant or actor.tenant_id or "").strip()
+    principal = str(actor.actor_id or "").strip()
+    if not (actor.authenticated or admitted_actor(actor)):
+        principal = ""
+    try:
+        session.require_scope(REQUIRED_SCOPE)
+        scopes = frozenset({REQUIRED_SCOPE})
+    except ScopeError:
+        scopes = frozenset()
+    return ServersCaller(
+        tenant=tenant,
+        principal=principal,
+        scopes=scopes,
+        requested_tenant=request.query_params.get("tenant") or None,
+    )
+
+
+async def _list_servers(
+    request: Request, *, limit: int, query: str, cursor: str | None
+) -> RegistryPage[Any] | JSONResponse:
+    """``GET /registry/servers`` through the typed reader (ARBORA-FLEET-R033.1/.2)."""
+    from arbora.gateway.servers_reader import (
+        FleetCatalogServersReader,
+        ServersPageRequest,
+        ServersRefused,
+    )
+
+    try:
+        caller = _servers_caller(request)
+        page = await FleetCatalogServersReader().list(
+            caller, ServersPageRequest(limit=limit, query=query, cursor=cursor)
+        )
+    except ServersRefused as refused:
+        return JSONResponse(
+            {"status": "refused", "code": refused.code},
+            status_code=_SERVERS_REFUSAL_STATUS[refused.code],
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
+        return _catalog_unavailable("servers", exc)
+    return RegistryPage[Any](
+        kind="servers", items=page.items, count=page.count, next_cursor=page.next_cursor
+    )
+
+
 async def _get_kind(
     request: Request,
     *,
@@ -1619,6 +1687,15 @@ def _make_list_handler(kind: str, model: type[BaseModel]) -> Callable[..., Any]:
     return handler
 
 
+def _make_servers_list_handler() -> Callable[..., Any]:
+    async def handler(request: Request) -> Any:
+        limit, query, cursor = _parse_request(request)
+        return await _list_servers(request, limit=limit, query=query, cursor=cursor)
+
+    handler.__name__ = "list_registry_servers"
+    return handler
+
+
 def _make_get_handler(kind: str, model: type[BaseModel]) -> Callable[..., Any]:
     async def handler(request: Request, item_id: str) -> Any:
         return await _get_kind(request, kind=kind, model=model, item_id=item_id)
@@ -1639,7 +1716,11 @@ registry_router.add_api_route(
 for _kind, _spec in _KIND_SPECS.items():
     _model = _spec.model
     _page_response_model, _item_response_model = _RESPONSE_MODELS[_kind]
-    _list_handler = _make_list_handler(_kind, _model)
+    _list_handler = (
+        _make_servers_list_handler()
+        if _kind == "servers"
+        else _make_list_handler(_kind, _model)
+    )
     _get_handler = _make_get_handler(_kind, _model)
     registry_router.add_api_route(
         f"/registry/{_kind}",
