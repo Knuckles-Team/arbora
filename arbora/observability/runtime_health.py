@@ -71,7 +71,7 @@ from concurrent.futures import TimeoutError as _FutureTimeoutError
 from typing import Any, NotRequired, TypedDict, cast
 from urllib.parse import urlsplit
 
-from arbora.observability.state import HealthState
+from arbora.observability.state import IDENTITY_CONTRACT_KEY, HealthState
 from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
@@ -851,9 +851,9 @@ def identity_readiness(health: HealthState) -> dict[str, Any]:
         return dict(reconciler.readiness())
     if health.identity.config_invalid:
         return {"status": "degraded", "reason": "identity_config_invalid"}
-    from arbora.identity.client_contract import CONFIG_KEY
-
-    return {"status": "checking" if read_env(CONFIG_KEY, "") else "unconfigured"}
+    return {
+        "status": "checking" if read_env(IDENTITY_CONTRACT_KEY, "") else "unconfigured"
+    }
 
 
 def failing_checks(report: Mapping[str, Any]) -> list[str]:

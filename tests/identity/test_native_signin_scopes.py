@@ -21,6 +21,7 @@ from arbora.identity.client_contract import ContractEvent, ReconcileResult
 from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 from arbora.mcp_server.host_context import build_host_context
 from arbora.observability import runtime_health
+from arbora.observability.state import IDENTITY_CONTRACT_KEY
 from tests.identity.test_client_contract import CONFIG, FakeRealm, factory
 
 ISSUER = "https://idp.example/realms/fixture"
@@ -144,7 +145,7 @@ def test_readiness_reports_each_identity_state(
         return {"checks": [{"name": "engine", "status": "healthy"}]}
 
     monkeypatch.setattr(runtime_health, "collect_health_async", health)
-    monkeypatch.delenv(cc.CONFIG_KEY, raising=False)
+    monkeypatch.delenv(IDENTITY_CONTRACT_KEY, raising=False)
     host = build_host_context()
     _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
     client = TestClient(mcp.http_app())
@@ -156,7 +157,7 @@ def test_readiness_reports_each_identity_state(
 
     assert identity() == {"status": "unconfigured"}
 
-    monkeypatch.setenv(cc.CONFIG_KEY, "{not json")
+    monkeypatch.setenv(IDENTITY_CONTRACT_KEY, "{not json")
     assert (
         cc.start_client_contract_supervisor(host.observability.health.identity) is None
     )
@@ -168,9 +169,9 @@ def test_readiness_reports_each_identity_state(
     finally:
         host.observability.health.identity.set_config_invalid(False)
     # Set but not yet started: checking.
-    monkeypatch.setenv(cc.CONFIG_KEY, "{}")
+    monkeypatch.setenv(IDENTITY_CONTRACT_KEY, "{}")
     assert identity() == {"status": "checking"}
-    monkeypatch.delenv(cc.CONFIG_KEY)
+    monkeypatch.delenv(IDENTITY_CONTRACT_KEY)
 
     machine = cc.ClientContractReconciler()
     host.observability.health.identity.reconciler.set(machine)

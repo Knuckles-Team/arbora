@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from arbora.identity import client_contract as cc
+from arbora.observability.state import IDENTITY_CONTRACT_KEY
 
 REALM = "fixture"
 CONFIG = cc.ContractConfig(
@@ -253,7 +254,7 @@ def test_reconcile_command_prints_state_and_exit_code(
 ) -> None:
     from arbora import console
 
-    monkeypatch.delenv(cc.CONFIG_KEY, raising=False)
+    monkeypatch.delenv(IDENTITY_CONTRACT_KEY, raising=False)
     monkeypatch.setattr("sys.argv", ["arbora", "identity", "reconcile"])
     with pytest.raises(SystemExit) as exited:
         console.main()
@@ -262,7 +263,7 @@ def test_reconcile_command_prints_state_and_exit_code(
 
     realm = FakeRealm()
     monkeypatch.setenv(
-        cc.CONFIG_KEY,
+        IDENTITY_CONTRACT_KEY,
         json.dumps(
             {
                 "admin_url": CONFIG.admin_url,
