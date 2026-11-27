@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any, Protocol, runtime_checkable
 
 from .models import A2AMessage, A2ARouteDecision
+
+logger = logging.getLogger(__name__)
+
 
 __all__ = [
     "A2AAssemblyUnavailable",
@@ -148,6 +152,7 @@ class OrchestratorA2ARouter:
             record = single_record(await self._decide(request))
             check_receipt(record, request, self._principal())
         except Exception:  # an unanswered route decision routes nothing
+            logger.warning("a2a route failed", exc_info=True)
             raise A2AAssemblyUnavailable(
                 "a2a route decision unavailable", "A2A_ROUTE_UNAVAILABLE"
             ) from None

@@ -80,7 +80,7 @@ async def compose_anonymous_a2a(
     ``GetRunWorkItem`` support (ARBORA-IDENTITY-R004.8.2); the application is mounted
     beside, never in place of, the verified one.
     """
-    from .anonymous import create_anonymous_a2a_application
+    from .anonymous import AnonymousNoRouter, create_anonymous_a2a_application
     from .anonymous_native import compose_anonymous_task_reads, log_audit
 
     owner = await compose_anonymous_task_reads(
@@ -90,7 +90,7 @@ async def compose_anonymous_a2a(
         return None
     return create_anonymous_a2a_application(
         owner=owner,
-        service=A2AService(authority=owner, router=None),  # type: ignore[arg-type]
+        service=A2AService(authority=owner, router=AnonymousNoRouter()),
     )
 
 

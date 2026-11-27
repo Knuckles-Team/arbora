@@ -13,6 +13,7 @@ import hashlib
 import inspect
 import ipaddress
 import json
+import logging
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -23,7 +24,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from .authority import WorkItemA2AAuthority
+from .models import A2AMessage, A2ARouteDecision, A2ATask
 from .service import A2AService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -314,20 +318,25 @@ class AnonymousTaskReadOwner:
     async def dispatch(
         self,
         *,
-        message: Any,
+        message: A2AMessage,
         idempotency_key: str,
-        decision: Any,
+        decision: A2ARouteDecision,
         blocking: bool = True,
-    ):
+        model_profile: Any = None,
+        media: dict[str, Any] | None = None,
+        harness: Any = None,
+    ) -> A2ATask:
         raise PermissionError("Anonymous mutation is unavailable")
 
-    async def list(self, *, cursor: str | None, limit: int):
+    async def list(
+        self, *, cursor: str | None, limit: int
+    ) -> tuple[list[A2ATask], str | None]:
         raise PermissionError("Anonymous listing is unavailable")
 
-    async def cancel(self, task_id: str):
+    async def cancel(self, task_id: str) -> A2ATask:
         raise PermissionError("Anonymous cancellation is unavailable")
 
-    async def get(self, task_id: str):
+    async def get(self, task_id: str) -> A2ATask | None:
         binding = self._binding.get()
         if binding is None:
             raise PermissionError("Anonymous admission required")
@@ -359,7 +368,7 @@ class AnonymousTaskReadOwner:
         ):
             return None
         from .authority import _STATE_MAP
-        from .models import A2ATask, A2ATaskStatus
+        from .models import A2ATaskStatus
 
         state = _STATE_MAP.get(item.status)
         if state is None:
@@ -369,6 +378,15 @@ class AnonymousTaskReadOwner:
         return A2ATask(
             id=task_id, context_id=item.context_id, status=A2ATaskStatus(state=state)
         )
+
+
+class AnonymousNoRouter:
+    """The router of the none-mode service: anonymous callers never route a message."""
+
+    async def route(
+        self, message: A2AMessage, *, context_budget_tokens: int | None
+    ) -> A2ARouteDecision:
+        raise PermissionError("Anonymous routing is unavailable")
 
 
 def _unique_object(pairs):
@@ -421,6 +439,7 @@ async def _read_payload(
     except (ValueError, TypeError):
         return _error(request_id, -32602, "Invalid params")
     except Exception:
+        logger.warning("read payload failed", exc_info=True)
         return _error(request_id, -32014, "Task read unavailable", 503)
 
 

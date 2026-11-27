@@ -12,11 +12,14 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
+import logging
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
 from arbora.agent_runs import NativeRunContext, current_native_run
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+logger = logging.getLogger(__name__)
 
 
 class CheckpointUnavailable(RuntimeError):
@@ -70,6 +73,7 @@ class EngineHostCheckpoint:
             )
             read = decode_get_run_checkpoint(answer)
         except Exception:
+            logger.warning("restore failed", exc_info=True)
             raise CheckpointUnavailable("checkpoint restore failed") from None
         self._known = True
         if read is None:
@@ -113,6 +117,7 @@ class EngineHostCheckpoint:
             )
             receipt = decode_publish_run_checkpoint(answer)
         except Exception:
+            logger.warning("save failed", exc_info=True)
             raise CheckpointUnavailable("checkpoint save failed") from None
         self._revision = receipt.revision
 

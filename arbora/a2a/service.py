@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
@@ -56,6 +57,9 @@ from .tool_task_card import (
     tool_task_calls,
     tool_task_extension,
 )
+
+logger = logging.getLogger(__name__)
+
 
 __all__ = ["A2ACardMetadata", "A2AService"]
 
@@ -326,6 +330,7 @@ class A2AService:
         except A2ATransitionHistoryUnavailable:
             raise
         except Exception:  # the refusal never echoes the failure text
+            logger.warning("with history failed", exc_info=True)
             raise A2ATransitionHistoryUnavailable() from None
         if page is None:
             raise A2ATransitionHistoryUnavailable()

@@ -9,6 +9,7 @@ round trip returns the verdict unchanged; a refusal never reads as an approval.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any, Literal, Protocol
 
@@ -16,6 +17,9 @@ from pydantic import ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from .models import A2APlanConfirmParams, _WireModel
+
+logger = logging.getLogger(__name__)
+
 
 ActionClass = Literal["egress", "privileged_call", "delegation"]
 DEFAULT_TIMEOUT_S = 10.0
@@ -117,6 +121,7 @@ async def reserve_then(
     try:
         await reserve(entry)
     except Exception:  # an unrecorded decision never proceeds
+        logger.warning("reserve then failed", exc_info=True)
         raise refusal("AUDIT_UNAVAILABLE") from None
 
 
@@ -160,6 +165,7 @@ class ToolActionAdmitter:
         except ConfirmRefusal:
             raise
         except Exception:  # an unreachable engine decides nothing
+            logger.warning("admit failed", exc_info=True)
             raise ToolActionRefusal("ENGINE_UNAVAILABLE") from None
         if answer is None:
             approval = deny_without_verdict(request)
