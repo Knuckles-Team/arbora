@@ -114,7 +114,7 @@ class _BoundForeignSources:
         self._context = context
 
     async def _send(self, method: str, params: dict[str, Any], **kw: Any) -> Any:
-        from arbora.pin_lag.medulla import send_main
+        from arbora.api.ops.pin_guards import send_main
 
         return await send_main(self._context, method, params, **kw)
 

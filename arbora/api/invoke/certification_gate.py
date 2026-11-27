@@ -66,7 +66,7 @@ def engine_attestation_reader(context: Any) -> Any:
     id and definition digest, and the revision the attestation completed at. Pinned
     releases that lack the read refuse ``UNAVAILABLE`` naming it.
     """
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     async def read(skill: Mapping[str, Any]) -> Mapping[str, Any] | None:
         answer = await send_main(

@@ -189,7 +189,7 @@ async def test_share_grant_and_revoke_reach_engine(monkeypatch) -> None:
     from arbora.api.ops import access
 
     engine = _Engine()
-    monkeypatch.setattr("arbora.pin_lag.medulla.send_main", engine.send_main)
+    monkeypatch.setattr("arbora.api.ops.pin_guards.send_main", engine.send_main)
     context = _context()
     grant = {"node_id": "n1", "scope": "tenant", "grantees": ["person:bob"]}
     await access.grant_share(context, grant, None)
@@ -209,7 +209,7 @@ async def test_ownership_apply_requires_approval(monkeypatch) -> None:
     from arbora.api.registry import Confirm
 
     engine = _Engine()
-    monkeypatch.setattr("arbora.pin_lag.medulla.send_main", engine.send_main)
+    monkeypatch.setattr("arbora.api.ops.pin_guards.send_main", engine.send_main)
     context = _context()
     await access.plan_ownership(context, {"graph": "g1"}, None)
     apply = {"graph": "g1", "plan": [], "plan_digest": "d", "signals_digest": "s"}

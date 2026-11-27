@@ -335,7 +335,8 @@ async def handle_ontology_import(
     ontology store (ARBORA-DEPLOY-R009.3).
     """
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 
     try:
         # PIN-LAG: remove after the re-pin that carries the import op.

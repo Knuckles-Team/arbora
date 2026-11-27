@@ -5,7 +5,7 @@
 ``R006``). Arbora keeps no defect, release or deployment record and computes no
 trace: each handler sends one engine method as the verified caller and returns the
 engine answer. The methods are engine ``main`` shapes the pinned release lacks, so each
-goes through :func:`arbora.pin_lag.medulla.send_main` and refuses ``UNAVAILABLE``
+goes through :func:`arbora.api.ops.pin_guards.send_main` and refuses ``UNAVAILABLE``
 naming the missing method until the re-pin.
 """
 
@@ -17,8 +17,8 @@ from typing import Any, Literal
 from pydantic import Field
 
 from arbora.api.ops._common import Params, build_read_op, build_write_op
+from arbora.api.ops.pin_guards import send_main
 from arbora.api.registry import OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
 
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "lifecycle:write"

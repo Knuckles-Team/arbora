@@ -554,7 +554,8 @@ class WorkItemA2AAuthority:
         if self.delegations is None:
             return metadata
         from arbora import work_items
-        from arbora.pin_lag.medulla import PinLagUnavailable, refusal
+        from arbora.api.ops.pin_guards import refusal
+        from arbora.pin_lag.medulla import PinLagUnavailable
 
         from .run_delegation import DELEGATION_KEY, run_delegation_id
 

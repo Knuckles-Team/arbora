@@ -303,11 +303,8 @@ def acting_session(session: Any, delegation: ResolvedRunDelegation) -> Any:
     session without the service-only ``identity:delegate`` scope, refuses: the run must
     not fall back to acting as the host.
     """
-    from arbora.pin_lag.medulla import (
-        DELEGATE_SCOPE,
-        PinLagUnavailable,
-        require_delegated_identity,
-    )
+    from arbora.api.ops.pin_guards import DELEGATE_SCOPE, require_delegated_identity
+    from arbora.pin_lag.medulla import PinLagUnavailable
 
     try:
         require_delegated_identity()

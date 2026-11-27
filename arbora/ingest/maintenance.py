@@ -14,7 +14,7 @@ from typing import Any
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.pin_lag.medulla import send_main
+from arbora.api.ops.pin_guards import send_main
 
 
 def _record(answer: Any) -> Mapping[str, Any]:

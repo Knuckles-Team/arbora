@@ -274,7 +274,7 @@ async def handle_inbox_send(
     answers ``INBOX_SEND_DENIED``. Either refusal enqueues nothing.
     """
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     caller = context.caller
     recipient = await _session_props(context, params["recipient_session_id"])
@@ -313,7 +313,7 @@ async def handle_inbox_read(
 ) -> dict[str, Any]:
     """Read only the caller's own inbox; a foreign session answers as absent."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     caller = context.caller
     session = await _session_props(context, params["session_id"])

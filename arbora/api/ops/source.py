@@ -493,7 +493,8 @@ async def handle_source_edit_symbol(
     (``EDIT_BASE_STALE``, ``EDIT_OPS_OVERLAP``, ``EDIT_UNPARSEABLE``,
     ``EDIT_ROUNDTRIP_MISMATCH``) returns unchanged.
     """
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
     request = SymbolEditParams.model_validate(dict(params))
     try:
@@ -681,7 +682,8 @@ async def handle_source_revert(
     PIN-LAG: neither the pinned release nor engine ``main`` publishes a revert
     method yet, so the operation refuses ``UNAVAILABLE`` naming it.
     """
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
     SourceRevertParams.model_validate(dict(params))
     try:

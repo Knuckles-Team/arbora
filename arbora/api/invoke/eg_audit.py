@@ -100,11 +100,8 @@ class EgAuditAdapter:
         naming ``AuditAppend.evidence`` (PIN-LAG, delete with the re-pin). An
         event with no evidence writes on any pin.
         """
-        from arbora.pin_lag.medulla import (
-            PinLagUnavailable,
-            accepts_parameter,
-            refusal,
-        )
+        from arbora.api.ops.pin_guards import refusal
+        from arbora.pin_lag.medulla import PinLagUnavailable, accepts_parameter
 
         if not any(key in event for key in cls.EVIDENCE_KEYS):
             return {}

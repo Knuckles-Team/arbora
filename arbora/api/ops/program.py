@@ -25,8 +25,8 @@ from pydantic import Field
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.ops._common import Params, build_write_op
+from arbora.api.ops.pin_guards import guard, send_main
 from arbora.api.registry import AuditClass, Confirm, Effect, OpSpec, Verb
-from arbora.pin_lag.medulla import guard, send_main
 
 OPTIMIZE_SCOPE = "jobs:write"
 REVISION_SCOPE = "kg:admin"

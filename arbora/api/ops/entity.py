@@ -18,8 +18,8 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.ops._common import Params, build_write_op
+from arbora.api.ops.pin_guards import send_main
 from arbora.api.registry import AuditClass, Confirm, Effect, OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
 
 SCOPE = "query:write"
 _APPLICATION = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")

@@ -62,7 +62,7 @@ def _owner(context: Any) -> str:
 
 
 async def _rbac_admin(context: Any, op: Mapping[str, Any], model: str) -> None:
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     await send_main(
         context, "RbacAdmin", {"op": dict(op)}, idempotent=True, models=(model,)

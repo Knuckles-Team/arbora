@@ -84,7 +84,7 @@ class Engine:
 
     def install(self, monkeypatch: pytest.MonkeyPatch) -> Engine:
         monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", self.send)
-        monkeypatch.setattr("arbora.pin_lag.medulla.send_main", self.send_main)
+        monkeypatch.setattr("arbora.api.ops.pin_guards.send_main", self.send_main)
         return self
 
     async def send_main(

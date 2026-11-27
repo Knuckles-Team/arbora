@@ -421,8 +421,8 @@ async def handle_delivery_arm(
 ) -> dict[str, Any]:
     """Arm only on the engine's ``arm`` verdict and an owner receipt of the head commit."""
     from arbora.api.ops.delivery_ports import delivery_port
+    from arbora.api.ops.pin_guards import guard
     from arbora.deployment.placement import check_receipt, single_record
-    from arbora.pin_lag.medulla import guard
 
     await _verified_receipt(context, params)
     guard("Decide")

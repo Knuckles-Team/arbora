@@ -19,6 +19,7 @@ from pydantic import Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_write_op
 from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.pin_guards import guard
 from arbora.api.registry import Confirm, OpSpec
 from arbora.control_plane.admission import (
     AdmissionError,
@@ -34,7 +35,6 @@ from arbora.control_plane.admission.engine import (
     parity_sample,
 )
 from arbora.control_plane.admission.run import plan_digest
-from arbora.pin_lag.medulla import guard
 
 SCOPE = "federation:admin"
 #: The run node and the governed change replay a retried request by their own ids.

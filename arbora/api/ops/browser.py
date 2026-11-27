@@ -90,7 +90,7 @@ async def handle_desktop_action(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Grant check first, then the SDK desktop port; never a local driver."""
-    from arbora.pin_lag.medulla import refusal
+    from arbora.api.ops.pin_guards import refusal
     from arbora.pin_lag.scion_sdk import require_desktop
     from arbora.pin_lag.unavailable import PinLagUnavailable
 

@@ -137,7 +137,7 @@ class EngineIdentityLinks:
         self._context = context
 
     async def principal_for(self, provider: str, actor: str) -> str | None:
-        from arbora.pin_lag.medulla import send_main
+        from arbora.api.ops.pin_guards import send_main
 
         try:
             answer = await send_main(
@@ -168,7 +168,7 @@ class EngineSourceAccess:
         self._context = context
 
     async def holds(self, principal: str, scope: str, repository: str) -> bool:
-        from arbora.pin_lag.medulla import send_main
+        from arbora.api.ops.pin_guards import send_main
 
         if scope != SOURCE_WRITE:
             return False

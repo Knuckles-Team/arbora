@@ -53,7 +53,7 @@ async def handle_meeting_summarize(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Finalization first, then admission, then one provider run and one commit."""
-    from arbora.pin_lag.medulla import refusal
+    from arbora.api.ops.pin_guards import refusal
 
     finals = bound_service(
         context, "meeting_final", reason="meeting finalization reader is not composed"

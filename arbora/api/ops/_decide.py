@@ -14,7 +14,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from arbora.api.ops.engine_calls import engine_send
-from arbora.pin_lag.medulla import guard
+from arbora.api.ops.pin_guards import guard
 
 
 def record_of(answer: Any) -> dict[str, Any]:

@@ -107,8 +107,8 @@ def test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_productio
             return {"kind": "linked_principal", "value": {"principal_id": "person:one"}}
         return {"grants": [{"repo": "org/repo", "prefix": "", "write": True}]}
 
-    monkeypatch.setattr("arbora.pin_lag.medulla.guard", lambda *a, **k: None)
-    monkeypatch.setattr("arbora.pin_lag.medulla.engine_send", engine_answer)
+    monkeypatch.setattr("arbora.api.ops.pin_guards.guard", lambda *a, **k: None)
+    monkeypatch.setattr("arbora.api.ops.pin_guards.engine_send", engine_answer)
     monkeypatch.setenv("ARBORA_DEVELOPMENT_SCM_SOURCES", SOURCES)
     bind_signed_ingress(
         ScmSignedIngress(

@@ -31,9 +31,9 @@ from arbora.api.ops.engine_calls import engine_send
 from arbora.api.ops.finance import _authority, _one
 from arbora.api.ops.market_compute import READ_SCOPE, VENUE_SERVER, _tool_value
 from arbora.api.ops.nested_invoke import invoke_registered
+from arbora.api.ops.pin_guards import guard
 from arbora.api.registry import OpSpec
 from arbora.finance.markets import project_account, project_performance
-from arbora.pin_lag.medulla import guard
 
 #: The venue tool that answers one listing's corporate-action records in the engine shape.
 ACTIONS_TOOL = "emerald_exchange_corporate_actions"

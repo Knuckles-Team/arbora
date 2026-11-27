@@ -369,7 +369,7 @@ async def test_the_pinned_release_refuses_detach_and_parity_naming_the_method(
         else frozenset(ids) - set(SOURCE_METHODS)
     )
     monkeypatch.setattr(generated, "METHOD_IDS", lacking)
-    from arbora.pin_lag.medulla import guard
+    from arbora.api.ops.pin_guards import guard
 
     for method in SOURCE_METHODS:
         with pytest.raises(OperationRefused) as refused:

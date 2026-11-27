@@ -8,7 +8,7 @@ validates the typed ``LocalCertificationRequest`` (``MEDULLA-DECISION-ENGINE-R14
 and stores the attestation. Arbora stamps the verified tenant and the idempotency key and
 forwards one ``DecisionEval`` ``certify_local_skill`` job. The request shape is an engine
 ``main`` shape the pinned release may lack, so the call goes through
-:func:`arbora.pin_lag.medulla.send_main` and refuses ``UNAVAILABLE`` naming the shape.
+:func:`arbora.api.ops.pin_guards.send_main` and refuses ``UNAVAILABLE`` naming the shape.
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.ops._common import Params, build_write_op
+from arbora.api.ops.pin_guards import send_main
 from arbora.api.registry import OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
 
 SCOPE = "admin:decision-eval"
 

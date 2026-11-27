@@ -330,7 +330,7 @@ def _control_steps(task: Mapping[str, Any]) -> dict[str, Any]:
         try:
             require_task_fields(tuple(found))
         except PinLagUnavailable as lag:
-            from arbora.pin_lag.medulla import refusal
+            from arbora.api.ops.pin_guards import refusal
 
             raise refusal(lag) from lag
     return found

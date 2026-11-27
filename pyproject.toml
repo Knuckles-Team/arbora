@@ -329,7 +329,7 @@ packages = ["arbora"]
 # until that ships, by tests/architecture/test_unit_layers.py.
 [[tool.pipelines_hooks.coupling.layers]]
 name = "foundation"
-units = ["architecture", "content", "core", "semantic_content", "skills", "unique_records", "version"]
+units = ["architecture", "content", "core", "pin_lag", "semantic_content", "skills", "unique_records", "version"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "security"
@@ -345,7 +345,7 @@ units = ["agent_runs", "api", "current_plan_publication", "knowledge", "native_r
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "subsystems"
-units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest", "pin_lag", "processes"]
+units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest", "processes"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "host"

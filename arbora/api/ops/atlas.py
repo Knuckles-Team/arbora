@@ -24,8 +24,9 @@ from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.engine_calls import engine_send, rfc3339
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.nested_invoke import invoke_registered
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.registry import Effect, OpSpec, Verb
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
 READ_SCOPE = "ingest:read"
 WRITE_SCOPE = "ingest:write"

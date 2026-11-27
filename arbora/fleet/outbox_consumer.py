@@ -19,17 +19,13 @@ from typing import Any
 import msgpack
 
 from arbora.api.ops.engine_calls import decode
+from arbora.api.ops.pin_guards import refusal
 from arbora.messaging.action_dispatch import (
     NotificationSpec,
     Notifier,
     send_notification,
 )
-from arbora.pin_lag.medulla import (
-    OUTBOX_MODELS,
-    PinLagUnavailable,
-    refusal,
-    require_models,
-)
+from arbora.pin_lag.medulla import OUTBOX_MODELS, PinLagUnavailable, require_models
 
 __all__ = [
     "NoticeFailed",

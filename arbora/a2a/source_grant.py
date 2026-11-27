@@ -122,7 +122,7 @@ def _write_prefixes(grants: Any) -> dict[str, set[str]]:
 async def read_engine_grant(context: Any, *, branch: str) -> dict[str, Any] | None:
     """List the verified principal's path grants; a release without the method is no grant."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     try:
         answer = await send_main(

@@ -214,7 +214,7 @@ async def _rbac_admin(context: Any, op: Mapping[str, Any]) -> Any:
     from arbora.api.engine_errors import (
         ENGINE_ERRORS,  # noqa: F401 - refusal vocabulary
     )
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     return await send_main(
         context, "RbacAdmin", {"op": dict(op)}, idempotent=True, models=("ShareGrant",)
@@ -244,7 +244,7 @@ async def revoke_share(context: Any, params: Mapping[str, Any], op: Any) -> Any:
 async def plan_ownership(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     """``access.ownership.plan``: the engine's read-only plan of one graph."""
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     graph = params.get("graph") or await caller_dispatch_graph(context)
     answer = await send_main(

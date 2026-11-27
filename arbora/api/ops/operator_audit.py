@@ -80,11 +80,8 @@ class EngineOperatorAudit:
 
     async def read(self, context: Any, *, request_id: str) -> Mapping[str, Any] | None:
         from arbora.api.ops.engine_calls import engine_send
-        from arbora.pin_lag.medulla import (
-            PinLagUnavailable,
-            operator_audit_missing,
-            refusal,
-        )
+        from arbora.api.ops.pin_guards import refusal
+        from arbora.pin_lag.medulla import PinLagUnavailable, operator_audit_missing
 
         missing = operator_audit_missing()
         if missing is not None:

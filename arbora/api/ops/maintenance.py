@@ -30,6 +30,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops._decide import committed_record
 from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.ops.question_round import advisory_scores
 from arbora.api.registry import (
     AuditClass,
@@ -44,7 +45,7 @@ from arbora.api.registry import (
     SubjectSource,
     Verb,
 )
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
 SCOPE = "agent:decision-write"
 #: The one governed graph write the purge is (a change envelope with a revision guard).

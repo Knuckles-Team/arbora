@@ -40,7 +40,7 @@ def ctx(**services: Any) -> Any:
 @pytest.fixture
 def engine(monkeypatch: pytest.MonkeyPatch) -> Engine:
     fake = Engine()
-    monkeypatch.setattr("arbora.pin_lag.medulla.send_main", fake.send_main)
+    monkeypatch.setattr("arbora.api.ops.pin_guards.send_main", fake.send_main)
     return fake
 
 

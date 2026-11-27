@@ -25,7 +25,8 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.engine_calls import decode
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.api.ops.pin_guards import refusal
+from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
 __all__ = [
     "LOOP_RUN_QUEUE",
