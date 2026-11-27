@@ -1,11 +1,10 @@
-"""Refusal tests for the .1 typed models: R008, R009, R010."""
+"""Refusal tests for the .1 typed models: R008, R010."""
 
 import pytest
 
 from arbora.identity.api_keys import ApiKeyGrant
 from arbora.identity.engine import IdentityUnavailable
 from arbora.identity.ldap import LdapBindConfig
-from arbora.identity.oidc import OidcMappingRule
 
 
 def test_api_key_accepts_non_approver_scopes() -> None:
@@ -25,27 +24,6 @@ def test_api_key_refuses_approver_scope() -> None:
 def test_api_key_refuses_empty_owner() -> None:
     with pytest.raises(IdentityUnavailable):
         ApiKeyGrant(key_id="k1", owner_principal_id="", scopes=frozenset())
-
-
-def test_oidc_mapping_rule_accepts_known_policy() -> None:
-    rule = OidcMappingRule(
-        provider_id="okta", order=0, claim_match="group=admins", jit_policy="create"
-    )
-    assert rule.jit_policy == "create"
-
-
-def test_oidc_mapping_rule_refuses_unknown_policy() -> None:
-    with pytest.raises(IdentityUnavailable):
-        OidcMappingRule(
-            provider_id="okta", order=0, claim_match="group=admins", jit_policy="ignore"
-        )
-
-
-def test_oidc_mapping_rule_refuses_negative_order() -> None:
-    with pytest.raises(IdentityUnavailable):
-        OidcMappingRule(
-            provider_id="okta", order=-1, claim_match="group=admins", jit_policy="deny"
-        )
 
 
 def test_ldap_bind_accepts_ldaps() -> None:

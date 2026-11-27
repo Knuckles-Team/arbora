@@ -83,6 +83,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - **ARBORA-IDENTITY-R012.2.3.1:** Replay check through a seen-assertion-id store port
 - **ARBORA-IDENTITY-R012.2.3.2:** Sign-in handler wiring into the browser authority
 - **ARBORA-IDENTITY-R012.2.4:** Live IdP sign-in probe
+- **ARBORA-IDENTITY-R012.2.5:** SAML response reader over a maintained signature library
 - **ARBORA-IDENTITY-R016:** Optional SMTP adapter for identity email
 - **ARBORA-IDENTITY-R016.1:** Remaining scope of ARBORA-IDENTITY-R016 (slice .1): Optional SMTP adapter for identity email
 - **ARBORA-IDENTITY-R016.2:** Remaining scope of ARBORA-IDENTITY-R016 (slice .2): Optional SMTP adapter for identity email
@@ -205,9 +206,9 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T045 ARBORA-IDENTITY-R010 LDAPS bind with nested group sync (rollup).
 - [x] T046 ARBORA-IDENTITY-R008.1 Typed API-key grant model.
 - [x] T047 ARBORA-IDENTITY-R008.2 Scope intersection and revocation.
-- [x] T048 ARBORA-IDENTITY-R009.1 Typed OIDC mapping-rule model.
+- [x] T048 ARBORA-IDENTITY-R009.1 RETIRED: mapping is the engine's.
 - [ ] T049 ARBORA-IDENTITY-R009.2 OIDC authentication flow (rollup).
-- [x] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
+- [x] T050 ARBORA-IDENTITY-R009.2.1 RETIRED: mapping is the engine's.
 - [x] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
 - [x] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
 - [x] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
@@ -338,3 +339,4 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T175 ARBORA-IDENTITY-R006.2.1 TOTP routes pass through to the engine, which holds the secret. Size: S, 1 PR, 2 hours.
 - [ ] T176 ARBORA-IDENTITY-R006.2.2 The WebAuthn finish route verifies origin and counter. Size: S, 1 PR, 2 hours.
 - [ ] T177 ARBORA-IDENTITY-R006.2.3 The recovery route consumes a one-use code and group enforcement holds the login incomplete. Size: S, 1 PR, 2 hours.
+- [x] T178 ARBORA-IDENTITY-R012.2.5 SAML response reader over a maintained signature library.

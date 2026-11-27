@@ -302,9 +302,7 @@ class BrowserAuthApplication:
                 "authenticate",
             )
             outcome = result.get("outcome") if isinstance(result, dict) else None
-            self.federation.audit(
-                identity.protocol, identity.idp_id, str(outcome), identity.rule_order
-            )
+            self.federation.audit(identity.protocol, identity.idp_id, str(outcome))
             if outcome in ("mfa_required", "mfa_enrollment_required"):
                 return self._interim(credential, outcome)
             if outcome != "ok":
