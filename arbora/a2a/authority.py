@@ -24,6 +24,7 @@ from arbora.api.domain.a2a.models import (
     A2ATaskStatus,
     A2ATextPart,
 )
+from arbora.core.a2a_errors import A2AIdempotencyConflict
 from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
@@ -35,7 +36,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "A2AContextUnavailable",
-    "A2AIdempotencyConflict",
     "A2AStreamingUnavailable",
     "A2ATransitionHistoryUnavailable",
     "A2ATaskAuthority",
@@ -108,10 +108,6 @@ class _ReplyUnavailable(RuntimeError):
 
 class A2AContextUnavailable(RuntimeError):
     """The durable context ownership reader could not supply a bounded answer."""
-
-
-class A2AIdempotencyConflict(RuntimeError):
-    """An idempotency key was replayed with a different logical request."""
 
 
 class A2ATaskNotCancelable(RuntimeError):

@@ -9,7 +9,6 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
-from arbora.a2a.authority import A2AIdempotencyConflict
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.models import (
     A2AArtifact,
@@ -17,6 +16,7 @@ from arbora.api.domain.a2a.models import (
     A2ATask,
     A2ATaskStatus,
 )
+from arbora.core.a2a_errors import A2AIdempotencyConflict
 
 
 class Authenticator:

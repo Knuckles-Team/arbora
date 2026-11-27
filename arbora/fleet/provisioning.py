@@ -28,6 +28,7 @@ from arbora.control_plane.runs.capacity import (
     CapacityLedger,
     CapacityReDecisionExhaustedError,
 )
+from arbora.core.provision_errors import ProvisionRefused
 from arbora.pin_lag.scion_sdk import require_provisioning
 
 logger = logging.getLogger(__name__)
@@ -35,35 +36,13 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "DEFAULT_MAX_CONCURRENT_INSTANCES",
     "PROVISION_PROOF_KIND",
-    "REFUSALS",
     "ProvisionGuards",
-    "ProvisionRefused",
     "max_concurrent_instances",
     "provision_instances",
 ]
 
 PROVISION_PROOF_KIND = "fleet.capacity.proof"
 DEFAULT_MAX_CONCURRENT_INSTANCES = 200
-
-REFUSALS: dict[str, str] = {
-    "PLATFORM_UNSUPPORTED": "the os and runtime are not a declared matrix row",
-    "PROVISION_GRANT_DENIED": "the caller holds no grant to provision",
-    "PROVISION_DECISION_STALE": "the engine decision behind the request is stale",
-    "PROVISION_BUDGET_EXCEEDED": "the request exceeds its budget or the capacity pool",
-    "PROVISION_REPLAY_BODY_CHANGED": "the idempotency key was used with another body",
-    "PROVISION_OUTCOME_UNKNOWN": "the allocation outcome is unknown; reconcile, never repeat",
-}
-
-
-class ProvisionRefused(RuntimeError):
-    """A closed refusal; ``details`` keeps real resource ids needed for cleanup."""
-
-    def __init__(self, code: str, **details: Any) -> None:
-        if code not in REFUSALS:
-            raise ValueError(f"unknown provisioning refusal {code!r}")
-        self.code = code
-        self.details = details
-        super().__init__(code)
 
 
 @dataclass(frozen=True)

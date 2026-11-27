@@ -13,11 +13,10 @@ from arbora.api.contracts.provisioning_capacity import AggregationRef
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.agents import handle_agent
 from arbora.api.registry import OpSpec
+from arbora.core.provision_errors import REFUSALS, ProvisionRefused
 from arbora.fleet.provision_service import ProvisioningService
 from arbora.fleet.provisioning import (
     PROVISION_PROOF_KIND,
-    REFUSALS,
-    ProvisionRefused,
     max_concurrent_instances,
     provision_instances,
 )

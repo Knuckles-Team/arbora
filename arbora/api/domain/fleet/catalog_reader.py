@@ -288,6 +288,25 @@ class GenerationStatus:
     engine_generation: int
 
 
+def generation_payload(status: GenerationStatus) -> dict[str, Any]:
+    """The wire form of one replica's generation and convergence state."""
+
+    active = status.active
+    return {
+        "replica": status.replica,
+        "state": status.state,
+        "reason": status.reason,
+        "generation": None
+        if active is None
+        else {
+            "tenant": active.tenant,
+            "generation": active.generation,
+            "digest": active.digest,
+        },
+        "engine_generation": status.engine_generation,
+    }
+
+
 class FleetCatalogReadPort(Protocol):
     """One long-lived EG client adapter used by ``FleetCatalogReader``.
 

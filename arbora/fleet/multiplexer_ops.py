@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from typing import Any, cast
 
 from arbora.api.domain.fleet.job_loads import JobLoadResult
+from arbora.core.fleet_errors import FleetServerNotFound
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, ItemKind
 from arbora.fleet.pin_store import PinRecord, PinStore, pinned_now_ms
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
@@ -107,18 +108,6 @@ def item_binding(item: CatalogItem) -> tuple[str, ...]:
 def _require_delegate_scope(caller: Any) -> None:
     if "mcp:delegate" not in caller.effective_scopes:
         raise PermissionError("mcp:delegate is required")
-
-
-class FleetServerNotFound(LookupError):
-    """A per-server catalog read for a server the snapshot holds nothing for.
-
-    Carries the server's pack status so the caller answers ``NOT_FOUND``
-    with it, never an empty catalog (ARBORA-FLEET-R040.3)."""
-
-    def __init__(self, server: str, pack_status: str) -> None:
-        super().__init__(server)
-        self.server = server
-        self.pack_status = pack_status
 
 
 #: The pack status vocabulary of the fleet census (ARBORA-FLEET-R040.3).

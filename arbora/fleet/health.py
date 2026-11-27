@@ -31,6 +31,7 @@ from arbora.api.domain.fleet.catalog_machine import (
     autoscaling_ready,
     convergence_ready,
 )
+from arbora.api.domain.fleet.catalog_reader import generation_payload
 
 if TYPE_CHECKING:
     from arbora.api.domain.fleet.catalog_reader import GenerationStatus
@@ -608,25 +609,6 @@ def _with_dependency(
     return replace(snapshot, evidence=evidence, **fields)
 
 
-def generation_payload(status: GenerationStatus) -> dict[str, Any]:
-    """The wire form of one replica's generation and convergence state."""
-
-    active = status.active
-    return {
-        "replica": status.replica,
-        "state": status.state,
-        "reason": status.reason,
-        "generation": None
-        if active is None
-        else {
-            "tenant": active.tenant,
-            "generation": active.generation,
-            "digest": active.digest,
-        },
-        "engine_generation": status.engine_generation,
-    }
-
-
 def with_catalog_generation(
     snapshot: FleetHealthSnapshot, status: GenerationStatus
 ) -> FleetHealthSnapshot:
@@ -665,7 +647,6 @@ __all__ = [
     "domain_sql",
     "_sql_in",
     "collect_fleet_health",
-    "generation_payload",
     "health_payload",
     "with_catalog_generation",
     "mark_dependency_failure",
