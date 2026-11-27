@@ -1,7 +1,10 @@
 # Seam: Process plan served and run
 
-Provider: medulla `MEDULLA-CQ-ORCH-R704.5` (plan) and `MEDULLA-DECISION-ENGINE-R180.4` (branch and table verdicts); meristem `MERISTEM-RUN-R018.5` (run loop).
-Consumer: arbora `ARBORA-OPS-R898`.
+Provider: medulla MEDULLA-CQ-ORCH-R704.5
+Provider: medulla MEDULLA-DECISION-ENGINE-R180.4
+Provider: medulla MEDULLA-DECISION-ENGINE-R180.8
+Provider: meristem MERISTEM-RUN-R018.5
+Consumer: arbora ARBORA-OPS-R898
 
 ## Wire shape
 

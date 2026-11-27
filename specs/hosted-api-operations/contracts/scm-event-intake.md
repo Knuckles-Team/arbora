@@ -3,6 +3,7 @@
 Seam between `ARBORA-OPS`, the scion-sdk SCM contract and the code-host connectors. Owner rows: `SCION-SCM-R003.2` in scion-sdk, the code-host connector rows that `MEDULLA-SDLC-R019` lists, `MEDULLA-SDLC-R019.5` in medulla and `ARBORA-OPS-R896.8` and `ARBORA-OPS-R896.9` in this repository.
 
 Provider: scion-sdk SCION-SCM-R003.2
+Provider: medulla MEDULLA-IDENTITY-R752
 Consumer: arbora ARBORA-OPS-R896.8
 
 ## Wire shape
