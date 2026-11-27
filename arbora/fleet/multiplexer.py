@@ -99,6 +99,7 @@ from arbora.fleet.local_skill_catalog import (
 from arbora.fleet.oauth_brokers import oauth_gated
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.fleet.state import FleetState, LiveMultiplexers
+from arbora.fleet.tool_rows import ProbeToolRows, ToolRowReader
 from arbora.fleet.workflow_binding import WorkflowBindings
 from arbora.pin_lag.unavailable import PinLagUnavailable
 from arbora.security.error_surface import public_error_text
@@ -2239,6 +2240,9 @@ def _decode_engine_server_config(body: bytes) -> dict[str, _typing.Any]:
 
 class MCPMultiplexer:
     """Aggregates and proxies multiple MCP servers over a single stdio connection."""
+
+    #: ARBORA-FLEET-R073.2: the one reader every tool-row site goes through.
+    _tool_rows: ToolRowReader = ProbeToolRows()
 
     def __init__(
         self,
@@ -5062,7 +5066,7 @@ class MCPMultiplexer:
         info = await self.probe_server(server_name)
         if info.get("error"):
             raise RuntimeError("MCP server probe failed")
-        return [dict(item) for item in info.get("tools", ()) if isinstance(item, dict)]
+        return await self._tool_rows.rows(server_name, info)
 
     async def delegate_server_tool(
         self,
@@ -6297,7 +6301,7 @@ class MCPMultiplexer:
             return ranked
         return self._server_level_fallback()
 
-    def _probe_rows(
+    async def _probe_rows(
         self, probe: dict, catalog: dict[str, dict], loaded: set[str]
     ) -> tuple[list[dict], dict[str, str]]:
         """Every loadable tool and skill row of the probe, and the servers that erred.
@@ -6317,14 +6321,13 @@ class MCPMultiplexer:
             if info.get("error"):
                 unavailable[server] = info["error"]
                 info = fallbacks.get(server)
-            rows.extend(
-                self._discovery_rows(server, info, catalog, loaded, now, ttl)
-                if info
-                else ()
-            )
+            if info:
+                rows.extend(
+                    await self._discovery_rows(server, info, catalog, loaded, now, ttl)
+                )
         return rows, unavailable
 
-    def _discovery_rows(
+    async def _discovery_rows(
         self,
         server: str,
         info: dict,
@@ -6349,7 +6352,7 @@ class MCPMultiplexer:
             "stale": is_stale,
         }
         rows: list[dict] = []
-        for entry in info.get("tools", []):
+        for entry in await self._tool_rows.rows(server, info):
             tool = entry["name"]
             if not self._tool_enabled(server, tool):
                 continue
@@ -6468,7 +6471,7 @@ class MCPMultiplexer:
         local_names = {s["name"] for s in local_info.get("skills", [])}
         probe = self._dedup_fleet_skills_against_local(fleet_probe, local_names)
         probe = {**probe, LOCAL_SKILLS_SERVER: local_info}
-        rows, unavailable = self._probe_rows(
+        rows, unavailable = await self._probe_rows(
             probe, catalog, loaded if loaded is not None else self._exposed
         )
         ranked = await self._ordered_discovery_rows(query, rows, top_k)
@@ -6482,8 +6485,11 @@ class MCPMultiplexer:
             "unavailable": unavailable,
         }
 
-    def _catalog_detail_tools(self, server: str, prefix: str, info: dict) -> list[dict]:
+    async def _catalog_detail_tools(
+        self, server: str, prefix: str, info: dict
+    ) -> list[dict]:
         """One drilled-down server's client-visible tool rows."""
+        tools = await self._tool_rows.rows(server, info)
         return [
             {
                 "prefixed_name": prefixed_name,
@@ -6498,7 +6504,7 @@ class MCPMultiplexer:
                 # actually be rejected.
                 "mounted": self.tool_dispatchable(prefixed_name),
             }
-            for t in info.get("tools", [])
+            for t in tools
             for prefixed_name in (clean_tool_name(prefix, server, t["name"]),)
         ]
 
@@ -6529,7 +6535,7 @@ class MCPMultiplexer:
             "stale": is_stale,
         }
         if include_tools:
-            result["tools"] = self._catalog_detail_tools(server, prefix, info)
+            result["tools"] = await self._catalog_detail_tools(server, prefix, info)
         return result
 
     async def _catalog_fleet_probe(self, include_tools: bool) -> dict:
@@ -6590,7 +6596,7 @@ class MCPMultiplexer:
         entry["age_s"] = age_s
         entry["stale"] = is_stale
 
-    def _catalog_fleet_entry(
+    async def _catalog_fleet_entry(
         self,
         name: str,
         info: dict,
@@ -6601,7 +6607,7 @@ class MCPMultiplexer:
     ) -> dict:
         """One server's row in a whole-fleet listing."""
         prefix = self.server_prefix(name)
-        tool_entries = info.get("tools", [])
+        tool_entries = await self._tool_rows.rows(name, info)
         enabled_names, disabled_names = self._catalog_tool_partition(
             name, prefix, tool_entries
         )
@@ -6657,7 +6663,7 @@ class MCPMultiplexer:
         now = time.time()
         ttl = self._probe_ttl()
         servers: list[dict] = [
-            self._catalog_fleet_entry(
+            await self._catalog_fleet_entry(
                 name, probe.get(name) or {}, name in probe, now, ttl, include_tools
             )
             for name in catalog
