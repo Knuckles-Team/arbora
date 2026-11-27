@@ -1651,6 +1651,13 @@ def start_fleet_onboarding(
     bind_scope = getattr(virtual_catalog, "bind_scope", None)
     if callable(bind_scope):
         bind_scope(str(session.tenant), str(session.graph))
+    from arbora.fleet.host_composition import (
+        compose_onboarding_ports,
+        declare_data_prep_at_boot,
+    )
+
+    ports = compose_onboarding_ports(engine, session)
+    declare_data_prep_at_boot(engine, session)
     service = FleetOnboardingService(
         onboarding=FleetOnboarding(
             engine=engine,
@@ -1658,6 +1665,7 @@ def start_fleet_onboarding(
             declarations=declarations,
             action_policies=action_policies,
             virtual_catalog=virtual_catalog,
+            definition_admission=ports.definition_admission,
         ),
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,

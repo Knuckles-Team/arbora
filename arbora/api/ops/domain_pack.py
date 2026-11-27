@@ -1,7 +1,7 @@
 """Read one domain pack from the engine (ARBORA-FLEET-R039.1 to R039.5).
 
 ``domain.pack`` composes three engine reads, one per engine method, and returns
-their answers unchanged: ``ConnectorPack`` (the pack and its digest),
+their answers unchanged: ``ConnectorPack`` status (the pack head and its digest),
 ``OntologyInspect`` (its classes and enumerations) and ``ShaclValidate`` (its
 shapes verdict). Arbora adds no ranking, keeps no cache and holds no local
 pack: an engine refusal reaches the caller with the engine's own code.
@@ -34,7 +34,7 @@ class DomainPackResult(_common.Params):
     classes: list[Any]
     enumerations: list[Any]
     shapes_verdict: dict[str, Any]
-    request_ids: list[str] = Field(min_length=3, max_length=3)
+    evidence_ids: list[str] = Field(min_length=3, max_length=3)
 
 
 def pack_id(domain: str, version: str) -> str:
@@ -42,11 +42,12 @@ def pack_id(domain: str, version: str) -> str:
     return f"domain.{domain}@{version}"
 
 
-def _request_id(answer: Any) -> str:
-    value = answer.get("request_id") if isinstance(answer, Mapping) else None
-    if not isinstance(value, str) or not value:
-        raise unavailable("the engine answer carries no request id")
-    return value
+def _evidence_id(*values: Any) -> str:
+    """The first engine-named id or digest of one answer (the engine answers carry no request id)."""
+    for value in values:
+        if isinstance(value, str) and value:
+            return value
+    raise unavailable("the engine answer carries no record id or digest")
 
 
 async def read_domain_pack(
@@ -63,18 +64,23 @@ async def read_domain_pack(
     )
     if isinstance(pack, Mapping) and pack.get("tenant_id", tenant) != tenant:
         raise OperationRefused("TENANT_DENIED", {})
+    head = pack.get("head") if isinstance(pack, Mapping) else None
+    if not isinstance(head, Mapping):
+        raise unavailable("the engine holds no head for this domain pack")
     inspected = await engine_send(context, "OntologyInspect", {"source_ids": [name]})
     verdict = await engine_send(context, "ShaclValidate", {"shapes": name})
     try:
         result = DomainPackResult(
-            pack_digest=pack["digest"],
+            pack_digest=head["pack_digest"],
             classes=list(inspected["classes"]),
             enumerations=list(inspected.get("enumerations", [])),
-            shapes_verdict={k: v for k, v in verdict.items() if k != "request_id"},
-            request_ids=[
-                _request_id(pack),
-                _request_id(inspected),
-                _request_id(verdict),
+            shapes_verdict=dict(verdict),
+            evidence_ids=[
+                _evidence_id(head.get("record_id")),
+                _evidence_id(
+                    inspected.get("composed_digest"), inspected.get("canonical_digest")
+                ),
+                _evidence_id(verdict.get("composed_digest")),
             ],
         )
     except (KeyError, TypeError, AttributeError, ValidationError):

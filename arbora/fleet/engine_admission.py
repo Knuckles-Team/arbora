@@ -3,8 +3,11 @@
 Arbora holds no scoring and computes no compatibility. It asks the engine two
 questions and applies the answers:
 
-- ``DecisionEval`` ``receipt`` reads the stored ``CertifyLocalSkill`` attestation
-  by digest (the producer is ``MEDULLA-DECISION-ENGINE-R142.101``);
+- ``DecisionEval`` ``certification_get`` reads the stored ``CertifyLocalSkill``
+  attestation by digest (the producer is ``MEDULLA-DECISION-ENGINE-R142.101``).
+  Engine ``main`` stores it under ``local_certification/<digest>`` but its
+  ``receipt`` op reads only evaluation receipts, so the read op is requested
+  (OVERSTORY-GAPS, MEDULLA FOR ARBORA w15) and refuses ``UNAVAILABLE`` until served;
 - ``Decide`` with ``QuestionKind::SkillUpgrade`` returns the contract
   compatibility verdict (``MEDULLA-DECISION-ENGINE-R167.3``).
 
@@ -33,6 +36,8 @@ __all__ = [
 
 #: ``send(method, params, tenant)`` returns the decoded engine answer.
 Send = Callable[[str, dict[str, Any], str], Awaitable[Any]]
+#: The one candidate of an engine ``skill_upgrade`` question.
+UPGRADE_OPTION = "admit_upgrade"
 _UPGRADE_CODES = frozenset(
     {"SKILL_UPGRADE_BREAKING_WITHOUT_MIGRATION", "SKILL_UPGRADE_DIGEST_MISMATCH"}
 )
@@ -121,6 +126,23 @@ def _find(value: Any, key: str) -> Any:
     return next((m[key] for m in _mappings(value) if m.get(key) is not None), None)
 
 
+def _abstained_code(answer: Any) -> str | None:
+    """The upgrade refusal code of an abstained record, else ``None``.
+
+    The engine answers a refusal as a record whose outcome is ``abstained`` with a
+    ``{"reason": "family", "family": "skill_upgrade", "code": ...}`` reason, not as
+    a transport error.
+    """
+    for item in _mappings(answer):
+        if item.get("outcome") != "abstained":
+            continue
+        for reason in item.get("reasons") or ():
+            if isinstance(reason, Mapping) and reason.get("code") in _UPGRADE_CODES:
+                return str(reason["code"])
+        return "PRODUCER_UNAVAILABLE"
+    return None
+
+
 @dataclass(frozen=True)
 class EngineAdmission:
     """The admission gate's engine port over one bound ``send``."""
@@ -138,8 +160,8 @@ class EngineAdmission:
             answer = await self.send(
                 "DecisionEval",
                 {
-                    "op": "receipt",
-                    "request": {"receipt_digest": digest, "tenant_id": tenant},
+                    "op": "certification_get",
+                    "request": {"attestation_digest": digest, "tenant_id": tenant},
                 },
                 tenant,
             )
@@ -168,10 +190,11 @@ class EngineAdmission:
             param,
         )
 
-        option = f"skill-upgrade:{question.subject_id}"
+        # The engine family declares exactly one option, ``admit_upgrade``.
+        option = UPGRADE_OPTION
         request = decide_request(
             tenant,
-            (option, "skill_upgrade", "ordinary"),
+            (f"skill-upgrade:{question.subject_id}", "skill_upgrade", "ordinary"),
             declared([DeclaredOption(option)]),
             self.feature_schema(tenant),
             params=[
@@ -185,19 +208,27 @@ class EngineAdmission:
             if code in _UPGRADE_CODES:
                 raise AdmissionRefused(code, {"subject": question.subject_id}) from None
             raise AdmissionRefused("PRODUCER_UNAVAILABLE") from None
-        receipt = _family(answer, "skill_upgrade")
-        if not isinstance(receipt, Mapping):
-            raise AdmissionRefused(
-                "PRODUCER_UNAVAILABLE", {"reason": "no admit answer"}
-            )
-        migration = receipt.get("declared_migration_id") or None
-        decision_id = str(_find(answer, "record_id") or canonical_digest(request)[:32])
-        return CompatibilityDecision(
-            decision_id=decision_id,
-            verdict="breaking" if migration else "compatible",
-            migration_id=migration,
-            readmitted=bool(migration),
-        )
+        return _decision_of(answer, request, question.subject_id)
+
+
+def _decision_of(
+    answer: Any, request: Mapping[str, Any], subject: str
+) -> CompatibilityDecision:
+    """Apply the engine's answer: a refusal record raises, an admit record decides."""
+    refusal = _abstained_code(answer)
+    if refusal is not None:
+        raise AdmissionRefused(refusal, {"subject": subject})
+    receipt = _family(answer, "skill_upgrade")
+    if not isinstance(receipt, Mapping):
+        raise AdmissionRefused("PRODUCER_UNAVAILABLE", {"reason": "no admit answer"})
+    migration = receipt.get("declared_migration_id") or None
+    decision_id = str(_find(answer, "record_id") or canonical_digest(request)[:32])
+    return CompatibilityDecision(
+        decision_id=decision_id,
+        verdict="breaking" if migration else "compatible",
+        migration_id=migration,
+        readmitted=bool(migration),
+    )
 
 
 def engine_port(send: Send | None, bindings: Any = None) -> EngineAdmission | None:

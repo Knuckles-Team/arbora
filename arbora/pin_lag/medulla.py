@@ -257,6 +257,11 @@ def guard_certification_read() -> None:
     """Refuse ``UNAVAILABLE`` naming what reading a stored attestation needs (R034.14).
 
     PIN-LAG: ``DecisionEval`` ``CertifyLocalSkill`` and its
-    ``LocalCertificationAttestation`` are engine ``main`` shapes.
+    ``LocalCertificationAttestation`` are engine ``main`` shapes. The by-digest read
+    op ``certification_get`` is not on engine ``main`` yet (requested, MEDULLA FOR
+    ARBORA w15), so the guard keeps refusing until it is served.
     """
-    guard("DecisionEval", models=("LocalCertificationAttestation",))
+    guard(
+        "DecisionEval",
+        models=("LocalCertificationAttestation", "DecisionEvalOpCertificationGet"),
+    )
