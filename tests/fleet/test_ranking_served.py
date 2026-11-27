@@ -158,12 +158,13 @@ def test_an_unbound_port_and_a_missing_pin_answer_the_floor() -> None:
 @pytest.mark.spec("ARBORA-FLEET-R083.5")
 def test_the_ranking_counter_records_the_source() -> None:
     from arbora.observability import gateway_metrics
+    from arbora.observability.state import Metrics
 
     if not gateway_metrics.PROMETHEUS_AVAILABLE:
         pytest.skip("the metrics extra is not installed")
     engine = LoopbackEngine(order=lambda ids: ids)
     _find(_bound(engine))
-    body, _ = gateway_metrics.render_metrics()
+    body, _ = gateway_metrics.render_metrics(Metrics())
     assert b'arbora_ranking_total{source="medulla"}' in body
 
 

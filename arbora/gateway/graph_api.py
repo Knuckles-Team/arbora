@@ -164,7 +164,6 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
     if config.gateway_metrics:
         from arbora.observability.gateway_metrics import (
             GatewayMetricsMiddleware,
-            metrics_asgi_endpoint,
             metrics_endpoint,
         )
 
@@ -180,7 +179,7 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
                     include_in_schema=False,
                 )
             else:  # plain Starlette
-                app.add_route("/metrics", metrics_asgi_endpoint, methods=["GET"])
+                app.add_route("/metrics", metrics_endpoint, methods=["GET"])
 
     application.mount_rest_routes(app, prefix=prefix)
 

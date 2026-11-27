@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from arbora.observability import gateway_metrics
+from arbora.observability.state import Metrics
 
 _RETIRED = "meristem_"
 
@@ -39,7 +40,23 @@ def test_the_rendered_exposition_carries_no_retired_series() -> None:
     gateway_metrics.GATEWAY_REQUESTS.labels(
         route="/health", method="GET", status="200"
     ).inc()
-    body, _ = gateway_metrics.render_metrics()
+    body, _ = gateway_metrics.render_metrics(Metrics())
     text = body.decode()
     assert "arbora_gateway_requests_total" in text
     assert _RETIRED not in text
+
+
+@pytest.mark.asyncio
+async def test_the_metrics_route_reads_the_host_on_the_application() -> None:
+    from types import SimpleNamespace
+
+    ran: list[str] = []
+    metrics = Metrics()
+    metrics.register(lambda: ran.append("sampled"))
+    host = SimpleNamespace(observability=SimpleNamespace(metrics=metrics))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(host=host)))
+    if not gateway_metrics.PROMETHEUS_AVAILABLE:
+        pytest.skip("the metrics extra is not installed")
+    response = await gateway_metrics.metrics_endpoint(request)
+    assert response.status_code == 200
+    assert ran == ["sampled"]

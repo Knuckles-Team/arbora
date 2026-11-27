@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import arbora.mcp_server.backing.server_factory as server_factory
+from arbora.observability.state import Metrics
 from arbora.security.key_cache import JwksCache
 
 
@@ -37,7 +38,7 @@ def test_create_mcp_server_basic(mock_fastmcp):
         mock_parse.return_value = (mock_args, [])
 
         args, mcp, middlewares = server_factory.create_mcp_server(
-            keys=JwksCache(), name="TestServer"
+            keys=JwksCache(), metrics=Metrics(), name="TestServer"
         )
 
         assert args == mock_args
@@ -97,7 +98,11 @@ def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatc
     (no mock) so the registered HTTP routes can be inspected."""
     monkeypatch.setattr("sys.argv", ["test-mcp"])  # defaults: auth none, eunomia none
     args, mcp, middlewares = server_factory.create_mcp_server(
-        keys=JwksCache(), name="metrics-test", version="0.0.0", instructions="t"
+        keys=JwksCache(),
+        metrics=Metrics(),
+        name="metrics-test",
+        version="0.0.0",
+        instructions="t",
     )
     mw_names = {type(m).__name__ for m in middlewares}
     assert "ToolMetricsMiddleware" in mw_names
@@ -130,7 +135,7 @@ def test_create_mcp_server_delegation_error(mock_get):
         mock_parse.return_value = (mock_args, [])
 
         with pytest.raises(SystemExit) as excinfo:
-            server_factory.create_mcp_server(keys=JwksCache())
+            server_factory.create_mcp_server(keys=JwksCache(), metrics=Metrics())
         assert excinfo.value.code == 1
 
 
@@ -143,7 +148,7 @@ def test_create_mcp_server_invalid_port():
         mock_parse.return_value = (mock_args, [])
 
         with pytest.raises(SystemExit) as excinfo:
-            server_factory.create_mcp_server(keys=JwksCache())
+            server_factory.create_mcp_server(keys=JwksCache(), metrics=Metrics())
         assert excinfo.value.code == 1
 
 
@@ -170,7 +175,9 @@ def test_create_mcp_server_eunomia(mock_create_mw):
         mock_args.eunomia_api_key_ref = None
         mock_parse.return_value = (mock_args, [])
 
-        server_factory.create_mcp_server(keys=JwksCache(), name="TestServerEmbedded")
+        server_factory.create_mcp_server(
+            keys=JwksCache(), metrics=Metrics(), name="TestServerEmbedded"
+        )
         mock_create_mw.assert_called_with(
             policy_file="my_custom_policy.json",
             use_remote_eunomia=False,
@@ -184,7 +191,9 @@ def test_create_mcp_server_eunomia(mock_create_mw):
         mock_args.eunomia_policy_file = None
         mock_args.eunomia_remote_url = "http://eunomia:8421"
 
-        server_factory.create_mcp_server(keys=JwksCache(), name="TestServerRemote")
+        server_factory.create_mcp_server(
+            keys=JwksCache(), metrics=Metrics(), name="TestServerRemote"
+        )
         mock_create_mw.assert_called_with(
             policy_file=None,
             use_remote_eunomia=True,

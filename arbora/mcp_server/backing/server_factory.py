@@ -32,6 +32,7 @@ from scion_sdk.utilities import to_boolean
 
 from arbora.core.environment import read_env, read_reference, write_env
 from arbora.mcp_server.served_engine import engine_unbound, no_process_session
+from arbora.observability.state import Metrics
 from arbora.security.key_cache import JwksCache
 from arbora.version import __version__
 
@@ -2346,7 +2347,7 @@ def _mount_tasks_extension_if_available(
 
 
 def _register_operational_routes(
-    mcp: Any, remote_network: bool, metrics_token: str | None
+    mcp: Any, remote_network: bool, metrics_token: str | None, metrics: Metrics
 ) -> None:
     """Health is a generic readiness result. Metrics are local-only unless a
     remote listener has a runtime-resolved bearer token; otherwise that
@@ -2393,7 +2394,7 @@ def _register_operational_routes(
                                 "Cache-Control": "no-store",
                             },
                         )
-                body, content_type = await _render_metrics_with_engine()
+                body, content_type = await _render_metrics_with_engine(metrics)
                 return _Response(
                     content=body,
                     media_type=content_type,
@@ -2421,6 +2422,7 @@ def create_mcp_server(
     transport_choices: tuple[str, ...] = _ALL_TRANSPORTS,
     *,
     keys: JwksCache,
+    metrics: Metrics,
     lifespan_extension: Callable[[Any], Any] | None = None,
     manage_engine_shutdown: bool = True,
     engine_provider: Callable[[], Any] = engine_unbound,
@@ -2441,6 +2443,7 @@ def create_mcp_server(
             tools, providing context for the LLM.
         command_args: Optional list of CLI arguments (default: sys.argv).
         transport_choices: Current transports exposed by this server.
+        metrics: The host's scrape samplers, read by the ``/metrics`` route.
         lifespan_extension: Optional application lifespan nested inside the
             factory-owned registration context.
         manage_engine_shutdown: Whether this factory context owns the active
@@ -2512,7 +2515,7 @@ def create_mcp_server(
         tasks=False,
     )
     _mount_tasks_extension_if_available(mcp, name, engine_provider)
-    _register_operational_routes(mcp, remote_network, metrics_token)
+    _register_operational_routes(mcp, remote_network, metrics_token, metrics)
 
     # Inject dynamic visibility transform for dynamic tag/tool filtering
     try:
