@@ -322,7 +322,7 @@ def _validate_against_model(field_name: str, value: Any) -> Any:
             f"value rejected by the AgentConfig schema for {field_name}: "
             f"{exc.error_count()} error(s); expected {_type_name(info.annotation)}",
         ) from exc
-    except Exception as exc:  # noqa: BLE001 - unvalidatable is still a refusal
+    except Exception as exc:  # unvalidatable is still a refusal
         raise ConfigAdminError(
             "validation_failed",
             f"value could not be validated against {field_name}: {type(exc).__name__}",
@@ -374,7 +374,7 @@ def _record_provenance(
             },
         )
         return node_id
-    except Exception as exc:  # noqa: BLE001 - provenance must not undo a write
+    except Exception as exc:  # provenance must not undo a write
         logger.error(
             "graph_config applied %s but its provenance event could NOT be "
             "recorded (error=%s); the change is live and unlogged in the KG",
@@ -407,7 +407,7 @@ def _gate(
                 reason=reason or f"set {env_key}",
             )
         )
-    except Exception as exc:  # noqa: BLE001 - fail closed
+    except Exception as exc:  # fail closed
         logger.error(
             "config.set policy gate unavailable for %s; refusing (error=%s)",
             env_key,

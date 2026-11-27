@@ -54,6 +54,7 @@ Wire-First risk this item was originally deferred over.
 from __future__ import annotations
 
 import json
+import logging
 
 from pydantic import Field
 
@@ -142,7 +143,7 @@ def register_candidate_claim_tools(mcp, tools: ToolTable):
                     fragments = json.loads(fragments_json) if fragments_json else []
                     if not isinstance(fragments, list):
                         raise ValueError("fragments_json must decode to a JSON array")
-                except Exception as exc:  # noqa: BLE001 — a malformed payload is a client error
+                except ValueError as exc:  # a malformed payload is a client error
                     return json.dumps(
                         {"error": f"invalid fragments_json: {type(exc).__name__}"}
                     )
@@ -157,7 +158,7 @@ def register_candidate_claim_tools(mcp, tools: ToolTable):
                     records_raw = json.loads(records_json) if records_json else []
                     if not isinstance(records_raw, list):
                         raise ValueError("records_json must decode to a JSON array")
-                except Exception as exc:  # noqa: BLE001 — a malformed payload is a client error
+                except ValueError as exc:  # a malformed payload is a client error
                     return json.dumps(
                         {"error": f"invalid records_json: {type(exc).__name__}"}
                     )
@@ -167,7 +168,8 @@ def register_candidate_claim_tools(mcp, tools: ToolTable):
                 )
 
             return json.dumps({"error": f"unknown action {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["graph_candidate_claims"] = graph_candidate_claims

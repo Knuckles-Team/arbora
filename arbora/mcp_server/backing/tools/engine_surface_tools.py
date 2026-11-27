@@ -316,7 +316,10 @@ def _session_bound_tenant(declared: str) -> str:
         from arbora.security.session import current_session
 
         session = current_session()
-    except Exception:  # noqa: BLE001 — no bound session is a legitimate RAM-only case
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "no bound session is a legitimate RAM-only case", exc_info=True
+        )
         return declared
     if session is None:
         # ``current_session`` returns None (rather than raising) when authority has
@@ -427,7 +430,8 @@ def _kv_recommend_response(action: str, manager: Any, bundles: dict[str, str]) -
     """``action='recommend'`` — a scored, advisory-only worthiness verdict."""
     try:
         observation = _checkpoint_observation(bundles)
-    except Exception as exc:  # noqa: BLE001 — caller-supplied JSON/shape
+    except Exception as exc:
+        logging.getLogger(__name__).debug("caller-supplied JSON/shape", exc_info=True)
         return _surface_error(
             exc, surface="kv_checkpoint", action=action, code="invalid_request"
         )
@@ -728,7 +732,10 @@ def _invoke(
     """
     try:
         client = _client(graph)
-    except Exception as exc:  # noqa: BLE001 — engine down is a normal degrade
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "engine down is a normal degrade", exc_info=True
+        )
         return _surface_error(
             exc,
             surface=surface,
@@ -755,7 +762,10 @@ def _invoke_callable(
         return _surface_error(
             exc, surface=surface, action=action, code="invalid_request"
         )
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine errors as data", exc_info=True
+        )
         return _surface_error(exc, surface=surface, action=action)
     return json.dumps(
         {"surface": surface, "action": action, "result": result}, default=_json_default
@@ -780,7 +790,10 @@ def _invoke_promql(
     surface = "promql"
     try:
         client = _client(graph)
-    except Exception as exc:  # noqa: BLE001 — engine down is a normal degrade
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "engine down is a normal degrade", exc_info=True
+        )
         return _surface_error(
             exc,
             surface=surface,
@@ -947,7 +960,10 @@ def _render_chart(
             max_bytes=request.max_bytes,
             dataset_ref=request.dataset_ref,
         )
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine errors as data", exc_info=True
+        )
         return _surface_error(exc, surface=surface, action=action, code="render_failed")
     return json.dumps(
         {"surface": surface, "action": action, "result": result},
@@ -1053,7 +1069,10 @@ def _viz_capability_matrix(viz_client: Any, action: str) -> str:
     """``action='capability_matrix'`` — which mark x surface pairs are real today."""
     try:
         result = viz_client.capability_matrix()
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine errors as data", exc_info=True
+        )
         return _surface_error(exc, surface="viz", action=action)
     return json.dumps(
         {"surface": "viz", "action": action, "result": result},
@@ -1135,7 +1154,10 @@ def _viz_query_rows(client: Any, action: str, query: str) -> tuple[Any, str | No
         return None, _degraded("viz", action, ["client.query.sql"])
     try:
         return query_client.sql(query), None
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine errors as data", exc_info=True
+        )
         return None, _surface_error(
             exc, surface="viz", action=action, code="query_failed"
         )
@@ -1254,7 +1276,7 @@ def _prometheus_http_query(
             resp = client.get(f"{base_url}{path}", params=params)
             resp.raise_for_status()
             payload = resp.json()
-    except Exception as e:  # noqa: BLE001 — fallback failures are "no data", never raised
+    except Exception as e:  # fallback failures are "no data", never raised
         logger.debug(
             "graph_promql: Prometheus HTTP fallback query failed: %s", type(e).__name__
         )
@@ -1309,7 +1331,10 @@ def _memory_crud(tools: ToolTable, action: str, params: dict[str, Any]) -> str:
         )
     try:
         result = _run_coro(runtime._execute_tool(tools, "graph_write", **call))
-    except Exception as exc:  # noqa: BLE001 — surface engine/core errors as data
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine/core errors as data", exc_info=True
+        )
         return _surface_error(exc, surface="memory", action=action)
     return json.dumps(
         {"surface": "memory", "action": action, "result": result}, default=_json_default
@@ -1330,7 +1355,10 @@ def _sandbox_available(sb: Any) -> bool:
     """Whether a rung probes as available; an unprobeable rung is simply skipped."""
     try:
         return bool(sb.is_available())
-    except Exception:  # noqa: BLE001 — an unprobeable rung is simply skipped
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unprobeable rung is simply skipped", exc_info=True
+        )
         return False
 
 
@@ -1526,7 +1554,7 @@ def _deep_write_node(
                 target=graph or "",
             )
         )
-    except Exception:  # noqa: BLE001 — writeback is best-effort
+    except Exception:  # writeback is best-effort
         logger.debug("deep-mining writeback failed", exc_info=True)
     return node_id
 
@@ -1548,7 +1576,7 @@ def _deep_write_edge(
                 target=graph or "",
             )
         )
-    except Exception:  # noqa: BLE001 — writeback is best-effort
+    except Exception:  # writeback is best-effort
         logger.debug("deep-mining writeback failed", exc_info=True)
 
 
@@ -1885,7 +1913,7 @@ def _kvcache_close(backend: Any) -> None:
     if callable(close):
         try:
             close()
-        except Exception:  # noqa: BLE001 — best-effort cleanup
+        except Exception:  # best-effort cleanup
             logger.debug("kv-cache backend close failed", exc_info=True)
 
 
@@ -2013,7 +2041,10 @@ def _deep_call_delegate(
                 params_style="args",
             )
         )
-    except Exception as exc:  # noqa: BLE001 — the delegate being unreachable degrades cleanly
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "the delegate being unreachable degrades cleanly", exc_info=True
+        )
         return None, _surface_error(
             exc,
             surface="mining_deep",
@@ -2201,7 +2232,10 @@ def register_engine_surface_tools(
         """Thin wrapper over the KG-2.306 KV-cache connector (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         try:
             backend = _kv_backend()
-        except Exception as exc:  # noqa: BLE001 — mis-config degrades, never raises
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "mis-config degrades, never raises", exc_info=True
+            )
             return _surface_error(
                 exc,
                 surface="kvcache",
@@ -2399,7 +2433,10 @@ def register_engine_surface_tools(
 
         try:
             store = _checkpoint_store(graph)
-        except Exception as exc:  # noqa: BLE001 — engine down is a normal degrade
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "engine down is a normal degrade", exc_info=True
+            )
             return _surface_error(
                 exc,
                 surface="kv_checkpoint",
@@ -3180,7 +3217,10 @@ def register_engine_surface_tools(
             tool_params, node_ids = _prepare_deep_delegation(
                 tools, action, params, graph
             )
-        except Exception as exc:  # noqa: BLE001 — bad input / feature-gathering failure is data
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "bad input / feature-gathering failure is data", exc_info=True
+            )
             return _surface_error(exc, surface="mining_deep", action=action)
 
         raw, delegate_error = _deep_call_delegate(action, tool_params)
@@ -3584,7 +3624,10 @@ def register_engine_surface_tools(
             return _describe_chart(view_result_json, spec_json)
         try:
             client = _client(graph)
-        except Exception as exc:  # noqa: BLE001 — engine down is a normal degrade
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "engine down is a normal degrade", exc_info=True
+            )
             return _surface_error(
                 exc, surface=surface, action=action, code="dependency_unavailable"
             )

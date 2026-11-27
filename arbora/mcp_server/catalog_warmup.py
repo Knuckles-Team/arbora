@@ -74,7 +74,7 @@ class CatalogWarmup:
         self._set(attempts=attempts)
         try:
             self._compose_once()
-        except Exception as exc:  # noqa: BLE001 - every failure is retried
+        except Exception as exc:  # every failure is retried
             # A class name only: the readiness route is unauthenticated.
             self._set(status="retrying", last_error=type(exc).__name__)
             logger.warning(
@@ -112,7 +112,7 @@ class CatalogWarmup:
             return
         try:
             self._after()
-        except Exception as exc:  # noqa: BLE001 - serving outlives the follow-up
+        except Exception as exc:  # serving outlives the follow-up
             logger.warning("catalog warm-up follow-up failed: %s", exc)
 
     def run(self) -> None:

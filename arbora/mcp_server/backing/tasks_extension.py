@@ -271,7 +271,9 @@ def _installed_fastmcp_version() -> str:
         import importlib.metadata
 
         return f"fastmcp=={importlib.metadata.version('fastmcp')}"
-    except Exception:  # noqa: BLE001 — purely cosmetic, never block the warning itself
+    except (
+        importlib.metadata.PackageNotFoundError
+    ):  # purely cosmetic, never block the warning itself
         return "an unknown fastmcp version"
 
 
@@ -760,7 +762,7 @@ class WorkItemTasksExtension(ServerExtension):
 
         try:
             return resolve_session(required_scope=scope)
-        except SessionRequiredError:  # noqa: BLE001 — falls through to mint from the access token
+        except SessionRequiredError:  # falls through to mint from the access token
             pass
 
         try:
@@ -780,7 +782,7 @@ class WorkItemTasksExtension(ServerExtension):
             return session
         except PermissionError:
             raise
-        except Exception as exc:  # noqa: BLE001 — convert auth failures to a stable protocol error
+        except Exception as exc:  # convert auth failures to a stable protocol error
             logger.warning(
                 "tasks_extension: failed to resolve verified request identity (%s)",
                 type(exc).__name__,

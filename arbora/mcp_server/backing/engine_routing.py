@@ -192,7 +192,7 @@ def _seed_external_graph_connectors(registry: Any) -> None:
         value["role"] = "read"
         try:
             registry.register(name, value)
-        except Exception as exc:  # noqa: BLE001 — one bad declaration never blocks the rest
+        except Exception as exc:  # one bad declaration never blocks the rest
             logger.warning(
                 "Skipping invalid external source declaration: %s",
                 type(exc).__name__,
@@ -209,7 +209,7 @@ def _seed_kg_connections(registry: Any) -> None:
         if name:
             try:
                 registry.register(name, spec)
-            except Exception as e:  # noqa: BLE001 — one bad declaration never blocks the rest
+            except Exception as e:  # one bad declaration never blocks the rest
                 logger.warning(
                     "Skipping invalid graph connection declaration: %s",
                     type(e).__name__,
@@ -227,7 +227,7 @@ def _seed_connection_registry(registry: Any) -> None:
     try:
         _seed_external_graph_connectors(registry)
         _seed_kg_connections(registry)
-    except Exception as exc:  # noqa: BLE001 — config-less environments
+    except Exception as exc:  # config-less environments
         logger.debug(
             "Graph connection declarations were not seeded (%s)",
             type(exc).__name__,
@@ -391,7 +391,10 @@ def _validate_graph_exists_in_catalog(engine: Any, graph: str) -> None:
         return
     try:
         catalog = list_graphs() or []
-    except Exception:  # noqa: BLE001 — best-effort probe; see docstring
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "best-effort probe; see docstring", exc_info=True
+        )
         return
     names = {
         row.get("name") for row in catalog if isinstance(row, dict) and row.get("name")
@@ -521,7 +524,7 @@ def fanout_execute(entries, fn, *, timeout=None):
         name = futures[fut]
         try:
             results[name] = fut.result()
-        except Exception as exc:  # noqa: BLE001 — partial-success contract
+        except Exception as exc:  # partial-success contract
             logger.warning(
                 "Graph fan-out target failed (exception_type=%s)",
                 type(exc).__name__,

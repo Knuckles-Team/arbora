@@ -282,7 +282,8 @@ def _source_sync_resolve_engine(
             return None, public_error_json(e, code="graph_not_found")
         except engine_routing.GraphSelectionConflictError as e:
             return None, public_error_json(e, code="graph_selection_conflict")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return None, public_error_json(e)
         if fanout or len(entries) != 1:
             return None, public_error_json(
@@ -298,7 +299,8 @@ def _source_sync_resolve_engine(
         return engine, None
     try:
         engine = engine_provider()
-    except Exception:  # noqa: BLE001
+    except Exception:
+        logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
         engine = None
     return engine, None
 
@@ -898,7 +900,10 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
         try:
             try:
                 engine = engine_provider()
-            except Exception:  # noqa: BLE001 - offline → no backend resolver
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "offline → no backend resolver", exc_info=True
+                )
                 engine = None
             backend = getattr(engine, "backend", None) if engine is not None else None
             ctx = _WritebackCtx(
@@ -925,7 +930,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
                 retirements_json,
                 process_ids_json,
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["graph_writeback"] = graph_writeback
@@ -964,7 +970,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
         try:
             try:
                 engine = engine_provider()
-            except Exception:  # noqa: BLE001
+            except Exception:
+                logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
                 engine = None
             backend = getattr(engine, "backend", None) if engine is not None else None
             if str(action) == "pull":
@@ -975,7 +982,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
             return _spec_ticket_link(
                 ctx, spec_json, issue_id, project_id, assignee, agent, comment
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["spec_ticket"] = spec_ticket
@@ -1055,7 +1063,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
             return public_error_json(
                 e, code="permission_denied" if graph else "operation_failed"
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["source_sync"] = source_sync
@@ -1133,7 +1142,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
         """Run / inspect a unified ETL flow over the canonical KG hub."""
         try:
             engine = engine_provider()
-        except Exception:  # noqa: BLE001
+        except Exception:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             engine = None
 
         try:
@@ -1160,7 +1170,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
                 dry_run=dry_run,
             )
             return _graph_etl_run(args)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["graph_etl"] = graph_etl
@@ -1251,7 +1262,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
         """Record / query / promote classification claims through the governed lifecycle."""
         try:
             engine = engine_provider()
-        except Exception:  # noqa: BLE001
+        except Exception:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             engine = None
         if engine is None:
             return json.dumps({"status": "error", "error": "active engine required"})
@@ -1283,7 +1295,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
                 tenant=tenant,
             )
             return handler(ctx)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["ontology_classification_claims"] = ontology_classification_claims
@@ -1341,7 +1354,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
         """Record repository provenance (RepositorySnapshot/Branch/Tag/ChangeEvent) into the KG."""
         try:
             engine = engine_provider()
-        except Exception:  # noqa: BLE001
+        except Exception:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             engine = None
         if engine is None:
             return json.dumps({"status": "error", "error": "active engine required"})
@@ -1368,7 +1382,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
             if err is not None:
                 return err
             return _repo_provenance_ingest(engine, obj, node_id, repo_id)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["ontology_repository_provenance"] = ontology_repository_provenance
@@ -1432,7 +1447,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
             if action == "compute_all":
                 return _ontology_derive_compute_all(object_json, object_type)
             return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["ontology_derive"] = ontology_derive
@@ -1540,7 +1556,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
             if action == "as_of":
                 return _object_edits_as_of(ledger, object_id, ts)
             return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["object_edits"] = object_edits
@@ -1579,7 +1596,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
                     }
                 )
             return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["object_index"] = object_index
@@ -1651,7 +1669,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
             if action == "private":
                 return _graph_share_private(node_id)
             return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["graph_share"] = graph_share
@@ -1721,7 +1740,8 @@ def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[],
                     ont, base, action, type_or_interface, effective_limit
                 )
             return json.dumps({"error": f"unknown action: {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["object_set"] = object_set

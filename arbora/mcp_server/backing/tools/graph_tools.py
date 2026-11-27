@@ -163,7 +163,7 @@ async def _read_catalog(key: str) -> list[dict[str, Any]] | None:
         raw = await runtime._execute_tool(
             "graph_table", action="query", sql=CATALOG_STATEMENTS[key]
         )
-    except Exception as exc:  # noqa: BLE001 — mapped to a typed, fail-closed error
+    except Exception as exc:  # mapped to a typed, fail-closed error
         raise SqlSchemaUnavailable(
             f"engine SQL catalog read failed ({type(exc).__name__})"
         ) from exc

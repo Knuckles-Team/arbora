@@ -1654,7 +1654,10 @@ def _configure_multi_realm_jwt(
             for _v in self._verifiers:
                 try:
                     _result = await _v.verify_token(token)
-                except Exception:  # noqa: BLE001 - try the next realm
+                except Exception:
+                    logging.getLogger(__name__).debug(
+                        "try the next realm", exc_info=True
+                    )
                     _result = None
                 if _result is not None:
                     return _result

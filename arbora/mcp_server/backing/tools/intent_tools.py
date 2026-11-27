@@ -1191,7 +1191,10 @@ def _operation_approved(intent_cache: IntentCache, op_id: str) -> bool:
     """
     try:
         return intent_cache.approved(_approval_key(op_id), time.monotonic())
-    except Exception:  # noqa: BLE001 — a broken session probe must fail closed
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "a broken session probe must fail closed", exc_info=True
+        )
         return False
 
 
@@ -1569,7 +1572,10 @@ async def _dispatch_execute_and_record(
     """
     try:
         result = await runtime._execute_tool(tools, chosen_tool, **call_kwargs)
-    except Exception as e:  # noqa: BLE001 — surface as a structured routing failure, not a 500
+    except Exception as e:
+        logging.getLogger(__name__).debug(
+            "surface as a structured routing failure, not a 500", exc_info=True
+        )
         routing["decision_trace"]["result_provenance"]["status"] = "failed"
         routing["learning"]["recorded"] = False
         return {
@@ -2611,7 +2617,10 @@ async def _find_capability(
                 top_k,
                 local,
             )
-    except Exception as exc:  # noqa: BLE001 — remote discovery health is reported elsewhere
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "remote discovery health is reported elsewhere", exc_info=True
+        )
         payload["fleet_error"] = type(exc).__name__
     return payload
 

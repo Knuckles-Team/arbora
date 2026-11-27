@@ -81,7 +81,7 @@ class BackgroundHost:
                 await service.run(self._stop.is_set)
             except asyncio.CancelledError:
                 raise
-            except Exception:  # noqa: BLE001 - one service must not stop the rest
+            except Exception:  # one service must not stop the rest
                 logger.exception("a background service stopped")
 
         await asyncio.gather(*(guarded(s) for s in self._services))
