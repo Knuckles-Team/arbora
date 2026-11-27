@@ -257,6 +257,9 @@ EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
     "schedules.update",
     "approvals.digest.send",
     "orders.paper_submit",
+    "orders.change",
+    "positions.change",
+    "wallet.operate",
 )
 
 

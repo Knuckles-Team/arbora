@@ -17,6 +17,8 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
     "CSV_PREVIEW_SYMBOL",
+    "WALLET_INTENT_SYMBOL",
+    "require_wallet_intent",
     "FORECAST_SYMBOLS",
     "require_csv_preview",
     "require_forecast",
@@ -169,4 +171,29 @@ def require_forecast() -> ModuleType:
     for name in FORECAST_SYMBOLS:
         if not hasattr(module, name):
             raise PinLagUnavailable(f"scion_sdk.finance.forecast.{name}")
+    return module
+
+
+WALLET_INTENT_SYMBOL = "scion_sdk.writeback.wallet_intent.WalletBusinessIntent"
+_WALLET_NEEDED = (
+    "WalletBusinessIntent",
+    "WalletConfirmation",
+    "WalletExecutionEnvelope",
+    "wallet_plan_digest",
+)
+
+
+def require_wallet_intent() -> ModuleType:
+    """The SDK wallet intent contract (``SCION-GOVERNED-WRITEBACK-R001.1``), or refuse.
+
+    Wallet operations stay unavailable on a pinned release without it, naming the
+    missing symbol; arbora hashes no intent of its own.
+    """
+    try:
+        module = importlib.import_module("scion_sdk.writeback.wallet_intent")
+    except ImportError:
+        raise PinLagUnavailable(WALLET_INTENT_SYMBOL) from None
+    for name in _WALLET_NEEDED:
+        if not hasattr(module, name):
+            raise PinLagUnavailable(f"scion_sdk.writeback.wallet_intent.{name}")
     return module
