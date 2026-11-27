@@ -108,6 +108,9 @@ class HostRuntimeResources:
     #: ``client(host, admitted)``: the terminal client the owner composes. It runs in the
     #: foreground while the host serves HTTP, and returns when the terminal exits.
     terminal_client: object | None = None
+    #: The co-service supervisor the owner composes beside the terminal client; the terminal
+    #: host starts its one HTTP thread on it and stops only that thread.
+    supervisor: object | None = None
 
     def __post_init__(self) -> None:
         if self.graph is None or self.engine is None or self.graph_config is None:

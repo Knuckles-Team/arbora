@@ -26,7 +26,10 @@ class FakeLogRuntime:
 
 
 def terminal_owner(
-    tmp_path: Path, client: Any, log_runtime: FakeLogRuntime | None = None
+    tmp_path: Path,
+    client: Any,
+    supervisor: Any,
+    log_runtime: FakeLogRuntime | None = None,
 ) -> ConstructionOwner:
     owner = ConstructionOwner(tmp_path)
     owner.configuration = replace(
@@ -39,7 +42,10 @@ def terminal_owner(
     )
     owner.grant = replace(owner.grant, request=owner.request)
     owner.resources = replace(
-        owner.resources, terminal_client=client, host_log_runtime=log_runtime
+        owner.resources,
+        terminal_client=client,
+        host_log_runtime=log_runtime,
+        supervisor=supervisor,
     )
     owner.binding = replace(
         owner.binding,

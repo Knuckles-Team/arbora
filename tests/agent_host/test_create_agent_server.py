@@ -147,7 +147,7 @@ def test_terminal_mode_serves_http_in_distinct_thread(tmp_path: Path) -> None:
             t.name for t in threading.enumerate() if t.name == HTTP_THREAD_NAME
         )
 
-    owner = terminal_owner(tmp_path, client)
+    owner = terminal_owner(tmp_path, client, CoServiceSupervisor())
     create_agent_server(**launch_arguments(owner))
     host = seen["host"]
     assert seen["health"] == {"status": "ok"}

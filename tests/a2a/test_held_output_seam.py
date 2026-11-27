@@ -216,13 +216,16 @@ def test_the_run_decision_sets_held_output_for_a_run_that_has_refs(
     import meristem.runtime as runtime
 
     from arbora import agent_runs
+    from arbora.mcp_server.harness_ports import shaped_run_plan
 
     monkeypatch.setattr(runtime, "default_run_plan", lambda request, cfg: _Plan())
     owner = SimpleNamespace(held_output=REFS, task_id=TASK, hosted_invocation=None)
     monkeypatch.setattr(agent_runs, "current_native_run", lambda request: owner)
-    plan = agent_runs.decide_run(SimpleNamespace(run_id=TASK))
+    request = SimpleNamespace(run_id=TASK)
+    plan = agent_runs.decide_run(request, shape_plan=shaped_run_plan)
     assert plan.harness.held_output.item_ref == "held:one"
     owner.held_output = None
     assert (
-        agent_runs.decide_run(SimpleNamespace(run_id=TASK)).harness.held_output is None
+        agent_runs.decide_run(request, shape_plan=shaped_run_plan).harness.held_output
+        is None
     )

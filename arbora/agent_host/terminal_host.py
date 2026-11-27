@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any
 
 from arbora.agent_host.start_admission import AdmittedHostStart, HostStartContext
 from arbora.agent_host.start_configuration import (
@@ -28,17 +27,15 @@ def run_terminal_host(
     admitted: AdmittedHostStart,
     configuration: HostStartConfiguration,
     runtime: HostRuntimeResources,
-    supervisor: Any | None = None,
     ready_timeout: float = 10.0,
 ) -> None:
     """Serve HTTP in the named thread, run the terminal client, then stop what we started."""
     from arbora.agent_host import build_agent_host_app
-    from arbora.mcp_server.composition import CoServiceSupervisor
 
     client = runtime.terminal_client
-    if not callable(client):
+    owner = runtime.supervisor
+    if not callable(client) or owner is None:
         raise ValueError("terminal_client_required")
-    owner = supervisor if supervisor is not None else CoServiceSupervisor()
     hosts = TerminalHttpHosts(owner)
     log_runtime = runtime.host_log_runtime
     host_instance = (

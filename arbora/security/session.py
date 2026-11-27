@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "GraphSession",
+    "SessionRouted",
     "ScopeError",
     "SessionExpiredError",
     "SessionRequiredError",
@@ -85,6 +86,15 @@ def graph_session_required() -> bool:
 def _matching_tenant(tenant: str, actor_tenant: str) -> bool:
     """Require a nonempty tenant shared by the session and its actor."""
     return bool(tenant and actor_tenant and tenant == actor_tenant)
+
+
+class SessionRouted:
+    """Marks an engine client view that authorizes each request from the ambient session.
+
+    Such a view is not a transport: it resolves the exact ambient session and applies the
+    client scope to the real pooled client per request, so a caller must not bind it as a raw
+    client.
+    """
 
 
 @dataclass(frozen=True)

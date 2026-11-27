@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from arbora.security.anonymous import client_scope, session_context
-from arbora.security.session import use_session
+from arbora.security.session import SessionRouted, use_session
 from arbora.semantic_provisioning import CONTROL_GRAPH
 
 
@@ -282,10 +282,8 @@ def _session_client_scope(client: Any, session: Any) -> Iterator[None]:
     Treating its deferred attributes as raw-client flags or context managers is
     invalid. Other clients still require the explicit verified/anonymous carrier.
     """
-    from arbora.mcp_server.served_engine import SessionRoutedClient
-
     with use_session(session):
-        if isinstance(client, SessionRoutedClient):
+        if isinstance(client, SessionRouted):
             yield
         else:
             with client_scope(client, session_context(session)):

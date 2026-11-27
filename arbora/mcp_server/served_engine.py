@@ -28,6 +28,7 @@ from arbora.core.environment import read_env
 from arbora.core.settings import RuntimeConfig
 from arbora.epistemic import run_blocking
 from arbora.security.anonymous import client_scope, session_context
+from arbora.security.session import SessionRouted
 from arbora.unique_records import record_body
 
 __all__ = [
@@ -73,7 +74,7 @@ def _ambient_session(process_session: Callable[[], Any] = no_process_session) ->
     return session
 
 
-class SessionRoutedClient:
+class SessionRoutedClient(SessionRouted):
     """An EG client view bound to one graph, authorized per request.
 
     The generated ``send_*`` functions call ``client._send``; the typed

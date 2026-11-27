@@ -15,6 +15,15 @@ from arbora.mcp_server.host_context import HostContext
 __all__ = ["bind_host_ports_of", "build_host_ports"]
 
 
+def shaped_run_plan(plan: Any, owner: Any) -> Any:
+    """The decided plan with an A2A run's held-output block and enforced tool subset."""
+    from arbora.a2a.held_output import plan_for_owner
+    from arbora.a2a.tool_subset import plan_with_subset
+
+    plan = plan_for_owner(plan, owner)  # ARBORA-A2A-R022: the held-output block
+    return plan_with_subset(plan, owner)  # ARBORA-A2A-R002.2.1: the enforced subset
+
+
 def build_host_ports(
     host: HostContext,
     *,
@@ -35,6 +44,7 @@ def build_host_ports(
 
     from arbora.a2a.checkpoint import checkpoint_store
     from arbora.agent_host.harness_cycle import HostProbeProvider
+    from arbora.agent_host.port_backends import TERMINALS
     from arbora.agent_runs import decide_run, record_run_event, resolve_model
     from arbora.api.domain.agent_host.host_port_adapters import bind_host_ports
     from arbora.current_plan_publication import publication_scope
@@ -53,9 +63,11 @@ def build_host_ports(
 
     # The engine is resolved when a run binds, never at composition.
     store = checkpoint_store(host.engine.served)
-    record_events = partial(record_run_event, engine_provider=host.engine.served)
+    record_events = partial(
+        record_run_event, engine_provider=host.engine.served, notify=TERMINALS.note
+    )
     base: dict[str, Any] = {
-        "decide": decide_run,
+        "decide": partial(decide_run, shape_plan=shaped_run_plan),
         "models": resolve_model,
         "scaffold_publication": publication_scope,
         "native": NativeToolsetProvider(
