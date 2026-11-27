@@ -14,10 +14,11 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 
 
 class ActorType(StrEnum):
@@ -125,13 +126,17 @@ LEASE_EDGES: tuple[LeaseEdge, ...] = (
     *(LeaseEdge(state, _E.STOP, _S.STOPPED) for state in _RENEWABLE),
 )
 
-_EDGES_BY_PAIR: dict[tuple[LeaseState, LeaseEvent], tuple[LeaseEdge, ...]] = {}
-for _edge in LEASE_EDGES:
-    _EDGES_BY_PAIR[(_edge.source, _edge.event)] = (
-        *_EDGES_BY_PAIR.get((_edge.source, _edge.event), ()),
-        _edge,
-    )
-del _edge
+
+def _edges_by_pair() -> Mapping[tuple[LeaseState, LeaseEvent], tuple[LeaseEdge, ...]]:
+    """The lease edges grouped by their source state and event."""
+    built: dict[tuple[LeaseState, LeaseEvent], tuple[LeaseEdge, ...]] = {}
+    for edge in LEASE_EDGES:
+        key = (edge.source, edge.event)
+        built[key] = (*built.get(key, ()), edge)
+    return MappingProxyType(built)
+
+
+_EDGES_BY_PAIR = _edges_by_pair()
 
 
 class IllegalLeaseTransition(CredentialExpiredError):

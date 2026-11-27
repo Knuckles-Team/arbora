@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Mapping
+from types import MappingProxyType
 
 __all__ = ["DOMAIN_CLASSES", "discover_domains"]
 
@@ -16,54 +18,56 @@ logger = logging.getLogger(__name__)
 # ── Domain → client sub-client class map ─────────────────────────────────────
 # domain name == the attribute on ``SyncMedullaClient`` == the REST sub-path.
 # The class is introspected (below) for its public async methods = the actions.
-DOMAIN_CLASSES: dict[str, str] = {
-    "nodes": "NodeClient",
-    "edges": "EdgeClient",
-    "graph": "GraphOperationsClient",
-    "analytics": "AnalyticsClient",
-    "lifecycle": "LifecycleClient",
-    "reasoning": "ReasoningClient",
-    "ledger": "LedgerClient",
-    "channels": "ChannelsClient",
-    "tenants": "MultiTenantClient",
-    "resharding": "ReshardingClient",
-    "placement": "PlacementClient",
-    "consensus": "ConsensusClient",
-    "finance": "FinanceClient",
-    "datascience": "DataScienceClient",
-    "mining": "MiningClient",
-    "query": "QueryClient",
-    "txn": "TxnClient",
-    "timeseries": "TimeSeriesClient",
-    "rdf": "RdfClient",
-    "streaming": "StreamingClient",
-    "blob": "BlobClient",
-    # MERISTEM-P0-6: previously-missing namespaces (audited gap #3). Domain name ==
-    # the attribute on ``SyncMedullaClient`` (checked against the
-    # installed ``medulla.client`` module — NOT a guess): the graph-
-    # learning sub-client is exposed as ``.graphlearn`` (no underscore), so
-    # the domain/tool/REST-path name below is ``graphlearn`` to match it.
-    # rbac/admin are ADMIN_DOMAINS (see below) — gated BEFORE being newly
-    # exposed, per the audit's explicit ordering.
-    "broker": "BrokerClient",
-    "rbac": "RbacClient",
-    "admin": "AdminClient",
-    "graphlearn": "GraphLearnClient",
-    # D-VZ-1 (lane w6-viz-xy) — native visualization: render a ViewSpec through
-    # the eg-viz ColumnStore/LOD/export pipeline (``Method::Viz``). Degrades
-    # cleanly (see ``discover_domains`` below) until the engine client ships
-    # ``VizClient``.
-    "viz": "VizClient",
-    # B-12 — the native document/image/audio/video ingest + typed-query +
-    # events surface (16 methods: ingest/ingest_stream/query_image_region/
-    # query_similar_images/query_audio_window/query_video_window/delete/
-    # move_to_cold/restore/events/stats/collect_tombstones/capabilities/…)
-    # had zero au callers anywhere, verified by grep, despite being fully
-    # implemented and bound on the typed client as ``.modalities``. This is
-    # the same generic introspection-driven registration every other domain
-    # gets — no bespoke tool needed.
-    "modalities": "ServedModalityClient",
-}
+DOMAIN_CLASSES: Mapping[str, str] = MappingProxyType(
+    {
+        "nodes": "NodeClient",
+        "edges": "EdgeClient",
+        "graph": "GraphOperationsClient",
+        "analytics": "AnalyticsClient",
+        "lifecycle": "LifecycleClient",
+        "reasoning": "ReasoningClient",
+        "ledger": "LedgerClient",
+        "channels": "ChannelsClient",
+        "tenants": "MultiTenantClient",
+        "resharding": "ReshardingClient",
+        "placement": "PlacementClient",
+        "consensus": "ConsensusClient",
+        "finance": "FinanceClient",
+        "datascience": "DataScienceClient",
+        "mining": "MiningClient",
+        "query": "QueryClient",
+        "txn": "TxnClient",
+        "timeseries": "TimeSeriesClient",
+        "rdf": "RdfClient",
+        "streaming": "StreamingClient",
+        "blob": "BlobClient",
+        # MERISTEM-P0-6: previously-missing namespaces (audited gap #3). Domain name ==
+        # the attribute on ``SyncMedullaClient`` (checked against the
+        # installed ``medulla.client`` module — NOT a guess): the graph-
+        # learning sub-client is exposed as ``.graphlearn`` (no underscore), so
+        # the domain/tool/REST-path name below is ``graphlearn`` to match it.
+        # rbac/admin are ADMIN_DOMAINS (see below) — gated BEFORE being newly
+        # exposed, per the audit's explicit ordering.
+        "broker": "BrokerClient",
+        "rbac": "RbacClient",
+        "admin": "AdminClient",
+        "graphlearn": "GraphLearnClient",
+        # D-VZ-1 (lane w6-viz-xy) — native visualization: render a ViewSpec through
+        # the eg-viz ColumnStore/LOD/export pipeline (``Method::Viz``). Degrades
+        # cleanly (see ``discover_domains`` below) until the engine client ships
+        # ``VizClient``.
+        "viz": "VizClient",
+        # B-12 — the native document/image/audio/video ingest + typed-query +
+        # events surface (16 methods: ingest/ingest_stream/query_image_region/
+        # query_similar_images/query_audio_window/query_video_window/delete/
+        # move_to_cold/restore/events/stats/collect_tombstones/capabilities/…)
+        # had zero au callers anywhere, verified by grep, despite being fully
+        # implemented and bound on the typed client as ``.modalities``. This is
+        # the same generic introspection-driven registration every other domain
+        # gets — no bespoke tool needed.
+        "modalities": "ServedModalityClient",
+    }
+)
 
 
 def discover_domains() -> dict[str, list[str]]:

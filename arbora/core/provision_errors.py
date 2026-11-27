@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 __all__ = ["REFUSALS", "ProvisionRefused"]
 
 
-REFUSALS: dict[str, str] = {
-    "PLATFORM_UNSUPPORTED": "the os and runtime are not a declared matrix row",
-    "PROVISION_GRANT_DENIED": "the caller holds no grant to provision",
-    "PROVISION_DECISION_STALE": "the engine decision behind the request is stale",
-    "PROVISION_BUDGET_EXCEEDED": "the request exceeds its budget or the capacity pool",
-    "PROVISION_REPLAY_BODY_CHANGED": "the idempotency key was used with another body",
-    "PROVISION_OUTCOME_UNKNOWN": "the allocation outcome is unknown; reconcile, never repeat",
-}
+REFUSALS: Mapping[str, str] = MappingProxyType(
+    {
+        "PLATFORM_UNSUPPORTED": "the os and runtime are not a declared matrix row",
+        "PROVISION_GRANT_DENIED": "the caller holds no grant to provision",
+        "PROVISION_DECISION_STALE": "the engine decision behind the request is stale",
+        "PROVISION_BUDGET_EXCEEDED": "the request exceeds its budget or the capacity pool",
+        "PROVISION_REPLAY_BODY_CHANGED": "the idempotency key was used with another body",
+        "PROVISION_OUTCOME_UNKNOWN": "the allocation outcome is unknown; reconcile, never repeat",
+    }
+)
 
 
 class ProvisionRefused(RuntimeError):
