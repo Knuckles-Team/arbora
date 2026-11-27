@@ -12,9 +12,14 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
+from arbora.security.key_cache import JwksCache
 from arbora.security.run_token import RunTokenSigner, token_secret_from_config
 
 __all__ = ["ProcessAuthority"]
+
+
+def _keys_or_new(keys: JwksCache | None) -> JwksCache:
+    return keys if keys is not None else JwksCache()
 
 
 class ProcessAuthority:
@@ -26,12 +31,23 @@ class ProcessAuthority:
     must yield to shutdown. ``signer`` mints and validates this host's run tokens.
     """
 
-    __slots__ = ("_lock", "_session", "_thread", "refresh_lock", "signer", "stop")
+    __slots__ = (
+        "_lock",
+        "_session",
+        "_thread",
+        "keys",
+        "refresh_lock",
+        "signer",
+        "stop",
+    )
 
     def __init__(
         self,
+        keys: JwksCache | None = None,
         token_secret: Callable[[], str | None] = token_secret_from_config,
     ) -> None:
+        #: The host's key cache; boot and renewal validate the process token against it.
+        self.keys = _keys_or_new(keys)
         self.signer = RunTokenSigner(token_secret)
         self._lock = threading.Lock()
         self._session: Any = None

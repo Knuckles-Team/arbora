@@ -23,8 +23,10 @@ def process_environment() -> Environment:
     from arbora.mcp_server import bootstrap, runtime
     from arbora.mcp_server.served_engine import EngineHandles
     from arbora.security.anonymous import session_context
+    from arbora.security.key_cache import JwksCache
 
-    session = runtime._mint_process_session("http")
+    # This one-shot CLI is its own composition root and owns its key cache.
+    session = runtime._mint_process_session("http", JwksCache())
     # This one-shot CLI is its own composition root and owns its engine.
     engine = EngineHandles().served()
     bootstrap._wait_for_engine_materialization(engine)

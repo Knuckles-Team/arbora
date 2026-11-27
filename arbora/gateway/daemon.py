@@ -24,6 +24,7 @@ from arbora.core.environment import read_env, write_env
 from arbora.gateway.state import GatewayState
 from arbora.security.anonymous import session_context
 from arbora.security.error_surface import public_error_payload
+from arbora.security.key_cache import JwksCache
 from arbora.security.log_redaction import redact_for_log
 from arbora.security.run_token import RunTokenSigner
 
@@ -142,7 +143,7 @@ def _bind_metrics_listener() -> bool:
     return True
 
 
-def mint_process_identity() -> Any:
+def mint_process_identity(keys: JwksCache) -> Any:
     """Mint the standalone host daemon's verified graph authority.
 
     The daemon is a long-lived, non-request process, so there is no HTTP
@@ -160,7 +161,7 @@ def mint_process_identity() -> Any:
     )
 
     token = acquire_process_identity_token(config)
-    actor = mint_actor_from_token_sync(token)
+    actor = mint_actor_from_token_sync(token, keys)
     del token
     expires_at = getattr(actor, "credential_expires_at", None)
     if expires_at is None:
@@ -176,7 +177,7 @@ def mint_process_identity() -> Any:
     return session
 
 
-def refresh_process_identity(session: Any) -> Any:
+def refresh_process_identity(session: Any, keys: JwksCache) -> Any:
     """Renew ``session`` in place before its validated credential expires.
 
     Only the shared expiry lease changes.  Subject, tenant, roles, groups, and
@@ -201,7 +202,7 @@ def refresh_process_identity(session: Any) -> Any:
     if lease is None:
         raise RuntimeError("Graph host process authority is not renewable")
     token = acquire_process_identity_token(config)
-    renewed_actor = mint_actor_from_token_sync(token)
+    renewed_actor = mint_actor_from_token_sync(token, keys)
     del token
     identity_fields = (
         "actor_id",

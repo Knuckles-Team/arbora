@@ -918,7 +918,7 @@ def _require_system_session_mode(session: GraphSession) -> None:
         raise PermissionError("System session authority mode mismatch")
 
 
-def system_write_session(config: Any = None) -> GraphSession:
+def system_write_session(keys: JwksCache, config: Any = None) -> GraphSession:
     """Resolve the verified authority for a background/system-triggered graph write.
 
     BUG-033/BUG-039 (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement):
@@ -990,7 +990,7 @@ def system_write_session(config: Any = None) -> GraphSession:
     if local_process_authority_enabled(config):
         return mint_local_process_session()
     token = acquire_process_identity_token(config)
-    actor = mint_actor_from_token_sync(token)
+    actor = mint_actor_from_token_sync(token, keys)
     return mint_graph_session(actor)
 
 
@@ -1162,7 +1162,7 @@ def acquire_process_identity_token(config: Any = None) -> str:
     return _validate_process_identity_token(token)
 
 
-def mint_actor_from_token_sync(token: str) -> ActorContext:
+def mint_actor_from_token_sync(token: str, keys: JwksCache) -> ActorContext:
     """Synchronously validate a graph process JWT and mint an actor.
 
     Callable from BOTH a plain synchronous context and one that already has a
@@ -1188,8 +1188,7 @@ def mint_actor_from_token_sync(token: str) -> ActorContext:
     import concurrent.futures
 
     def _drive() -> ActorContext:
-        # A one-shot process identity check owns the key set it fetches.
-        return asyncio.run(actor_from_bearer_token(token, keys=JwksCache()))
+        return asyncio.run(actor_from_bearer_token(token, keys=keys))
 
     try:
         try:

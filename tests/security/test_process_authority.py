@@ -54,3 +54,21 @@ def test_no_module_holds_process_authority_state() -> None:
     ):
         for name in names:
             assert not hasattr(module, name), f"{module.__name__}.{name}"
+
+
+@pytest.mark.spec("ARBORA-HOST-R039.9")
+def test_the_authority_and_the_request_path_share_the_host_key_cache(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    host = build_host_context()
+    assert host.authority.keys is host.caches.jwks
+    assert build_host_context().authority.keys is not host.authority.keys
+    seen: list[object] = []
+
+    async def validate(token: str, *, keys: object, **_kw: object) -> object:
+        seen.append(keys)
+        return object()
+
+    monkeypatch.setattr(request_identity, "actor_from_bearer_token", validate)
+    request_identity.mint_actor_from_token_sync("token", host.authority.keys)
+    assert seen == [host.caches.jwks]

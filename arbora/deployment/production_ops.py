@@ -30,6 +30,7 @@ from arbora.core.environment import inherited_environment, read_env
 from arbora.core.settings import ArboraConfig as AgentConfig
 from arbora.core.settings import platform_config_file
 from arbora.deployment.doctor_support import PROBE_FAULTS
+from arbora.security.key_cache import JwksCache
 
 
 class ProductionOperationError(RuntimeError):
@@ -436,7 +437,7 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     from arbora.security.actor_context import use_actor
     from arbora.security.session import use_session
 
-    session = runtime._mint_process_session("http")
+    session = runtime._mint_process_session("http", JwksCache())
     with use_actor(session.actor), use_session(session):
         from arbora.mcp_server.served_engine import EngineHandles
 
@@ -489,7 +490,7 @@ async def _onboard_fleet(
     endpoints = configured_fleet_endpoints(exclude=self_served_connectors())
     if profile is not None:
         endpoints = select_endpoints(endpoints, profile)
-    session = runtime._mint_process_session("http")
+    session = runtime._mint_process_session("http", JwksCache())
     with use_actor(session.actor), use_session(session):
         from arbora.mcp_server.served_engine import EngineHandles
 
@@ -542,7 +543,7 @@ async def _check_fleet_coverage() -> dict[str, Any]:
     registered = registered_connectors(exclude=exclude)
     endpoints = configured_fleet_endpoints(exclude=exclude)
 
-    session = runtime._mint_process_session("http")
+    session = runtime._mint_process_session("http", JwksCache())
     with use_actor(session.actor), use_session(session):
         from arbora.mcp_server.served_engine import EngineHandles
 

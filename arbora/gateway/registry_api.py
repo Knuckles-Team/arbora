@@ -32,6 +32,7 @@ from arbora.fleet.discovery_authority import (
     DISCOVERY_AUTHORITY_OAUTH_GRANT,
     DISCOVERY_AUTHORITY_TENANT_LOCAL,
 )
+from arbora.security.key_cache import JwksCache
 from arbora.security.run_token import RunTokenSigner, TokenError
 
 logger = logging.getLogger(__name__)
@@ -415,6 +416,11 @@ _RESPONSE_MODELS: dict[str, tuple[Any, Any]] = {
 def _signer_of(request: Any) -> RunTokenSigner:
     """The run-token signer of the host that serves ``request``."""
     return request.app.state.host.authority.signer
+
+
+def _keys_of(request: Any) -> JwksCache:
+    """The key cache of the host that serves ``request``."""
+    return request.app.state.host.caches.jwks
 
 
 class CatalogUnavailable(RuntimeError):
@@ -805,7 +811,7 @@ def _rows_from_engine(raw: Any) -> list[dict[str, Any]]:
     return rows
 
 
-def _catalog_service_session() -> Any:
+def _catalog_service_session(keys: JwksCache) -> Any:
     """The fixed identity this deployment's catalog SQL RPC must run as.
 
     ROOT CAUSE (measured live 2026-08-25, D-catalog-503-human): the engine's
@@ -852,7 +858,7 @@ def _catalog_service_session() -> Any:
     from arbora.security.session import suspend_session
 
     with suspend_session():
-        return system_write_session()
+        return system_write_session(keys)
 
 
 def _log_catalog_exception(action: str, exc: BaseException) -> None:
@@ -880,7 +886,7 @@ def _log_catalog_exception(action: str, exc: BaseException) -> None:
     )
 
 
-def _require_sql_exec(engine: Any) -> Callable[[str], Any]:
+def _require_sql_exec(engine: Any, keys: JwksCache) -> Callable[[str], Any]:
     """Resolve the engine's write-capable SQL surface or fail closed.
 
     The returned callable executes under this deployment's fixed
@@ -896,7 +902,7 @@ def _require_sql_exec(engine: Any) -> Callable[[str], Any]:
     def _run_as_catalog_service(statement: str) -> Any:
         from arbora.security.session import use_session
 
-        with use_session(_catalog_service_session()):
+        with use_session(_catalog_service_session(keys)):
             return sql_exec(statement)
 
     return _run_as_catalog_service
@@ -1069,6 +1075,7 @@ def _authorized_count(
     grant_digests: tuple[str, ...],
     query: str,
     engine: Any,
+    keys: JwksCache,
 ) -> int:
     """``SELECT COUNT(*)`` for the total matching the same predicate as the
     page read, instead of counting a materialized Python list.
@@ -1082,7 +1089,7 @@ def _authorized_count(
     """
 
     spec = KIND_SPECS[kind]
-    sql_exec = _require_sql_exec(engine)
+    sql_exec = _require_sql_exec(engine, keys)
     where = _build_where(
         spec,
         tenant=tenant,
@@ -1167,13 +1174,14 @@ def authorized_page(
     after: tuple[str, str] | None,
     limit: int,
     engine: Any,
+    keys: JwksCache,
 ) -> list[dict[str, Any]]:
     """Read one keyset-paginated page: LIMIT/keyset/filter/authz all pushed
     into SQL, so a page of N rows transfers N rows over the wire, never the
     whole table."""
 
     spec = KIND_SPECS[kind]
-    sql_exec = _require_sql_exec(engine)
+    sql_exec = _require_sql_exec(engine, keys)
     where = _build_where(
         spec,
         tenant=tenant,
@@ -1219,12 +1227,13 @@ def _authorized_item(
     grant_digests: tuple[str, ...],
     item_id: str,
     engine: Any,
+    keys: JwksCache,
 ) -> dict[str, Any] | None:
     """Read at most one row by id, with the id predicate pushed into SQL
     rather than fetching the authorized set and filtering it in Python."""
 
     spec = KIND_SPECS[kind]
-    sql_exec = _require_sql_exec(engine)
+    sql_exec = _require_sql_exec(engine, keys)
     where = _build_where(
         spec, tenant=tenant, principal=principal, grant_digests=grant_digests, query=""
     )
@@ -1344,6 +1353,7 @@ async def _list_kind(
             after=after,
             limit=limit,
             engine=engine,
+            keys=_keys_of(request),
         )
         has_more = len(rows) > limit
         page_rows = rows[:limit]
@@ -1359,6 +1369,7 @@ async def _list_kind(
                 grant_digests=grant_digests,
                 query=query,
                 engine=engine,
+                keys=_keys_of(request),
             ),
         )
     except Exception as exc:
@@ -1436,7 +1447,9 @@ async def _list_servers(
     try:
         caller = _servers_caller(request)
         page = await FleetCatalogServersReader(
-            get_catalog_engine(request), _signer_of(request)
+            get_catalog_engine(request),
+            _signer_of(request),
+            _keys_of(request),
         ).list(caller, ServersPageRequest(limit=limit, query=query, cursor=cursor))
     except ServersRefused as refused:
         return JSONResponse(
@@ -1474,6 +1487,7 @@ async def _get_kind(
             grant_digests=grant_digests,
             item_id=item_id,
             engine=get_catalog_engine(request),
+            keys=_keys_of(request),
         )
     except Exception as exc:
         logging.getLogger(__name__).debug(
@@ -1637,6 +1651,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                 after=afters[kind],
                 limit=limit,
                 engine=engine,
+                keys=_keys_of(request),
             )
             has_more = len(rows) > limit
             page_rows = rows[:limit]
@@ -1652,6 +1667,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                     grant_digests=grant_digests,
                     query=query,
                     engine=engine,
+                    keys=_keys_of(request),
                 ),
             )
         except Exception as exc:  # explicit per-kind unavailable

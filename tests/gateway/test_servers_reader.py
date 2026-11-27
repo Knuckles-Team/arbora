@@ -17,6 +17,7 @@ from arbora.gateway.servers_reader import (
     ServersPageRequest,
     ServersRefused,
 )
+from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 from arbora.security.run_token import RunTokenSigner
 from arbora.security.session import ScopeError
@@ -72,8 +73,10 @@ def _session(tenant: str, principal: str, scopes: frozenset[str]) -> Any:
 def _host_app(secret: str) -> FastAPI:
     """An application over a host whose authority signs with ``secret``."""
     app = FastAPI()
-    authority = ProcessAuthority(lambda: secret)
-    app.state.host = SimpleNamespace(authority=authority)
+    authority = ProcessAuthority(token_secret=lambda: secret)
+    app.state.host = SimpleNamespace(
+        authority=authority, caches=SimpleNamespace(jwks=JwksCache())
+    )
     registry_api.register_registry_routes(app)
     return app
 
@@ -84,7 +87,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Any:
     import arbora.security.session as session_module
 
     monkeypatch.setattr(registry_api, "get_catalog_engine", lambda _request: object())
-    monkeypatch.setattr(registry_api, "_require_sql_exec", lambda _e: _sql)
+    monkeypatch.setattr(registry_api, "_require_sql_exec", lambda _e, _k: _sql)
     monkeypatch.setattr(session_module, "resolve_session", lambda: state["session"])
     app = _host_app("s" * 48)
     test_client = TestClient(app)
@@ -129,7 +132,9 @@ def test_refusals_leak_no_records(client: Any) -> None:
 @pytest.mark.spec("ARBORA-FLEET-R033.1")
 @pytest.mark.asyncio
 async def test_reader_refuses_before_any_read() -> None:
-    reader = FleetCatalogServersReader(object(), RunTokenSigner(lambda: "s" * 48))
+    reader = FleetCatalogServersReader(
+        object(), RunTokenSigner(lambda: "s" * 48), JwksCache()
+    )
     with pytest.raises(ServersRefused) as refused:
         await reader.list(
             ServersCaller("acme", "alice", frozenset()), ServersPageRequest(limit=5)
