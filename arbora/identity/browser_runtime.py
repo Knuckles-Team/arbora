@@ -5,7 +5,7 @@ import threading
 import time
 from typing import Any
 
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from .engine import IdentityUnavailable
 from .issuer import require_token_binding
@@ -14,6 +14,12 @@ from .ports import SessionState
 
 class _LoginResponse(JSONResponse):
     """Retain only this newly issued cookie for failed-delivery cleanup."""
+
+    _created_session: str
+
+
+class _LoginRedirect(RedirectResponse):
+    """A federated sign-in landing: the new cookie rides a redirect to the console."""
 
     _created_session: str
 
@@ -91,6 +97,7 @@ class BrowserAuthApplication:
         audit: Any = None,
         acting: Any = None,
         mail: Any = None,
+        federation: Any = None,
     ):
         from .account_ceremonies import AccountCeremonies
         from .mfa_ceremonies import MfaCeremonies, log_audit
@@ -101,6 +108,7 @@ class BrowserAuthApplication:
             client, graph, acting=acting, audit=sink, mail=mail
         )
         self.discovery = discovery
+        self.federation = federation
         self.client, self.authority = client, authority
         self.graph, self.origin = graph, origin
         self.issuer, self.caller = issuer, caller
@@ -159,16 +167,9 @@ class BrowserAuthApplication:
 
         if scope.get("method") == "GET" and scope.get("path") == "/auth/session":
             return await self._session(scope)
-        if scope.get("method") == "GET" and self.discovery is not None:
-            from starlette.responses import JSONResponse
-
-            published = {
-                "/.well-known/openid-configuration": self.discovery.document,
-                "/.well-known/jwks.json": self.discovery.jwks,
-            }
-            build = published.get(scope.get("path"))
-            if build is not None:
-                return JSONResponse(build())
+        answered = self._published(scope) or await self._federated(scope, receive)
+        if answered is not None:
+            return answered
         routes = self._routes()
         if scope.get("method") != "POST" or scope.get("path") not in routes:
             return Response(status_code=404)
@@ -210,6 +211,111 @@ class BrowserAuthApplication:
         )
         routes.update({path: self._account for path in ACCOUNT_ROUTES})
         return routes
+
+    def _published(self, scope: Any) -> Any:
+        """The issuer discovery documents, or ``None`` for any other request."""
+        if scope.get("method") != "GET" or self.discovery is None:
+            return None
+        published = {
+            "/.well-known/openid-configuration": self.discovery.document,
+            "/.well-known/jwks.json": self.discovery.jwks,
+        }
+        build = published.get(scope.get("path"))
+        return None if build is None else JSONResponse(build())
+
+    async def _federated(self, scope: Any, receive: Any) -> Any:
+        """The OIDC redirect, the OIDC callback and the SAML ACS (R009.2.3, R012.2.3.2).
+
+        They are entered by a provider's redirect or form post, so the exact-origin proof
+        of the POST routes does not apply; the host check, the one-use state and the
+        signed assertion are the proof. Every refusal is the one 401 of ``__call__``.
+        """
+        if self.federation is None:
+            return None
+        from arbora.pin_lag.medulla import PinLagUnavailable
+
+        from . import federated as fed
+
+        route = (scope.get("method"), scope.get("path"))
+        handlers = {
+            ("GET", fed.OIDC_LOGIN): self._oidc_login,
+            ("GET", fed.OIDC_CALLBACK): self._oidc_callback,
+            ("POST", fed.SAML_ACS): self._saml_acs,
+        }
+        handler = handlers.get(route)
+        if handler is None:
+            return None
+        self._require_host(scope)
+        try:
+            return await handler(scope, receive)
+        except PinLagUnavailable as missing:
+            return JSONResponse(
+                {"error": "UNAVAILABLE", "missing": missing.missing}, status_code=503
+            )
+
+    def _require_host(self, scope: Any) -> None:
+        from urllib.parse import urlsplit
+
+        from .browser import _headers
+
+        if scope.get("scheme") != "https" or _headers(scope, b"host") != (
+            urlsplit(self.origin).netloc.encode("ascii"),
+        ):
+            raise PermissionError("secure browser host required")
+
+    async def _oidc_login(self, scope: Any, receive: Any) -> Any:
+        query = _query_fields(scope)
+        url = await self.federation.oidc_start(query.get("provider"))
+        return RedirectResponse(url, status_code=303)
+
+    async def _oidc_callback(self, scope: Any, receive: Any) -> Any:
+        identity = await self.federation.oidc_complete(_query_fields(scope))
+        return await self._external(scope, identity)
+
+    async def _saml_acs(self, scope: Any, receive: Any) -> Any:
+        identity = await self.federation.saml_complete(
+            await _form_fields(scope, receive)
+        )
+        return await self._external(scope, identity)
+
+    async def _external(self, scope: Any, identity: Any) -> Any:
+        """Open the engine session of a verified external identity (``external_login``)."""
+        import secrets
+
+        from .approval_engine import identity_value
+
+        credential = secrets.token_urlsafe(32)
+        request: dict[str, Any] = {
+            "idp_id": identity.idp_id,
+            "subject": identity.subject,
+            "claims": identity.claims,
+            "session_token": credential,
+            "ip_prefix": _peer_prefix(scope),
+        }
+        if identity.username_hint:
+            request["username_hint"] = identity.username_hint
+        try:
+            result = await identity_value(
+                self.client,
+                self.graph,
+                {"family": "credential", "op": "external_login", "request": request},
+                "authenticate",
+            )
+            outcome = result.get("outcome") if isinstance(result, dict) else None
+            self.federation.audit(
+                identity.protocol, identity.idp_id, str(outcome), identity.rule_order
+            )
+            if outcome in ("mfa_required", "mfa_enrollment_required"):
+                return self._interim(credential, outcome)
+            if outcome != "ok":
+                raise PermissionError("external sign-in refused")
+            response = await self._complete(credential, landing=self.origin + "/")
+            if identity.hint:
+                response.headers.append("Set-Cookie", _hint_cookie(identity.hint))
+            return response
+        except BaseException:
+            await self._revoke(credential)
+            raise
 
     async def _login_route(self, scope: Any, receive: Any) -> Any:
         return await self._login(scope, await _login_body(scope, receive))
@@ -303,18 +409,19 @@ class BrowserAuthApplication:
         )
         return refusal if refusal is not None else await self._complete(credential)
 
-    async def _complete(self, credential: str) -> Any:
-        """Issue the full session response for a credential whose login is complete."""
-        from .browser import csrf_token_for, session_cookie_header
+    async def _complete(self, credential: str, landing: str | None = None) -> Any:
+        """Issue the full session response for a credential whose login is complete.
+
+        A federated sign-in passes ``landing`` and answers a redirect, not JSON.
+        """
+        from .browser import session_cookie_header
 
         token = await self.issuer.issue(credential)
         await self.caller(token, credential)
         state = await self.authority.resolve_session(credential)
         if not isinstance(state, SessionState) or state.resolution.kind != "human":
             raise PermissionError("human browser session required")
-        response = _LoginResponse(
-            {"outcome": "ok", "csrf_token": csrf_token_for(credential)}
-        )
+        response = _session_response(credential, landing)
         response.headers["Set-Cookie"] = session_cookie_header(
             credential,
             expires_at_ms=state.expires_at_ms,
@@ -350,7 +457,6 @@ class BrowserAuthApplication:
         return response
 
     async def _logout(self, scope: Any) -> Any:
-        from starlette.responses import Response
 
         from .approval_engine import identity_value
         from .browser import require_mutation_proof, session_from_scope
@@ -371,9 +477,23 @@ class BrowserAuthApplication:
             "done",
         )
         self._stop_leases(state, token)
-        response = Response(status_code=204)
+        response = _logout_response(await self._end_session_url(scope))
         _clear_cookie(response)
         return response
+
+    async def _end_session_url(self, scope: Any) -> str | None:
+        """The provider's logout URL with ``id_token_hint``, from the sign-in hint cookie."""
+        if self.federation is None:
+            return None
+        from .browser import _headers
+        from .federated import HINT_COOKIE
+
+        for header in _headers(scope, b"cookie"):
+            for part in header.decode("latin-1").split(";"):
+                name, _, value = part.strip().partition("=")
+                if name == HINT_COOKIE:
+                    return await self.federation.end_session_url(value)
+        return None
 
     def _stop_leases(self, state: Any, token: str | None) -> None:
         """Close every live run lease of the signed-out caller and audit it once."""
@@ -547,9 +667,14 @@ async def _login_body(scope: Any, receive: Any) -> dict[str, str]:
 
 def _clear_cookie(response: Any) -> None:
     from .browser import SESSION_COOKIE
+    from .federated import HINT_COOKIE
 
     response.headers["Set-Cookie"] = (
         f"{SESSION_COOKIE}=; Max-Age=0; Secure; HttpOnly; SameSite=Lax; Path=/"
+    )
+    response.headers.append(
+        "Set-Cookie",
+        f"{HINT_COOKIE}=; Max-Age=0; Secure; HttpOnly; SameSite=Lax; Path=/",
     )
 
 
@@ -575,3 +700,64 @@ def _peer_prefix(scope: Any) -> str | None:
         return str(ipaddress.ip_network(f"{address}/{prefix}", strict=False))
     except (ValueError, TypeError, IndexError):
         raise PermissionError("invalid browser peer") from None
+
+
+def _session_response(credential: str, landing: str | None) -> Any:
+    """The completed-login answer: a redirect for a federated landing, else JSON."""
+    from .browser import csrf_token_for
+
+    if landing:
+        return _LoginRedirect(landing, status_code=303)
+    return _LoginResponse({"outcome": "ok", "csrf_token": csrf_token_for(credential)})
+
+
+def _logout_response(end_session: str | None) -> Any:
+    """Signed out: the provider's logout URL when one was hinted, else no content."""
+    from starlette.responses import Response
+
+    if end_session:
+        return JSONResponse({"end_session_url": end_session})
+    return Response(status_code=204)
+
+
+def _hint_cookie(hint: str) -> str:
+    """The provider logout hint, held by the browser and never by Arbora."""
+    from .federated import HINT_COOKIE
+
+    return (
+        f"{HINT_COOKIE}={hint}; Max-Age=28800; Secure; HttpOnly; SameSite=Lax; Path=/"
+    )
+
+
+def _query_fields(scope: Any) -> dict[str, str]:
+    """The query's single-valued fields; a repeated field is refused."""
+    from urllib.parse import parse_qs
+
+    parsed = parse_qs(bytes(scope.get("query_string") or b"").decode("latin-1"))
+    if any(len(values) != 1 for values in parsed.values()):
+        raise PermissionError("repeated query field")
+    return {name: values[0] for name, values in parsed.items()}
+
+
+async def _form_fields(scope: Any, receive: Any) -> dict[str, str]:
+    """A bounded urlencoded body (an ACS form post) as single-valued fields."""
+    from urllib.parse import parse_qs
+
+    from .browser import _headers
+
+    if _headers(scope, b"content-type") != (b"application/x-www-form-urlencoded",):
+        raise PermissionError("form post required")
+    data = bytearray()
+    while True:
+        message = await receive()
+        if message.get("type") != "http.request":
+            raise PermissionError("form post interrupted")
+        data.extend(message.get("body", b""))
+        if len(data) > 1 << 20:
+            raise PermissionError("form post too large")
+        if not message.get("more_body"):
+            break
+    parsed = parse_qs(bytes(data).decode("latin-1"))
+    if any(len(values) != 1 for values in parsed.values()):
+        raise PermissionError("repeated form field")
+    return {name: values[0] for name, values in parsed.items()}
