@@ -186,9 +186,9 @@ def trusted_roots_from_config() -> frozenset[str]:
     """
     import json
 
-    from arbora.core.settings import setting
+    from arbora.core.environment import read_env
 
-    raw = setting("ACP_TRUSTED_ROOTS", "")
+    raw = read_env("ACP_TRUSTED_ROOTS")
     roots = json.loads(raw) if isinstance(raw, str) and raw else raw or []
     if not isinstance(roots, (list, tuple)) or not all(
         isinstance(root, str) and root.startswith("/") for root in roots

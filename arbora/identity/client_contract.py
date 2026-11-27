@@ -186,9 +186,9 @@ def _is_vendor_redirect(uri: str) -> bool:
 
 def configured_contract_config() -> ContractConfig | None:
     """The configured contract, or ``None`` when the feature is not configured."""
-    from arbora.security.settings import setting
+    from arbora.core.environment import read_env
 
-    raw = setting(CONFIG_KEY, "")
+    raw = read_env(CONFIG_KEY, "")
     if not raw:
         return None
     mapping = json.loads(raw) if isinstance(raw, str) else raw

@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
+from arbora.core.environment import read_env
+
 __all__ = [
     "CACHE_SKEW_SECONDS",
     "ClientEnrollment",
@@ -99,7 +101,7 @@ async def enroll_client(
 
 def _cache_file(client: str, directory: Path | None) -> Path:
     base = directory or Path(
-        os.environ.get("XDG_RUNTIME_DIR") or Path.home() / ".cache" / "arbora"
+        read_env("XDG_RUNTIME_DIR") or Path.home() / ".cache" / "arbora"
     )
     return base / f"token-{client}.json"
 

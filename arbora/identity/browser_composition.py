@@ -54,7 +54,8 @@ def configured_browser_boundary(
     request_dispatch: Any,
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
-    from arbora.core.settings import runtime_config, setting
+    from arbora.core.environment import read_env
+    from arbora.core.settings import runtime_config
     from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.settings import security_settings
 
@@ -76,8 +77,8 @@ def configured_browser_boundary(
         or not config.auth_jwt_jwks_uri
         or not config.auth_jwt_issuer
         or not config.auth_jwt_audience
-        or not setting("SECRETS_VAULT_URL", None)
-        or setting("SECRETS_BACKEND", "vault") != "vault"
+        or not read_env("SECRETS_VAULT_URL")
+        or read_env("SECRETS_BACKEND", "vault") != "vault"
     ):
         raise IdentityUnavailable(
             "EG browser requires configured HTTPS origin, JWT verifier and signing store"

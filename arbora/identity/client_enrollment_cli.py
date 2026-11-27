@@ -13,6 +13,7 @@ import sys
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.identity.client_enrollment import (
     ClientEnrollmentRefused,
     ProviderAdmin,
@@ -70,10 +71,9 @@ def _composed_ports(
     The config is the ``deploy.yml`` of the realm (``--config`` or ``ARBORA_DEPLOY_CONFIG``).
     An absent or unreadable config leaves the port unset, so the command fails closed.
     """
-    import os
     from pathlib import Path
 
-    path = config_path or os.environ.get("ARBORA_DEPLOY_CONFIG")
+    path = config_path or read_env("ARBORA_DEPLOY_CONFIG")
     if not path:
         return provider, secrets
     try:

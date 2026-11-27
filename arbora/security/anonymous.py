@@ -31,13 +31,12 @@ def indicator() -> dict[str, str]:
     acknowledgement is set, because anyone who can reach the port is then an
     administrator, and ``warn`` otherwise (ARBORA-IDENTITY-R004.2).
     """
-    import os
-
+    from arbora.core.environment import read_env
     from arbora.core.settings import runtime_config
 
     if runtime_config.arbora_auth_mode != "none":
         return {}
-    exposed = bool(os.environ.get("ARBORA_AUTH_NONE_EXPOSE"))
+    exposed = bool(read_env("ARBORA_AUTH_NONE_EXPOSE"))
     return {
         "mode": "anonymous_local",
         "principal": PRINCIPAL,
@@ -108,7 +107,7 @@ def _validate_transport(args: Any) -> None:
 
 def _validate_credentials(config: Any) -> None:
     """Keep configured identity and engine secrets out of tokenless mode."""
-    from arbora.core.settings import setting
+    from arbora.core.environment import read_env
 
     fields = (
         "auth_jwt_jwks_uri",
@@ -119,9 +118,7 @@ def _validate_credentials(config: Any) -> None:
     )
     if any(getattr(config, field, None) for field in fields):
         raise ValueError("Anonymous mode conflicts with credential configuration")
-    if setting("GRAPH_SERVICE_AUTH_SECRET", "") or setting(
-        "MEDULLA_SIGNER_KEYS_JSON", ""
-    ):
+    if read_env("GRAPH_SERVICE_AUTH_SECRET") or read_env("MEDULLA_SIGNER_KEYS_JSON"):
         raise ValueError("Anonymous mode must not configure engine secrets")
 
 

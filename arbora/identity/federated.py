@@ -454,10 +454,10 @@ def federation_from_settings(
     client: Any, graph: str, origin: str, *, saml_reader: Any = None
 ) -> Federation | None:
     """A ``Federation`` when providers are configured, else ``None`` (the routes are absent)."""
-    from arbora.core.settings import setting
+    from arbora.core.environment import read_env
 
-    oidc = oidc_providers(str(setting("ARBORA_IDENTITY_OIDC_PROVIDERS", "") or ""))
-    saml = saml_providers(str(setting("ARBORA_IDENTITY_SAML_PROVIDERS", "") or ""))
+    oidc = oidc_providers(str(read_env("ARBORA_IDENTITY_OIDC_PROVIDERS") or ""))
+    saml = saml_providers(str(read_env("ARBORA_IDENTITY_SAML_PROVIDERS") or ""))
     if not oidc and not saml:
         return None
     from .oidc_transport import HttpOidcTransport

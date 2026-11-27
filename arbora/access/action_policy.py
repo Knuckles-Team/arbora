@@ -60,7 +60,7 @@ from typing import Any, ClassVar
 
 from arbora.access.approval_leases import file_approval, granted_approval
 from arbora.access.assurance import verify_action
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.unique_records import create_record
 
 logger = logging.getLogger(__name__)
@@ -656,7 +656,7 @@ class ActionPolicy:
         self.engine = engine
         self._ports = ports if ports is not None else ActionPolicyPorts()
         if policy_path is None:
-            policy_path = str(setting("ACTION_POLICY_PATH", "") or "") or None
+            policy_path = str(read_env("ACTION_POLICY_PATH") or "") or None
         self.policy_path = resolve_policy_path(
             str(policy_path) if policy_path else None
         )
@@ -665,7 +665,7 @@ class ActionPolicy:
         # shipped behavior is unchanged). When on, an irreversible action that the
         # tier would auto-execute is downgraded to a human approval.
         self._irreversibility_aversion = bool(
-            setting("ACTION_IRREVERSIBILITY_AVERSION", False, cast=bool)
+            read_env("ACTION_IRREVERSIBILITY_AVERSION")
         )
 
     def qualified_source_revision(self) -> str:

@@ -12,7 +12,9 @@ import asyncio
 import hashlib
 import hmac
 import json
+import os
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -205,18 +207,14 @@ def test_backoff_is_capped_and_a_private_resolution_at_delivery_is_never_posted(
 
 
 @pytest.mark.spec("ARBORA-A2A-R013.2")
-def test_settings_are_clamped_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
-    from arbora.core import settings
-
+def test_settings_are_clamped_configuration() -> None:
     values = {
         "A2A_PUSH_MAX_ATTEMPTS": "99",
         "A2A_PUSH_BACKOFF_BASE_S": "0",
         "A2A_PUSH_ALLOWED_PRIVATE_HOSTS": "Hooks.Example.Test, other.example.test",
     }
-    monkeypatch.setattr(
-        settings, "setting", lambda name, default="": values.get(name, default)
-    )
-    config = PushSettings.from_config()
+    with patch.dict(os.environ, values):
+        config = PushSettings.from_config()
     assert (config.max_attempts, config.backoff_base_s) == (20, 1)
     assert config.backoff_cap_s == 600 and config.timeout_s == 10
     assert config.allowed_private_hosts == ("hooks.example.test", "other.example.test")

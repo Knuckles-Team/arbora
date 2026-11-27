@@ -69,7 +69,7 @@ import anyio
 import httpx
 from fastmcp.utilities.logging import get_logger
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env, read_reference
 from arbora.security.log_redaction import redact_for_log
 
 logger = get_logger(name="MultiplexerClientAuth")
@@ -98,7 +98,7 @@ _SECRET_REF_RE = re.compile(r"^(?:env|secret|vault)://[A-Za-z0-9_./#-]+$")
 
 def _configured_text(name: str) -> str:
     """Read one canonical AgentConfig/XDG projection as normalized text."""
-    return str(setting(name, "") or "").strip()
+    return str(read_env(name, "") or "").strip()
 
 
 def _runtime_secret_reference(ref_name: str) -> str | None:
@@ -121,7 +121,7 @@ def _resolve_env_secret(target: str) -> str:
     """
     if not target or target[0].isdigit() or not target.replace("_", "a").isalnum():
         raise RuntimeError("outbound MCP credential reference is invalid")
-    return str(setting(target, "") or "")
+    return str(read_reference(target))
 
 
 def _resolve_vault_secret(ref: str) -> str:
@@ -159,7 +159,7 @@ def _auth_mode() -> str:
     An unrecognized value is a configuration error; a typo must not silently
     disable authentication.
     """
-    mode = str(setting("MCP_CLIENT_AUTH", _MODE_NONE) or _MODE_NONE).strip().lower()
+    mode = str(read_env("MCP_CLIENT_AUTH", _MODE_NONE) or _MODE_NONE).strip().lower()
     if mode in (_MODE_OIDC, _MODE_BASIC, _MODE_ROTATING_FILE_BEARER, _MODE_NONE):
         return mode
     raise RuntimeError("MCP_CLIENT_AUTH has an unsupported value")
@@ -555,7 +555,7 @@ def get_provider() -> ClientCredentialsTokenProvider | None:
             client_id=client_id,
             client_secret=client_secret,
             audience=audience,
-            scope=setting("OIDC_SCOPE", None) or None,
+            scope=read_env("OIDC_SCOPE") or None,
         )
         return _provider
 

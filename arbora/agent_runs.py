@@ -23,7 +23,6 @@ import hashlib
 import inspect
 import json
 import logging
-import os
 import uuid
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
@@ -37,6 +36,7 @@ from arbora.api.contracts.agent_control_contracts import (
     AgentExecutionRequest,
     AgentExecutionResult,
 )
+from arbora.core.environment import read_reference
 from arbora.run_origin import RunOriginRegistry
 from arbora.security.session import GraphSession
 
@@ -414,7 +414,7 @@ def resolve_model(model_id: str) -> Any:
     api_key_env = str(entry.get("api_key_env") or "")
     provider = OpenAIProvider(
         base_url=str(entry["base_url"]),
-        api_key=os.environ.get(api_key_env, "") if api_key_env else None,
+        api_key=read_reference(api_key_env) if api_key_env else None,
     )
     return OpenAIChatModel(str(entry.get("model") or model_id), provider=provider)
 

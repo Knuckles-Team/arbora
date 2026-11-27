@@ -19,7 +19,7 @@ import secrets
 import time
 from dataclasses import dataclass
 
-from arbora.security.settings import setting
+from arbora.core.environment import read_env
 
 # Per-process signing-secret fallback used ONLY when delegated identity is off (dev/test/
 # legacy). It is a RANDOM 256-bit value, minted once per process — NOT derived from the PID.
@@ -47,7 +47,7 @@ def _secret() -> bytes:
     3. Otherwise (delegation off/warn), a random per-process ephemeral (stable within the
        process so mint/validate agree; never persisted, never PID-derived).
     """
-    val = setting("ARBORA_TOKEN_SECRET")
+    val = read_env("ARBORA_TOKEN_SECRET")
     if val:
         return val.encode()
 
@@ -78,7 +78,7 @@ def require_token_secret() -> None:
     """
     from arbora.security.delegation import DelegationMode, delegation_mode
 
-    if delegation_mode() is DelegationMode.ON and not setting("ARBORA_TOKEN_SECRET"):
+    if delegation_mode() is DelegationMode.ON and not read_env("ARBORA_TOKEN_SECRET"):
         raise RunTokenSecretUnavailable(
             "ENABLE_DELEGATED_IDENTITY=on requires ARBORA_TOKEN_SECRET to resolve "
             "from the secrets backend before startup (no PID-derived fallback exists)."

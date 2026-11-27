@@ -18,7 +18,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.security.settings import setting
+from arbora.core.environment import read_env, read_reference
 
 logger = logging.getLogger(__name__)
 
@@ -216,9 +216,9 @@ class VaultBackend(SecretsBackend):
         self._path_prefix = path_prefix.rstrip("/") if path_prefix else None
         self._auth_method = auth_method
         self._auth_mount = auth_mount
-        self._role = role or setting("VAULT_ROLE", "default")
-        self._role_id = role_id or setting("VAULT_ROLE_ID")
-        self._secret_id = secret_id or setting("VAULT_SECRET_ID")
+        self._role = role or read_env("VAULT_ROLE", "default")
+        self._role_id = role_id or read_env("VAULT_ROLE_ID")
+        self._secret_id = secret_id or read_env("VAULT_SECRET_ID")
         self._k8s_sa_token_path = (
             k8s_sa_token_path or "/var/run/secrets/kubernetes.io/serviceaccount/token"
         )
@@ -226,7 +226,7 @@ class VaultBackend(SecretsBackend):
         self._token_auth_time: float = 0.0
 
         # Initialise hvac client — may not have a token yet
-        static_token = token or setting("VAULT_TOKEN")
+        static_token = token or read_env("VAULT_TOKEN")
         self._client = hvac.Client(url=url, token=static_token)
 
         # Authenticate using the configured method
@@ -546,7 +546,7 @@ class SecretsClient:
             if not target.replace("_", "a").isalnum() or target[0].isdigit():
                 raise ValueError("runtime secret reference is invalid")
             var_name = target
-            return setting(var_name)
+            return read_reference(var_name, None)
         if not all(
             character.isalnum() or character in "_./#@-" for character in target
         ):
@@ -632,19 +632,16 @@ def create_secrets_client(config: SecretsConfig | None = None) -> SecretsClient:
     """
     if config is None:
         config = SecretsConfig(
-            backend=setting("SECRETS_BACKEND", "vault"),
-            vault_url=setting("SECRETS_VAULT_URL"),
-            vault_mount=setting("SECRETS_VAULT_MOUNT", "secret"),
-            vault_auth_method=setting("VAULT_AUTH_METHOD", "auto"),
-            vault_auth_mount=setting("VAULT_AUTH_MOUNT", "jwt"),
-            vault_role=setting("VAULT_ROLE"),
-            vault_path_prefix=setting("VAULT_PATH_PREFIX"),
-            vault_role_id=setting("VAULT_ROLE_ID"),
-            vault_secret_id=setting("VAULT_SECRET_ID"),
-            vault_k8s_sa_token_path=setting(
-                "VAULT_K8S_SA_TOKEN_PATH",
-                "/var/run/secrets/kubernetes.io/serviceaccount/token",
-            ),
+            backend=read_env("SECRETS_BACKEND", "vault"),
+            vault_url=read_env("SECRETS_VAULT_URL"),
+            vault_mount=read_env("SECRETS_VAULT_MOUNT"),
+            vault_auth_method=read_env("VAULT_AUTH_METHOD"),
+            vault_auth_mount=read_env("VAULT_AUTH_MOUNT"),
+            vault_role=read_env("VAULT_ROLE"),
+            vault_path_prefix=read_env("VAULT_PATH_PREFIX"),
+            vault_role_id=read_env("VAULT_ROLE_ID"),
+            vault_secret_id=read_env("VAULT_SECRET_ID"),
+            vault_k8s_sa_token_path=read_env("VAULT_K8S_SA_TOKEN_PATH"),
         )
 
     url = config.vault_url or "http://127.0.0.1:8200"

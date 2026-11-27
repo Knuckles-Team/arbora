@@ -153,6 +153,6 @@ class EngineHarnessConfigDecider:
 
 
 def _configured_timeout() -> Any:
-    from arbora.core.settings import setting
+    from arbora.core.environment import read_env
 
-    return setting("A2A_ENGINE_DECISION_TIMEOUT_S", "10")
+    return read_env("A2A_ENGINE_DECISION_TIMEOUT_S")

@@ -19,6 +19,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Literal, get_args, get_origin
 
+from arbora.core.environment_names import NAMES
 from arbora.core.settings import ArboraConfig, credential_shaped
 
 __all__ = [
@@ -40,7 +41,7 @@ __all__ = [
 
 SCHEMA_VERSION = 1
 ARBORA_COMPONENT = "arbora"
-_TYPES = frozenset({"string", "int", "bool", "secret_reference", "enum"})
+_TYPES = frozenset({"string", "int", "float", "bool", "secret_reference", "enum"})
 _CONDITION = re.compile(r"^when:([A-Za-z][A-Za-z0-9_]*)$")
 _SECRET = re.compile(r"^(env|vault|openbao|file|secret)://", re.IGNORECASE)
 _TRUE = frozenset({"1", "true", "yes", "on"})
@@ -75,6 +76,8 @@ class EnvironmentDeclaration:
     call_sites: tuple[str, ...]
     source_revision: str = ""
     schema_version: int = SCHEMA_VERSION
+    #: The spec row that owns the variable (``ARBORA-HOST-R010.2``); empty for owners'.
+    owner_row: str = ""
 
     def row(self) -> list[Any]:
         return [
@@ -111,30 +114,27 @@ def _digest(value: object) -> str:
 
 # --- Arbora's own declarations ---------------------------------------------------
 
-#: Reads outside ``ArboraConfig``: name, type, call site. The census keeps this exact.
-_OTHER_READS: tuple[tuple[str, str, str], ...] = (
-    ("ARBORA_AUTH_NONE_EXPOSE", "bool", "arbora.security.anonymous"),
-    ("ARBORA_DEPLOYED_WORKTREE", "string", "arbora.deployment.deployed_source"),
-    ("ARBORA_DEPLOY_CONFIG", "string", "arbora.identity.client_enrollment_cli"),
-    ("ARBORA_MCP_TASK_CHANNEL_SECRET", "secret_reference", "arbora.fleet.multiplexer"),
-    ("ARBORA_PLUGIN_FILE_STORE", "string", "arbora.harness_plugins.login"),
-    ("ARBORA_PLUGIN_SKILL_ROOTS", "string", "arbora.harness_plugins.cli"),
-    ("ARBORA_PUBLIC_URL", "string", "arbora.harness_plugins.cli"),
-    ("ARBORA_SOURCE_REPO", "string", "arbora.deployment.deployed_source"),
-    ("ARBORA_TOKEN", "secret_reference", "arbora.deployment.cli"),
-    ("ARBORA_URL", "string", "arbora.deployment.cli"),
-    ("ARBORA_WEBUI_PORT", "int", "arbora.webui_host.webui_co_service"),
-    ("HOME", "string", "arbora.harness_plugins.cli"),
-    ("XDG_CACHE_HOME", "string", "arbora.harness_plugins.cli"),
-    ("XDG_CONFIG_HOME", "string", "arbora.harness_plugins.install"),
-    ("XDG_RUNTIME_DIR", "string", "arbora.identity.client_enrollment"),
+#: Reads outside ``ArboraConfig``: name, type, first call site. The table is
+#: ``arbora.core.environment_names.NAMES``; the census keeps it exact.
+_OTHER_READS: tuple[tuple[str, str, str], ...] = tuple(
+    (name, kind, sites[0]) for name, kind, _d, _o, sites, _s in NAMES
 )
 
 #: Reads whose name arrives from the caller. The caller's literal names are declared on
 #: their own, so a pass-through reader adds no declaration.
 _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
     {
+        ("arbora/a2a/push.py", "name"),
         ("arbora/agent_runs.py", "api_key_env"),
+        ("arbora/core/environment.py", "name"),
+        ("arbora/core/settings.py", "name"),
+        ("arbora/identity/deployment_settings.py", "name"),
+        ("arbora/observability/runtime_health.py", "CONFIG_KEY"),
+        ("arbora/security/client_credentials.py", "name"),
+        ("arbora/security/client_credentials.py", "ref_name"),
+        ("arbora/security/client_credentials.py", "target"),
+        ("arbora/security/secrets.py", "var_name"),
+        ("arbora/security/settings.py", "key"),
         ("arbora/core/settings.py", "str(info.alias)"),
         ("arbora/core/settings.py", "alias"),
         ("arbora/core/settings.py", "env_key"),
@@ -193,12 +193,13 @@ def _arbora_other_declarations(revision: str) -> list[EnvironmentDeclaration]:
             component=ARBORA_COMPONENT,
             type=kind,
             required_when="optional",
-            default=None,
-            sensitive=kind == "secret_reference",
-            call_sites=(site,),
+            default=default,
+            sensitive=sensitive,
+            call_sites=sites,
             source_revision=revision,
+            owner_row=owner,
         )
-        for name, kind, site in _OTHER_READS
+        for name, kind, default, owner, sites, sensitive in NAMES
     ]
 
 
@@ -333,7 +334,20 @@ class EnvironmentRead:
         return f"{self.path}:{self.line}"
 
 
-_READ_CALLS = frozenset({"os.environ.get", "os.getenv", "os.environ.pop"})
+_READ_CALLS = frozenset(
+    {"os.environ.get", "os.getenv", "os.environ.pop", "read_env", "read_text"}
+)
+#: Helpers that pass their first argument to the accessor, by module: a call with a
+#: literal (or a module constant) is a read of that name.
+_READ_HELPERS: dict[str, frozenset[str]] = {
+    "arbora/a2a/push.py": frozenset({"number"}),
+    "arbora/core/settings.py": frozenset({"_env_dir"}),
+    "arbora/identity/deployment_settings.py": frozenset({"_text"}),
+    "arbora/security/client_credentials.py": frozenset(
+        {"_configured_text", "_runtime_secret_reference"}
+    ),
+    "arbora/security/settings.py": frozenset({"_text", "_list", "_mapping"}),
+}
 
 
 def _constants(tree: ast.AST) -> dict[str, str]:
@@ -348,9 +362,12 @@ def _constants(tree: ast.AST) -> dict[str, str]:
     }
 
 
-def _name_argument(node: ast.AST) -> ast.expr | None:
+def _name_argument(
+    node: ast.AST, helpers: frozenset[str] = frozenset()
+) -> ast.expr | None:
     if isinstance(node, ast.Call) and node.args:
-        return node.args[0] if ast.unparse(node.func) in _READ_CALLS else None
+        callee = ast.unparse(node.func)
+        return node.args[0] if callee in _READ_CALLS | helpers else None
     if (
         isinstance(node, ast.Subscript)
         and isinstance(node.ctx, ast.Load)
@@ -365,7 +382,7 @@ def _file_reads(path: str, source: str) -> list[EnvironmentRead]:
     constants = _constants(tree)
     reads: list[EnvironmentRead] = []
     for node in ast.walk(tree):
-        arg = _name_argument(node)
+        arg = _name_argument(node, _READ_HELPERS.get(path, frozenset()))
         if arg is None:
             continue
         if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
@@ -435,14 +452,21 @@ def _truthy(environ: Mapping[str, str], name: str) -> bool:
     return environ.get(name, "").strip().lower() in _TRUE
 
 
+_PATTERNS: dict[str, re.Pattern[str]] = {
+    "int": re.compile(r"[+-]?\d+"),
+    "float": re.compile(r"[+-]?\d+(\.\d+)?"),
+    "bool": re.compile("|".join(sorted(_TRUE | _FALSE)), re.IGNORECASE),
+    "secret_reference": _SECRET,
+}
+
+
 def _valid(kind: str, text: str) -> bool:
-    if kind == "int":
-        return re.fullmatch(r"[+-]?\d+", text.strip()) is not None
-    if kind == "bool":
-        return text.strip().lower() in _TRUE | _FALSE
-    if kind == "secret_reference":
-        return _SECRET.match(text) is not None
-    return True
+    pattern = _PATTERNS.get(kind)
+    if pattern is None:
+        return True
+    return pattern.fullmatch(text.strip()) is not None or (
+        kind == "secret_reference" and _SECRET.match(text) is not None
+    )
 
 
 def _check_defaults(manifest: HostEnvironmentManifest) -> list[str]:

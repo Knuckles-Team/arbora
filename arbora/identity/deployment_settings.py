@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 ISSUER_ENV = "ARBORA_IDENTITY_ISSUER"
 TENANT_ENV = "ARBORA_IDENTITY_TENANT"
@@ -35,7 +35,7 @@ class IdentityDeployment:
 
 
 def _text(name: str) -> str | None:
-    value = str(setting(name, "") or "").strip()
+    value = str(read_env(name, "") or "").strip()
     return value or None
 
 
