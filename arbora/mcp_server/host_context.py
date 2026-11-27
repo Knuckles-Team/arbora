@@ -17,6 +17,7 @@ from arbora.a2a.service import A2AService
 from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
 from arbora.agent_host.host_port_adapters import HostPortsSlot
+from arbora.browser_control.browser_state import BrowserState
 from arbora.fleet.state import FleetState
 from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.served_engine import EngineHandles
@@ -54,6 +55,7 @@ class HostContext:
     policy: PolicyState
     engine: EngineHandles
     caches: HostCaches
+    browser: BrowserState
 
 
 def build_host_context() -> HostContext:
@@ -91,6 +93,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         ),
         engine=engine,
         caches=caches,
+        browser=BrowserState(),
     )
 
 

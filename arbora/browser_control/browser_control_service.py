@@ -30,6 +30,7 @@ from arbora.browser_control.browser_control_proposals import (
 )
 from arbora.browser_control.browser_control_provenance import BrowserProvenanceMixin
 from arbora.browser_control.browser_control_state import _ActiveCall, _ChannelState
+from arbora.browser_control.browser_state import BrowserState
 from arbora.observability.langfuse_exporter import get_langfuse_exporter
 
 SyncRunner = Callable[[Callable[[], Any]], Awaitable[Any]]
@@ -67,6 +68,7 @@ class BrowserControlService(
         self,
         engine: Any,
         *,
+        browser: BrowserState,
         sync_runner: SyncRunner,
         session_revalidator: SessionRevalidator,
         action_policy: PolicyGate,
@@ -80,6 +82,7 @@ class BrowserControlService(
         if control_authority(engine) is None:
             raise ValueError("engine lacks native browser-control authorities")
         self._engine = engine
+        self._browser = browser
         self._authority = cast(Any, control_authority(engine))
         self._sync_runner = sync_runner
         self._session_revalidator = session_revalidator
@@ -164,6 +167,7 @@ def browser_control_factory_kwargs(
     engine: Any,
     sync_runner: SyncRunner,
     *,
+    browser: BrowserState,
     action_policy: PolicyGate,
     session_revalidator: SessionRevalidator | None = None,
 ) -> dict[str, Any]:
@@ -191,6 +195,7 @@ def browser_control_factory_kwargs(
     try:
         service = BrowserControlService(
             engine,
+            browser=browser,
             sync_runner=sync_runner,
             session_revalidator=session_revalidator,
             action_policy=action_policy,

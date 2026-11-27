@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.browser_control.browser_state import BrowserState
 from arbora.mcp_server import composition
 from arbora.mcp_server.composition import CompositionPlan, start_composed_services
 from arbora.mcp_server.host_caches import ToolTable
@@ -53,6 +54,7 @@ def test_live_start_calls_start_composed_services_with_detected_composition(
         engine,
         action_policies=ActionPolicies(),
         tools=ToolTable(),
+        browser=BrowserState(),
         messaging_intake_enabled=True,
         served_network=True,
     )

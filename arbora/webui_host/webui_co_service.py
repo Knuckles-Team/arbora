@@ -44,6 +44,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from arbora.access.action_policy import ActionPolicies
+    from arbora.browser_control.browser_state import BrowserState
 from arbora.core.environment import default_env, read_env
 
 __all__ = ["compose_web_application", "run_web_ui"]
@@ -86,18 +87,13 @@ async def _serve_until_stopped(
     server: Any,
     stop_event: threading.Event,
     browser_control_service: Any,
-    register_browser_control_service: Any,
-    unregister_browser_control_service: Any,
+    browser: BrowserState,
 ) -> None:
     import asyncio
 
     if browser_control_service is not None:
-        register_browser_control_service(browser_control_service)
-        from arbora.browser_control.browser_control_runtime import (
-            bind_browser_control_owner,
-        )
-
-        bind_browser_control_owner(browser_control_service)
+        browser.register(browser_control_service)
+        browser.bind_owner(browser_control_service)
     task = asyncio.ensure_future(server.serve())
     try:
         while not stop_event.is_set() and not task.done():
@@ -108,7 +104,7 @@ async def _serve_until_stopped(
             await task
         finally:
             if browser_control_service is not None:
-                unregister_browser_control_service(browser_control_service)
+                browser.unregister(browser_control_service)
 
 
 def run_web_ui(
@@ -117,6 +113,7 @@ def run_web_ui(
     action_policies: ActionPolicies,
     engine: Any,
     tools: Mapping[str, Any],
+    browser: BrowserState,
     host: str | None = None,
     port: int | None = None,
     session_boundary: Any = None,
@@ -195,10 +192,6 @@ def run_web_ui(
     # measurement, this path: 11 seconds to a built app.
     from pydantic_ai import Agent
 
-    from arbora.browser_control.browser_control_runtime import (
-        register_browser_control_service,
-        unregister_browser_control_service,
-    )
     from arbora.browser_control.browser_control_service import (
         browser_control_factory_kwargs,
     )
@@ -223,6 +216,7 @@ def run_web_ui(
         create_agent_web_app,
         engine,
         lambda operation: invoke_governed_helper(operation, deadline=10.0),
+        browser=browser,
         action_policy=action_policies.for_engine(engine),
         session_revalidator=revalidate_browser_control_session,
     )
@@ -272,7 +266,6 @@ def run_web_ui(
             server,
             stop_event,
             browser_control_service,
-            register_browser_control_service,
-            unregister_browser_control_service,
+            browser,
         )
     )

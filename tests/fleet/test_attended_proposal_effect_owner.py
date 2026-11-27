@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import copy
 import time
+from functools import partial
 from typing import Any
 
 import pytest
@@ -16,6 +17,7 @@ from arbora.api.mcp.caller import caller_from_session
 from arbora.api.registry import Surface
 from arbora.browser_control.browser_control_client import ControlResultMessage
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
+from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import runtime_config
 from arbora.mcp_server.effect_journal import EgEffectJournal
 from arbora.mcp_server.served_invocation import (
@@ -153,7 +155,9 @@ def _composed_authority(
         graph=session.graph,
         process_session=lambda: session,
         action_policies=ActionPolicies(),
-        bindings={"browser_control": dispatch_browser_operation},
+        bindings={
+            "browser_control": partial(dispatch_browser_operation, BrowserState())
+        },
         fleet_effect=refused_fleet_effect,
     )
     return session, client, invocation.services

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.browser_control.browser_state import BrowserState
 from arbora.identity.engine import IdentityUnavailable
 from arbora.mcp_server.browser_composition import configured_browser_boundary
 from arbora.mcp_server.host_caches import ToolTable
@@ -35,6 +36,7 @@ def test_missing_secure_deployment_prerequisites_refuse(monkeypatch, origin):
             tenant="fixture-tenant",
             broker_claims=lambda: {},
             request_dispatch=object(),
+            browser=BrowserState(),
         )
 
 
@@ -62,11 +64,14 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     )
     policies = ActionPolicies()
     tools = ToolTable()
+    browser = BrowserState()
+    engine = object()
     composition.start_composed_services(
         object(),
-        object(),
+        engine,
         action_policies=policies,
         tools=tools,
+        browser=browser,
         session_boundary=boundary,
     )
     assert calls == [
@@ -74,7 +79,9 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
             "fixture-stop",
             {
                 "action_policies": policies,
+                "engine": engine,
                 "tools": tools,
+                "browser": browser,
                 "session_boundary": boundary,
             },
         )
@@ -285,6 +292,7 @@ def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
         object(),
         action_policies=ActionPolicies(),
         tools=ToolTable(),
+        browser=BrowserState(),
         session_boundary=boundary,
     )
     assert handed == [boundary] and handed[0] is boundary

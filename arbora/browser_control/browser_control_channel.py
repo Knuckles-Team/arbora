@@ -120,11 +120,7 @@ class BrowserChannelMixin(BrowserControlMixinState):
     ) -> BrowserControlConnection:
         """Attach one attended, server-verified document channel."""
 
-        from arbora.browser_control.browser_control_runtime import (
-            bind_browser_control_owner,
-        )
-
-        bind_browser_control_owner(self)
+        self._browser.bind_owner(self)
         if not callable(send):
             raise TypeError("browser channel sender must be callable")
         binding = _coerce_binding(binding)

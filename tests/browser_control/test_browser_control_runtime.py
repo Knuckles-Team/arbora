@@ -12,17 +12,17 @@ import pytest
 
 from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.browser_control.browser_control_runtime import (
-    bind_browser_control_owner,
     dispatch_browser_control,
-    register_browser_control_service,
-    unregister_browser_control_service,
 )
+from arbora.browser_control.browser_state import BrowserState
 from arbora.security.actor_context import ActorContext, ActorType
 from arbora.security.session import (
     GraphSession,
     current_session,
     use_session,
 )
+
+_BROWSER = BrowserState()
 
 
 class _Service:
@@ -75,12 +75,12 @@ async def test_foreign_loop_dispatch_preserves_verified_session(
         owner_loop.run_forever()
 
     thread = threading.Thread(target=serve, daemon=True)
-    register_browser_control_service(service)
+    _BROWSER.register(service)
     thread.start()
     assert await asyncio.to_thread(ready.wait, 1.0)
 
     def bind() -> None:
-        bind_browser_control_owner(service)
+        _BROWSER.bind_owner(service)
         bound.set()
 
     owner_loop.call_soon_threadsafe(bind)
@@ -88,6 +88,7 @@ async def test_foreign_loop_dispatch_preserves_verified_session(
     try:
         with use_session(session):
             receipt = await dispatch_browser_control(
+                _BROWSER,
                 "issue_lease",
                 {
                     "document_ref": "document_" + "a" * 64,
@@ -99,7 +100,7 @@ async def test_foreign_loop_dispatch_preserves_verified_session(
         assert receipt.status == "active"
         assert service.seen_session == session
     finally:
-        unregister_browser_control_service(service)
+        _BROWSER.unregister(service)
         owner_loop.call_soon_threadsafe(owner_loop.stop)
         await asyncio.to_thread(thread.join, 1.0)
         owner_loop.close()
@@ -111,12 +112,13 @@ async def test_runtime_refuses_replacement_and_unbound_caller(
 ) -> None:
     first = _Service()
     second = _Service()
-    register_browser_control_service(first)
+    _BROWSER.register(first)
     try:
         with pytest.raises(RuntimeError, match="different live"):
-            register_browser_control_service(second)
+            _BROWSER.register(second)
         with use_session(session), pytest.raises(RuntimeError, match="not attached"):
             await dispatch_browser_control(
+                _BROWSER,
                 "issue_lease",
                 {
                     "document_ref": "document_" + "a" * 64,
@@ -125,18 +127,19 @@ async def test_runtime_refuses_replacement_and_unbound_caller(
                 },
             )
     finally:
-        unregister_browser_control_service(first)
+        _BROWSER.unregister(first)
 
 
 @pytest.mark.asyncio
 async def test_runtime_requires_write_scope(session: GraphSession) -> None:
     service = _Service()
-    register_browser_control_service(service)
-    bind_browser_control_owner(service)
+    _BROWSER.register(service)
+    _BROWSER.bind_owner(service)
     try:
         read_only = replace(session, scopes=frozenset({"kg:read"}))
         with use_session(read_only), pytest.raises(PermissionError):
             await dispatch_browser_control(
+                _BROWSER,
                 "issue_lease",
                 {
                     "document_ref": "document_" + "a" * 64,
@@ -145,7 +148,7 @@ async def test_runtime_requires_write_scope(session: GraphSession) -> None:
                 },
             )
     finally:
-        unregister_browser_control_service(service)
+        _BROWSER.unregister(service)
 
 
 def test_both_production_webui_compositions_inject_the_same_authority() -> None:
@@ -154,8 +157,8 @@ def test_both_production_webui_compositions_inject_the_same_authority() -> None:
     source = Path(webui_co_service.__file__).read_text(encoding="utf-8")
     assert "browser_control_factory_kwargs(" in source
     assert "**browser_control_kwargs" in source
-    assert "register_browser_control_service(" in source
-    assert "unregister_browser_control_service(" in source
+    assert "browser.register(" in source
+    assert "browser.unregister(" in source
 
 
 @pytest.mark.asyncio
@@ -167,15 +170,15 @@ async def test_discovery_reports_unavailable_without_granting_a_session(session)
     )
 
     with pytest.raises(PermissionError):
-        await dispatch_browser_control("discover", {})
+        await dispatch_browser_control(_BROWSER, "discover", {})
     with use_session(session):
         receipt = await dispatch_browser_operation(
-            "discover", {}, SimpleNamespace(session=session)
+            _BROWSER, "discover", {}, SimpleNamespace(session=session)
         )
         assert receipt.bridge_available is False
         assert receipt.documents == ()
         with pytest.raises(ValueError):
-            await dispatch_browser_control("discover", {"tenant": "other"})
+            await dispatch_browser_control(_BROWSER, "discover", {"tenant": "other"})
 
 
 @pytest.mark.asyncio
@@ -188,18 +191,18 @@ async def test_discovery_tracks_binding_and_teardown(session):
             return BrowserDiscoveryReceipt(bridge_available=True)
 
     service = DiscoveryService()
-    register_browser_control_service(service)
+    _BROWSER.register(service)
     try:
-        bind_browser_control_owner(service)
+        _BROWSER.bind_owner(service)
         with use_session(session):
-            receipt = await dispatch_browser_control("discover", {})
+            receipt = await dispatch_browser_control(_BROWSER, "discover", {})
             assert receipt.bridge_available is True
             assert receipt.documents == ()
     finally:
-        unregister_browser_control_service(service)
+        _BROWSER.unregister(service)
     with use_session(session):
         assert (
-            await dispatch_browser_control("discover", {})
+            await dispatch_browser_control(_BROWSER, "discover", {})
         ).bridge_available is False
 
 
@@ -222,19 +225,18 @@ async def test_webui_start_binds_bridge_before_first_browser_and_clears_on_stop(
 
         async def serve(self):
             with use_session(session):
-                seen.append(await dispatch_browser_control("discover", {}))
+                seen.append(await dispatch_browser_control(_BROWSER, "discover", {}))
             stop.set()
 
     await _serve_until_stopped(
         Server(),
         stop,
         Service(),
-        register_browser_control_service,
-        unregister_browser_control_service,
+        _BROWSER,
     )
     assert seen[0].bridge_available is True
     assert seen[0].documents == ()
     with use_session(session):
         assert (
-            await dispatch_browser_control("discover", {})
+            await dispatch_browser_control(_BROWSER, "discover", {})
         ).bridge_available is False

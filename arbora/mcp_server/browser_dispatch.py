@@ -6,8 +6,6 @@ import threading
 from concurrent.futures import Future
 from typing import Any
 
-_capacity = threading.BoundedSemaphore(16)
-
 
 async def _unavailable(scope: Any, receive: Any, send: Any) -> None:
     if scope.get("type") == "websocket":
@@ -23,12 +21,16 @@ async def _unavailable(scope: Any, receive: Any, send: Any) -> None:
 
 
 async def dispatch_browser_request(
-    app: Any, scope: Any, receive: Any, send: Any
+    capacity: threading.BoundedSemaphore,
+    app: Any,
+    scope: Any,
+    receive: Any,
+    send: Any,
 ) -> None:
     """Cap before scheduling; keep admission/invoke in one owner-loop task."""
     from arbora.fleet.shared_multiplexer import run_on_served_multiplexer
 
-    if not _capacity.acquire(blocking=False):
+    if not capacity.acquire(blocking=False):
         await _unavailable(scope, receive, send)
         return
 
@@ -38,15 +40,15 @@ async def dispatch_browser_request(
     try:
         owner = await run_on_served_multiplexer(owner_loop)
     except asyncio.CancelledError:
-        _capacity.release()
+        capacity.release()
         raise
     except RuntimeError:
-        _capacity.release()
+        capacity.release()
         await _unavailable(scope, receive, send)
         return
     # Ownership of the capacity slot transfers to the actual task completion,
     # not cancellation acknowledgement or the WebUI response's lifetime.
-    await _on_owner(app, scope, receive, send, owner, release=_capacity.release)
+    await _on_owner(app, scope, receive, send, owner, release=capacity.release)
 
 
 async def _on_owner(

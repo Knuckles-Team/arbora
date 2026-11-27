@@ -23,6 +23,7 @@ from typing import Any, Literal
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.browser_control.browser_state import BrowserState
 from arbora.core.environment import inherited_environment, read_env
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import configure_gateway_application
@@ -1021,6 +1022,7 @@ def start_composed_services(
     *,
     action_policies: ActionPolicies,
     tools: ToolTable,
+    browser: BrowserState,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
     session_boundary: Any = None,
@@ -1049,11 +1051,16 @@ def start_composed_services(
                 action_policies=action_policies,
                 engine=engine,
                 tools=tools,
+                browser=browser,
                 session_boundary=session_boundary,
             )
             if session_boundary is not None
             else partial(
-                run_web_ui, action_policies=action_policies, engine=engine, tools=tools
+                run_web_ui,
+                action_policies=action_policies,
+                engine=engine,
+                tools=tools,
+                browser=browser,
             )
         )
         supervisor.start_service("overstory", runner, session)

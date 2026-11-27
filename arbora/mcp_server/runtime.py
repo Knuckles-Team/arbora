@@ -1042,7 +1042,7 @@ def _register_graph_tool_surface(
             caches=host.caches,
             canonical=canonical,
         )
-    register_browser_control_tools(backing, host.caches.tools)
+    register_browser_control_tools(backing, host.caches.tools, host.browser)
     if invocation is None:
         rpc_handler = register_a2a_tools(
             mcp, service=host.runs.a2a, tools=backing, tool_table=host.caches.tools

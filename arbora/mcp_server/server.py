@@ -5,11 +5,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+from functools import partial
 from typing import Any
 
 from scion_sdk.mcp.network import build_network_serving_config
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.browser_control.browser_state import BrowserState
 from arbora.content import register_installed_content
 from arbora.core.environment import read_env, write_env
 from arbora.fleet.state import FleetState
@@ -160,6 +162,13 @@ def _attach_fleet_runtime(
         ) from exc
 
 
+def _with_browser(
+    factory: BrowserBoundaryFactory | None, browser: BrowserState
+) -> BrowserBoundaryFactory | None:
+    """The browser boundary factory handed the host's browser state, or ``None``."""
+    return partial(factory, browser=browser) if factory is not None else None
+
+
 def _served_invocation(
     *,
     host: HostContext,
@@ -219,7 +228,7 @@ def _served_invocation(
             ),
             "fleet_virtual_catalog": host.fleet.virtual_catalog,
             "fleet_declarations": host.fleet.declarations,
-            "browser_control": dispatch_browser_operation,
+            "browser_control": partial(dispatch_browser_operation, host.browser),
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
             "source_grants": EngineSourceGrants(runtime_config.source_run_branch),
@@ -228,7 +237,7 @@ def _served_invocation(
             ),
         },
         fleet_effect=fleet.effect,
-        browser_boundary_factory=browser_boundary_factory,
+        browser_boundary_factory=_with_browser(browser_boundary_factory, host.browser),
     )
     return invocation, session
 
@@ -638,6 +647,7 @@ def mcp_server(
                 host_context.engine.served(),
                 action_policies=host_context.policy.action_policies,
                 tools=host_context.caches.tools,
+                browser=host_context.browser,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",
                 session_boundary=invocation.browser_boundary if invocation else None,

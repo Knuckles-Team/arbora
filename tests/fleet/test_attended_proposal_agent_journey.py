@@ -13,6 +13,7 @@ import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field, replace
+from functools import partial
 from typing import Any
 
 import pytest
@@ -26,7 +27,6 @@ from arbora.access.approval import ApprovalDecisions
 from arbora.agent_host.host_port_adapters import HostPortsBinding
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-from arbora.browser_control import browser_control_runtime
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
     ControlResultMessage,
@@ -70,8 +70,6 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {})
     monkeypatch.setattr(shared_multiplexer, "_served", None)
-    monkeypatch.setattr(browser_control_runtime, "_service", None)
-    monkeypatch.setattr(browser_control_runtime, "_owner_loop", None)
     monkeypatch.setattr(ports, "_application", ports._application)
     monkeypatch.setenv("MCP_FLEET_REGISTRATION", "false")
 
@@ -99,16 +97,16 @@ async def _served(
 ) -> AsyncIterator[tuple[Any, list[Any]]]:
     session, client = _session(monkeypatch), EffectClient()
     _isolate_registration(monkeypatch, client)
+    host = compose_host_context(FixedEngineHandles(client))
     invocation = compose_served_invocation(
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,
         action_policies=ActionPolicies(),
-        bindings={"browser_control": dispatch_browser_operation},
+        bindings={"browser_control": partial(dispatch_browser_operation, host.browser)},
         fleet_effect=refused_fleet_effect,
     )
     fleet = FleetState()
-    host = compose_host_context(FixedEngineHandles(client))
     install_gateway_application(
         invocation,
         fleet=fleet,
