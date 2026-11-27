@@ -32,6 +32,7 @@ from arbora.browser_control.browser_control_provenance import BrowserProvenanceM
 from arbora.browser_control.browser_control_state import _ActiveCall, _ChannelState
 from arbora.browser_control.browser_state import BrowserState
 from arbora.observability.langfuse_exporter import get_langfuse_exporter
+from arbora.observability.state import Telemetry
 
 SyncRunner = Callable[[Callable[[], Any]], Awaitable[Any]]
 SessionRevalidator = Callable[[BrowserChannelBinding], Awaitable[bool]]
@@ -69,6 +70,7 @@ class BrowserControlService(
         engine: Any,
         *,
         browser: BrowserState,
+        telemetry: Telemetry,
         sync_runner: SyncRunner,
         session_revalidator: SessionRevalidator,
         action_policy: PolicyGate,
@@ -83,6 +85,7 @@ class BrowserControlService(
             raise ValueError("engine lacks native browser-control authorities")
         self._engine = engine
         self._browser = browser
+        self._telemetry = telemetry
         self._authority = cast(Any, control_authority(engine))
         self._sync_runner = sync_runner
         self._session_revalidator = session_revalidator
@@ -90,7 +93,7 @@ class BrowserControlService(
         self._langfuse = (
             langfuse_exporter
             if langfuse_exporter is not None
-            else get_langfuse_exporter()
+            else get_langfuse_exporter(telemetry)
         )
         self._clock = clock
         self._channels: dict[str, _ChannelState] = {}
@@ -168,6 +171,7 @@ def browser_control_factory_kwargs(
     sync_runner: SyncRunner,
     *,
     browser: BrowserState,
+    telemetry: Telemetry,
     action_policy: PolicyGate,
     session_revalidator: SessionRevalidator | None = None,
 ) -> dict[str, Any]:
@@ -196,6 +200,7 @@ def browser_control_factory_kwargs(
         service = BrowserControlService(
             engine,
             browser=browser,
+            telemetry=telemetry,
             sync_runner=sync_runner,
             session_revalidator=session_revalidator,
             action_policy=action_policy,

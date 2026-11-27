@@ -28,6 +28,7 @@ from arbora.mcp_server.host_context import (
     bind_ranking,
 )
 from arbora.mcp_server.hosted_invocation import HostedInvocation
+from arbora.observability.state import Telemetry
 from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 from arbora.semantic_content import default_content_providers
@@ -59,7 +60,7 @@ def _register_semantic_content(mcp: Any) -> None:
     register_installed_content(mcp, default_content_providers())
 
 
-def _configure_arbora_otel() -> None:
+def _configure_arbora_otel(telemetry: Telemetry) -> None:
     """Activate the canonical metadata-only OTLP pipeline when configured."""
 
     if not read_env("ENABLE_OTEL"):
@@ -67,7 +68,7 @@ def _configure_arbora_otel() -> None:
     try:
         from arbora.observability.custom_observability import setup_otel
 
-        setup_otel(service_name="arbora")
+        setup_otel(telemetry, service_name="arbora")
     except Exception as exc:  # noqa: BLE001 - observability cannot prevent serving
         logger.warning(
             "Arbora OTLP setup failed; trace export is disabled: %s",
@@ -75,7 +76,7 @@ def _configure_arbora_otel() -> None:
         )
 
 
-def _configure_telemetry_engine_otel() -> None:
+def _configure_telemetry_engine_otel(telemetry: Telemetry) -> None:
     """Eagerly start the standard-env-var OTLP trace pipeline (X2).
 
     CONCEPT:MERISTEM-OS.observability.telemetry-observability — independent of
@@ -89,7 +90,7 @@ def _configure_telemetry_engine_otel() -> None:
     try:
         from arbora.observability.telemetry import configure_standard_otel
 
-        configured = configure_standard_otel(service_name="arbora")
+        configured = configure_standard_otel(telemetry, service_name="arbora")
         logger.info(
             "Arbora OTLP trace export (standard env vars): %s",
             "enabled" if configured else "disabled",
@@ -464,8 +465,9 @@ def mcp_server(
     }
     bind_health_probes(host_context.engine.served)
     _preflight_mcp_sdk_floor()
-    _configure_arbora_otel()
-    _configure_telemetry_engine_otel()
+    telemetry = host_context.observability.telemetry
+    _configure_arbora_otel(telemetry)
+    _configure_telemetry_engine_otel(telemetry)
     write_env("IS_KG_SERVER", "true")
     if invocation is None:
         args, mcp, middlewares = runtime._build_server(host=host_context)
@@ -666,6 +668,7 @@ def mcp_server(
                 action_policies=host_context.policy.action_policies,
                 tools=host_context.caches.tools,
                 browser=host_context.browser,
+                telemetry=host_context.observability.telemetry,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",
                 session_boundary=invocation.browser_boundary if invocation else None,

@@ -7,6 +7,7 @@ import pytest
 from arbora.observability import custom_observability as co
 from arbora.observability import langfuse_trust as lt
 from arbora.observability import telemetry
+from arbora.observability.state import Telemetry
 
 
 @pytest.mark.parametrize(
@@ -41,7 +42,7 @@ def test_otel_endpoint_follows_the_standard_variables(monkeypatch, env, expected
         monkeypatch.setenv(name, value)
     assert telemetry.otel_endpoint() == expected
     if not expected:
-        assert telemetry.configure_standard_otel() is False
+        assert telemetry.configure_standard_otel(Telemetry()) is False
 
 
 def test_otlp_headers_parse_and_reject_malformed_input():

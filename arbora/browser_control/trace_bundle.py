@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.observability.state import Telemetry
 from arbora.observability.trace_ontology import (
     OUTCOME_NODE_LABEL,
     TOOL_CALL_NODE_LABEL,
@@ -168,6 +169,7 @@ def _validated_reference(value: Any) -> str:
 
 def _build_bundle(
     *,
+    event_sequence: int,
     run_id: str,
     agent_name: str,
     tool_name: str,
@@ -192,8 +194,8 @@ def _build_bundle(
         duration_ms=duration_ms,
         result_preview=str(result or ""),
         execution_mode="browser_control",
+        event_sequence=event_sequence,
     )
-    event_sequence = int(trace_props["event_sequence"])
     tool_props = tool_call_properties(
         run_id=run_id,
         tool_name=tool_name,
@@ -253,6 +255,7 @@ def _build_bundle(
 
 def record_trace_bundle(
     engine: Any,
+    telemetry: Telemetry,
     *,
     session: GraphSession,
     run_id: str,
@@ -280,6 +283,7 @@ def record_trace_bundle(
     safe_attributes = _validated_attributes(attributes)
     emitted_at = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     bundle = _build_bundle(
+        event_sequence=telemetry.next_event_sequence(),
         run_id=run_id,
         agent_name=agent_name,
         tool_name=tool_name,

@@ -174,7 +174,7 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
         "_configure_arbora_otel",
         "_configure_telemetry_engine_otel",
     ):
-        monkeypatch.setattr(server, name, lambda: None)
+        monkeypatch.setattr(server, name, lambda *_: None)
 
     class BoundaryReached(Exception):
         pass

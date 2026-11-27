@@ -9,6 +9,7 @@ from arbora.browser_control.browser_state import BrowserState
 from arbora.identity.engine import IdentityUnavailable
 from arbora.mcp_server.browser_composition import configured_browser_boundary
 from arbora.mcp_server.host_caches import ToolTable
+from arbora.observability.state import Telemetry
 from arbora.security.key_cache import JwksCache
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
@@ -67,6 +68,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     policies = ActionPolicies()
     tools = ToolTable()
     browser = BrowserState()
+    telemetry = Telemetry()
     engine = object()
     composition.start_composed_services(
         object(),
@@ -74,6 +76,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
         action_policies=policies,
         tools=tools,
         browser=browser,
+        telemetry=telemetry,
         session_boundary=boundary,
     )
     assert calls == [
@@ -84,6 +87,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
                 "engine": engine,
                 "tools": tools,
                 "browser": browser,
+                "telemetry": telemetry,
                 "session_boundary": boundary,
             },
         )
@@ -296,6 +300,7 @@ def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
         action_policies=ActionPolicies(),
         tools=ToolTable(),
         browser=BrowserState(),
+        telemetry=Telemetry(),
         session_boundary=boundary,
     )
     assert handed == [boundary] and handed[0] is boundary

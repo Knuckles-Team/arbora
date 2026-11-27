@@ -33,6 +33,7 @@ from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.mcp_server.routes import mount_rest_routes
 from arbora.messaging.intake import configured_platforms, start_messaging_intake
 from arbora.messaging.memory_webhooks import start_memory_webhook_pump
+from arbora.observability.state import Telemetry
 from arbora.webui_host import run_web_ui
 
 logger = logging.getLogger(__name__)
@@ -1023,6 +1024,7 @@ def start_composed_services(
     action_policies: ActionPolicies,
     tools: ToolTable,
     browser: BrowserState,
+    telemetry: Telemetry,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
     session_boundary: Any = None,
@@ -1052,6 +1054,7 @@ def start_composed_services(
                 engine=engine,
                 tools=tools,
                 browser=browser,
+                telemetry=telemetry,
                 session_boundary=session_boundary,
             )
             if session_boundary is not None
@@ -1061,6 +1064,7 @@ def start_composed_services(
                 engine=engine,
                 tools=tools,
                 browser=browser,
+                telemetry=telemetry,
             )
         )
         supervisor.start_service("overstory", runner, session)

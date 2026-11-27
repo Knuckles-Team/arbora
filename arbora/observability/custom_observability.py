@@ -62,6 +62,7 @@ from urllib.parse import urlparse
 from scion_sdk.privacy_reference import persistence_reference
 
 from arbora.observability.langfuse_trust import resolve_langfuse_host
+from arbora.observability.state import Telemetry
 
 if TYPE_CHECKING:
     from opentelemetry.sdk.trace.export import SpanExporter
@@ -106,9 +107,6 @@ def retrieve_package_name() -> str:
 
 logger = logging.getLogger(__name__)
 
-_otel_initialized = False
-_agent_instrumented_metadata_only = False
-_web_instrumentation_enabled = False
 _HEADER_NAME_RE = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]{1,256}\Z")
 _SAFE_ATTRIBUTE_STRINGS = frozenset(
     {
@@ -858,6 +856,7 @@ def _instrument_metadata_only_agents() -> bool:
 
 
 def setup_otel(
+    telemetry: Telemetry,
     service_name: str | None = None,
     endpoint: str | None = None,
     headers: str | None = None,
@@ -904,12 +903,10 @@ def setup_otel(
         from arbora.observability.custom_observability import setup_otel
 
         # Minimal — uses config.json defaults
-        setup_otel(service_name="my-agent")
+        setup_otel(host.observability.telemetry, service_name="my-agent")
 
         # Endpoint/auth/TLS are resolved from AgentConfig references.
     """
-    global _agent_instrumented_metadata_only, _otel_initialized
-
     ctx = _resolve_setup_otel_context(
         endpoint=endpoint,
         headers=headers,
@@ -925,7 +922,7 @@ def setup_otel(
 
     logger.debug("OTel metadata-only configuration resolved")
 
-    if _otel_initialized:
+    if telemetry.otel_initialized:
         logger.debug("Re-configuring metadata-only OTel")
 
     span_processors = _build_otel_span_processors(ctx)
@@ -939,14 +936,14 @@ def setup_otel(
         span_processors=span_processors,
     )
 
-    _agent_instrumented_metadata_only = _instrument_metadata_only_agents()
+    agent_instrumented = _instrument_metadata_only_agents()
 
     # FastAPI/Starlette instrumentation requires a concrete application and
     # otherwise records URL/route/user-agent/request attributes. setup_otel has
     # no app-bound redaction hook, so it is intentionally skipped here instead
     # of enabling an ungoverned global auto-instrumentor.
 
-    _otel_initialized = True
+    telemetry.mark_otel_initialized(agent_instrumented=agent_instrumented)
     logger.info(
         "Metadata-only OpenTelemetry pipeline initialized (processors=%d)",
         len(span_processors),
@@ -975,10 +972,12 @@ def _resolve_verify_otel_state() -> tuple[str, str, str | None]:
     return endpoint, resolved_headers, None
 
 
-def _build_verify_report_base(endpoint: str, resolved_headers: str) -> dict[str, Any]:
+def _build_verify_report_base(
+    telemetry: Telemetry, endpoint: str, resolved_headers: str
+) -> dict[str, Any]:
     """The static/config-derived fields of the ``verify_otel_pipeline`` report."""
     return {
-        "initialized": _otel_initialized,
+        "initialized": telemetry.otel_initialized,
         "logfire_available": HAS_LOGFIRE,
         "endpoint_configured": bool(endpoint),
         "headers_set": bool(resolved_headers),
@@ -989,9 +988,9 @@ def _build_verify_report_base(endpoint: str, resolved_headers: str) -> dict[str,
         ),
         "service_configured": bool(read_env("OTEL_SERVICE_NAME")),
         "exporter_ok": False,
-        "agent_instrumented": _agent_instrumented_metadata_only,
+        "agent_instrumented": telemetry.agent_instrumented,
         "content_capture": False,
-        "web_instrumented": _web_instrumentation_enabled,
+        "web_instrumented": False,
     }
 
 
@@ -1043,7 +1042,7 @@ def _probe_langfuse_otel_health(endpoint: str, resolved_headers: str) -> dict[st
     return updates
 
 
-def verify_otel_pipeline() -> dict[str, Any]:
+def verify_otel_pipeline(telemetry: Telemetry) -> dict[str, Any]:
     """Verify the OTel → Langfuse pipeline is operational.
 
     CONCEPT:MERISTEM-OS.config.secrets-authentication — Pipeline Health Check
@@ -1057,7 +1056,7 @@ def verify_otel_pipeline() -> dict[str, Any]:
     """
     endpoint, resolved_headers, resolution_error = _resolve_verify_otel_state()
 
-    report = _build_verify_report_base(endpoint, resolved_headers)
+    report = _build_verify_report_base(telemetry, endpoint, resolved_headers)
     if resolution_error:
         report["endpoint_error"] = resolution_error
         return report
@@ -1072,7 +1071,7 @@ def verify_otel_pipeline() -> dict[str, Any]:
     return report
 
 
-def get_otel_status_summary() -> str:
+def get_otel_status_summary(telemetry: Telemetry) -> str:
     """Get a human-readable summary of the OTel pipeline status.
 
     CONCEPT:MERISTEM-OS.config.secrets-authentication — Diagnostics
@@ -1080,7 +1079,7 @@ def get_otel_status_summary() -> str:
     Returns:
         Multi-line string summarizing the pipeline health.
     """
-    report = verify_otel_pipeline()
+    report = verify_otel_pipeline(telemetry)
     lines = [
         "=== OTel Pipeline Status ===",
         f"  Initialized:     {report['initialized']}",

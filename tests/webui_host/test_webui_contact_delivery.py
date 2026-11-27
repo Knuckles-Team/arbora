@@ -12,6 +12,7 @@ from typing import Any, cast
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.observability.state import Telemetry
 
 
 def _package(name: str) -> types.ModuleType:
@@ -215,6 +216,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         sync_runner: object,
         *,
         browser: object,
+        telemetry: object,
         action_policy: object,
         session_revalidator: object,
     ) -> dict[str, object]:
@@ -253,6 +255,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         engine="arbora-engine",
         tools={},
         browser=browser,
+        telemetry=Telemetry(),
         host=listener,
         port=8181,
         session_boundary=boundary,
