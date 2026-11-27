@@ -11,7 +11,7 @@ returned unchanged. A stopped unit is ``unhealthy`` with reason
 from __future__ import annotations
 
 import logging
-import subprocess
+import subprocess  # nosec B404 - the host starts one fixed-argv worker
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
@@ -92,6 +92,10 @@ def with_ingest_worker_health(
     return _with_dependency(snapshot, INGEST_WORKER_DEPENDENCY, dependency), health
 
 
+def _popen(argv: tuple[str, ...]) -> Any:
+    return subprocess.Popen(argv)  # nosec B603 - fixed argv from the declared unit, no shell
+
+
 class IngestWorkerSupervisor:
     """The host's supervision of one declared worker unit: start, observe, stop.
 
@@ -105,7 +109,7 @@ class IngestWorkerSupervisor:
         unit: IngestWorkerUnit,
         *,
         read_metrics: Callable[[], Awaitable[Mapping[str, Any]]] | None = None,
-        spawn: Callable[[tuple[str, ...]], Any] = lambda argv: subprocess.Popen(argv),
+        spawn: Callable[[tuple[str, ...]], Any] = _popen,
     ) -> None:
         self.unit = unit
         self.read_metrics = read_metrics
