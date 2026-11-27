@@ -35,6 +35,7 @@ __all__ = [
     "PlanMode",
     "build_dca_proposal_key",
     "evaluate_dca",
+    "minor_exponent",
     "minor_units",
     "record_dca_proposal",
     "run_dca_due",
@@ -115,12 +116,14 @@ class DCAEvaluationError(ValueError):
     code = "INVALID_ARGUMENT"
 
 
+def minor_exponent(currency: str) -> int:
+    """The ISO 4217 minor-unit exponent of ``currency``."""
+    return 0 if currency in _ZERO_DECIMAL else 3 if currency in _THREE_DECIMAL else 2
+
+
 def minor_units(amount: Decimal, currency: str) -> int:
     """The amount in the currency's minor units; a fractional minor unit is refused."""
-    exponent = (
-        0 if currency in _ZERO_DECIMAL else 3 if currency in _THREE_DECIMAL else 2
-    )
-    scaled = amount.scaleb(exponent)
+    scaled = amount.scaleb(minor_exponent(currency))
     if scaled != scaled.to_integral_value():
         raise DCAEvaluationError("amount is not a whole number of minor units")
     return int(scaled)

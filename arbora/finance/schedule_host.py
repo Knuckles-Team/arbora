@@ -3,13 +3,15 @@
 ``arbora.finance.loop_body.FinanceLoopBody`` runs on the Loops worker and needs a host
 for its engine reads and job doors. This is that host, over the worker's engine
 ``send``. Arbora holds no schedule state: a schedule entry is the engine node
-``finance-schedule:<tenant>:<loop_id>``, the owner's delegated grant is the engine node
-``finance-delegation:<tenant>:<owner>:<grant>`` (``active`` true while held), and every run
-claim is an engine receipt. ``last_run`` moves only by compare-and-set from the value
+``finance-schedule:<tenant>:<loop_id>``, the owner's delegation is an engine resource grant
+on ``finance-delegation:<owner>`` read with ``CheckResourceAccess`` (written by
+``finance.delegation.grant``), and every run claim is an engine receipt. ``last_run`` moves only by compare-and-set from the value
 the body read, so a second worker cannot move it backwards.
 
 Job doors: ``scan`` sends the entry's stored ``request`` to the engine ``signal_scan``;
-``dca_due`` reads the entry's ``dca_plan_id`` plan and runs ``run_dca_due`` over it.
+``dca_due`` reads the entry's ``dca_plan_id`` plan and runs ``run_dca_due`` over it; a paper
+fill goes through the ``paper_order`` door, which production composition binds to the served
+``orders.paper_submit`` operation (no second order path).
 ``backfill`` and ``explain`` call served operations (``ingest.run``, ``agents.run``) that
 need a verified request context a worker does not hold, so they refuse ``UNAVAILABLE``
 until the host binds them in ``jobs``. A door that is not bound never falls back.
@@ -19,6 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
+from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any
 
@@ -26,7 +29,14 @@ import msgpack
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._engine import decode, node_rows
-from arbora.finance.dca import DCAHost, DCAPlan, run_dca_due
+from arbora.finance.dca import (
+    DCAHost,
+    DCAPlan,
+    build_dca_proposal_key,
+    minor_exponent,
+    run_dca_due,
+)
+from arbora.finance.delegation import DELEGATION_PROTOCOL, delegation_resource
 from arbora.finance.receipts import (
     FinanceReceiptEngine,
     ServedReceiptEngine,
@@ -36,21 +46,28 @@ from arbora.finance.schedule import FinanceScheduleEntry
 
 __all__ = [
     "EngineFinanceScheduleHost",
-    "delegation_node_id",
     "schedule_node_id",
 ]
 
 Send = Callable[[str, dict[str, Any]], Awaitable[Any]]
 #: One job door: the stored record and the occurrence key.
 JobDoor = Callable[[Any, str], Awaitable[None]]
+#: The paper order door: ``(plan, order arguments, idempotency key)``.
+PaperDoor = Callable[[DCAPlan, Mapping[str, Any], str], Awaitable[Any]]
 
 
 def schedule_node_id(tenant: str, loop_id: str) -> str:
     return f"finance-schedule:{tenant}:{loop_id}"
 
 
-def delegation_node_id(tenant: str, owner: str, grant: str) -> str:
-    return f"finance-delegation:{tenant}:{owner}:{grant}"
+def _allowed(answer: Any) -> bool:
+    return isinstance(answer, Mapping) and answer.get("allow") is True
+
+
+async def _paper_unbound(plan: DCAPlan, arguments: Mapping[str, Any], key: str) -> Any:
+    raise OperationRefused(
+        "UNAVAILABLE", {"reason": "the paper order door is not bound"}
+    )
 
 
 def _pack(value: Mapping[str, Any]) -> bytes:
@@ -60,17 +77,33 @@ def _pack(value: Mapping[str, Any]) -> bytes:
 class _EngineDcaHost(DCAHost):
     """A failed occurrence moves its receipt to ``failed``; paper fills need a bound door."""
 
-    def __init__(self, engine: FinanceReceiptEngine) -> None:
+    def __init__(
+        self,
+        engine: FinanceReceiptEngine,
+        paper: PaperDoor | None,
+        occurrence: str,
+    ) -> None:
         self._engine = engine
+        self._paper = paper or _paper_unbound
+        self._occurrence = occurrence
 
     async def submit_paper(self, plan: DCAPlan, proposal: Mapping[str, Any]) -> None:
-        raise OperationRefused(
-            "UNAVAILABLE", {"reason": "the paper order door is not bound"}
+        exponent = minor_exponent(plan.currency)
+        qty = Decimal(int(proposal["amount_minor_units"])).scaleb(-exponent)
+        await self._paper(
+            plan,
+            {
+                "account_id": plan.account_id,
+                "symbol": plan.symbol,
+                "side": str(proposal.get("side", "buy")).lower(),
+                "qty": float(qty),
+                "order_type": "market",
+                "mode": "paper",
+            },
+            f"dca:{build_dca_proposal_key(plan, self._occurrence)}",
         )
 
     async def missed(self, plan: DCAPlan, occurrence: str, reason: str) -> None:
-        from arbora.finance.dca import build_dca_proposal_key
-
         key = build_dca_proposal_key(plan, occurrence)
         await self._engine.move(receipt_id(plan.tenant_id, "dca_proposal", key), "fail")
 
@@ -83,9 +116,14 @@ class EngineFinanceScheduleHost:
         send: Send,
         tenant: str,
         jobs: Mapping[str, JobDoor] | None = None,
+        *,
+        scheduler: str,
+        paper_order: PaperDoor | None = None,
     ) -> None:
         self._send = send
         self._tenant = tenant
+        self._scheduler = scheduler
+        self._paper_order = paper_order
         self._jobs: dict[str, JobDoor] = {
             "scan": self._scan,
             "dca_due": self._dca_due,
@@ -127,11 +165,20 @@ class EngineFinanceScheduleHost:
         )
 
     async def owner_holds(self, record: Any) -> bool:
-        entry = record.entry
-        held = await self._node(
-            delegation_node_id(self._tenant, entry.owner, record.grant)
+        """The engine's resource grant ledger decides; no local grant stands in."""
+        from arbora.pin_lag.medulla import guard
+
+        guard("CheckResourceAccess")
+        answer = await self._wire(
+            "CheckResourceAccess",
+            {
+                "agent_id": self._scheduler,
+                "resource_ref": delegation_resource(record.entry.owner),
+                "protocol": DELEGATION_PROTOCOL,
+                "operation": record.grant,
+            },
         )
-        return bool(held and held.get("active") is True)
+        return _allowed(answer)
 
     def receipts(self, record: Any) -> FinanceReceiptEngine:
         return ServedReceiptEngine(self._send)
@@ -176,7 +223,7 @@ class EngineFinanceScheduleHost:
         await run_dca_due(
             engine,
             self._wire,
-            _EngineDcaHost(engine),
+            _EngineDcaHost(engine, self._paper_order, occurrence_key),
             plan,
             occurrence_key,
         )

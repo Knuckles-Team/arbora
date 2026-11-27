@@ -232,3 +232,56 @@ async def test_import_journey_previews_commits_and_replays(world: Engine) -> Non
     again = (await imp.handle_import_preview(ctx, PREVIEW, NO_OP))["value"]
     assert again["reimport"] is True
     assert not [n for n in world.nodes if "order" in n]
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R009.6")
+async def test_composed_source_reads_the_uploaded_blob_and_sink_sends_the_ingest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import base64
+    from datetime import UTC, datetime
+
+    from arbora.api.ops import bundle
+    from arbora.finance import import_ports as ports
+
+    chunks = [b"id,when\n1,", b"2026\n"]
+
+    async def download(_c: Any, params: Any, _op: Any) -> Any:
+        return {
+            "chunks": len(chunks),
+            "data_b64": base64.b64encode(chunks[params["index"]]).decode(),
+        }
+
+    monkeypatch.setattr(bundle, "handle_bundle_download", download)
+    assert await ports.BlobImportSource().read(None, "blob-1") == b"id,when\n1,2026\n"
+
+    class Activity:
+        tenant_id, source_id, provider = "t1", "csv:d", "csv"
+        account_id, source_event_id = "a1", "d:0"
+        observed_at_utc = datetime(2026, 1, 1, tzinfo=UTC)
+
+        def model_dump(self, mode: str = "python") -> dict[str, Any]:
+            return {"account_id": "a1", "price": 1.5}
+
+    submitted: list[Any] = []
+
+    class Receipt:
+        affected_count = 1
+
+    class Ingest:
+        def __init__(self, _transport: Any) -> None:
+            pass
+
+        async def submit(self, binding: Any, changes: Any) -> Receipt:
+            submitted.append((binding, changes))
+            return Receipt()
+
+    monkeypatch.setattr("scion_sdk.ingest.KnowledgeIngest", Ingest)
+    sent = await ports.EngineActivitySink().ingest(
+        SimpleNamespace(client=object()), [Activity()]
+    )
+    binding, changes = submitted[0]
+    assert sent == 1 and binding.stream == ports.ACTIVITY_STREAM
+    assert [e.id for e in changes.entities] == [ports.activity_record_id(Activity())]
+    assert changes.entities[0].node_type == "AccountActivity"

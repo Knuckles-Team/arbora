@@ -629,6 +629,27 @@ def _loop_body(bindings: Mapping[str, Any]) -> Any:
     return FinanceLoopBody(host)
 
 
+def _bind_late_doors(services: Any, *doors: Any) -> None:
+    """Bind each late door to the invoke services once they exist."""
+    for door in filter(None, doors):
+        door.bind(services)
+
+
+def _with_finance_import_ports(bindings: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Compose the CSV import ports (ARBORA-DATA-MARKET-R009.6).
+
+    The source reads the uploaded blob through the upload path and the sink sends the
+    engine activity ingest; a port the deployment binds itself wins.
+    """
+    from arbora.finance.import_ports import BlobImportSource, EngineActivitySink
+
+    return {
+        "finance_import_source": BlobImportSource(),
+        "finance_activity_sink": EngineActivitySink(),
+        **bindings,
+    }
+
+
 def _with_finance_schedule_host(
     bindings: Mapping[str, Any],
     pool: Any,
@@ -644,6 +665,8 @@ def _with_finance_schedule_host(
     """
     if bindings.get("finance_schedule_host") is not None:
         return bindings
+    from arbora.api.mcp.caller import caller_from_session
+    from arbora.finance.paper_door import LatePaperDoor
     from arbora.finance.schedule_host import EngineFinanceScheduleHost
 
     tenant = str(session().tenant)
@@ -654,9 +677,19 @@ def _with_finance_schedule_host(
         client = await pool.connected_client(connect_context(tenant), graph)
         return await send_by_id(client, method, params, graph)
 
+    scheduler = str(session().actor.actor_id)
+    # ARBORA-DATA-MARKET-R006: a paper fill is the one served paper order handler, run as
+    # the host service caller; the invoke services bind it once they exist.
+    paper = LatePaperDoor(
+        lambda: caller_from_session(session(), credential_kind="service")
+    )
     return {
         **bindings,
-        "finance_schedule_host": EngineFinanceScheduleHost(send, tenant),
+        "finance_scheduler_principal": scheduler,
+        "finance_paper_door": paper,
+        "finance_schedule_host": EngineFinanceScheduleHost(
+            send, tenant, scheduler=scheduler, paper_order=paper
+        ),
     }
 
 
@@ -1093,6 +1126,7 @@ def compose_served_invocation(
             bindings, pool, graph, connect_context, session
         )
         process_startup = _chained_startup(process_startup, outbox_startup)
+        bindings = _with_finance_import_ports(bindings)
         bindings = _with_finance_schedule_host(
             bindings, pool, graph, connect_context, session
         )
@@ -1268,8 +1302,7 @@ def compose_served_invocation(
         audit_client_factory=audit_client,
         **changes,
     )
-    if step_invoke is not None:
-        step_invoke.bind(services)
+    _bind_late_doors(services, step_invoke, (bindings or {}).get("finance_paper_door"))
     from arbora.a2a.chain_composition import compose_approval_chain
     from arbora.a2a.engine_decide import build_ask_decide
     from arbora.api.invoke.eg_audit import EgAuditAdapter
