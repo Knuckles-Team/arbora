@@ -105,7 +105,7 @@
 - [x] T104 ARBORA-HOST-R009.7 Inject and verify bounded host log authority.
 - [ ] T105 ARBORA-HOST-R009.8 Record authenticated requests through the production sink.
 - [x] T106 ARBORA-HOST-R009.8.2.2.1 Qualify all four real native terminal cases against the pinned released wheel.
-- [ ] T107 ARBORA-HOST-R009.8.2.2.2 Qualify retained metadata and gap clearing in installed Overstory.
+- [x] T107 ARBORA-HOST-R009.8.2.2.2 Qualify retained metadata and gap clearing in installed Overstory.
 - [x] T135 ARBORA-HOST-R009.8.1 Admit exact source generations for host-log reads.
 - [x] T136 ARBORA-HOST-R009.8.2.1 Replay retained host files with fresh grant and cursor validation.
 - [x] T137 ARBORA-HOST-R009.8.2.2 Project source metadata and retention gaps in the host-log batch.

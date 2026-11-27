@@ -1,4 +1,8 @@
-"""Served host-log contract the Overstory log view reads, over real HTTP and real retention files."""
+"""Served host-log contract the Overstory log view reads, over real HTTP and real retention files.
+
+The browser leg is the Overstory host-log view test, which drives the same sequence in a
+real browser (consumer row OVERSTORY-APPS-R054).
+"""
 # spec: ARBORA-HOST-R009.8.2.2.2
 
 import asyncio

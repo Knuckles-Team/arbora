@@ -127,7 +127,7 @@ These checks do not prove authorized host logs or terminal startup.
   resume its original cursor. Revocation and retention gaps clear old text and
   do not trigger renewed admission. Missing native tooling fails required Linux
   acceptance. Other platforms and deployed grant owners remain unqualified.
-- R009.8.2.2.2: Installed Overstory metadata and gap acceptance remain open.
+- R009.8.2.2.2: The served HTTP half and the Overstory browser leg (`OVERSTORY-APPS-R054`) both exist. Installed-deployment grant issuance stays unqualified.
 
 The R010.7.2.2.1 launcher attachment accepts an explicit borrowed runtime bundle.
 It rejects conflicting legacy resource arguments and absent admission before
@@ -258,7 +258,8 @@ Each row below has no test bound by a `spec` marker. `Existing` names a test in 
 | `ARBORA-HOST-R009.2` | `tests/agent_host/test_create_agent_server.py::test_terminal_mode_serves_http_in_distinct_thread` | Planned, not yet written |
 | `ARBORA-HOST-R009.3` | `tests/agent_host/test_log_sink.py::test_real_http_request_reaches_production_sink_and_authorized_read` | Exists |
 | `ARBORA-HOST-R009.6` | `tests/agent_host/test_terminal_host_served.py::test_combined_mode_serves_http_and_scoped_logs` | Planned, not yet written |
-| `ARBORA-HOST-R009.8.2.2.2` | `tests/agent_host/test_overstory_logs_served.py::test_retention_gap_clears_protected_content` | Served HTTP half written; the browser half waits on the Overstory host-log view |
+| `ARBORA-HOST-R009.8.2.2.2` | `tests/agent_host/test_overstory_logs_served.py::test_retention_gap_clears_protected_content` | Served HTTP half written |
+| `ARBORA-HOST-R009.8.2.2.2` | `overstory:e2e/host-log-view.browser.ts::retention_gap_clears_protected_content` | Browser leg, consumer row `OVERSTORY-APPS-R054` |
 | `ARBORA-HOST-R010.2` | `tests/test_environment_manifest.py::test_census_matches_declarations_and_dynamic_read_refuses` | Planned, not yet written |
 | `ARBORA-HOST-R010.3` | `tests/mcp_server/test_launch_configuration_served.py::test_refusals_start_nothing` | Planned, not yet written |
 | `ARBORA-HOST-R010.4` | `tests/test_environment_manifest.py::test_disabled_component_needs_no_credential` | Planned, not yet written |

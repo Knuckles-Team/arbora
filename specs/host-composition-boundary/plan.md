@@ -633,7 +633,7 @@ selects the published Linux x86_64/aarch64 wheels and a terminal-cell decoder.
 No source checkout or private consumer implementation replaces that wheel.
 The four cases retain real sink, restart, rotation, delayed reads and writes, and clearing
 checks with controlled identity/grant owners. They do not establish deployed
-grant issuance, complete host startup or Overstory acceptance (R009.8.2.2.2).
+grant issuance or complete host startup. Overstory acceptance (R009.8.2.2.2) is the browser leg `OVERSTORY-APPS-R054`.
 
 The log lifecycle fixture waits for the native startup task request to finish
 before opening logs. A visible first-frame footer is not a completion signal.
