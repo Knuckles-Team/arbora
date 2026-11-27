@@ -122,9 +122,9 @@ class AdmissionGovernance(Protocol):
 class AdmissionSources(Protocol):
     """The source side effects and measurements of one admission."""
 
-    async def attach(self, source_id: str) -> None: ...
+    async def attach(self, source_id: str, tables: Sequence[str]) -> None: ...
 
-    async def detach(self, source_id: str) -> None: ...
+    async def detach(self, source_id: str, tables: Sequence[str]) -> None: ...
 
     async def probe(self, source_id: str) -> bool: ...
 
@@ -283,7 +283,7 @@ class AdmissionRun:
     async def _begin_probing(self, tenant: str, run: dict[str, Any]) -> dict[str, Any]:
         moved = await self._move(tenant, run, AdmissionState.PROBING)
         try:
-            await self._sources.attach(run["source_id"])
+            await self._sources.attach(run["source_id"], run["tables"])
         except Exception as error:
             await self._roll_back(tenant, moved, "attach_failed")
             raise error
@@ -339,7 +339,7 @@ class AdmissionRun:
         parity: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Detach the new source and leave the prior connector untouched."""
-        await self._sources.detach(run["source_id"])
+        await self._sources.detach(run["source_id"], run["tables"])
         fields: dict[str, Any] = {"failure": failure}
         if parity is not None:
             fields["parity"] = dict(parity)
@@ -364,7 +364,7 @@ class AdmissionRun:
             await self._governance.approve(change, run["plan_digest"])
         if await self._governance.status(change) != "approved":
             raise AdmissionError("POLICY_DENIED", {"reason": "approval_required"})
-        await self._sources.detach(run["prior_connector"])
+        await self._sources.detach(run["prior_connector"], run["tables"])
         retired = await self._move(tenant, run, AdmissionState.RETIRED)
         return _view(retired)
 

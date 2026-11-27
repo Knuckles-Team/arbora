@@ -33,8 +33,14 @@ PARITY_SAMPLE_DEFAULT = 1000
 _SAMPLE_RANGE = (10, 100_000)
 _PROPOSAL_TTL_MS = 7 * 24 * 3_600_000
 _WINDOW_MS = 24 * 3_600_000
-#: Engine methods ``main`` has not published; each refuses ``UNAVAILABLE`` until pinned.
-SOURCE_METHODS = ("ForeignSourceAdmit", "ForeignSourceDetach", "ForeignSourceParity")
+#: Engine methods ``main`` publishes that the pinned release lacks (
+#: engine main); each refuses ``UNAVAILABLE`` until pinned. Attach is the existing registry read.
+SOURCE_METHODS = ("ForeignSourceDetach", "ForeignSourceParity")
+
+
+def registered_name(source_id: str, table: str) -> str:
+    """The registered source of one table: ``<name>.<table>``, or ``<name>`` when equal."""
+    return source_id if table == source_id else f"{source_id}.{table}"
 
 
 def parity_sample(document: Mapping[str, Any] | str | None = None) -> int:
@@ -238,11 +244,21 @@ class EngineAdmissionSources:
             )
         return True
 
-    async def attach(self, source_id: str) -> None:
-        await self._send("ForeignSourceAdmit", {"name": source_id})
+    async def attach(self, source_id: str, tables: Sequence[str]) -> None:
+        """Admit one registered source per table (``RegisterForeignSource`` made them).
 
-    async def detach(self, source_id: str) -> None:
-        await self._send("ForeignSourceDetach", {"name": source_id})
+        Each table's source is read from the engine registry; a table with no
+        registration refuses with the engine's own code, so nothing half-attaches.
+        """
+        await self._each("GetForeignSource", source_id, tables)
+
+    async def detach(self, source_id: str, tables: Sequence[str]) -> None:
+        """Detach every table's source; the engine's detach is owner-only and idempotent."""
+        await self._each("ForeignSourceDetach", source_id, tables)
+
+    async def _each(self, method: str, source_id: str, tables: Sequence[str]) -> None:
+        for table in tables:
+            await self._send(method, {"name": registered_name(source_id, table)})
 
     async def table_counts(
         self, source_id: str, tables: Sequence[str]
