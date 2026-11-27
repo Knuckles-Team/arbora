@@ -22,6 +22,21 @@ from pathlib import Path
 import pytest
 
 from arbora.deployment import venv_autosync, venv_sync
+from arbora.deployment import venv_probes as _venv_sync_venv_probes
+from arbora.deployment.venv_backup import LockBackupStore
+from arbora.deployment.venv_plan import (
+    PlanParseError,
+    SyncPlan,
+    VenvSyncError,
+    Workspace,
+    WorkspaceNotFoundError,
+)
+from arbora.deployment.venv_probes import (
+    ActivityRecord,
+    ProcessActivityProbe,
+    SyncInvocation,
+    UnsafeInvocationError,
+)
 from arbora.deployment.venv_sync import (
     ALLOW,
     DEFER,
@@ -29,18 +44,7 @@ from arbora.deployment.venv_sync import (
     NATIVE,
     REFUSE,
     SOURCE_ONLY,
-    ActivityRecord,
-    CommandResult,
-    LockBackupStore,
-    PlanParseError,
-    ProcessActivityProbe,
     SyncContext,
-    SyncInvocation,
-    SyncPlan,
-    UnsafeInvocationError,
-    VenvSyncError,
-    Workspace,
-    WorkspaceNotFoundError,
     classify_change,
     evaluate_plan,
     exclusive_lock,
@@ -49,6 +53,7 @@ from arbora.deployment.venv_sync import (
     prune,
     session_start_hint,
 )
+from arbora.deployment.venv_sync_types import CommandResult
 
 # Verbatim head/tail of the observed destructive plan (2026-07-31).
 DESTRUCTIVE_PLAN = """Would use project environment at: .venv
@@ -145,7 +150,7 @@ def workspace(tmp_path: Path) -> Workspace:
 def test_sanctioned_invocation_always_carries_every_safety_flag() -> None:
     argv = SyncInvocation().argv("uv")
     assert argv[:2] == ["uv", "sync"]
-    for flag in venv_sync.SANCTIONED_SYNC_FLAGS:
+    for flag in _venv_sync_venv_probes.SANCTIONED_SYNC_FLAGS:
         assert flag in argv
     assert "--dry-run" in SyncInvocation(dry_run=True).argv("uv")
 
@@ -162,12 +167,12 @@ def test_sanctioned_invocation_always_carries_every_safety_flag() -> None:
 )
 def test_assert_sanctioned_refuses_every_incomplete_sync(argv: list[str]) -> None:
     with pytest.raises(UnsafeInvocationError) as excinfo:
-        venv_sync._assert_sanctioned(argv)
+        _venv_sync_venv_probes._assert_sanctioned(argv)
     assert "unsanctioned" in str(excinfo.value)
 
 
 def test_assert_sanctioned_ignores_non_sync_commands() -> None:
-    venv_sync._assert_sanctioned(["uv", "lock", "--check"])
+    _venv_sync_venv_probes._assert_sanctioned(["uv", "lock", "--check"])
 
 
 def test_run_uv_never_executes_an_unsanctioned_sync(
@@ -625,7 +630,7 @@ def test_detect_drift_reports_a_stale_lock_as_fail(
     monkeypatch.setattr(
         venv_sync,
         "lock_check",
-        lambda ws: venv_sync.CommandResult(
+        lambda ws: _venv_sync_venv_probes.CommandResult(
             argv=("uv", "lock", "--check"),
             returncode=1,
             stdout="",
@@ -643,7 +648,7 @@ def test_detect_drift_reports_packages_behind_the_lock(
     monkeypatch.setattr(
         venv_sync,
         "lock_check",
-        lambda ws: venv_sync.CommandResult(("uv",), 0, "", ""),
+        lambda ws: _venv_sync_venv_probes.CommandResult(("uv",), 0, "", ""),
     )
     monkeypatch.setattr(venv_sync, "plan_sync", lambda ws: SyncPlan.parse(BEHIND_PLAN))
     report = venv_sync.detect_drift(workspace, include_floor=False)
@@ -656,7 +661,9 @@ def test_detect_drift_is_ok_when_everything_matches(
     workspace: Workspace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        venv_sync, "lock_check", lambda ws: venv_sync.CommandResult(("uv",), 0, "", "")
+        venv_sync,
+        "lock_check",
+        lambda ws: _venv_sync_venv_probes.CommandResult(("uv",), 0, "", ""),
     )
     monkeypatch.setattr(venv_sync, "plan_sync", lambda ws: SyncPlan.parse(CLEAN_PLAN))
     report = venv_sync.detect_drift(workspace, include_floor=False)
@@ -667,7 +674,9 @@ def test_detect_drift_surfaces_a_stuck_flip_queue(
     workspace: Workspace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        venv_sync, "lock_check", lambda ws: venv_sync.CommandResult(("uv",), 0, "", "")
+        venv_sync,
+        "lock_check",
+        lambda ws: _venv_sync_venv_probes.CommandResult(("uv",), 0, "", ""),
     )
     monkeypatch.setattr(venv_sync, "plan_sync", lambda ws: SyncPlan.parse(CLEAN_PLAN))
     venv_autosync.enqueue(

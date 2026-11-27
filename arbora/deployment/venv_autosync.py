@@ -68,6 +68,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
+from arbora.deployment.venv_plan import VenvSyncError, Workspace, redact_path_for_log
 from arbora.deployment.venv_sync import (
     ALLOW,
     DEFER,
@@ -76,12 +77,9 @@ from arbora.deployment.venv_sync import (
     NATIVE,
     SOURCE_ONLY,
     LockBusyError,
-    VenvSyncError,
-    Workspace,
     classify_change,
     exclusive_lock,
     member_install_states,
-    redact_path_for_log,
     sync,
     upgrade,
 )
@@ -138,7 +136,7 @@ class AutosyncConfig:
     #:   * :class:`~arbora.deployment.venv_sync.ActivityGuardrail`
     #:     defers while any lane is mid-test, so a relock never lands underneath
     #:     running work;
-    #:   * :class:`~arbora.deployment.venv_sync.LockBackupStore`
+    #:   * :class:`~arbora.deployment.venv_backup.LockBackupStore`
     #:     archives ``uv.lock`` before the mutation starts;
     #:   * the verify probes run after it, and any failure **auto-rolls-back**
     #:     the lock and re-syncs the environment;
@@ -834,7 +832,7 @@ def _dispatch_toggle(
     *,
     as_json: bool,
 ) -> int:
-    from arbora.deployment.venv_sync import emit
+    from arbora.deployment.venv_cli import emit
 
     config.enabled = args.action == "on"
     save_config(workspace, config)
@@ -859,7 +857,7 @@ def _dispatch_status(
     *,
     as_json: bool,
 ) -> int:
-    from arbora.deployment.venv_sync import emit
+    from arbora.deployment.venv_cli import emit
 
     backend = TRIGGER_BACKENDS["git-hook"]
     repos = _resolve_repos(workspace, config.installed_repos)
@@ -890,7 +888,7 @@ def _dispatch_install_uninstall(
     *,
     as_json: bool,
 ) -> int:
-    from arbora.deployment.venv_sync import emit
+    from arbora.deployment.venv_cli import emit
 
     backend = TRIGGER_BACKENDS["git-hook"]
     repos = _resolve_repos(workspace, args.repo)
@@ -927,7 +925,7 @@ def _dispatch_drain_action(
     *,
     as_json: bool,
 ) -> int:
-    from arbora.deployment.venv_sync import emit
+    from arbora.deployment.venv_cli import emit
 
     emit(drain(workspace, ignore_activity=args.ignore_activity), as_json=as_json)
     return 0
@@ -940,7 +938,7 @@ def _dispatch_trigger_action(
     *,
     as_json: bool,
 ) -> int:
-    from arbora.deployment.venv_sync import emit
+    from arbora.deployment.venv_cli import emit
 
     repo = Path(args.repo[0]) if args.repo else Path.cwd()
     emit(

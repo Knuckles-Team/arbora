@@ -1982,11 +1982,8 @@ def _check_venv_drift() -> dict[str, Any]:
     """
 
     try:
-        from arbora.deployment.venv_sync import (
-            Workspace,
-            WorkspaceNotFoundError,
-            detect_drift,
-        )
+        from arbora.deployment.venv_plan import Workspace, WorkspaceNotFoundError
+        from arbora.deployment.venv_sync import detect_drift
     except ImportError as exc:
         return _result("venv_drift", "error", f"venv_sync is not importable: {exc}")
 
