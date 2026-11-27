@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any, Literal
 
 from scion_sdk.privacy import persistence_reference
@@ -55,7 +56,10 @@ class BrowserOutcomeMixin(BrowserControlMixinState):
                 active.timed_out = True
                 self._schedule_unknown_reaper(active)
                 raise
-            except Exception:  # noqa: BLE001 - preserve uncertain durable work
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "preserve uncertain durable work", exc_info=True
+                )
                 active.timed_out = True
                 self._schedule_unknown_reaper(active)
                 return self._receipt(
@@ -263,7 +267,10 @@ class BrowserOutcomeMixin(BrowserControlMixinState):
                     return
             except asyncio.CancelledError:
                 raise
-            except Exception:  # noqa: BLE001 - retain until durable audit recovers
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "retain until durable audit recovers", exc_info=True
+                )
                 await asyncio.sleep(_UNKNOWN_RECONCILE_SECONDS)
 
     async def _close_reaped_work_item(self, active: _ActiveCall) -> bool:

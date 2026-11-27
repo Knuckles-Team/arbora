@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any, Literal
 
 from arbora.browser_control.browser_control_api import (
@@ -51,7 +52,10 @@ class BrowserCancellationMixin(BrowserControlMixinState):
         except asyncio.CancelledError:
             self._schedule_unknown_reaper(current)
             raise
-        except Exception:  # noqa: BLE001 - durable reaper owns recovery
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "durable reaper owns recovery", exc_info=True
+            )
             self._schedule_unknown_reaper(current)
 
     async def _recover_fence_ownership(
@@ -72,7 +76,10 @@ class BrowserCancellationMixin(BrowserControlMixinState):
                 return bool(created)
             except asyncio.CancelledError:
                 raise
-            except Exception:  # noqa: BLE001 - retry native authority recovery
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "retry native authority recovery", exc_info=True
+                )
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, _MAX_FENCE_RECOVERY_SECONDS)
                 candidate = None
@@ -159,7 +166,10 @@ class BrowserCancellationMixin(BrowserControlMixinState):
             return await asyncio.wait_for(
                 asyncio.shield(active.cancel_future), timeout=_CANCEL_ACK_SECONDS
             )
-        except Exception:  # noqa: BLE001 - cancellation ambiguity is reported
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "cancellation ambiguity is reported", exc_info=True
+            )
             return CancellationEffect.UNKNOWN
 
 

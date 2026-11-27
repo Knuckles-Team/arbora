@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal, cast
 
 from scion_sdk.privacy import persistence_reference
@@ -221,7 +222,10 @@ class BrowserProvenanceMixin(BrowserControlMixinState):
                     )
                 )
             )
-        except Exception:  # noqa: BLE001 - trace records exporter unavailability
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "trace records exporter unavailability", exc_info=True
+            )
             return LangfuseStatus.UNAVAILABLE
         return LangfuseStatus.RECORDED if recorded else LangfuseStatus.UNAVAILABLE
 
