@@ -275,7 +275,7 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 
 | Row | Test | State |
 |---|---|---|
-| `ARBORA-HOST-R001.9.2` | `tests/deployment/test_tiny_profile_served_graph.py::test_tiny_profile_writes_and_reads_one_node` | Planned, not yet written |
+| `ARBORA-HOST-R001.9.2` | `tests/deployment/test_tiny_profile_served_graph.py::test_tiny_profile_writes_and_reads_one_node` | Written, owner-run |
 | `ARBORA-HOST-R002` | `tests/architecture/test_engine_client_surface.py::test_every_imported_client_symbol_exists` | Planned, not yet written |
 | `ARBORA-HOST-R007.2.4` | `arbora/agent_host/__init__.py::start_agent_server` | Planned, not yet written |
 | `ARBORA-HOST-R007.2.4` | `tests/agent_host/test_start_admission.py::test_start_admits_and_runs_graph` | Planned, not yet written |
