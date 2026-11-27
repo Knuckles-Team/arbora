@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
 from typing import Any
 
 from arbora.core.settings import runtime_config
 from arbora.run_origin import RunOriginRegistry
 
-from .application import A2AAuthenticator, create_a2a_application
 from .authority import WorkItemA2AAuthority
 from .engine_decider import EngineHarnessConfigDecider
 from .event_log import A2AEventLog, A2AEventStreams, StreamClock
@@ -21,9 +19,7 @@ from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
 __all__ = [
-    "A2AComposition",
     "build_a2a_service",
-    "compose_a2a",
     "compose_anonymous_a2a",
 ]
 
@@ -73,14 +69,6 @@ def _harness_decider(
         feature_schema=feature_schema or (lambda tenant: {}),
         principal=principal or _principal,
     )
-
-
-@dataclass(frozen=True)
-class A2AComposition:
-    application: Any
-    service: A2AService
-    #: The none-mode read application of anonymous tasks, or ``None`` when no owner composed.
-    anonymous_application: Any = None
 
 
 async def compose_anonymous_a2a(
@@ -164,44 +152,4 @@ def build_a2a_service(
         ),
         history=EngineTransitionHistory(authority),
         media_refs=SessionMediaRefStore(engine_provider),
-    )
-
-
-def compose_a2a(
-    *,
-    engine_provider: Callable[[], Any],
-    origins: RunOriginRegistry,
-    authenticator: A2AAuthenticator,
-    card_metadata: A2ACardMetadata | None = None,
-    task_plan_config: Any = None,
-    hosted_invocation: Any = None,
-    clock: StreamClock | None = None,
-    decide: Callable[[dict[str, Any]], Any] | None = None,
-    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
-    decision_principal: Callable[[], str] | None = None,
-    provisioning: Any = None,
-    capacity: Any = None,
-    anonymous_application: Any = None,
-) -> A2AComposition:
-    """Compose one projection over the existing WorkItem/dispatch authorities."""
-    service = build_a2a_service(
-        engine_provider=engine_provider,
-        origins=origins,
-        card_metadata=card_metadata,
-        task_plan_config=task_plan_config,
-        hosted_invocation=hosted_invocation,
-        clock=clock,
-        decide=decide,
-        feature_schema=feature_schema,
-        decision_principal=decision_principal,
-        provisioning=provisioning,
-        capacity=capacity,
-    )
-    return A2AComposition(
-        application=create_a2a_application(
-            service=service,
-            authenticator=authenticator,
-        ),
-        service=service,
-        anonymous_application=anonymous_application,
     )

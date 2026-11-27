@@ -40,6 +40,7 @@ def register_a2a_tools(
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
     approval_chain: Any = None,
+    anonymous: Any = None,
 ) -> Any:
     """Register one action router and the protocol-native routes.
 
@@ -48,6 +49,9 @@ def register_a2a_tools(
 
     The ``graph_a2a`` operation registers on ``tools`` (arbora's backing
     server, reached through ``act``) and the HTTP routes on the served ``mcp``.
+
+    ``anonymous`` is the provider of the none-mode anonymous task application: in none
+    mode ``POST /a2a`` is answered by it when it composes (ARBORA-IDENTITY-R004.8.2).
     """
     authority = service.authority
     if isinstance(authority, WorkItemA2AAuthority):
@@ -108,7 +112,13 @@ def register_a2a_tools(
     mcp.custom_route("/.well-known/agent-card.json", methods=["GET"])(card_handler)
     # A2A clients read the card next to the endpoint the card names.
     mcp.custom_route("/a2a/.well-known/agent-card.json", methods=["GET"])(card_handler)
-    mcp.custom_route("/a2a", methods=["POST"])(rpc_handler)
+    from starlette.routing import request_response
+
+    from .anonymous_host import AnonymousA2AEntry
+
+    mcp.custom_route("/a2a", methods=["POST"])(
+        AnonymousA2AEntry(request_response(rpc_handler), anonymous, "/a2a")
+    )
     return rpc_handler
 
 

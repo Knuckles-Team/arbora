@@ -21,7 +21,6 @@ from .authority import (
     A2ATaskNotCancelable,
     WorkItemA2AAuthority,
 )
-from .composition import A2AComposition, compose_a2a
 from .models import (
     A2AAgentCard,
     A2AListResult,
@@ -63,7 +62,6 @@ __all__ = [
     "A2AAssemblyUnavailable",
     "A2AAuthenticator",
     "A2ACardMetadata",
-    "A2AComposition",
     "A2AIdempotencyConflict",
     "A2AListResult",
     "A2AMessage",
@@ -84,7 +82,6 @@ __all__ = [
     "WorkItemA2AAuthority",
     "WorkItemFence",
     "WorkItemView",
-    "compose_a2a",
     "create_a2a_application",
     "create_a2a_handlers",
     "list_work_item_views",

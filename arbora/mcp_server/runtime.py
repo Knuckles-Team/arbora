@@ -946,7 +946,11 @@ def _build_server(
 
         host = build_host_context(_get_engine)
     _register_graph_tool_surface(
-        mcp, canonical=canonical_surface, invocation=invocation, host=host
+        mcp,
+        canonical=canonical_surface,
+        invocation=invocation,
+        host=host,
+        anonymous=_anonymous_a2a(args, invocation),
     )
 
     global _FULL_TOOL_NAMES
@@ -954,8 +958,43 @@ def _build_server(
     return args, mcp, middlewares
 
 
+def _anonymous_a2a(args: Any, invocation: Any) -> Any:
+    """The provider of the none-mode anonymous ``/a2a`` application, or ``None``."""
+    from arbora.security.anonymous import enabled
+
+    graph = getattr(invocation, "decision_graph", "")
+    if not (enabled() and graph):
+        return None
+    from arbora import __version__
+    from arbora.a2a.anonymous_host import anonymous_a2a_provider
+    from arbora.core.settings import runtime_config
+    from arbora.mcp_server.composition import parse_engine_endpoint
+
+    endpoint = parse_engine_endpoint(
+        (runtime_config.graph_service_endpoints or [""])[0]
+    )
+
+    async def connect() -> Any:
+        from medulla import MedullaClient
+
+        return await MedullaClient.connect(**endpoint.client_kwargs(), auth_mode="none")
+
+    host, port = getattr(args, "host", "127.0.0.1"), int(getattr(args, "port", 8000))
+    return anonymous_a2a_provider(
+        origin=f"http://{host}:{port}",
+        graph=graph,
+        revision=__version__,
+        connect=connect,
+    )
+
+
 def _register_graph_tool_surface(
-    mcp: Any, *, host: Any, canonical: bool = False, invocation: Any = None
+    mcp: Any,
+    *,
+    host: Any,
+    canonical: bool = False,
+    invocation: Any = None,
+    anonymous: Any = None,
 ) -> None:
     """Mount arbora's one MCP tool contract.
 
@@ -1009,6 +1048,7 @@ def _register_graph_tool_surface(
             mcp,
             service=host.runs.a2a,
             tools=backing,
+            anonymous=anonymous,
             operation_services=invocation.services,
             operation_authenticator=invocation.authenticator,
             task_plan_config=invocation.task_plan_config,
