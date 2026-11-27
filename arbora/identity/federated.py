@@ -19,6 +19,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import logging
 import secrets
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -184,7 +185,7 @@ async def token_op(
         if refused.code in (_SPENT, _REPLAY):
             raise FederatedRefused(refused.code) from None
         raise IdentityUnavailable("qualified identity operation unavailable") from None
-    except Exception:  # noqa: BLE001 - an unanswered question refuses nothing and admits nothing
+    except Exception:  # an unanswered question refuses nothing and admits nothing
         raise IdentityUnavailable("qualified identity operation unavailable") from None
     payload = response.payload
     if not isinstance(payload, dict) or payload.get("kind") != kind:
@@ -387,7 +388,8 @@ class Federation:
             return None
         try:
             endpoint = await self._transport.end_session_endpoint(provider.issuer)
-        except Exception:  # noqa: BLE001 - logout never fails on a provider outage
+        except Exception:
+            logging.getLogger(__name__).debug("logout never fails on a provider outage")
             return None
         if endpoint is None:
             return None

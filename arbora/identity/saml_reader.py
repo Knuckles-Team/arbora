@@ -141,6 +141,7 @@ class SamlReader:
         if not isinstance(assertion, SignedAssertion):
             return False
         from signxml import XMLVerifier
+        from signxml.exceptions import SignXMLException
 
         try:
             result = XMLVerifier().verify(
@@ -157,5 +158,9 @@ class SamlReader:
                 else list(signed.iter(f"{{{SAML}}}Assertion"))
             )
             return len(found) == 1 and _assertion_of(found[0], b"") == assertion
-        except Exception:  # noqa: BLE001 - any failure to verify is an unverified assertion
+        except (
+            SignXMLException,
+            etree.LxmlError,
+            ValueError,
+        ):  # any failure to verify is an unverified assertion
             return False
