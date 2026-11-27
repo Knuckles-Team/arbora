@@ -146,7 +146,7 @@ class _Graph:
         monkeypatch.setattr("medulla.generated.graph.send_remove_triples", self.remove)
         monkeypatch.setattr("medulla.generated.reasoning.send_sparql", self.sparql)
         monkeypatch.setattr(
-            "arbora.deployment.semantic_provisioning.bind_session_graph",
+            "arbora.semantic_provisioning.bind_session_graph",
             lambda _graph: contextlib.nullcontext(),
         )
 
@@ -248,7 +248,7 @@ async def _write(graph: _Graph, pack: Any, monkeypatch: pytest.MonkeyPatch) -> N
     from arbora.fleet import onboarding
 
     monkeypatch.setattr(
-        "arbora.deployment.semantic_provisioning.catalog_content_digest",
+        "arbora.semantic_provisioning.catalog_content_digest",
         lambda _pack: "e" * 64,
     )
     endpoint = onboarding.FleetEndpoint(name="c", url="http://c/mcp")
@@ -264,7 +264,7 @@ async def test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal(
     graph = _Graph(monkeypatch)
     fleet = _fleet()
     monkeypatch.setattr(
-        "arbora.deployment.semantic_provisioning.catalog_content_digest",
+        "arbora.semantic_provisioning.catalog_content_digest",
         lambda _pack: "e" * 64,
     )
     endpoint = onboarding.FleetEndpoint(name="servicenow-mcp", url="http://sn/mcp")

@@ -102,7 +102,7 @@ def register_platform(platform: str) -> None:
 
 
 def _platforms() -> frozenset[str]:
-    from arbora.messaging.capabilities import CAPABILITY_MATRIX
+    from arbora.core.messaging_capabilities import CAPABILITY_MATRIX
 
     return frozenset(key.upper() for key in CAPABILITY_MATRIX) | _REGISTERED_PLATFORMS
 

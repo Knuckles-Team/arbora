@@ -16,7 +16,7 @@ from arbora.api.ops.query import NaturalLanguageParams, operations
 from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, eg_method_ref
 from arbora.api.registry.eg_binding import load_catalog
-from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+from arbora.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
 from tests.api.test_invoke_bootstrap import FakeSession, _caller
 

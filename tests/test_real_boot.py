@@ -966,7 +966,6 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.caller import caller_from_session
     from arbora.api.registry import Surface
-    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
     from arbora.epistemic import ConnectClient, EpistemicClientPool
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.served_engine import ServedEngine
@@ -980,6 +979,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         mint_graph_session,
     )
     from arbora.security.session import use_session
+    from arbora.semantic_provisioning import CONTROL_GRAPH
 
     with _booted_stack(
         extra_token_roles=("work:read", "work:write"),

@@ -12,7 +12,8 @@ from typing import Any
 
 import pytest
 
-from arbora.deployment import production_ops, semantic_provisioning
+from arbora import semantic_provisioning
+from arbora.deployment import production_ops
 from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
@@ -284,7 +285,7 @@ def test_registration_digest_matches_engine_canonical_json() -> None:
 async def test_boot_creates_tenant_and_control_graphs_on_a_fresh_store() -> None:
     from contextlib import nullcontext
 
-    from arbora.deployment.semantic_provisioning import ensure_base_graphs
+    from arbora.semantic_provisioning import ensure_base_graphs
 
     engine = _Engine(registered=set(), graphs=set())
     session = type("S", (), {"graph": GRAPH})()
@@ -300,6 +301,6 @@ async def test_boot_creates_tenant_and_control_graphs_on_a_fresh_store() -> None
 
 
 async def test_boot_skips_engines_without_native_graphs() -> None:
-    from arbora.deployment.semantic_provisioning import ensure_base_graphs
+    from arbora.semantic_provisioning import ensure_base_graphs
 
     assert await ensure_base_graphs(engine=object(), session=object()) == {}

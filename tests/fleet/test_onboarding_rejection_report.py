@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 from pydantic import TypeAdapter
 
-from arbora.deployment import semantic_provisioning as sp
+from arbora import semantic_provisioning as sp
 
 #: An engine answer the generated client refuses: the last code is not text.
 RAW_REJECTION = {
@@ -73,8 +73,6 @@ async def test_an_undecodable_rejection_still_names_every_violation(
 ) -> None:
     import scion_sdk.sinks.medulla as sinks
 
-    import arbora.api.contracts as contracts
-
     async def binding(*_a: Any, **_k: Any) -> str:
         return "binding"
 
@@ -84,7 +82,6 @@ async def test_an_undecodable_rejection_still_names_every_violation(
     monkeypatch.setattr(sp, "session_context", lambda _s: {"tenant": "t"})
     monkeypatch.setattr(sp, "attest_self_served_catalog", binding)
     monkeypatch.setattr(sp, "_owner_principal", owner)
-    monkeypatch.setattr(contracts, "pack_import_authority", lambda *_a, **_k: None)
     monkeypatch.setattr(sinks, "MedullaSink", _Sink)
 
     engine = _Engine()
@@ -97,6 +94,7 @@ async def test_an_undecodable_rejection_still_names_every_violation(
             commons=engine,
             pack=SimpleNamespace(connector="demo-mcp"),
             action_policies=sp.ActionPolicies(),
+            pack_import_authority=lambda *_a, **_k: None,
             bind_graph=lambda _g: contextlib.nullcontext(),
         )
     message = str(refused.value)

@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
+from arbora.api.domain.fleet.capacity_proposals import CapacityCellView
 from arbora.api.domain.fleet.error_budget import OutcomeClass, Partition
-from arbora.fleet.capacity_proposals import CapacityCellView
-from arbora.fleet.throttle_service import (
+from arbora.api.domain.fleet.throttle_service import (
     ControllerConfig,
     OutcomeRecorder,
     ThrottleController,

@@ -21,7 +21,7 @@ import uuid
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from arbora.work_items import (
+from arbora.core.work_item_errors import (
     NativeWorkItemRequired,
     WorkItemBackendUnavailable,
 )

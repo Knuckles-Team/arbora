@@ -17,6 +17,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
 
+from arbora.semantic_provisioning import SEED_URI_PREFIX
+
 __all__ = [
     "CONTRACT_REJECTION_CODES",
     "ContractRefused",
@@ -123,7 +125,6 @@ def _body_bytes(body: Any) -> bytes:
 _MANIFEST_URI = "connector://resources"
 #: A seed travels as ``SeedPart`` pack entries, one per closed key
 #: (MEDULLA-TYPED-PACKS-R104.3); there is no separate seed body.
-SEED_URI_PREFIX = "seed://"
 SEED_PART_KEYS = ("identity", "catalog", "references")
 
 

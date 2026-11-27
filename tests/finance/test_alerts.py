@@ -8,11 +8,11 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+from arbora.api.domain.finance.receipts import ServedReceiptEngine
 from arbora.finance.alerts import (
     FlipAlertDelivery,
     record_alert_delivery,
 )
-from arbora.finance.receipts import ServedReceiptEngine
 from tests.finance._receipt_engine import ReceiptMachine
 
 

@@ -26,7 +26,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Mapping
 from typing import TYPE_CHECKING, Any
 
-from arbora.messaging.capabilities import MessagingCapabilities
+from arbora.core.messaging_capabilities import MessagingCapabilities
 from arbora.messaging.models import (
     Channel,
     InboundEvent,

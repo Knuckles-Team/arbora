@@ -10,12 +10,12 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from arbora.finance.dca import (
+from arbora.api.domain.finance.dca import (
     DCAPlan,
     build_dca_proposal_key,
     record_dca_proposal,
 )
-from arbora.finance.receipts import ServedReceiptEngine
+from arbora.api.domain.finance.receipts import ServedReceiptEngine
 from tests.finance._receipt_engine import ReceiptMachine
 
 

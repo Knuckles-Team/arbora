@@ -97,7 +97,7 @@ async def test_browser_op_uses_the_registered_authority(
 
 def test_browser_discovery_uses_preloaded_find_without_widening_execution():
     from arbora.api.registry import Effect, Surface, Verb
-    from arbora.host_bindings import FLEET_TOOLS
+    from arbora.core.agent_names import FLEET_TOOLS
 
     operations = {op.id: op for op in browser.operations()}
     discovery = operations["browser.discover"]

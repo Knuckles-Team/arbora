@@ -166,7 +166,7 @@ async def test_registration_and_release_start_one_pass_each(monkeypatch) -> None
 async def test_orphan_refusal_marks_contract_rejected_and_admits_no_tools(
     monkeypatch,
 ) -> None:
-    from arbora.deployment.semantic_provisioning import SemanticProvisioningError
+    from arbora.semantic_provisioning import SemanticProvisioningError
 
     failure = SemanticProvisioningError("rejected: ONTOLOGY_INVALID:u:ONTOLOGY_ORPHAN")
     onboarding, _ = make_onboarding([_counted_pack()], monkeypatch, error=failure)

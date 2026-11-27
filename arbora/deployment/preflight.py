@@ -39,6 +39,10 @@ from pathlib import Path
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.deployment.genesis_environments import (
+    EnvironmentProfileError,
+    load_environment_profile,
+)
 from arbora.webui_host.package_layout_expectation import (
     EXPECTED_TOP_LEVEL_MODULES,
     OVERSTORY_DISTRIBUTION,
@@ -48,7 +52,6 @@ from arbora.webui_host.package_layout_expectation import (
 )
 
 from .doctor import _RANK, _result
-from .genesis_environments import EnvironmentProfileError, load_environment_profile
 from .webui_reference_model import StaleWebUiReferenceError, current_web_ui_references
 
 # Current deployment profiles from genesis.yaml; named environments are loaded

@@ -33,8 +33,8 @@ from typing import Any, ClassVar
 import httpx
 
 from arbora.core.environment import read_env
+from arbora.core.messaging_capabilities import CAPABILITY_MATRIX, MessagingCapabilities
 from arbora.messaging.base import InboundSignatureInvalid, MessagingBackend
-from arbora.messaging.capabilities import CAPABILITY_MATRIX, MessagingCapabilities
 from arbora.messaging.models import (
     EventType,
     InboundEvent,

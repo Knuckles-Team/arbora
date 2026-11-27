@@ -74,7 +74,7 @@ def compose_definition_admission(
     ``decision_feature_schema``, which reads the verified task-plan pins. Unbound,
     the lookup refuses closed (no verified pin) and admission refuses ``UNAVAILABLE``.
     """
-    from arbora.deployment.semantic_provisioning import bind_session_graph
+    from arbora.semantic_provisioning import bind_session_graph
 
     graph = str(session.graph)
     client = engine.graph_compute.for_graph(graph).async_client

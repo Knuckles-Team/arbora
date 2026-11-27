@@ -57,7 +57,7 @@ async def _native_owner_graph(
     from medulla.generated import ContractViolation
 
     from arbora.api.errors import EngineRefusal
-    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.semantic_provisioning import CONTROL_GRAPH
 
     try:
         from medulla.generated.coordination import (
@@ -85,7 +85,7 @@ def _owned_admission_graph(
     view: Any, *, run_id: str, tenant: str, principal: str
 ) -> str | None:
     """Validate the decoded native admission without changing caller authority."""
-    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.semantic_provisioning import CONTROL_GRAPH
 
     if view is None:
         return None

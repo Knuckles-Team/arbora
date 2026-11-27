@@ -107,7 +107,7 @@ def test_id_and_capabilities() -> None:
 
 def test_registered_as_first_class_platform() -> None:
     # Same enum + entry-point + capability matrix membership as Telegram.
-    from arbora.messaging.capabilities import CAPABILITY_MATRIX
+    from arbora.core.messaging_capabilities import CAPABILITY_MATRIX
 
     assert PlatformId.MATTERMOST == "mattermost"
     assert "mattermost" in CAPABILITY_MATRIX

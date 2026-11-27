@@ -95,7 +95,8 @@ def test_onboarding_records_the_contract_and_the_changed_keys() -> None:
 
 import types  # noqa: E402
 
-from arbora.deployment import semantic_provisioning  # noqa: E402
+from arbora import semantic_provisioning  # noqa: E402
+from arbora.api.contracts import pack_import_authority  # noqa: E402
 from arbora.fleet.connect_contract import ContractRefused  # noqa: E402
 from arbora.fleet.declarations import Declarations  # noqa: E402
 from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding  # noqa: E402
@@ -197,7 +198,7 @@ async def test_list_changed_reaches_onboard(monkeypatch) -> None:
 @pytest.mark.spec("ARBORA-FLEET-R036.4")
 @pytest.mark.asyncio
 async def test_contract_refusals(monkeypatch) -> None:
-    from arbora.deployment.semantic_provisioning import SemanticProvisioningError
+    from arbora.semantic_provisioning import SemanticProvisioningError
 
     onboarding, imports = make_onboarding([contract_pack(seed=None)], monkeypatch)
     await onboarding.onboard(ENDPOINT, auth=None)
@@ -303,8 +304,8 @@ async def test_seed_parts_refuse_unavailable_on_the_pinned_release(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A pack with seed parts is never imported with its seed dropped (pin-lag)."""
-    from arbora.deployment.semantic_provisioning import import_attested_pack
     from arbora.pin_lag.medulla import PinLagUnavailable, require_seed_parts
+    from arbora.semantic_provisioning import import_attested_pack
 
     _install_pack_shapes(monkeypatch, main=False)
     with pytest.raises(PinLagUnavailable, match="PackEntryKind.seed_part"):
@@ -317,6 +318,7 @@ async def test_seed_parts_refuse_unavailable_on_the_pinned_release(
             commons=object(),
             pack=_seeded_pack(),
             action_policies=object(),
+            pack_import_authority=pack_import_authority,
         )
 
 
@@ -330,8 +332,7 @@ async def test_seed_parts_reach_pack_import_on_the_main_shape(
 
     import scion_sdk.sinks.medulla as sink_module
 
-    import arbora.api.contracts as contracts
-    from arbora.deployment.semantic_provisioning import (
+    from arbora.semantic_provisioning import (
         SemanticProvisioningError,
         import_attested_pack,
         seed_content_digest,
@@ -373,7 +374,6 @@ async def test_seed_parts_reach_pack_import_on_the_main_shape(
         return "owner"
 
     monkeypatch.setattr(sink_module, "MedullaSink", Sink)
-    monkeypatch.setattr(contracts, "pack_import_authority", lambda *a, **k: object())
     monkeypatch.setattr(semantic_provisioning, "attest_self_served_catalog", attested)
     monkeypatch.setattr(semantic_provisioning, "_owner_principal", owner)
     monkeypatch.setattr(
@@ -395,6 +395,7 @@ async def test_seed_parts_reach_pack_import_on_the_main_shape(
             commons=object(),
             pack=pack,
             action_policies=object(),
+            pack_import_authority=lambda *a, **k: object(),
             bind_graph=lambda graph: contextlib.nullcontext(),
         )
 

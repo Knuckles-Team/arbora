@@ -26,7 +26,7 @@ from typing import Any
 import anyio
 from anyio.abc import Process
 
-from .genesis_environments import (
+from arbora.deployment.genesis_environments import (
     EnvironmentProfile,
     EnvironmentProfileError,
     load_environment_profile,

@@ -13,8 +13,8 @@ from typing import Any
 
 import msgpack
 
+from arbora.api.domain.finance.receipts import ServedReceiptEngine
 from arbora.api.errors import EngineRefusal
-from arbora.finance.receipts import ServedReceiptEngine
 
 EDGES: dict[tuple[str, str], str] = {
     ("due", "claim"): "claimed",

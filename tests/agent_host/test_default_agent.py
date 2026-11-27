@@ -13,7 +13,7 @@ from arbora.agent_host.default_agent import (
 )
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import agent_library, agents
-from arbora.host_bindings import FLEET_AGENT_NAME
+from arbora.core.agent_names import FLEET_AGENT_NAME
 from arbora.pin_lag import medulla as pin_lag
 from tests.a2a.test_operation_bridge import session
 from tests.api._engine_double import EngineDouble

@@ -508,8 +508,8 @@ async def _gateway_call(
 
 
 def _capacity_guard(context: Any) -> Any:
+    from arbora.api.domain.fleet.throttle_service import UNGUARDED, CapacityGuard
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.fleet.throttle_service import UNGUARDED, CapacityGuard
 
     limiter = context.services.get("partition_limiter")
     recorder = context.services.get("outcome_recorder")

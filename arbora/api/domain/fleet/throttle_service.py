@@ -26,17 +26,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any
 
-from arbora.api.domain.fleet.error_budget import (
-    AimdConfig,
-    BudgetWindow,
-    OutcomeClass,
-    OutcomeSample,
-    Partition,
-    ThrottleDecision,
-    ThrottleMode,
-    decide,
-)
-from arbora.fleet.capacity_proposals import (
+from arbora.api.domain.fleet.capacity_proposals import (
     CapacityAppliedReceipt,
     CapacityPort,
     CapacityProposalError,
@@ -48,6 +38,16 @@ from arbora.fleet.capacity_proposals import (
     build_proposal,
     judge,
     read_back,
+)
+from arbora.api.domain.fleet.error_budget import (
+    AimdConfig,
+    BudgetWindow,
+    OutcomeClass,
+    OutcomeSample,
+    Partition,
+    ThrottleDecision,
+    ThrottleMode,
+    decide,
 )
 
 logger = logging.getLogger(__name__)

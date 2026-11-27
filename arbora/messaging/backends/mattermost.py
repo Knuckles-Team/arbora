@@ -40,11 +40,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from arbora.core.environment import read_env
+from arbora.core.messaging_capabilities import CAPABILITY_MATRIX, MessagingCapabilities
 from arbora.messaging.base import MessagingBackend
-from arbora.messaging.capabilities import (
-    CAPABILITY_MATRIX,
-    MessagingCapabilities,
-)
 from arbora.messaging.models import (
     Channel,
     EventType,

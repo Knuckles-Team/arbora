@@ -1,3 +1,4 @@
+from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
 """Native owner admission uses engine identities without a durable alias map."""
@@ -142,11 +143,9 @@ def test_owner_graph_comes_from_work_item_engine_not_session():
         work_items.native_owner_graph(SimpleNamespace(graph_name="admitted"))
         == "admitted"
     )
-    with pytest.raises(work_items.NativeWorkItemRequired):
+    with pytest.raises(NativeWorkItemRequired):
         work_items.native_owner_graph(SimpleNamespace(graph_name=" bad "))
-    with pytest.raises(
-        work_items.NativeWorkItemRequired, match="context graph mismatch"
-    ):
+    with pytest.raises(NativeWorkItemRequired, match="context graph mismatch"):
         work_items._typed_request_context(
             {"tenant_id": "tenant", "graph": "foreign"}, SESSION, "key", "admitted"
         )

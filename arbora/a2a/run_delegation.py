@@ -18,6 +18,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.core.work_item_errors import WorkItemBackendUnavailable
 from arbora.pin_lag.medulla import (
     agent_run_delegation_served,
     require_agent_run_delegation,
@@ -222,7 +223,7 @@ def engine_identity_sender(engine_provider: Callable[[], Any]) -> IdentitySender
         from medulla.generated.security import decode_identity, send_identity
 
         from arbora import work_items
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         engine = engine_provider()
         if engine is None:
@@ -233,7 +234,7 @@ def engine_identity_sender(engine_provider: Callable[[], Any]) -> IdentitySender
             graph = work_items.native_owner_graph(
                 getattr(engine, "_work_item_engine", engine)
             )
-        except work_items.WorkItemBackendUnavailable:
+        except WorkItemBackendUnavailable:
             graph = CONTROL_GRAPH
         answer = await send_identity(client, {"op": dict(op)}, graph)
         return decode_identity(answer)
@@ -267,7 +268,7 @@ def engine_delegation_reader(
         )
 
         from arbora import work_items
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         engine = engine_provider()
         if engine is None:
@@ -278,7 +279,7 @@ def engine_delegation_reader(
             graph = work_items.native_owner_graph(
                 getattr(engine, "_work_item_engine", engine)
             )
-        except work_items.WorkItemBackendUnavailable:
+        except WorkItemBackendUnavailable:
             graph = CONTROL_GRAPH
         try:
             answer = await send_get_delegation_record(

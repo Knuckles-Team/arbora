@@ -7,6 +7,10 @@ from typing import Any
 import pytest
 
 from arbora import work_items
+from arbora.core.work_item_errors import (
+    NativeWorkItemRequired,
+    WorkItemBackendUnavailable,
+)
 
 _CLAIM = {
     "tenant": "t1",
@@ -160,12 +164,12 @@ def test_get_reads_the_session_tenant(session: Any) -> None:
 
 
 def test_refuses_a_tenant_other_than_the_session(session: Any) -> None:
-    with pytest.raises(work_items.WorkItemBackendUnavailable):
+    with pytest.raises(WorkItemBackendUnavailable):
         work_items.submit_work_item_atomic(
             FakeEngine(), kind="k", idempotency_key="i", tenant="other"
         )
 
 
 def test_engine_without_work_items_is_refused(session: Any) -> None:
-    with pytest.raises(work_items.NativeWorkItemRequired):
+    with pytest.raises(NativeWorkItemRequired):
         work_items.get_work_item(object(), "w1")

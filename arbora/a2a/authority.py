@@ -14,6 +14,7 @@ from typing import Any, Protocol, cast, runtime_checkable
 
 from scion_sdk.privacy import persistence_reference
 
+from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
 from .held_output import held_metadata
@@ -563,7 +564,7 @@ class WorkItemA2AAuthority:
             work_items.get_work_item, work_engine, self._work_item_id(task_id)
         )
         if existing is None:
-            from arbora.host_bindings import preloaded_agent_tools
+            from arbora.core.agent_names import preloaded_agent_tools
 
             try:
                 await self.delegations.record(
@@ -729,8 +730,8 @@ class WorkItemA2AAuthority:
         from contextlib import nullcontext
 
         from arbora.agent_runs import native_run_scope, native_stream_scope
+        from arbora.core.agent_names import preloaded_agent_tools
         from arbora.current_plan_publication import bind_admitted_claim
-        from arbora.host_bindings import preloaded_agent_tools
 
         run_session, acting_scope = _acting_scope(session, acting_session)
         subset = await self._selected_tools(work_engine, item_id)
@@ -1795,7 +1796,7 @@ class WorkItemA2AAuthority:
                 ),
                 timeout=5.0,
             )
-        except (TimeoutError, work_items.NativeWorkItemRequired) as exc:
+        except (TimeoutError, NativeWorkItemRequired) as exc:
             raise A2ATerminalEventUnavailable(
                 "committed terminal event is unavailable"
             ) from exc

@@ -98,7 +98,7 @@ async def run_agent_name(context: Any, message: Mapping[str, Any]) -> str:
     The default agent is registered first when the host composed a registrar, so a host
     without one leaves it unregistered and the gate refuses ``attestation_source_unavailable``.
     """
-    from arbora.host_bindings import FLEET_AGENT_NAME
+    from arbora.core.agent_names import FLEET_AGENT_NAME
 
     named = str((message.get("metadata") or {}).get("agent_name") or "").strip()
     registrar = (getattr(context, "services", None) or {}).get("default_agent")

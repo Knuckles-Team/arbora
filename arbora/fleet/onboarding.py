@@ -414,7 +414,7 @@ class FleetOnboarding:
 
     @property
     def commons_client(self) -> Any:
-        from arbora.deployment.semantic_provisioning import COMMONS_GRAPH
+        from arbora.semantic_provisioning import COMMONS_GRAPH
 
         return self.engine.graph_compute.for_graph(COMMONS_GRAPH).async_client
 
@@ -423,7 +423,7 @@ class FleetOnboarding:
     ) -> tuple[str, ...]:
         """Register every endpoint whose lease is absent or lapses soon."""
 
-        from arbora.deployment.semantic_provisioning import (
+        from arbora.semantic_provisioning import (
             COMMONS_GRAPH,
             bind_session_graph,
             ensure_server_registrations,
@@ -488,8 +488,9 @@ class FleetOnboarding:
 
     async def _import_pack(self, endpoint: FleetEndpoint, pack: Any) -> None:
         """Import one pack; an engine contract refusal marks the connector."""
-        from arbora.deployment.semantic_provisioning import import_attested_pack
+        from arbora.api.contracts import pack_import_authority
         from arbora.fleet.connect_contract import contract_rejection_code
+        from arbora.semantic_provisioning import import_attested_pack
 
         try:
             result = await import_attested_pack(
@@ -499,6 +500,7 @@ class FleetOnboarding:
                 commons=self.commons_client,
                 pack=pack,
                 action_policies=self.action_policies,
+                pack_import_authority=pack_import_authority,
                 allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
             )
         except Exception as exc:
@@ -538,7 +540,7 @@ class FleetOnboarding:
 
     def _record_import_receipt(self, connector: str, result: Any) -> None:
         """Record the import answer and the engine's seed digest on the contract surface."""
-        from arbora.deployment.semantic_provisioning import seed_content_digest
+        from arbora.semantic_provisioning import seed_content_digest
 
         contract = self.surfaces[connector]["contract"]
         contract["import_receipt"] = {
@@ -551,7 +553,7 @@ class FleetOnboarding:
             contract["seed_content_digest"] = engine_seed
 
     def _tenant(self) -> str:
-        from arbora.deployment.semantic_provisioning import session_context
+        from arbora.semantic_provisioning import session_context
 
         return str(session_context(self.session)["tenant"])
 
@@ -572,7 +574,7 @@ class FleetOnboarding:
         )
 
     async def reproject(self, connector: str) -> None:
-        from arbora.deployment.semantic_provisioning import reproject_connector
+        from arbora.semantic_provisioning import reproject_connector
 
         await reproject_connector(
             self.tenant_client,
@@ -734,11 +736,11 @@ class FleetOnboarding:
         as a ``catalog`` surface gap.
         """
 
-        from arbora.deployment.semantic_provisioning import (
+        from arbora.fleet.catalog_graph import write_catalog
+        from arbora.semantic_provisioning import (
             bind_session_graph,
             catalog_content_digest,
         )
-        from arbora.fleet.catalog_graph import write_catalog
 
         report = self.surfaces.setdefault(endpoint.name, {})
         try:
@@ -803,7 +805,7 @@ class FleetOnboarding:
         from medulla.generated.connector_pack import ConnectorPackStatusRequest
         from medulla.generated.storage import send_connector_pack_status
 
-        from arbora.deployment.semantic_provisioning import bind_session_graph
+        from arbora.semantic_provisioning import bind_session_graph
 
         tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
@@ -929,10 +931,7 @@ class FleetOnboarding:
             return
 
         from arbora.api.errors import ArboraRefusal
-        from arbora.deployment.semantic_provisioning import (
-            bind_session_graph,
-            shell_context,
-        )
+        from arbora.semantic_provisioning import bind_session_graph, shell_context
 
         tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
@@ -1093,7 +1092,7 @@ class FleetOnboarding:
     ) -> dict[str, str]:
         """Self-served registrations to renew, at their configured or live URL."""
 
-        from arbora.deployment.semantic_provisioning import (
+        from arbora.semantic_provisioning import (
             COMMONS_GRAPH,
             bind_session_graph,
             registry_page,

@@ -11,6 +11,7 @@ logic.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import contextlib
 import contextvars
 import inspect
@@ -550,3 +551,25 @@ class TopologyAdapter:
             context, graph, required_scope=SERVICE_CONTROL_SCOPE
         ) as client:
             return await client.health()
+
+
+def run_blocking(coroutine_factory: Any) -> Any:
+    """Run one EG request to completion from synchronous code.
+
+    Synchronous callers (the action-policy ledger) may run inside an event
+    loop; the request then runs on a worker thread with its own loop, under a
+    copy of the caller's context so the ambient session still authorizes it.
+    """
+    from arbora.epistemic import temporary_client_scope
+
+    async def request() -> Any:
+        async with temporary_client_scope():
+            return await coroutine_factory()
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(request())
+    context = contextvars.copy_context()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
+        return worker.submit(context.run, asyncio.run, request()).result()

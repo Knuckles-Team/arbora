@@ -9,10 +9,7 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import dca as ops
-from arbora.api.ops.registry_factory import get_registry
-from arbora.finance.dca import (
+from arbora.api.domain.finance.dca import (
     DCAEvaluationError,
     DCAHost,
     DCAPlan,
@@ -20,6 +17,9 @@ from arbora.finance.dca import (
     minor_units,
     run_dca_due,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import dca as ops
+from arbora.api.ops.registry_factory import get_registry
 from tests.finance._receipt_engine import ReceiptMachine
 from tests.mcp_server._read_port_double import FakeReadPort
 

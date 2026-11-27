@@ -15,8 +15,8 @@ import pytest
 from meristem import host_ports
 
 from arbora import current_plan_publication as publication
-from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from arbora.pin_lag.meristem import plan_types
+from arbora.semantic_provisioning import CONTROL_GRAPH
 
 PlanItem = plan_types().PlanItem
 PlanState = plan_types().PlanState

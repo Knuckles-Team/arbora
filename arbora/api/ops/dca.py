@@ -3,10 +3,10 @@
 A plan is one engine graph node ``dca-plan:<tenant>:<plan_id>`` that carries its
 ``revision``. Arbora holds no plan state: a write swaps the node only from the revision
 the caller read, so two writers cannot both win (``CONFLICT``). The proposal key of a due
-occurrence binds that revision (``arbora.finance.dca.build_dca_proposal_key``), so a
+occurrence binds that revision (``arbora.api.domain.finance.dca.build_dca_proposal_key``), so a
 revised plan never collides with its earlier proposals. The recurrence is the schedule
-trigger grammar (``arbora.finance.schedule.parse_trigger``), and the engine DCA evaluator
-sizes each proposal (``arbora.finance.dca.evaluate_dca``). The verified account binding
+trigger grammar (``arbora.api.domain.finance.schedule.parse_trigger``), and the engine DCA evaluator
+sizes each proposal (``arbora.api.domain.finance.dca.evaluate_dca``). The verified account binding
 must match the plan's account.
 """
 
@@ -19,13 +19,13 @@ from typing import Any, Literal
 import msgpack
 from pydantic import Field, ValidationError
 
+from arbora.api.domain.finance.dca import DCAEvaluationError, DCAPlan, minor_units
+from arbora.api.domain.finance.schedule import ScheduleRefused, parse_trigger
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_write_op
 from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.ops.finance import _authority
 from arbora.api.registry import OpSpec
-from arbora.finance.dca import DCAEvaluationError, DCAPlan, minor_units
-from arbora.finance.schedule import ScheduleRefused, parse_trigger
 
 SCOPE = "finance:track"
 #: The engine replays a plan write by the node swap it holds.

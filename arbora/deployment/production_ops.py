@@ -430,12 +430,13 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     uses, so every EG call carries exactly the authority Arbora serves with.
     """
 
-    from arbora.deployment.semantic_provisioning import provision_semantic_content
+    from arbora.api.contracts import pack_import_authority
 
     # ``runtime`` binds bootstrap's host slots on import; import it first.
     from arbora.mcp_server import bootstrap, runtime
     from arbora.security.actor_context import use_actor
     from arbora.security.session import use_session
+    from arbora.semantic_provisioning import provision_semantic_content
 
     session = runtime._mint_process_session("http", JwksCache(), RuntimeConfig())
     with use_actor(session.actor), use_session(session):
@@ -450,6 +451,7 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
             served_url=served_url,
             # This one-shot process owns its own policy gates.
             action_policies=ActionPolicies(),
+            pack_import_authority=pack_import_authority,
         )
     return {"operation": "provision-semantic-content", "ok": True, **report}
 

@@ -15,10 +15,10 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import VerifiedCaller
 from arbora.api.ops.runs import read_current_plan
-from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from arbora.mcp_server import current_plan_reader as reader_module
 from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
 from arbora.mcp_server.host_context import build_host_context
+from arbora.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
 from tests.test_native_run_admission import view as admission_view
 

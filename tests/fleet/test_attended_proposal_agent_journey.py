@@ -21,7 +21,6 @@ from meristem.graph import default_run_plan
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
 from pydantic_ai.models.function import FunctionModel
 
-from arbora import host_bindings
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.agent_host.host_port_adapters import HostPortsBinding
@@ -32,6 +31,7 @@ from arbora.browser_control.browser_control_client import (
     ControlResultMessage,
 )
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
+from arbora.core.agent_names import preloaded_agent_tools
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet import shared_multiplexer
 from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
@@ -193,7 +193,7 @@ async def _run(session: Any, run_id: str) -> Any:
             agent_name="webui-assistant",
             task="request synthetic attended browser action",
             run_id=run_id,
-            allowed_tools=host_bindings.preloaded_agent_tools("webui-assistant"),
+            allowed_tools=preloaded_agent_tools("webui-assistant"),
         ),
         session=session,
     )

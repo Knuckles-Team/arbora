@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.api.domain.finance.receipts import claim_receipt, receipt_id
 from arbora.finance.alerts import FlipAlertDelivery, record_alert_delivery
-from arbora.finance.receipts import claim_receipt, receipt_id
 from tests.finance._receipt_engine import ReceiptMachine
 
 

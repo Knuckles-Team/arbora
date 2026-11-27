@@ -10,7 +10,7 @@ CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging B
 
 Usage::
 
-    from arbora.messaging.capabilities import CAPABILITY_MATRIX
+    from arbora.core.messaging_capabilities import CAPABILITY_MATRIX
 
     caps = CAPABILITY_MATRIX["discord"]
     if caps.threads:

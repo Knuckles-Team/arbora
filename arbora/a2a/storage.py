@@ -22,6 +22,8 @@ from fasta2a.schema import Artifact, Message, Task, TaskState, TaskStatus
 from fasta2a.storage import Storage
 from pydantic_core import to_jsonable_python
 
+from arbora.core.work_item_errors import WorkItemBackendUnavailable
+
 __all__ = [
     "DEFAULT_RETENTION_DAYS",
     "NAMESPACE",
@@ -73,7 +75,7 @@ def engine_kv_send(engine_provider: Callable[[], Any]) -> EngineSend:
     async def send(method: str, params: dict[str, Any], key: str | None) -> Any:
         from arbora import work_items
         from arbora.api.ops.engine_calls import send_on_client
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         engine = engine_provider()
         if engine is None:
@@ -84,7 +86,7 @@ def engine_kv_send(engine_provider: Callable[[], Any]) -> EngineSend:
             graph = work_items.native_owner_graph(
                 getattr(engine, "_work_item_engine", engine)
             )
-        except work_items.WorkItemBackendUnavailable:
+        except WorkItemBackendUnavailable:
             graph = CONTROL_GRAPH
         return await send_on_client(client, method, params, graph, key=key)
 
