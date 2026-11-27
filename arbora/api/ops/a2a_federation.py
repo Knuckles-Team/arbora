@@ -20,7 +20,7 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.a2a.hub_federation import FederationRefused, HubFederation
+from arbora.api.domain.a2a.hub_federation import FederationRefused, HubFederation
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values

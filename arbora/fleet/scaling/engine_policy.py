@@ -62,14 +62,14 @@ class EngineScalePolicy:
             raise refusal(missing) from missing
         from medulla.decision_client import scale_intent_request
 
-        from arbora.api.invoke.bootstrap import caller_dispatch_graph
-        from arbora.api.ops.deploy import feature_schema_of
-        from arbora.api.ops.engine_calls import engine_send
-        from arbora.deployment.placement import (
+        from arbora.api.domain.deployment.placement import (
             check_receipt,
             send_decide,
             single_record,
         )
+        from arbora.api.invoke.bootstrap import caller_dispatch_graph
+        from arbora.api.ops.deploy import feature_schema_of
+        from arbora.api.ops.engine_calls import engine_send
 
         context = request_context()
         tenant = str(context.caller.tenant)

@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.ingest.service import IngestJobRecord, IngestSourceInventory
 from arbora.api.errors import EngineRefusal, to_envelope
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import sessions
-from arbora.ingest.service import IngestJobRecord, IngestSourceInventory
 from tests.api._knowledge_support import NO_OP, caller_context
 from tests.test_served_operation_api import _call, served  # noqa: F401
 

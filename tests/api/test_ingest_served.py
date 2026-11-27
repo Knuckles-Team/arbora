@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from arbora.ingest.service import IngestSyncReceipt
+from arbora.api.domain.ingest.service import IngestSyncReceipt
 from tests.api._loopback_engine import Loopback, loopback  # noqa: F401
 from tests.api._served_support import McpAsk, person
 from tests.test_served_operation_api import served  # noqa: F401

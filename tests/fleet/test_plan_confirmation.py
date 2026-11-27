@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.plan_confirmation import confirmed_plan_call
+from arbora.api.domain.fleet.plan_confirmation import confirmed_plan_call
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R015.2", "ARBORA-FLEET-R015.6")

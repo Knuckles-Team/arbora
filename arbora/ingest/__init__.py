@@ -1,13 +1,13 @@
 """Ingestion services for the Arbora operation registry.
 
 ARBORA-OPS-R020.1: Arbora calls the ingestion SDK only through the typed
-:class:`~arbora.ingest.service.IngestRunner` port defined here. No handler
+:class:`~arbora.api.domain.ingest.service.IngestRunner` port defined here. No handler
 imports a private ingestion implementation directly.
 """
 
 from __future__ import annotations
 
-from .service import (
+from arbora.api.domain.ingest.service import (
     IngestIndexReceipt,
     IngestRunner,
     IngestSourceInventory,

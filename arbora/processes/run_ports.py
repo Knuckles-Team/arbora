@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from arbora.processes.approvals import ApprovalBroker
+from arbora.api.domain.processes.approvals import ApprovalBroker
 
 Wait = Callable[[float], Awaitable[None]]
 

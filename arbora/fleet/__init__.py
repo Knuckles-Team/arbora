@@ -7,6 +7,17 @@ until the generated joined registry/component query is public; it refuses
 rather than substituting the served static declaration as durable authority.
 """
 
+from arbora.api.domain.fleet.error_budget import (
+    AimdConfig,
+    BudgetWindow,
+    OutcomeClass,
+    OutcomeSample,
+    Partition,
+    ThrottleDecision,
+    ThrottleMode,
+    decide,
+)
+
 from .catalog_reader import (
     FLEET_COMPONENT_KINDS,
     CatalogComponent,
@@ -26,16 +37,6 @@ from .catalog_reader import (
     ReadReceipt,
     ServerPage,
     ServerRegistration,
-)
-from .error_budget import (
-    AimdConfig,
-    BudgetWindow,
-    OutcomeClass,
-    OutcomeSample,
-    Partition,
-    ThrottleDecision,
-    ThrottleMode,
-    decide,
 )
 from .mcp_resource_reconciliation import (
     MCP_RESOURCE_FAMILIES,

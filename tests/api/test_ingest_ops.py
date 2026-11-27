@@ -10,6 +10,16 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.api.domain.ingest.service import (
+    IngestIndexReceipt,
+    IngestJobRecord,
+    IngestPackInventory,
+    IngestPackRecord,
+    IngestSourceInventory,
+    IngestSourceRecord,
+    IngestSyncMode,
+    IngestSyncReceipt,
+)
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.ingest import (
     get_job_status,
@@ -19,16 +29,6 @@ from arbora.api.ops.ingest import (
     list_sources,
     operations,
     sync_source,
-)
-from arbora.ingest.service import (
-    IngestIndexReceipt,
-    IngestJobRecord,
-    IngestPackInventory,
-    IngestPackRecord,
-    IngestSourceInventory,
-    IngestSourceRecord,
-    IngestSyncMode,
-    IngestSyncReceipt,
 )
 
 

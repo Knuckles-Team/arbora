@@ -409,7 +409,7 @@ def _confirmed_arguments(
     tool: str, descriptor: AdmittedTool, arguments: Mapping[str, Any]
 ) -> Mapping[str, Any]:
     """Pass ``confirm=true`` to a declaring tool under a consumed plan."""
-    from arbora.fleet.plan_confirmation import plan_confirmed
+    from arbora.api.domain.fleet.plan_confirmation import plan_confirmed
 
     if (
         getattr(descriptor, "confirm_argument", False) is True

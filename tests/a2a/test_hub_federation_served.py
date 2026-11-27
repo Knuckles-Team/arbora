@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from arbora.a2a.hub_federation import (
+from arbora.api.domain.a2a.hub_federation import (
     FEDERATION_SCOPE_WIDER,
     FederationRefused,
     HubFederation,

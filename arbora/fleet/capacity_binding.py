@@ -16,8 +16,8 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
+from arbora.api.domain.fleet.error_budget import Partition
 from arbora.fleet.capacity_proposals import CapacityCellView, Judge
-from arbora.fleet.error_budget import Partition
 from arbora.fleet.throttle_service import (
     ControllerConfig,
     ModelCapacityGate,

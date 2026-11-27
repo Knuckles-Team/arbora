@@ -17,7 +17,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from arbora.fleet.admission_models import AdmissionRefused
+from arbora.api.domain.fleet.admission_models import AdmissionRefused
 from arbora.fleet.catalog_graph import (
     KG,
     RDF_TYPE,

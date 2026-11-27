@@ -11,12 +11,12 @@ import weakref
 from dataclasses import dataclass, field
 from typing import Any
 
+from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.actor_exchange import ActorExchange
 from arbora.fleet.credential_reuse import CredentialReuse
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
-from arbora.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.ranking import HostRanking
 from arbora.fleet.virtual_catalog import VirtualCatalog
 

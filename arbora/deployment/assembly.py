@@ -1,6 +1,6 @@
 """Assemble the deployment steps the engine chose (ARBORA-DEPLOY-R017.2, .5).
 
-Where to run is the engine's answer (:mod:`arbora.deployment.placement`). The
+Where to run is the engine's answer (:mod:`arbora.api.domain.deployment.placement`). The
 ordered fleet-tool steps are an agent graph the engine assembles from the
 tenant's published deployment template. Arbora sends the request and returns
 the engine's graph and certificate unmodified; an abstention passes through
@@ -15,10 +15,10 @@ from collections.abc import Awaitable, Callable, Collection, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Literal
 
+from arbora.api.domain.deployment.assembly_view import render_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import OpError
 from arbora.api.registry import Confirm, OpSpec
-from arbora.deployment.assembly_view import render_graph
 
 #: The template key of one target in the tenant Agent Library.
 TEMPLATE_PREFIX = "deployment:"

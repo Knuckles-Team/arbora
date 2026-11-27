@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.gateway.rate_limit import GatewayRateLimitMiddleware
+from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
 from arbora.observability.gateway_metrics import render_metrics
 from arbora.observability.state import Metrics
 from tests.api._support import make_verified_caller

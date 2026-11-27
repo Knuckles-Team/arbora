@@ -11,11 +11,11 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.ingest import service
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import capacity_questions
 from arbora.api.ops.question_round import Q32_ONE
 from arbora.api.ops.registry_factory import get_registry
-from arbora.ingest import service
 from tests.api._lane_double import EngineDouble, context
 
 

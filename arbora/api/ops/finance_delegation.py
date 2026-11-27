@@ -17,14 +17,14 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import Params, bound_service, build_write_op
-from arbora.api.registry import Confirm, OpSpec
-from arbora.finance.delegation import (
+from arbora.api.domain.finance.delegation import (
     DELEGATION_PROTOCOL,
     delegation_grant_id,
     delegation_resource,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._common import Params, bound_service, build_write_op
+from arbora.api.registry import Confirm, OpSpec
 
 SCOPE = "finance:track"
 SCHEDULER_BINDING = "finance_scheduler_principal"

@@ -3,7 +3,7 @@
 ARBORA-OPS-R020 exposes ingest operations for repository indexing, source
 sync, pack and job management, drift listing and repair, and embedding
 admission, calling the ingestion SDK only through a typed runner facade
-(:mod:`arbora.ingest.service`). R020.1 proved the port's first entry point,
+(:mod:`arbora.api.domain.ingest.service`). R020.1 proved the port's first entry point,
 ``ingest.sources.sync``: a durable job receipt on success and a typed
 ``UNAVAILABLE`` refusal when no runner is composed. This slice (R020.2) adds
 ``ingest.repositories.index`` and ``ingest.sources.{list,status}`` through
@@ -18,16 +18,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.api.registry import (
-    AuditClass,
-    Composite,
-    Effect,
-    Idempotency,
-    OpSpec,
-    Verb,
-)
-from arbora.ingest.maintenance import run_maintenance
-from arbora.ingest.service import (
+from arbora.api.domain.ingest.maintenance import run_maintenance
+from arbora.api.domain.ingest.service import (
     admit_embedding,
     approve_repair,
     cancel_job,
@@ -45,12 +37,20 @@ from arbora.ingest.service import (
     submit_ingest,
     sync_source,
 )
+from arbora.api.registry import (
+    AuditClass,
+    Composite,
+    Effect,
+    Idempotency,
+    OpSpec,
+    Verb,
+)
 
 #: Re-exported so ``registry_factory.get_registry()`` can resolve each
 #: ``Composite(handler="arbora.api.ops.ingest.<name>")`` binding from this
 #: module's own namespace, matching the ``access`` ops-module convention even
 #: though the implementation lives in the service layer
-#: (``arbora.ingest.service``).
+#: (``arbora.api.domain.ingest.service``).
 __all__ = [
     "NATIVE_IDEMPOTENCY",
     "admit_embedding",

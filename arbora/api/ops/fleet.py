@@ -487,7 +487,7 @@ def _plan_confirmed(context: Any, op: OpSpec) -> bool:
 def _plan_confirmation(context: Any, params: Mapping[str, Any], op: OpSpec) -> Any:
     import contextlib
 
-    from arbora.fleet.plan_confirmation import confirmed_plan_call
+    from arbora.api.domain.fleet.plan_confirmation import confirmed_plan_call
 
     if _plan_confirmed(context, op):
         return confirmed_plan_call(str(params["tool"]))
@@ -522,7 +522,7 @@ def _capacity_guard(context: Any) -> Any:
 
 def _capacity_partition(context: Any, params: Mapping[str, Any], op: OpSpec) -> Any:
     """Tenant, child, read or write class and policy revision of one call."""
-    from arbora.fleet.error_budget import Partition
+    from arbora.api.domain.fleet.error_budget import Partition
 
     effect = getattr(context.fleet_decision, "effect", op.effect)
     return Partition(

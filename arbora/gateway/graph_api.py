@@ -138,7 +138,7 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
     # the bucket key (tenant → actor → client IP) is resolved. Disabled by
     # default (GATEWAY_RATE_LIMIT=0); /metrics and health paths are exempt.
     if host.config.gateway_rate_limit > 0:
-        from arbora.gateway.rate_limit import GatewayRateLimitMiddleware
+        from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
 
         app.add_middleware(GatewayRateLimitMiddleware)
 

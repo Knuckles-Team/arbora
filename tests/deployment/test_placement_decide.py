@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.deployment.placement import ask_placement, chosen_target
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.deployment.placement import ask_placement, chosen_target
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R017.1")
 
@@ -77,7 +77,7 @@ def test_request_fields_record_passthrough_and_no_backend_names() -> None:
     assert record == _record(request, "person:one")
     assert chosen_target(record) == "compose"
 
-    import arbora.deployment.placement as module
+    import arbora.api.domain.deployment.placement as module
 
     source = inspect.getsource(module)
     for backend in ("compose", "helm", "swarm", "kubernetes", "standalone"):

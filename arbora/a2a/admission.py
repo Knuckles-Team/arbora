@@ -397,7 +397,7 @@ async def resolve_model_profile(
         return ModelProfileUnavailable()
     from medulla.decision_client import DeclaredOption, decide_request, declared, param
 
-    from arbora.deployment.placement import check_receipt, single_record
+    from arbora.api.domain.deployment.placement import check_receipt, single_record
 
     request = decide_request(
         tenant,

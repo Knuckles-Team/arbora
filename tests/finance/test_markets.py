@@ -9,12 +9,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from arbora.api.errors import ArboraErrorCode, ArboraRefusal
-from arbora.finance.markets import (
+from arbora.api.domain.finance.markets import (
     AccountBinding,
     MarketReadRequest,
     get_market_read,
 )
+from arbora.api.errors import ArboraErrorCode, ArboraRefusal
 
 
 def _request() -> MarketReadRequest:

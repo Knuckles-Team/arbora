@@ -15,6 +15,8 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from arbora.api.domain.deployment.assembly_view import render_graph
+from arbora.api.domain.deployment.placement import ask_placement, chosen_target
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.steps import claim_values
@@ -34,7 +36,6 @@ from arbora.deployment.assembly import (
     run_confirmed_steps,
     store_secret_step,
 )
-from arbora.deployment.assembly_view import render_graph
 from arbora.deployment.manifest import (
     DeploymentDiff,
     DeploymentManifest,
@@ -45,7 +46,6 @@ from arbora.deployment.manifest import (
     plan_manifest,
     record_rollout,
 )
-from arbora.deployment.placement import ask_placement, chosen_target
 from arbora.security.anonymous import client_scope
 
 #: Engine refusal tokens that mean the question kind is not served.

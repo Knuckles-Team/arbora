@@ -25,6 +25,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
+from arbora.api.domain.fleet.error_budget import Partition, ThrottleMode
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -35,7 +36,6 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
-from arbora.fleet.error_budget import Partition, ThrottleMode
 
 
 class CapacityPartitionParams(BaseModel):

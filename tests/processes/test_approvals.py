@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from arbora.processes.approvals import (
+from arbora.api.domain.processes.approvals import (
     ApprovalBroker,
     ApprovalNotPending,
     ApproverRoleRequired,

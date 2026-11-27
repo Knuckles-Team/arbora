@@ -520,7 +520,10 @@ class FleetOnboarding:
         self, connector: str, pack: Any, revision: Any, digest: str
     ) -> None:
         """Keep what is deployed for the conformance check (ARBORA-OPS-R067.10)."""
-        from arbora.fleet.conformance import DeployedPack, live_tool_fingerprints
+        from arbora.api.domain.fleet.conformance import (
+            DeployedPack,
+            live_tool_fingerprints,
+        )
 
         if revision is None or not digest:
             return

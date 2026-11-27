@@ -400,7 +400,7 @@ def engine_ask(
             schema,
             params=[param("query", "text", query)],
         )
-        from arbora.deployment.placement import (
+        from arbora.api.domain.deployment.placement import (
             check_receipt,
             send_decide,
             single_record,

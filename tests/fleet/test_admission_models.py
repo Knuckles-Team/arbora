@@ -4,13 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.fleet.admission import (
-    REFUSALS,
-    admit_workflow,
-    certification_order,
-    validate_certification,
-)
-from arbora.fleet.admission_models import (
+from arbora.api.domain.fleet.admission_models import (
     AdmissionRefused,
     AuditFinding,
     SkillAuditReport,
@@ -18,6 +12,12 @@ from arbora.fleet.admission_models import (
     parse_certification_binding,
     parse_workflow_binding,
     parse_workflow_record,
+)
+from arbora.fleet.admission import (
+    REFUSALS,
+    admit_workflow,
+    certification_order,
+    validate_certification,
 )
 from arbora.fleet.admission_policy import (
     AdmissionConfig,

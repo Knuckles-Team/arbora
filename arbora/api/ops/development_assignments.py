@@ -61,7 +61,7 @@ async def _reserve_lane(
     now_ms: Callable[[], int],
 ) -> dict[str, Any]:
     """The lane hold, or ``{"queued": reason}`` when no slot is free or the engine lacks lanes."""
-    from arbora.fleet.scaling.development_lane import (
+    from arbora.api.domain.fleet.scaling.development_lane import (
         DevelopmentLaneAuthorityUnavailable,
     )
 

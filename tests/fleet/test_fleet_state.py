@@ -7,15 +7,15 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.api.domain.fleet import plan_confirmation
+from arbora.api.domain.fleet.plan_confirmation import confirmed_plan_call
 from arbora.fleet import (
     access_contracts,
     child_resilience,
     declarations,
     gateway_ops,
     multiplexer,
-    plan_confirmation,
 )
-from arbora.fleet.plan_confirmation import confirmed_plan_call
 from arbora.fleet.state import FleetState
 from arbora.mcp_server.host_context import build_host_context
 from tests.fleet.catalog_fixture import multiplexer_from_fixture

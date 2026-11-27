@@ -140,8 +140,8 @@ def test_both_routes_share_provider_dispatch_and_isolate_effects(
 
 @pytest.mark.spec("ARBORA-DATA-MARKET-R003.6")
 def test_reads_declare_no_effect_confirmation_or_submission() -> None:
+    from arbora.api.domain.finance.fleet_read_port import FinanceReadPort
     from arbora.api.ops import finance
-    from arbora.finance.fleet_read_port import FinanceReadPort
 
     declared = {op.id: op for op in finance.operations() if op.id in ALL_OPS}
     assert set(declared) == set(ALL_OPS)
@@ -155,7 +155,7 @@ def test_reads_declare_no_effect_confirmation_or_submission() -> None:
 
 @pytest.mark.spec("ARBORA-DATA-MARKET-R003.6")
 def test_the_host_composes_the_fleet_read_port() -> None:
-    from arbora.finance.fleet_read_port import FleetFinanceReadPort
+    from arbora.api.domain.finance.fleet_read_port import FleetFinanceReadPort
     from arbora.mcp_server.served_invocation import _with_finance_read_port
 
     composed = _with_finance_read_port({})

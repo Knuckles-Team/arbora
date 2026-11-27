@@ -15,10 +15,7 @@ import pytest
 from test_invoke_contract import caller as _caller
 from test_invoke_contract import setup_services as _setup_services
 
-from arbora.api.invoke import OpError, invoke
-from arbora.api.ops import capacity
-from arbora.api.registry import Confirm, Effect, PrincipalRule, Registry, Surface
-from arbora.fleet.error_budget import (
+from arbora.api.domain.fleet.error_budget import (
     AimdConfig,
     BudgetWindow,
     OutcomeClass,
@@ -27,6 +24,9 @@ from arbora.fleet.error_budget import (
     ThrottleMode,
     decide,
 )
+from arbora.api.invoke import OpError, invoke
+from arbora.api.ops import capacity
+from arbora.api.registry import Confirm, Effect, PrincipalRule, Registry, Surface
 from arbora.fleet.throttle_service import ThrottleRegistry
 from tests.api._ops_support import service_context as _context
 

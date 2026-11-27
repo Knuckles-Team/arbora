@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from arbora.fleet.scaling.scaling_authority import (
+from arbora.api.domain.fleet.scaling.scaling_authority import (
     MaintenanceWindow,
     ObservedOutcome,
     ScaleAuthority,

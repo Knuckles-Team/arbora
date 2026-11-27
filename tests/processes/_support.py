@@ -222,7 +222,7 @@ async def run_loop(
     prompts: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """The harness double: apply the mapped plan's steps in order through the bound ports."""
-    from arbora.processes.run_plan import map_process_plan
+    from arbora.api.domain.processes.run_plan import map_process_plan
 
     run = map_process_plan(plan, prompts or {}, model=model)
     return await _Loop(plan, run, run_id, ports).run()

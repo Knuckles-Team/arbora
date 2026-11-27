@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 from fastmcp import Client, FastMCP
 
+from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.catalog_composition import probe_primer
 from arbora.fleet.catalog_items import CatalogItem
 from arbora.fleet.multiplexer import (
@@ -23,7 +24,6 @@ from arbora.fleet.multiplexer import (
     _list_all_tools,
 )
 from arbora.fleet.multiplexer_ops import MultiplexerOps
-from arbora.fleet.plan_confirmation import PlanConfirmations
 
 # ── R068: tools/list pagination ──────────────────────────────────────────────
 
@@ -759,6 +759,7 @@ def test_a_cancelled_child_result_is_a_typed_confirmation_refusal(result) -> Non
 
 @pytest.mark.spec("ARBORA-FLEET-R077")
 def test_a_confirm_argument_tool_is_planned_and_confirmed_under_its_plan() -> None:
+    from arbora.api.domain.fleet.plan_confirmation import confirmed_plan_call
     from arbora.api.registry import Effect
     from arbora.fleet.gateway_ops import (
         AdmittedTool,
@@ -766,7 +767,6 @@ def test_a_confirm_argument_tool_is_planned_and_confirmed_under_its_plan() -> No
         _declares_confirm,
         annotation_effect,
     )
-    from arbora.fleet.plan_confirmation import confirmed_plan_call
 
     schema = {"type": "object", "properties": {"confirm": {"type": "boolean"}}}
     assert _declares_confirm(schema)

@@ -22,13 +22,13 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import bound_service, build_write_op
-from arbora.api.registry import Composite, Effect, OpSpec, Verb
-from arbora.control_plane.fleet_watch.service import (
+from arbora.api.domain.control_plane.fleet_watch.service import (
     DeployProbe,
     evaluate_deploy_watch,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._common import bound_service, build_write_op
+from arbora.api.registry import Composite, Effect, OpSpec, Verb
 
 
 class _Params(BaseModel):

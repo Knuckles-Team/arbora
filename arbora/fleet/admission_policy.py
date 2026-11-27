@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from arbora.fleet.admission_models import (
+from arbora.api.domain.fleet.admission_models import (
     AdmissionRefused,
     AuditFinding,
     SkillAuditReport,

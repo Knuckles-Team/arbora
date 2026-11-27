@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.ingest import service
 from arbora.api.ops.registry_factory import get_registry
-from arbora.ingest import service
 from arbora.ingest.connector_sources import SUBMISSION_KIND, ConnectorIngestRunner
 from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,

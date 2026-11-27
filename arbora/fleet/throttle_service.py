@@ -2,8 +2,8 @@
 
 Part of ARBORA-CAPACITY-R002 and the ARBORA-CAPACITY-R001 build sequence:
 holds the latest recorded
-:class:`~arbora.fleet.error_budget.ThrottleDecision` and the selected
-:class:`~arbora.fleet.error_budget.ThrottleMode` per partition, so a
+:class:`~arbora.api.domain.fleet.error_budget.ThrottleDecision` and the selected
+:class:`~arbora.api.domain.fleet.error_budget.ThrottleMode` per partition, so a
 hosted operation (``capacity.throttle.status`` / ``capacity.throttle.
 set_mode`` in :mod:`arbora.api.ops.capacity`) can read or administer
 controller state without a second fleet call path or a cloned engine
@@ -26,6 +26,16 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any
 
+from arbora.api.domain.fleet.error_budget import (
+    AimdConfig,
+    BudgetWindow,
+    OutcomeClass,
+    OutcomeSample,
+    Partition,
+    ThrottleDecision,
+    ThrottleMode,
+    decide,
+)
 from arbora.fleet.capacity_proposals import (
     CapacityAppliedReceipt,
     CapacityPort,
@@ -38,16 +48,6 @@ from arbora.fleet.capacity_proposals import (
     build_proposal,
     judge,
     read_back,
-)
-from arbora.fleet.error_budget import (
-    AimdConfig,
-    BudgetWindow,
-    OutcomeClass,
-    OutcomeSample,
-    Partition,
-    ThrottleDecision,
-    ThrottleMode,
-    decide,
 )
 
 logger = logging.getLogger(__name__)

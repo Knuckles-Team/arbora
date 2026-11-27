@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.deployment import assembly_view
-from arbora.deployment.assembly_view import render_graph
+from arbora.api.domain.deployment import assembly_view
+from arbora.api.domain.deployment.assembly_view import render_graph
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R017.3")
 

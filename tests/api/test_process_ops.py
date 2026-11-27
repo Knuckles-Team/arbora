@@ -168,7 +168,10 @@ class _Broker:
 async def test_decide_stamps_the_verified_person_and_hides_a_missing_wait(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.processes.approvals import ApprovalNotPending, ApproverRoleRequired
+    from arbora.api.domain.processes.approvals import (
+        ApprovalNotPending,
+        ApproverRoleRequired,
+    )
 
     params = {"run_id": "r", "step_id": "s", "verdict": "approve", "comment": "ok"}
     broker = _Broker()

@@ -7,6 +7,10 @@ from typing import Any
 
 from pydantic import Field
 
+from arbora.api.domain.gateway.schemas.schema_context import (
+    SchemaContextRequest,
+    SchemaContextResult,
+)
 from arbora.api.errors import not_served
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.ops.engine_calls import engine_send
@@ -17,10 +21,6 @@ from arbora.api.ops.projections import (
 )
 from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, OpSpec, Verb, eg_method_ref
-from arbora.gateway.schemas.schema_context import (
-    SchemaContextRequest,
-    SchemaContextResult,
-)
 
 __all__ = [
     "NaturalLanguageParams",

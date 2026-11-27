@@ -17,9 +17,9 @@ import logging
 from collections.abc import Callable, Iterator, Mapping
 from typing import Any
 
+from arbora.api.domain.fleet.fleet_tool_call import call_fleet_tool, refused_result
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.core.environment import read_env
-from arbora.fleet.fleet_tool_call import call_fleet_tool, refused_result
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleActuationRequest,
     ScaleActuationResult,

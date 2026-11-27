@@ -27,6 +27,7 @@ from typing import Any
 
 import msgpack
 
+from arbora.api.domain.finance.delegation import delegated, delegation_holds
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.engine_calls import decode, node_rows
 from arbora.finance.dca import (
@@ -36,7 +37,6 @@ from arbora.finance.dca import (
     minor_exponent,
     run_dca_due,
 )
-from arbora.finance.delegation import delegated, delegation_holds
 from arbora.finance.receipts import (
     FinanceReceiptEngine,
     ServedReceiptEngine,

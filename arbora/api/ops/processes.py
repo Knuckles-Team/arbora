@@ -4,7 +4,7 @@
 workflow version and returns the sealed plan, its digest and the bindings unchanged:
 arbora adds no binding and no ranking. ``process.approvals.list`` and
 ``process.approval.decide`` read and decide the approval waits of the run journal through
-the :class:`arbora.processes.approvals.ApprovalBroker`. ``process.run`` plans, resolves the
+the :class:`arbora.api.domain.processes.approvals.ApprovalBroker`. ``process.run`` plans, resolves the
 bound prompts, binds the decision port and the approval waiter, and runs the sealed plan
 through the meristem run loop (MERISTEM-RUN-R018, ARBORA-OPS-R898.5). Against a pinned
 meristem without the control step kinds and ports it refuses ``UNAVAILABLE`` naming them.
@@ -20,6 +20,11 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from arbora.api.domain.processes.approvals import (
+    ApprovalBroker,
+    ApprovalNotPending,
+    ApproverRoleRequired,
+)
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
@@ -33,11 +38,6 @@ from arbora.api.registry import (
     OpSpec,
     PrincipalRule,
     Verb,
-)
-from arbora.processes.approvals import (
-    ApprovalBroker,
-    ApprovalNotPending,
-    ApproverRoleRequired,
 )
 
 READ_SCOPE = "process:read"
@@ -117,13 +117,13 @@ async def handle_process_plan(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """The engine's sealed plan of one workflow version, its digest and its bindings."""
-    from arbora.api.ops.pin_guards import refusal
-    from arbora.api.ops.plans import _feature_schema
-    from arbora.deployment.placement import (
+    from arbora.api.domain.deployment.placement import (
         check_receipt,
         decide_params,
         single_record,
     )
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.api.ops.plans import _feature_schema
     from arbora.pin_lag.medulla import PinLagUnavailable, require_question_kind
 
     try:
@@ -232,7 +232,7 @@ def _prompt_reader(context: Any) -> Any:
 
 def _decide_call(context: Any) -> Any:
     """The ``RunCall`` of the control-step ``Decide``: the engine answer, checked and wrapped."""
-    from arbora.deployment.placement import check_receipt, single_record
+    from arbora.api.domain.deployment.placement import check_receipt, single_record
 
     async def call(
         op_id: str, params: Mapping[str, Any], run_ref: str, plan_ref: str | None = None
@@ -320,8 +320,11 @@ async def handle_process_run(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Plan, bind the ports and run one stored workflow as one governed agent DAG."""
+    from arbora.api.domain.processes.run_plan import (
+        ProcessPromptUnresolved,
+        resolve_prompts,
+    )
     from arbora.api.ops.plans import _plan_model, execute_task_plan
-    from arbora.processes.run_plan import ProcessPromptUnresolved, resolve_prompts
     from arbora.processes.run_ports import RunEvidence
 
     planned = await handle_process_plan(context, params, op)

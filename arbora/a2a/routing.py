@@ -136,7 +136,7 @@ class OrchestratorA2ARouter:
     async def _a2a_route(self, requested: str) -> A2ARouteDecision:
         from medulla.decision_client import decide_request, library, param
 
-        from arbora.deployment.placement import check_receipt, single_record
+        from arbora.api.domain.deployment.placement import check_receipt, single_record
 
         assert self._decide is not None
         tenant = self._tenant()

@@ -10,9 +10,9 @@ from unittest.mock import Mock
 import pytest
 from pydantic import ValidationError
 
+from arbora.api.domain.gateway.schemas.schema_context import SchemaContextRequest
 from arbora.api.errors import ArboraErrorCode, ArboraRefusal
 from arbora.gateway.schema_context_service import get_schema_context
-from arbora.gateway.schemas.schema_context import SchemaContextRequest
 
 
 def _valid_payload() -> dict[str, object]:

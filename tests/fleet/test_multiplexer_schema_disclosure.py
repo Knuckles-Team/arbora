@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.child_resilience import ChildRuntime
-from arbora.fleet.plan_confirmation import PlanConfirmations
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R035")

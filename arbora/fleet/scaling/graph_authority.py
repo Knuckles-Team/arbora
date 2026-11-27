@@ -15,9 +15,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops.engine_calls import engine_send, node_rows
-from arbora.fleet.scaling.scaling_authority import (
+from arbora.api.domain.fleet.scaling.scaling_authority import (
     ControllerRegistration,
     FailureDomain,
     ResourcePool,
@@ -25,6 +23,8 @@ from arbora.fleet.scaling.scaling_authority import (
     ScaleUnit,
     WorkloadClass,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops.engine_calls import engine_send, node_rows
 
 #: The graph class of each inventory record, in the field order of ``ScaleAuthority``.
 INVENTORY: tuple[tuple[str, str, type[BaseModel]], ...] = (

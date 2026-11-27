@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from arbora.fleet.admission_models import AdmissionRefused, canonical_digest
+from arbora.api.domain.fleet.admission_models import AdmissionRefused, canonical_digest
 
 __all__ = ["CatalogAdmissionSources", "tool_name"]
 
