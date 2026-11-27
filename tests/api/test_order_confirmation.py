@@ -1,0 +1,340 @@
+"""Confirmed order, position and wallet changes over structural SDK doubles (ARBORA-DATA-MARKET-R007).
+
+The SDK wallet contract is not in the pinned release, so these tests install a structural
+double of ``scion_sdk.writeback.wallet_intent`` (the shapes on scion-sdk main) and drive the
+handlers with recording ports. A pinned release without the contract refuses UNAVAILABLE.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+from types import ModuleType, SimpleNamespace
+from typing import Any
+
+import pytest
+
+from arbora.api.invoke.audit import audit_event
+from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS, OperationRefused
+from arbora.api.ops import finance_changes as ops
+from arbora.api.ops.registry_factory import get_registry
+from arbora.api.registry import Confirm, Idempotency, Surface
+from arbora.finance.changes import OrderChange, WalletOperation, refusal_for
+
+NO_OP: Any = None
+INTENT = {
+    "operation_id": "pay",
+    "account_id": "acct-1",
+    "wallet_id": "w1",
+    "network_id": "xrpl",
+    "key_id": "k1",
+    "params": {"amount": "5"},
+}
+
+
+class Intent:
+    def __init__(self, **fields: Any) -> None:
+        for name in ("operation_id", "account_id", "wallet_id", "network_id", "key_id"):
+            setattr(self, name, fields[name])
+        self.params = fields.get("params", {})
+
+
+def digest(intent: Intent) -> str:
+    body = json.dumps(vars(intent), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(body.encode()).hexdigest()
+
+
+@pytest.fixture
+def sdk(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    module = ModuleType("scion_sdk.writeback.wallet_intent")
+    module.WalletBusinessIntent = Intent  # type: ignore[attr-defined]
+    module.WalletConfirmation = dict  # type: ignore[attr-defined]
+    module.WalletExecutionEnvelope = dict  # type: ignore[attr-defined]
+    module.wallet_plan_digest = digest  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "scion_sdk.writeback.wallet_intent", module)
+    return module
+
+
+class Wallet:
+    """Recording ports; every provider mutation is one ``applied`` entry."""
+
+    def __init__(self, verdict: dict[str, Any] | None = None, allowed: bool = True):
+        self.verdict = verdict or {
+            "outcome": "verified",
+            "proof_digest": "p" * 64,
+            "signer": "key-1",
+            "trust_revision": "7",
+            "signature": "SECRET",
+        }
+        self.allowed = allowed
+        self.applied: list[tuple[dict[str, str], str | None]] = []
+        self.reconciled: list[Any] = []
+        self.state = "applied"
+
+    async def verify(self, projection: Any, proof: Any) -> Any:
+        return self.verdict
+
+    async def authorize(self, projection: Any) -> Any:
+        return {"allowed": self.allowed, "authorization_id": "auth-1"}
+
+    async def apply(self, projection: Any, key: str | None) -> Any:
+        self.applied.append((projection, key))
+        return {"state": self.state, "effect_receipt": f"eff:{key}"}
+
+    async def reconcile(self, projection: Any, key: str | None) -> None:
+        self.reconciled.append(key)
+
+
+def context(wallet: Wallet | None = None, **services: Any) -> Any:
+    bound = dict(services)
+    if wallet is not None:
+        bound["wallet_operations"] = wallet
+    return SimpleNamespace(
+        caller=SimpleNamespace(tenant="t1", principal="actor-1", request_id="r1"),
+        services=bound,
+        idempotency_key="key-1",
+    )
+
+
+def confirmed(params: dict[str, Any] = INTENT) -> dict[str, Any]:
+    return {
+        "intent": params,
+        "confirmation": {
+            "confirmed_by": "actor-1",
+            "confirmed_at_ms": 1,
+            "plan_digest": digest(Intent(**params)),
+        },
+    }
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.1")
+def test_models_bind_exact_intent_and_exclude_proof(sdk: ModuleType) -> None:
+    wallet = WalletOperation.from_params("t1", "actor-1", INTENT)
+    projection = wallet.projection()
+    assert projection == {
+        "tenant_id": "t1",
+        "actor": "actor-1",
+        "account_id": "acct-1",
+        "network_id": "xrpl",
+        "wallet_id": "w1",
+        "operation_id": "pay",
+        "plan_digest": digest(Intent(**INTENT)),
+    }
+    assert "proof" not in json.dumps(projection) and "signature" not in str(projection)
+    order = OrderChange(
+        tenant_id="t1", actor="a", account_id="acct-1", order_id="o1",
+        action="amend", quantity="1.50",
+    )  # fmt: skip
+    assert order.identity() == "order:t1:acct-1:o1:amend:1.50:-"
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.2")
+async def test_digest_is_stable_across_signing_and_retries_reuse_effect_key(
+    sdk: ModuleType,
+) -> None:
+    port = Wallet()
+    unsigned = await ops.handle_wallet_operate(context(port), confirmed(), NO_OP)
+    signed = await ops.handle_wallet_operate(
+        context(port), {**confirmed(), "proof": {"signature": "SECRET"}}, NO_OP
+    )
+    assert unsigned["value"]["plan_digest"] == signed["value"]["plan_digest"]
+    # Both calls carry the one effect key the pipeline gave them; arbora mints no nonce.
+    assert [key for _p, key in port.applied] == ["key-1", "key-1"]
+    assert not hasattr(ops, "NONCES")
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.3")
+def test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp() -> None:
+    registry = get_registry()
+    for op_id in ("orders.change", "positions.change", "wallet.operate"):
+        spec = registry.get(op_id)
+        assert spec is not None
+        assert spec.confirm is Confirm.PLAN
+        assert spec.idempotency is Idempotency.KEY_REQUIRED
+        assert {Surface.HTTP, Surface.MCP} <= set(spec.surfaces)
+        assert op_id in EXTERNAL_EFFECT_OPERATIONS
+    # One params model carries intent, confirmation and proof for both routes.
+    assert set(ops.WalletOperateParams.model_fields) == {
+        "intent",
+        "confirmation",
+        "proof",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.3")
+async def test_wallet_is_unavailable_until_every_binding_exists(
+    sdk: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with pytest.raises(OperationRefused) as unbound:
+        await ops.handle_wallet_operate(context(), confirmed(), NO_OP)
+    assert unbound.value.code == "UNAVAILABLE"
+    monkeypatch.delitem(sys.modules, "scion_sdk.writeback.wallet_intent")
+    monkeypatch.setitem(sys.modules, "scion_sdk.writeback", None)
+    with pytest.raises(OperationRefused) as pinned:
+        await ops.handle_wallet_operate(context(Wallet()), confirmed(), NO_OP)
+    assert pinned.value.code == "UNAVAILABLE"
+    assert "wallet_intent" in str(pinned.value.details)
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.4")
+async def test_each_refusal_code_reaches_no_provider_mutation(sdk: ModuleType) -> None:
+    cases: list[tuple[str, Wallet, dict[str, Any]]] = [
+        ("CONFIRMATION_REQUIRED", Wallet(), {"intent": INTENT}),
+        (
+            "PLAN_MISMATCH",
+            Wallet(),
+            {**confirmed(), "intent": {**INTENT, "wallet_id": "w2"}},
+        ),
+        ("POLICY_DENIED", Wallet({"outcome": "refused", "reason": "bad_signature"}), confirmed()),
+        ("POLICY_DENIED", Wallet(allowed=False), confirmed()),
+        ("UNAVAILABLE", Wallet({"outcome": "refused", "reason": "verifier_absent"}), confirmed()),
+    ]  # fmt: skip
+    for code, port, params in cases:
+        with pytest.raises(OperationRefused) as refused:
+            await ops.handle_wallet_operate(context(port), params, NO_OP)
+        assert refused.value.code == code
+        assert port.applied == []
+    assert refusal_for("bad_signature") == (
+        "POLICY_DENIED",
+        {"reason": "bad_signature"},
+    )
+    # The SDK typed reason survives in the redacted detail.
+    with pytest.raises(OperationRefused) as detail:
+        await ops.handle_wallet_operate(
+            context(Wallet({"outcome": "refused", "reason": "key_revoked"})),
+            confirmed(),
+            NO_OP,
+        )
+    assert detail.value.details == {"reason": "key_revoked"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.4")
+async def test_an_uncertain_prior_effect_enters_reconciliation_and_is_not_retried(
+    sdk: ModuleType,
+) -> None:
+    port = Wallet()
+    port.state = "uncertain"
+    out = await ops.handle_wallet_operate(context(port), confirmed(), NO_OP)
+    assert out["value"]["state"] == "reconciling"
+    assert port.reconciled == ["key-1"] and len(port.applied) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.5")
+async def test_audit_joins_authorization_and_proof_digest_without_secrets(
+    sdk: ModuleType,
+) -> None:
+    out = await ops.handle_wallet_operate(context(Wallet()), confirmed(), NO_OP)
+    spec = get_registry().get("wallet.operate")
+    caller = SimpleNamespace(tenant="t1", principal="actor-1", request_id="r1")
+    event = audit_event(
+        spec, confirmed(), caller, Surface.HTTP, "ok", evidence=out["evidence"]
+    )
+    assert event["authorization_id"] == "auth-1"
+    assert event["proof_digest"] == "p" * 64
+    assert event["signer"] == "key-1" and event["trust_revision"] == "7"
+    assert event["effect_receipt"] == "eff:key-1"
+    assert "SECRET" not in json.dumps(event) and "signature" not in event
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.6")
+async def test_wallet_proof_confirmation_and_replay(sdk: ModuleType) -> None:
+    port = Wallet()
+    params = {**confirmed(), "proof": {"signature": "SECRET"}}
+    first = await ops.handle_wallet_operate(context(port), params, NO_OP)
+    # A replay carries the same effect key, so the port reads the one receipt.
+    again = await ops.handle_wallet_operate(context(port), params, NO_OP)
+    assert first["value"]["effect_receipt"] == again["value"]["effect_receipt"]
+    assert {key for _p, key in port.applied} == {"key-1"}
+    for altered in ("account_id", "network_id", "key_id"):
+        with pytest.raises(OperationRefused) as refused:
+            await ops.handle_wallet_operate(
+                context(port), {**params, "intent": {**INTENT, altered: "x"}}, NO_OP
+            )
+        assert refused.value.code == "PLAN_MISMATCH"
+
+
+class Doors:
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+
+    async def send_main(
+        self, _context: Any, method: str, params: dict[str, Any], **kwargs: Any
+    ) -> Any:
+        self.sent.append((method, params, kwargs))
+        return {"proposal_id": "pr-1", "revision": 1}
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.7")
+async def test_stage_confirm_promote(monkeypatch: pytest.MonkeyPatch) -> None:
+    doors = Doors()
+    monkeypatch.setattr(ops, "send_main", doors.send_main)
+    staged = await ops.handle_order_stage(
+        context(),
+        {"snapshot": {"proposal_id": "pr-1"}, "expected_head_revision": None},
+        NO_OP,
+    )
+    assert staged["value"]["proposal_id"] == "pr-1"
+    assert doors.sent[0][0] == "FinanceOrderStage"
+    assert doors.sent[0][1] == {"snapshot": {"proposal_id": "pr-1"}}
+    receipt = {"gate_id": "g1", "digest": "d"}
+    await ops.handle_order_confirm(
+        context(),
+        {
+            "proposal_id": "pr-1",
+            "candidate_revision": 1,
+            "snapshot_digest": "s",
+            "required_gate_manifest_digest": "m",
+            "manifest_gate_ids": ["g1"],
+            "gate_receipts": [receipt],
+        },
+        NO_OP,
+    )
+    method, params, _kw = doors.sent[1]
+    assert method == "FinanceOrderPromote"
+    # The human confirmation is the verified caller; the tenant is never a request field.
+    assert params["request"]["approver"] == "actor-1"
+    assert params["request"]["tenant_id"] == "t1"
+    assert params["request"]["gate_receipts"] == [receipt]
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.7")
+async def test_the_proposal_door_refuses_unavailable_on_a_release_without_it() -> None:
+    with pytest.raises(OperationRefused) as refused:
+        await ops.handle_order_stage(context(), {"snapshot": {}}, NO_OP)
+    assert refused.value.code == "UNAVAILABLE"
+    assert "FinanceOrderStage" in str(refused.value.details)
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.3")
+async def test_order_and_position_changes_need_the_composed_door() -> None:
+    params = {"order_id": "o1", "action": "cancel", "account_id": "acct-1"}
+    with pytest.raises(OperationRefused) as refused:
+        await ops.handle_orders_change(context(), params, NO_OP)
+    assert refused.value.code == "UNAVAILABLE"
+    sent: list[Any] = []
+
+    class Door:
+        async def apply(self, *args: Any) -> Any:
+            sent.append(args)
+            return {"state": "applied"}
+
+    out = await ops.handle_orders_change(
+        context(finance_change_port=Door()), params, NO_OP
+    )
+    assert out["value"]["identity"] == "order:t1:acct-1:o1:cancel:-:-"
+    assert sent[0][1] == "order" and sent[0][4] == "key-1"
+    with pytest.raises(OperationRefused) as bad:
+        await ops.handle_orders_change(
+            context(finance_change_port=Door()), {**params, "action": "amend"}, NO_OP
+        )
+    assert bad.value.code == "INVALID_ARGUMENT"
