@@ -336,6 +336,7 @@ def acquire_intake_leases(
                 "refusing inbound polling",
                 platform,
                 exc,
+                exc_info=True,
             )
             continue
         if lease is not None:
@@ -364,6 +365,7 @@ def _release_intake_lease(engine: Any, lease: IntakeLease) -> None:
             "messaging intake lease release deferred to expiry: platform=%s error=%s",
             lease.platform,
             exc,
+            exc_info=True,
         )
 
 
@@ -406,6 +408,7 @@ def _renew_one(engine: Any, lease: IntakeLease) -> IntakeLeaseEvent:
             "messaging intake lease renewal failed: platform=%s error=%s",
             lease.platform,
             type(exc).__name__,
+            exc_info=True,
         )
         return IntakeLeaseEvent.HEARTBEAT_ERR
     if bool(answer.get("renewed", answer.get("ok", False))):
@@ -428,6 +431,7 @@ def _try_reacquire(engine: Any, lease: IntakeLease) -> bool:
             "messaging intake re-acquire failed: platform=%s error=%s",
             lease.platform,
             type(exc).__name__,
+            exc_info=True,
         )
         return False
     if not answer.get("claimed"):

@@ -119,6 +119,7 @@ class MatrixBackend(MessagingBackend):
                 channel_id=channel_id,
             )
         except Exception as e:
+            logger.warning("send message failed", exc_info=True)
             return SendResult(success=False, platform=PlatformId.MATRIX, error=str(e))
 
     async def send_reaction(self, channel_id: str, message_id: str, emoji: str) -> None:

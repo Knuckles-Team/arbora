@@ -220,6 +220,7 @@ class TelegramBackend(MessagingBackend):
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Telegram updater stop during "
                 "cleanup skipped: %s",
                 e,
+                exc_info=True,
             )
 
     async def send_message(
@@ -264,6 +265,7 @@ class TelegramBackend(MessagingBackend):
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Telegram %s send failed (%s); retrying as plain text.",
                 parse_mode,
                 e,
+                exc_info=True,
             )
             try:
                 msg = await self._app.bot.send_message(text=text, **base)
@@ -277,6 +279,7 @@ class TelegramBackend(MessagingBackend):
                 logger.error(
                     "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Telegram send failed: %s",
                     e2,
+                    exc_info=True,
                 )
                 return SendResult(
                     success=False, platform=PlatformId.TELEGRAM, error=str(e2)
@@ -319,6 +322,7 @@ class TelegramBackend(MessagingBackend):
                 "[CONCEPT:MERISTEM-ORCH.execution.messaging-orchestration-transparency] Telegram %s edit failed (%s); retrying as plain text.",
                 parse_mode,
                 e,
+                exc_info=True,
             )
             try:
                 msg = await self._app.bot.edit_message_text(text=text, **base)
@@ -332,6 +336,7 @@ class TelegramBackend(MessagingBackend):
                 logger.debug(
                     "[CONCEPT:MERISTEM-ORCH.execution.messaging-orchestration-transparency] Telegram edit failed: %s",
                     e2,
+                    exc_info=True,
                 )
                 return SendResult(
                     success=False, platform=PlatformId.TELEGRAM, error=str(e2)
@@ -372,6 +377,7 @@ class TelegramBackend(MessagingBackend):
                 channel_id=channel_id,
             )
         except Exception as e:
+            logger.warning("send media failed", exc_info=True)
             return SendResult(success=False, platform=PlatformId.TELEGRAM, error=str(e))
 
     async def send_typing(self, channel_id: str) -> None:
@@ -404,6 +410,7 @@ class TelegramBackend(MessagingBackend):
             logger.warning(
                 "[CONCEPT:MERISTEM-ECO.messaging.single-inbound-command-dispatcher] Telegram setMyCommands failed: %s",
                 e,
+                exc_info=True,
             )
 
     async def _start_intake(self) -> None:

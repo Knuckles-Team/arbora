@@ -31,6 +31,7 @@ async def run_action_policy(
         logger.warning(
             "[ECO-4.48] action policy runner unavailable; outbound send refused (%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         return None
 

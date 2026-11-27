@@ -100,6 +100,7 @@ class SignalBackend(MessagingBackend):
                 success=True, platform=PlatformId.SIGNAL, channel_id=channel_id
             )
         except Exception as e:
+            logger.warning("send message failed", exc_info=True)
             return SendResult(success=False, platform=PlatformId.SIGNAL, error=str(e))
 
     async def listen(self) -> AsyncIterator[InboundEvent]:

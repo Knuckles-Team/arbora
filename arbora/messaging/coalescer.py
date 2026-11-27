@@ -98,4 +98,5 @@ class BurstCoalescer:
                 "[CONCEPT:MERISTEM-ECO.messaging.burst-mode-coalescing] burst flush failed for %s: %s",
                 key,
                 e,
+                exc_info=True,
             )

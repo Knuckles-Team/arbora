@@ -138,7 +138,7 @@ async def _handle(request: web.Request) -> web.Response:
     async with deliveries:
         try:
             body: Any = await request.json()
-        except Exception:
+        except ValueError:
             body = await request.text()
         text = extract_alert_text(body)
 
@@ -163,7 +163,9 @@ async def _handle(request: web.Request) -> web.Response:
                 timeout=_DELIVERY_TIMEOUT_SECONDS,
             )
         except Exception as exc:  # boundary is fail-closed + generic
-            logger.warning("alert-intake delivery failed (%s)", type(exc).__name__)
+            logger.warning(
+                "alert-intake delivery failed (%s)", type(exc).__name__, exc_info=True
+            )
             return web.json_response(
                 {"ok": False, "error": "alert delivery failed"}, status=502
             )

@@ -162,6 +162,7 @@ class WhatsAppBackend(MessagingBackend):
             logger.error(
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] WhatsApp send failed: %s",
                 e,
+                exc_info=True,
             )
             return SendResult(success=False, platform=PlatformId.WHATSAPP, error=str(e))
 

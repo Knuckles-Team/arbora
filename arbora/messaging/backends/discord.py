@@ -247,6 +247,7 @@ class DiscordBackend(MessagingBackend):
             logger.error(
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Discord send failed: %s",
                 e,
+                exc_info=True,
             )
             return SendResult(
                 success=False,

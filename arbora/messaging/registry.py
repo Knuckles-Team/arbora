@@ -140,6 +140,7 @@ class MessagingRegistry:
             logger.debug(
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Entry-point discovery failed: %s",
                 e,
+                exc_info=True,
             )
 
         if self._entry_points:

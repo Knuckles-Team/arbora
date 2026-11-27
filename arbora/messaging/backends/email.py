@@ -120,6 +120,7 @@ class EmailBackend(MessagingBackend):
         try:
             await asyncio.to_thread(self._smtp_send, message)
         except Exception as exc:  # the platform call failed: report, never raise
+            logger.warning("send message failed", exc_info=True)
             return SendResult(
                 success=False,
                 platform=PlatformId.EMAIL,
