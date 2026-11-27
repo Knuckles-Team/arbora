@@ -716,6 +716,21 @@ def _with_operator_audit(
     return {**bindings, "operator_audit": EngineOperatorAudit()}
 
 
+def _with_federation_sources(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the engine foreign-source catalog (ARBORA-OPS-R019.1).
+
+    Each request binds it to the caller's own session; the engine holds the record,
+    its owner and its grantees. Without bindings the operations refuse ``UNAVAILABLE``.
+    """
+    if bindings is None or "federation_sources" in bindings:
+        return bindings
+    from arbora.api.ops.federation import EngineForeignSources
+
+    return {**bindings, "federation_sources": EngineForeignSources()}
+
+
 def _with_retriever(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -879,6 +894,7 @@ def compose_served_invocation(
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
     bindings = _with_operator_audit(bindings)
+    bindings = _with_federation_sources(bindings)
     bindings = _with_security_evaluation(bindings)
     bindings = _with_host_adapters(bindings)
     bindings = _with_retriever(bindings)
