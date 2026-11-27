@@ -13,7 +13,9 @@ from typing import Any
 
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import execution_context
-from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, authorize
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_authority import authorize
+from arbora.api.invoke.pipeline_services import InvokeServices
 from arbora.api.invoke.steps import RequestCaller
 from arbora.core.claims import claim_values, freeze_claims
 from arbora.core.settings import RuntimeConfig

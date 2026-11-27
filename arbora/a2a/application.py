@@ -48,7 +48,7 @@ from .terminal_event import A2ATerminalEventUnavailable
 
 if TYPE_CHECKING:
     from arbora.api.http.auth import AmbientHTTPAuthenticator
-    from arbora.api.invoke.pipeline import InvokeServices
+    from arbora.api.invoke.pipeline_services import InvokeServices
     from arbora.api.invoke.steps import RequestCaller
 
 __all__ = [

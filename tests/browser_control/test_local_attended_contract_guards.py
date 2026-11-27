@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from arbora.api.invoke.pipeline import _base_authority
+from arbora.api.invoke.pipeline_authority import _base_authority
 from arbora.api.invoke.steps import AnonymousCaller, authenticate
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.registry import Effect, PrincipalRule

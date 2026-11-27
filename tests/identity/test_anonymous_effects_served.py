@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.api.invoke.pipeline import _anonymous_effect
+from arbora.api.invoke.pipeline_authority import _anonymous_effect
 from arbora.api.invoke.steps import AnonymousCaller, VerifiedCaller
 from arbora.api.registry import Effect
 from arbora.core.claims import params_digest

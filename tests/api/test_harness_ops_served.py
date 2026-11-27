@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.api.invoke.pipeline import OperationRefused, uncovered_write_operations
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import uncovered_write_operations
 from arbora.api.ops import harness
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Effect, PrincipalRule

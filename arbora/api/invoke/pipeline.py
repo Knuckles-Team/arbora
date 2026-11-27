@@ -7,28 +7,40 @@ import hashlib
 import json
 import logging
 import secrets
-from collections.abc import Awaitable, Callable, Iterable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel
 
-from arbora.api.domain.fleet.admission import AdmissionGate
 from arbora.api.domain.fleet.admission_models import AdmissionRefused
 from arbora.api.errors import EngineRefusal, FleetRefusal
 from arbora.api.invoke.agent_ref import bind_agent_ref
-from arbora.api.invoke.audit import EffectJournal, EffectReservation
+from arbora.api.invoke.audit import EffectReservation
 from arbora.api.invoke.audit_evidence import result_evidence
-from arbora.api.invoke.autonomy import AskVerdict, require_autonomy_clearance
+from arbora.api.invoke.autonomy import require_autonomy_clearance
 from arbora.api.invoke.executor import (
-    OperationRuntime,
     execution_context,
-    prepare_executor,
 )
-from arbora.api.invoke.gate_class import GateReader, no_engine_answer, resolve_gate
-from arbora.api.invoke.hooks import HookChain, HookRecord
-from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan
+from arbora.api.invoke.hooks import HookRecord
+from arbora.api.invoke.pipeline_authority import (
+    _base_authority,
+    _console_ready,
+    _effect,
+    _effect_authority_valid,
+    _refresh,
+    _requires_plan,
+    _valid_fleet_decision,
+    authorize,
+    split_envelope,
+)
+from arbora.api.invoke.pipeline_services import (
+    FleetCallDecision,
+    InvokeServices,
+    _valid_key,
+)
+from arbora.api.invoke.plan import bind_plan
 from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.api.invoke.recommendation_gate import gate_result
 from arbora.api.invoke.screening import (
@@ -42,25 +54,15 @@ from arbora.api.invoke.screening import (
     screening_fields,
 )
 from arbora.api.invoke.steps import (
-    AnonymousCaller,
     RequestCaller,
-    SchemaValidate,
-    authenticate,
     freeze_claims,
-    principal_rule,
-    require_scopes,
     validate_params,
 )
-from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import (
     AuditClass,
     Confirm,
     Effect,
-    EgSchemaRef,
-    Executor,
     Idempotency,
-    PrincipalRule,
-    Registry,
     Surface,
 )
 from arbora.core.claims import claim_values, params_digest
@@ -71,12 +73,6 @@ from arbora.security.operation_result import OpError, OpResult
 _logger = logging.getLogger(__name__)
 
 DISPATCH_TIMEOUT_SECONDS = 320
-MFA_FRESH_SECONDS = 900
-
-AuditWrite = Callable[[Mapping[str, str], AuditClass, RequestCaller], Awaitable[None]]
-AuditPreflight = Callable[
-    [Mapping[str, str], AuditClass, RequestCaller], Awaitable[str]
-]
 
 
 def _request_caller(
@@ -110,29 +106,6 @@ def _request_caller(
     return replace(caller, request_id=hashlib.sha256(raw).hexdigest())
 
 
-@dataclass(frozen=True, slots=True)
-class FleetCallDecision:
-    """Trusted live catalog authority for one exact child call."""
-
-    effect: Effect
-    confirm: Confirm
-    principals: PrincipalRule
-    executor: Executor
-    required_scopes: frozenset[str]
-    executor_scopes: frozenset[str]
-    subject_id: str | None
-    credential_mode: str
-    #: The tool's resource declaration (``SCION-CONNECTOR-CONTROL-R911``), when it has one.
-    resource_protocol: str | None = None
-    resource_param: str | None = None
-
-
-FleetEffect = Callable[
-    [Any, Mapping[str, Any], RequestCaller],
-    Awaitable[FleetCallDecision],
-]
-
-
 class OperationRefused(Exception):
     """A composite handler refusal retained by the shared invoke boundary."""
 
@@ -140,420 +113,6 @@ class OperationRefused(Exception):
         self.code = code
         self.details = details or {}
         super().__init__(code)
-
-
-_RUNTIME_PORTS = (
-    "verify_current",
-    "as_caller",
-    "as_service",
-    "check_subject_access",
-    "dispatch",
-)
-_PLAN_PORTS = ("issue", "validate", "consume")
-_PLAN_GATED_CONFIRMS = frozenset({Confirm.PLAN, Confirm.CONSOLE})
-
-
-def _has_methods(owner: Any, names: tuple[str, ...]) -> bool:
-    return all(callable(getattr(owner, name, None)) for name in names)
-
-
-def _valid_key(value: Any) -> bool:
-    return isinstance(value, str) and 1 <= len(value) <= 256
-
-
-def _declared_owners(modules: Iterable[str] | None = None) -> dict[str, str]:
-    """Every ops module's ``NATIVE_IDEMPOTENCY``: op id -> replay owner."""
-    import importlib
-    import pkgutil
-
-    import arbora.api.ops as ops_package
-
-    names = (
-        modules
-        if modules is not None
-        else [
-            f"{ops_package.__name__}.{info.name}"
-            for info in pkgutil.iter_modules(ops_package.__path__)
-        ]
-    )
-    owners: dict[str, str] = {}
-    for name in names:
-        module = importlib.import_module(name)
-        owners.update(getattr(module, "NATIVE_IDEMPOTENCY", None) or {})
-    return owners
-
-
-#: Operations whose effect the durable effect journal settles at most once per
-#: request: the replay owner of every write the engine does not replay by key.
-EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
-    "identity.self.mfa.totp.begin",
-    "identity.self.mfa.totp.confirm",
-    "identity.self.mfa.webauthn.register_begin",
-    "identity.self.mfa.webauthn.register_finish",
-    "identity.self.mfa.recovery.regenerate",
-    "identity.self.mfa.credentials.remove",
-    "fleet.call",
-    "fleet.write_back.commit",
-    "fleet.tools.pin",
-    "fleet.tools.unpin",
-    "messaging.alert",
-    "browser.request_call",
-    "browser.desktop_action",
-    "browser.observe",
-    "browser.act",
-    "eg.graph.ApplyMutation",
-    "access.elevation.request",
-    "agents.goals.cancel",
-    "agents.goals.run",
-    "agents.tasks.cancel",
-    "browser.cancel_call",
-    "browser.execute_call",
-    "browser.issue_lease",
-    "browser.reconcile_call",
-    "browser.revoke_lease",
-    "decide.commit",
-    "federation.sources.share",
-    "federation.sources.unshare",
-    "fleet.catalog.refresh",
-    "fleet.tools.load",
-    "fleet.tools.unload",
-    "ingest.drift.repair_approve",
-    "ingest.drift.repair_propose",
-    "ingest.embedding.admit",
-    "ingest.embedding.reembed",
-    "ingest.jobs.cancel",
-    "ingest.jobs.prioritize",
-    "ingest.repositories.index",
-    "ingest.submissions.create",
-    "knowledge.curation.propose",
-    "knowledge.flag.raise",
-    "knowledge.flag.resolve",
-    "rlm.run",
-    "skills.tier.promote",
-    "commands.execute",
-    "fleet.skills.toggle",
-    "fleet.tools.toggle",
-    "ingest.pipeline.run",
-    "ingest.sources.connections.create",
-    "ingest.sources.discover",
-    "ingest.sources.mapping.propose",
-    "ingest.sources.runs.cancel",
-    "ontology.actions.apply",
-    "ontology.document.process",
-    "ontology.functions.invoke",
-    "ontology.object_sets.delete",
-    "ontology.object_sets.save",
-    "ontology.object_views.put",
-    "ontology.objects.edit",
-    "ontology.objects.revert",
-    "resources.spawn",
-    "roles.instances.create",
-    "roles.instances.retire",
-    "roles.instances.update",
-    "workflows.create",
-    "workflows.run",
-    "a2a.media.upload",
-    "schedules.create",
-    "schedules.pause",
-    "schedules.resume",
-    "schedules.update",
-    "approvals.digest.send",
-    "orders.paper_submit",
-    "orders.change",
-    "positions.change",
-    "wallet.operate",
-)
-
-
-def _engine_replayed(registry: Any) -> dict[str, str]:
-    """Engine methods that replay by the idempotency key the pipeline forwards."""
-    from arbora.api.registry import EgMethod
-
-    return {
-        op.id: f"medulla:{op.binding.service}"
-        for op in registry
-        if isinstance(op.binding, EgMethod)
-        and op.idempotency == Idempotency.KEY_REQUIRED
-    }
-
-
-def _registered_owners(registry: Any) -> dict[str, str]:
-    return {
-        op_id: owner
-        for op_id, owner in {
-            **_engine_replayed(registry),
-            **_declared_owners(),
-        }.items()
-        if registry.get(op_id) is not None
-    }
-
-
-def uncovered_write_operations(registry: Any) -> list[str]:
-    """Write, act and admin operations that no replay owner settles.
-
-    An operation is covered by a declared native owner, by the effect journal's
-    operation list, or by a plan gate (the one confirmed-replay owner).
-    """
-    owned = _registered_owners(registry)
-    journal = frozenset(EXTERNAL_EFFECT_OPERATIONS)
-    return sorted(
-        op.id
-        for op in registry
-        if op.effect != Effect.READ
-        and op.id not in owned
-        and op.id not in journal
-        and op.confirm not in _PLAN_GATED_CONFIRMS
-    )
-
-
-def _with_owned_idempotency(services: Any) -> dict[str, str]:
-    """Declared owners plus each registered operation whose authority owns replay.
-
-    ``agents.run`` derives its A2A task id from the idempotency key, so every
-    composition that registers it serves it without a separate declaration.
-    """
-    return {
-        **_registered_owners(services.registry),
-        **dict(services.native_idempotency),
-    }
-
-
-@dataclass(frozen=True, slots=True)
-class InvokeServices:
-    registry: Registry
-    runtime: OperationRuntime
-    plans: PlanStore
-    policy_gate: PolicyGate
-    audit_preflight: AuditPreflight
-    audit_write: AuditWrite
-    config: RuntimeConfig
-    effects: EffectJournal | None = None
-    external_effect_operations: frozenset[str] = frozenset()
-    native_idempotency: Mapping[str, str] = field(default_factory=dict)
-    fleet_effect: FleetEffect | None = None
-    schema_validate: SchemaValidate | None = None
-    #: Reads the engine's gate answer when a plan is minted (ARBORA-OPS-R918.2).
-    gate_reader: GateReader = no_engine_answer
-    #: Operator hooks (ARBORA-OPS-R009.6); empty unless the host binds some.
-    hooks: HookChain = field(default_factory=HookChain)
-    #: The resource-grant gate for tools that declare a resource
-    #: (ARBORA-IDENTITY-R019.3); ``None`` while no gate is composed.
-    resource_gate: Any = None
-    #: Skill and workflow admission, run before the confirmation gate
-    #: (ARBORA-FLEET-R034.3). The default gate admits what declares nothing.
-    admission: AdmissionGate = field(default_factory=AdmissionGate)
-    #: The engine autonomy verdict reader (ARBORA-OPS-R867); ``None`` until the host binds one.
-    autonomy: AskVerdict | None = None
-
-    def __post_init__(self) -> None:
-        self._cover_plan_gated_operations()
-        self._check_effect_coverage()
-        object.__setattr__(self, "native_idempotency", _with_owned_idempotency(self))
-        self._check_native_idempotency()
-        object.__setattr__(
-            self, "native_idempotency", MappingProxyType(dict(self.native_idempotency))
-        )
-        self._check_authorities()
-
-    def _cover_plan_gated_operations(self) -> None:
-        """Put every plan-gated operation under the one confirmed-replay owner.
-
-        A consumed plan cannot prove that its effect completed, so the durable
-        effect journal is the single coordinator that settles a retry. Fleet,
-        admin and console operations all reach it through this one rule; with
-        no journal the operation refuses at the confirmation gate.
-        """
-        if self.effects is None:
-            return
-        gated = frozenset(
-            op.id for op in self.registry if op.confirm in _PLAN_GATED_CONFIRMS
-        )
-        if gated and isinstance(self.external_effect_operations, frozenset):
-            object.__setattr__(
-                self,
-                "external_effect_operations",
-                self.external_effect_operations | gated,
-            )
-
-    def _check_effect_coverage(self) -> None:
-        if self.effects is not None and not _has_methods(
-            self.effects, ("reserve", "complete")
-        ):
-            raise ValueError("effect reservation authority unavailable")
-        if not isinstance(self.external_effect_operations, frozenset) or any(
-            not isinstance(op_id, str) or self.registry.get(op_id) is None
-            for op_id in self.external_effect_operations
-        ):
-            raise ValueError("external effect coverage requires exact operations")
-        if self.external_effect_operations and self.effects is None:
-            raise ValueError("external effect coverage has no owner authority")
-
-    def _check_native_idempotency(self) -> None:
-        if any(
-            self.registry.get(op_id) is None
-            or not isinstance(owner_contract, str)
-            or not owner_contract
-            for op_id, owner_contract in self.native_idempotency.items()
-        ):
-            raise ValueError("invalid native idempotency owner coverage")
-
-    def _check_authorities(self) -> None:
-        ports = (
-            (self.runtime, _RUNTIME_PORTS),
-            (self.plans, _PLAN_PORTS),
-            (self.policy_gate, ("check_op",)),
-        )
-        if not all(_has_methods(owner, names) for owner, names in ports):
-            raise ValueError("required invocation authority unavailable")
-        if not callable(self.audit_preflight) or not callable(self.audit_write):
-            raise ValueError("durable audit authority unavailable")
-        needs_schema = any(isinstance(op.params, EgSchemaRef) for op in self.registry)
-        if needs_schema and not callable(self.schema_validate):
-            raise ValueError("provider schema authority unavailable")
-        if self.registry.get("fleet.call") is not None and not callable(
-            self.fleet_effect
-        ):
-            raise ValueError("fleet effect authority unavailable")
-
-
-async def _policy(
-    op: Any, caller: RequestCaller, services: InvokeServices
-) -> OpError | None:
-    try:
-        allowed = await services.policy_gate.check_op(op, caller)
-    except Exception:
-        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
-        return OpError("POLICY_UNAVAILABLE")
-    return None if allowed is True else OpError("POLICY_DENIED")
-
-
-async def _base_authority(
-    op: Any, caller: RequestCaller, services: InvokeServices
-) -> OpError | None:
-    for check in (principal_rule, require_scopes):
-        refused = check(op, caller)
-        if refused is not None:
-            return refused
-    return await _policy(op, caller, services)
-
-
-def _anonymous_effect(
-    op: Any, params: Mapping[str, Any], caller: RequestCaller
-) -> OpError | None:
-    """An anonymous effect runs only under an operator policy entry (R004.6)."""
-    if not isinstance(caller, AnonymousCaller) or op.effect == Effect.READ:
-        return None
-    from arbora.security.anonymous import admit_effect
-
-    target = str(params.get("target") or params.get("node_id") or "")
-    code = admit_effect(op.id, target, params_digest(params))
-    return None if code is None else OpError(code)
-
-
-def split_envelope(
-    op: Any, params: Mapping[str, Any]
-) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
-    """The params without the op's envelope fields, and those fields (ARBORA-DATA-MARKET-R007.2).
-
-    This is the one place the extension is separated, for every surface: the remainder is
-    what validation, the plan digest, audit and reservation see.
-    """
-    fields = getattr(op, "envelope", ())
-    if not fields:
-        return params, {}
-    kept = {k: v for k, v in params.items() if k not in fields}
-    return kept, {k: params[k] for k in fields if params.get(k) is not None}
-
-
-async def _effect(
-    op: Any,
-    params: Mapping[str, Any],
-    caller: RequestCaller,
-    surface: Surface,
-    services: InvokeServices,
-    *,
-    plan_ref: str | None,
-    resolved_from_intent: bool,
-) -> OpError | OpResult | None:
-    refused = _anonymous_effect(op, params, caller)
-    if refused is not None:
-        return refused
-    return await _effect_plan(
-        op,
-        params,
-        caller,
-        surface,
-        services,
-        plan_ref=plan_ref,
-        resolved_from_intent=resolved_from_intent,
-    )
-
-
-async def _effect_plan(
-    op: Any,
-    params: Mapping[str, Any],
-    caller: RequestCaller,
-    surface: Surface,
-    services: InvokeServices,
-    *,
-    plan_ref: str | None,
-    resolved_from_intent: bool,
-) -> OpError | OpResult | None:
-    if not _requires_plan(op, resolved_from_intent):
-        return OpError("PLAN_MISMATCH") if plan_ref is not None else None
-    binding = bind_plan(op, params, caller, services.registry.digest)
-    if plan_ref is None:
-        return await _issue_plan(op, binding, params, services)
-    if op.confirm == Confirm.CONSOLE and not _console_ready(caller, surface):
-        return OpError("PRINCIPAL_NOT_ALLOWED")
-    try:
-        return await services.plans.consume(plan_ref, binding)
-    except Exception:
-        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
-        return OpError("UNAVAILABLE", {"reason": "plan lease unavailable"})
-
-
-async def _issue_plan(
-    op: Any,
-    binding: PlanBinding,
-    params: Mapping[str, Any],
-    services: InvokeServices,
-) -> OpResult | OpError:
-    unavailable = OpError("UNAVAILABLE", {"reason": "plan lease unavailable"})
-    try:
-        gate = await resolve_gate(services.gate_reader, op.id, binding.tenant)
-        reference = await services.plans.issue(binding, params, gate)
-    except Exception:
-        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
-        return unavailable
-    if not isinstance(reference, str) or not reference:
-        return unavailable
-    details = {"plan_ref": reference, "op": op.id, "effect": op.effect.value}
-    if op.confirm == Confirm.CONSOLE:
-        details["console_url"] = f"/console/confirm/{reference}"
-        return OpResult(code="STEP_UP_REQUIRED", details=details)
-    return OpResult(code="CONFIRMATION_REQUIRED", details=details)
-
-
-def _requires_plan(op: Any, resolved_from_intent: bool) -> bool:
-    return op.confirm in _PLAN_GATED_CONFIRMS or (
-        op.effect == Effect.WRITE and resolved_from_intent
-    )
-
-
-def _console_ready(caller: RequestCaller, surface: Surface) -> bool:
-    if (
-        surface != Surface.CONSOLE
-        or caller.delegated
-        or caller.mfa_at_ms is None
-        or caller.principal_kind != "human"
-        or caller.credential_kind != "session"
-    ):
-        return False
-    import time
-
-    age_ms = int(time.time() * 1000) - caller.mfa_at_ms
-    return 0 <= age_ms <= MFA_FRESH_SECONDS * 1000
 
 
 async def _effective_op(
@@ -605,119 +164,6 @@ async def _effective_op(
         )
         return updated, resolved
     return OpError("UNAVAILABLE", {"reason": "invalid fleet effect authority"})
-
-
-def _effect_authority_valid(
-    effect: Effect, confirm: Confirm, principals: PrincipalRule
-) -> bool:
-    """Destructive effects need a plan; admin effects need an undelegated human."""
-    if effect == Effect.DESTRUCTIVE:
-        return confirm == Confirm.PLAN
-    if effect == Effect.ADMIN:
-        return (
-            confirm == Confirm.CONSOLE and principals == PrincipalRule.HUMAN_UNDELEGATED
-        )
-    return True
-
-
-def _fleet_types_valid(decision: FleetCallDecision) -> bool:
-    if not isinstance(decision.required_scopes, frozenset) or not isinstance(
-        decision.executor_scopes, frozenset
-    ):
-        return False
-    typed = all(
-        isinstance(value, expected)
-        for value, expected in (
-            (decision.effect, Effect),
-            (decision.confirm, Confirm),
-            (decision.principals, PrincipalRule),
-            (decision.executor, Executor),
-        )
-    )
-    return typed and all(
-        isinstance(scope, str) and bool(scope) and "*" not in scope
-        for scope in decision.required_scopes | decision.executor_scopes
-    )
-
-
-def _fleet_executor_valid(op: Any, decision: FleetCallDecision) -> bool:
-    if decision.executor == Executor.CALLER:
-        return (
-            decision.credential_mode == "delegated"
-            and not decision.executor_scopes
-            and decision.subject_id is None
-        )
-    return (
-        decision.credential_mode == "service"
-        and bool(decision.required_scopes)
-        and bool(decision.executor_scopes)
-        and isinstance(decision.subject_id, str)
-        and 1 <= len(decision.subject_id) <= 256
-        and op.audit != AuditClass.NONE
-    )
-
-
-def _valid_fleet_decision(op: Any, decision: FleetCallDecision) -> bool:
-    return (
-        _fleet_types_valid(decision)
-        and _effect_authority_valid(
-            decision.effect, decision.confirm, decision.principals
-        )
-        and _fleet_executor_valid(op, decision)
-    )
-
-
-async def _refresh(
-    caller: RequestCaller | None, services: InvokeServices
-) -> RequestCaller | OpError:
-    refused = authenticate(caller)
-    if refused is not None:
-        return refused
-    assert caller is not None
-    try:
-        current = await services.runtime.verify_current(caller)
-    except Exception:
-        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
-        return OpError("UNAUTHENTICATED")
-    refused = authenticate(current)
-    if refused is not None:
-        return refused
-    if (current.principal, current.tenant, current.principal_kind) != (
-        caller.principal,
-        caller.tenant,
-        caller.principal_kind,
-    ):
-        return OpError("UNAUTHENTICATED")
-    current = replace(current, request_id=caller.request_id)
-    if current != caller:
-        return OpError("UNAUTHENTICATED")
-    return current
-
-
-async def authorize(
-    op: Any,
-    params: Mapping[str, Any],
-    caller: RequestCaller,
-    services: InvokeServices,
-    decision: FleetCallDecision | None,
-) -> OpError | None:
-    refreshed = await _refresh(caller, services)
-    if isinstance(refreshed, OpError):
-        return refreshed
-    refused = await _base_authority(op, caller, services)
-    if refused is not None:
-        return refused
-    if services.resource_gate is not None and decision is not None:
-        refused = await services.resource_gate(op, params, caller, decision)
-        if refused is not None:
-            return refused
-    return await prepare_executor(
-        op,
-        params,
-        caller,
-        services.runtime,
-        verified_subject=decision.subject_id if decision else None,
-    )
 
 
 async def _recheck(

@@ -27,7 +27,8 @@ from arbora.api.invoke.executor import (
     SubjectCheck,
 )
 from arbora.api.invoke.hooks import load_hooks
-from arbora.api.invoke.pipeline import InvokeServices, OperationRefused
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import InvokeServices
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.invoke.steps import RequestCaller, authenticate, freeze_claims
 from arbora.api.policy.eunomia import PolicyGate

@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 
 from arbora.api.errors import to_envelope
-from arbora.api.invoke import pipeline
+from arbora.api.invoke import pipeline_services as _pipeline_services
 
 
 @dataclass
@@ -42,12 +42,14 @@ def test_refusal_cause_is_logged_with_request_id(
 
 @pytest.mark.spec("ARBORA-OPS-R009.3")
 def test_ops_modules_declare_replay_owners(monkeypatch: pytest.MonkeyPatch) -> None:
-    owners = pipeline._declared_owners()
+    owners = _pipeline_services._declared_owners()
     assert owners["agents.run"] == "arbora.a2a.authority:WorkItemA2AAuthority"
     module = types.ModuleType("arbora_test_declares_owner")
     module.NATIVE_IDEMPOTENCY = {"demo.write": "demo:Owner"}  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, module.__name__, module)
-    declared = pipeline._declared_owners(["arbora.api.ops.agents", module.__name__])
+    declared = _pipeline_services._declared_owners(
+        ["arbora.api.ops.agents", module.__name__]
+    )
     assert declared["demo.write"] == "demo:Owner" and "agents.run" in declared
 
 

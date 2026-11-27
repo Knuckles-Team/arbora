@@ -17,7 +17,8 @@ from typing import Any
 import pytest
 import yaml
 
-from arbora.api.invoke.pipeline import OperationRefused, _declared_owners
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import _declared_owners
 from arbora.api.ops import a2a_peers
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Surface

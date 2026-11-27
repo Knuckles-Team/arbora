@@ -132,7 +132,7 @@ async def test_served_policy_request_reaches_engine_port_and_absent_producer_ref
         assert op.scopes == {"agent:decision-write"}
         assert op.idempotency.name == "KEY_REQUIRED"
     assert registry.get("policy.review.approve").confirm is Confirm.PLAN
-    from arbora.api.invoke.pipeline import _declared_owners
+    from arbora.api.invoke.pipeline_services import _declared_owners
 
     owners = _declared_owners()
     assert owners["policy.create"] == "medulla:DecisionLog"

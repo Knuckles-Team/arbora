@@ -23,7 +23,7 @@ from arbora.a2a.service import A2AService
 from arbora.api.http.app import create_api_application
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke import invoke
-from arbora.api.invoke.pipeline import FleetCallDecision
+from arbora.api.invoke.pipeline_services import FleetCallDecision
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
 from arbora.api.ops.fleet import operations as fleet_operations

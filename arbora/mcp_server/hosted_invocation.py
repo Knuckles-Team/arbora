@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
-from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, invoke
+from arbora.api.invoke.pipeline import OperationRefused, invoke
+from arbora.api.invoke.pipeline_services import InvokeServices
 from arbora.api.invoke.steps import RequestCaller
 from arbora.core.task_plan_config import TaskPlanConfig
 from arbora.mcp_server.task_plan import evaluate_task_plan

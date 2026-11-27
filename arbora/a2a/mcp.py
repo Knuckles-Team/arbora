@@ -13,7 +13,7 @@ from .service import A2AService
 
 if TYPE_CHECKING:
     from arbora.api.http.auth import AmbientHTTPAuthenticator
-    from arbora.api.invoke.pipeline import InvokeServices
+    from arbora.api.invoke.pipeline_services import InvokeServices
 
 
 def _admitted_handlers(

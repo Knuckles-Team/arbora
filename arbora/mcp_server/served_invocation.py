@@ -621,7 +621,7 @@ def compose_served_invocation(
         build_operation_runtime,
         build_service_claims,
     )
-    from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
+    from arbora.api.invoke.pipeline_services import EXTERNAL_EFFECT_OPERATIONS
     from arbora.api.invoke.plan import EgPlanStore
     from arbora.api.ops.registry_factory import get_registry
     from arbora.api.policy.eunomia import PolicyGate

@@ -14,7 +14,7 @@ from arbora.api.http.auth import (
     AmbientHTTPAuthenticator,
     verified_bearer_session_for_request,
 )
-from arbora.api.invoke.pipeline import InvokeServices
+from arbora.api.invoke.pipeline_services import InvokeServices
 from arbora.security.key_cache import JwksCache
 from tests.a2a.test_application import Authority, Router
 
