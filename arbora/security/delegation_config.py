@@ -18,6 +18,9 @@ from arbora.core.environment import read_env
 
 __all__ = ["McpAuthConfig"]
 
+#: Settings that start unset: the discovered endpoint and the client credential.
+_UNSET_KEYS: tuple[str, ...] = ("token_endpoint", "oidc_client_secret")
+
 #: The environment name each delegation setting starts from.
 _ENV_KEYS: tuple[tuple[str, str], ...] = (
     ("audience", "AUDIENCE"),
@@ -42,9 +45,8 @@ class McpAuthConfig(Mapping[str, Any]):
         self._lock = threading.Lock()
         values: dict[str, Any] = {
             "enable_delegation": to_boolean(read_env("ENABLE_DELEGATION", "False")),
-            "token_endpoint": None,
-            "oidc_client_secret": None,
         }
+        values.update(dict.fromkeys(_UNSET_KEYS))
         values.update({key: read_env(env) for key, env in _ENV_KEYS})
         self._values = values
 
