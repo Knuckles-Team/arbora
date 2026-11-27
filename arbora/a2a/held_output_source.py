@@ -17,9 +17,12 @@ digest: replay owner is the run (``task_id``), and a replayed run writes nothing
 Arbora decides nothing. A missing checklist, an unanswered question or a refused write
 yields no refs, so the output stays held (``POLICY_EVIDENCE_MISSING``).
 
-PIN-LAG: the engine's held-item answer carries no checklist on the pinned shapes; the
-ask is filed as ``MEDULLA FOR ARBORA (w16)``. Until the answer carries one, no block is
-produced and the gate holds every output.
+The checklist is read from the engine's ``held_item_admission`` answer. The engine
+records ``critique_ref``, ``critique_digest`` and ``critique_verdict`` in its own
+decision record and on the proposal node; arbora never writes them.
+
+PIN-LAG: until the pinned engine's answer carries a checklist, no block is produced and
+the gate holds every output.
 """
 
 from __future__ import annotations

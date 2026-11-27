@@ -189,8 +189,13 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.2")
 def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
-    engine: FakeEngine,
+    engine: FakeEngine, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    async def library_entry(_context: Any, _agent: str) -> dict[str, Any]:
+        # The named agent's graph definition: it uses no definition-bound skill.
+        return {"skills": []}
+
+    monkeypatch.setattr("arbora.api.ops.agent_library.current_entry", library_entry)
     service = A2AService(
         authority=WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry()),
         router=OrchestratorA2ARouter(lambda: engine),
@@ -201,7 +206,17 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
         runtime=runtime,
         external_effect_operations=frozenset(),
     )
-    caller = make_verified_caller("kg:write")(session=session(frozenset({"kg:write"})))
+    caller = make_verified_caller("kg:write")(
+        session=session(frozenset({"kg:write"})),
+        engine_claims={
+            "principal": "person:one",
+            "tenant": "tenant:one",
+            "scopes": ["kg:write"],
+            "policy_version": "revision:one",
+            "delegation": False,
+            "session_ref": "session-7",
+        },
+    )
     message = {
         "role": "user",
         "messageId": "message-1",
@@ -226,6 +241,10 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     item_id = f"workitem:orchestrator:{task['id']}"
     assert engine.work_items.leases == [item_id]
     assert engine.work_items.outcomes == ["succeeded"]
+    # The item carries the opening session (ARBORA-IDENTITY-R026.3).
+    stored = engine.work_items.rows[item_id]["metadata"]
+    assert stored["a2a_client_session_id"] == "session-7"
+    assert stored["a2a_client_principal"] == "person:one"
     run_events = [
         json.loads(event["properties"]["payload"])["type"]
         for event in engine.events
