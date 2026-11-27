@@ -133,6 +133,9 @@ class FleetDependencyEvidence(BaseModel):
     last_success_at: float | None = Field(default=None, ge=0)
     freshness_seconds: float | None = Field(default=None, ge=0)
     diagnostics: list[str] = Field(default_factory=list, max_length=_MAX_DIAGNOSTICS)
+    #: The engine ``Metrics`` reply of a supervised worker, unchanged
+    #: (ARBORA-FLEET-R045); ``None`` for every other dependency.
+    metrics: dict[str, Any] | None = None
 
 
 class FleetHealthEvidence(BaseModel):

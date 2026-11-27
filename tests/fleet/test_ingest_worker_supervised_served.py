@@ -137,3 +137,21 @@ async def test_a_fleet_with_no_worker_reports_not_configured_not_unhealthy(
     assert evidence["dependencies"]["ingest_worker"]["status"] == "not_configured"
     # Nothing supervising a worker never marks the fleet unready by itself.
     assert not any("ingest_worker" in line for line in evidence["diagnostics"])
+
+
+@pytest.mark.spec("ARBORA-FLEET-R045")
+async def test_the_route_returns_the_engine_worker_gauges_unchanged(boot: Any) -> None:
+    """The engine ``Metrics`` reply, ``medulla_ingest_*`` series included, is surfaced as read."""
+    gauges = {
+        "medulla_ingest_jobs_total": {"outcome=succeeded": 7, "outcome=failed": 1},
+        "medulla_ingest_dead_letter_total": {"queue=ingest": 2},
+        "medulla_lane_depth": {"lane=ingest,queue_class=bulk": 4},
+        "medulla_lane_inflight": {"lane=ingest": 1},
+    }
+    boot.answers["metrics"] = gauges
+    boot.start("tcp://engine:7000")
+    dependency = await _route()
+    assert dependency["status"] == "healthy"
+    assert dependency["metrics"] == gauges
+    boot.spawned[0][1].exit = 1
+    assert (await _route())["metrics"] is None
