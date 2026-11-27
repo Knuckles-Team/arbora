@@ -8,77 +8,12 @@ from pathlib import Path
 import pytest
 
 from arbora.api.ops import (
-    a2a_federation,
-    a2a_media,
-    a2a_peers,
-    access,
-    agent_library,
     agents,
-    approvals,
-    assistants,
-    atlas,
-    browser,
-    capacity,
-    capacity_questions,
-    catalog,
-    chats,
-    config_layers,
-    dashboard,
-    decide,
-    decision_evidence,
-    deploy,
-    development,
-    documents,
-    ecosystem,
-    evolution,
-    evolution_metrics,
-    federation,
-    finance,
-    finance_receipts,
-    fleet,
     get_registry,
-    goals,
-    governance,
-    graph_limits,
     harness,
     identity,
-    ingest,
-    knowledge,
-    media,
-    memory,
-    messaging,
-    models,
-    ontology_objects,
-    operator_surface,
-    ops,
-    participants,
-    plans,
-    policy,
-    preferences,
-    promote,
-    prompts,
     query,
     query_engine,
-    research,
-    retrieval,
-    runs,
-    schedules,
-    schema,
-    security,
-    sessions,
-    skills_discovery,
-    skills_eval,
-    skills_friction,
-    skills_telemetry,
-    skills_tier,
-    source,
-    swarm,
-    telemetry,
-    usage,
-    viewport,
-    work,
-    workspace_files,
-    workstreams,
 )
 from arbora.api.registry import (
     Composite,
@@ -174,6 +109,21 @@ _ENGINE_METHODS = {
 }
 
 
+def _engine_scope_rows(listed_rows: list[dict]) -> list[dict]:
+    """The installed engine catalog's scopes the fixture does not already list.
+
+    The engine catalog is the scope authority: serving every scope it lists means a curated
+    operation naming a real engine scope never trips on a stale hand-kept list. The list
+    above only adds the Arbora-owned scopes the engine lacks.
+    """
+    from arbora.api.registry import eg_binding
+
+    listed = {row["scope"] for row in listed_rows}
+    return [
+        row for row in eg_binding.load_catalog()["scopes"] if row["scope"] not in listed
+    ]
+
+
 @pytest.fixture
 def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, Path]:
     """Serve an in-memory method catalog in place of the installed engine's."""
@@ -182,6 +132,7 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, Pat
     document, exclusions = _fixture(tmp_path)
     # Synthetic approved scope evidence; production classifications are provider-owned.
     document["scopes"].extend(scope_row(scope, "user") for scope in _CURATED_SCOPES)
+    document["scopes"].extend(_engine_scope_rows(document["scopes"]))
     # The engine methods curated operations bind, with the curated scope.
     for module in (query, query_engine):
         for op in module.operations():
@@ -198,6 +149,34 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, Pat
     return document, exclusions
 
 
+#: Modules the factory leaves uncomposed on purpose: every call to their operations could
+#: only answer ``UNAVAILABLE`` until the engine serves the world view, so they are not
+#: listed (pinned by ``test_city_operations_unregistered_until_engine_world_view``).
+_UNCOMPOSED = frozenset({"fleet_city", "presence", "activity"})
+
+
+def _declared_operations() -> list:
+    """Every operation any ``arbora.api.ops`` module declares, found by walking the package.
+
+    A hand-kept module list went stale as modules were added; walking the package makes the
+    test fail when the factory composes fewer modules than the package declares.
+    """
+    import importlib
+    import pkgutil
+
+    import arbora.api.ops as package
+
+    declared: list = []
+    for info in pkgutil.iter_modules(package.__path__):
+        if info.name in _UNCOMPOSED:
+            continue
+        module = importlib.import_module(f"{package.__name__}.{info.name}")
+        operations = getattr(module, "operations", None)
+        if callable(operations):
+            declared.extend(operations())
+    return declared
+
+
 def test_no_argument_factory_is_deterministic_and_complete(
     provider: tuple[dict, Path],
 ) -> None:
@@ -206,78 +185,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
     assert first is not second
     assert first.canonical == second.canonical
     assert first.digest == second.digest
-    declared = (
-        *access.operations(),
-        *agent_library.operations(),
-        *agents.operations(),
-        *approvals.operations(),
-        *assistants.operations(),
-        *browser.operations(),
-        *capacity.operations(),
-        *capacity_questions.operations(),
-        *decide.operations(),
-        *catalog.operations(),
-        *chats.operations(),
-        *config_layers.operations(),
-        *dashboard.operations(),
-        *decision_evidence.operations(),
-        *deploy.operations(),
-        *development.operations(),
-        *documents.operations(),
-        *ecosystem.operations(),
-        *evolution.operations(),
-        *evolution_metrics.operations(),
-        *federation.operations(),
-        *finance.operations(),
-        *governance.operations(),
-        *finance_receipts.operations(),
-        *fleet.operations(),
-        *harness.operations(),
-        *identity.operations(),
-        *atlas.operations(),
-        *goals.operations(),
-        *ingest.operations(),
-        *ontology_objects.operations(),
-        *knowledge.operations(),
-        *media.operations(),
-        *memory.operations(),
-        *messaging.operations(),
-        *models.operations(),
-        *security.operations(),
-        *sessions.operations(),
-        *skills_discovery.operations(),
-        *skills_eval.operations(),
-        *skills_friction.operations(),
-        *skills_telemetry.operations(),
-        *skills_tier.operations(),
-        *telemetry.operations(),
-        *usage.operations(),
-        *viewport.operations(),
-        *graph_limits.operations(),
-        *a2a_federation.operations(),
-        *a2a_media.operations(),
-        *a2a_peers.operations(),
-        *policy.operations(),
-        *query.operations(),
-        *query_engine.operations(),
-        *research.operations(),
-        *retrieval.operations(),
-        *runs.operations(),
-        *schedules.operations(),
-        *schema.operations(),
-        *source.operations(),
-        *swarm.operations(),
-        *work.operations(),
-        *workspace_files.operations(),
-        *workstreams.operations(),
-        *ops.operations(),
-        *operator_surface.operations(),
-        *participants.operations(),
-        *plans.operations(),
-        *preferences.operations(),
-        *promote.operations(),
-        *prompts.operations(),
-    )
+    declared = _declared_operations()
     assert {op.id for op in first} == {op.id for op in declared} | {
         "eg.query.Read",
         "eg.query.Admin",
@@ -537,7 +445,7 @@ def test_identity_operations_are_registered() -> None:
     """Identity administration is composed unconditionally and needs ``identity:admin``."""
     import inspect
 
-    from arbora.api.ops import identity, registry_factory
+    from arbora.api.ops import registry_factory
     from arbora.security.scope_registry import session_scopes
 
     composed = inspect.getsource(registry_factory.get_registry)
