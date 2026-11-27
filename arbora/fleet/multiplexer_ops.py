@@ -8,8 +8,8 @@ import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from typing import Any, cast
 
+from arbora.api.domain.fleet.job_loads import JobLoadResult
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, ItemKind
-from arbora.fleet.job_loads import JobLoadResult
 from arbora.fleet.pin_store import PinRecord, PinStore, pinned_now_ms
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
@@ -700,7 +700,7 @@ class MultiplexerOps:
         Arbora computes no ranking (ARBORA-FLEET-R037.2): the answered tools
         load until the session cap and the rest are listed as ``over_cap``.
         """
-        from arbora.fleet.job_loads import apply_load_set
+        from arbora.api.domain.fleet.job_loads import apply_load_set
 
         result = apply_load_set(answer, self.sessions.cap)
         key = self._session_key_for(caller)

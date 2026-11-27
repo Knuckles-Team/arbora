@@ -53,19 +53,19 @@ def apply_load_set(answer: Mapping[str, Any], session_cap: int) -> JobLoadResult
     if session_cap < 0:
         raise ValueError("the session cap is not negative")
     tools: Sequence[Mapping[str, Any]] = answer.get("tools") or ()
-    loaded = tuple(str(t["id"]) for t in tools[:session_cap])
-    over = tuple(str(t["id"]) for t in tools[session_cap:])
-    premises = {
-        str(t["id"]): str(t["premise"]) for t in tools[:session_cap] if t.get("premise")
-    }
+    kept = tools[:session_cap]
     return JobLoadResult(
-        loaded=loaded,
-        over_cap=over,
-        skills=tuple(str(s) for s in answer.get("skills") or ()),
-        agent_starts=tuple(str(a) for a in answer.get("agents") or ()),
+        loaded=tuple(str(t["id"]) for t in kept),
+        over_cap=tuple(str(t["id"]) for t in tools[session_cap:]),
+        skills=_names(answer, "skills"),
+        agent_starts=_names(answer, "agents"),
         decision_id=str(answer.get("decision_id", "")),
-        premises=premises,
+        premises={str(t["id"]): str(t["premise"]) for t in kept if t.get("premise")},
     )
+
+
+def _names(answer: Mapping[str, Any], key: str) -> tuple[str, ...]:
+    return tuple(str(name) for name in answer.get(key) or ())
 
 
 #: The engine's refusal when a job asks for more tools than the session may hold.

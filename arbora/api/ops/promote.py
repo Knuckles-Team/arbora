@@ -18,6 +18,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.domain.deployment.assembly_view import render_graph
+from arbora.api.domain.deployment.image_digests import is_digest_pinned
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import approval_id_for
 from arbora.api.ops._common import Params, build_read_op, build_write_op
@@ -30,7 +31,6 @@ from arbora.deployment.assembly import (
     require_confirmed_plan,
     run_confirmed_steps,
 )
-from arbora.deployment.image_digests import is_digest_pinned
 from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 from arbora.security.operation_result import OpError
 

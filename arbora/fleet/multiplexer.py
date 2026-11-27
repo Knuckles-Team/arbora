@@ -88,9 +88,9 @@ from mcp.client.streamable_http import streamable_http_client
 import arbora.core.priority as _resource_priority
 import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
+from arbora.api.domain.fleet.approval_meta import approval_call_kwargs
 from arbora.core.capability_contract import Capability
 from arbora.fleet import catalog_machine as _catalog_machine
-from arbora.fleet.approval_meta import approval_call_kwargs
 from arbora.fleet.local_skill_catalog import (
     LOCAL_SKILLS_SERVER,
     build_local_skill_catalog,
@@ -131,7 +131,7 @@ _ENGINE_CONFIG_FIELDS = frozenset(
         "disabledTools",
         # Declares a child tool's owner-stamped service-credential path
         # (ARBORA-FLEET-R015/R021; see arbora.fleet.gateway_ops and
-        # arbora.fleet.service_child) instead of the caller's own
+        # arbora.api.domain.fleet.service_child) instead of the caller's own
         # delegated credential. Absent or any other value means "delegated".
         "credential_mode",
         # An operator-declared actor-required connector and the client id its

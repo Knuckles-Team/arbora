@@ -11,10 +11,10 @@ from typing import Any
 import pytest
 import yaml
 
-from arbora.deployment import image_digests as checker
+from arbora.api.domain.deployment import image_digests as checker
 
 ROOT = Path(__file__).resolve().parents[2]
-COMMAND = [sys.executable, "-m", "arbora.deployment.image_digests"]
+COMMAND = [sys.executable, "-m", "arbora.api.domain.deployment.image_digests"]
 
 DIGEST = "0123456789abcdef" * 4
 PINNED = f"registry.example/team/worker@sha256:{DIGEST}"
@@ -379,7 +379,7 @@ def test_real_cli_has_explicit_inputs_and_exit_status(tmp_path: Path) -> None:
 def test_module_is_the_one_checker_and_script_is_removed() -> None:
     """The checker lives in the package; no script copy or wrapper remains."""
     assert not (ROOT / "scripts" / "check_deployment_image_digests.py").exists()
-    assert checker.__name__ == "arbora.deployment.image_digests"
+    assert checker.__name__ == "arbora.api.domain.deployment.image_digests"
     from arbora.deployment import artifacts
 
     assert artifacts.check_paths is checker.check_paths

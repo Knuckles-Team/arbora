@@ -287,8 +287,8 @@ async def handle_write_back_commit(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Apply one confirmed repository effect through the governed fleet gateway."""
+    from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.fleet.service_child import ServiceChildOutcomeUnknown
 
     key = getattr(context, "idempotency_key", None)
     if not isinstance(key, str) or not key.startswith("plan:"):

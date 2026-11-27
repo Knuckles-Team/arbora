@@ -9,19 +9,19 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.catalog_items import CatalogItem
-from arbora.fleet.multiplexer import _decode_engine_server_config
-from arbora.fleet.service_child import (
+from arbora.api.domain.fleet.service_child import (
     DurableReservation,
     ServiceChildAdapter,
     ServiceChildOutcomeUnknown,
     ServiceChildRecord,
     service_child_call_for_mux,
 )
+from arbora.fleet.catalog_items import CatalogItem
+from arbora.fleet.multiplexer import _decode_engine_server_config
 
 
 class Journal:
-    """A fake structurally satisfying ``arbora.fleet.service_child.ServiceChildJournal``."""
+    """A fake structurally satisfying ``arbora.api.domain.fleet.service_child.ServiceChildJournal``."""
 
     def __init__(
         self,
@@ -69,7 +69,7 @@ class Journal:
 
 
 class Transport:
-    """A fake structurally satisfying ``arbora.fleet.service_child.ServiceChildTransport``."""
+    """A fake structurally satisfying ``arbora.api.domain.fleet.service_child.ServiceChildTransport``."""
 
     def __init__(self, *, fail: bool = False, result: Any = None):
         self.fail = fail

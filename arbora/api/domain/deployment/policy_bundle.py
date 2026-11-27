@@ -16,7 +16,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from arbora.deployment.image_digests import load_strict
+from arbora.api.domain.deployment.image_digests import load_strict
 
 __all__ = ["BundleRefused", "PolicyBundle", "bundle_name_ok", "load_bundle"]
 

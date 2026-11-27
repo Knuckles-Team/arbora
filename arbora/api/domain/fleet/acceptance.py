@@ -88,22 +88,33 @@ def _digest(matches: bool | None) -> tuple[str, str]:
     return FAIL, "the engine pack digest differs from the connector's"
 
 
+def _skipped(connector: str, skip_reason: str) -> ConnectorResult:
+    """The result of a connector the caller skipped, or a gap for a bare skip."""
+    if not skip_reason.strip():
+        return ConnectorResult(
+            connector,
+            {name: GAP for name in CHECKS},
+            {"skip": "a skip needs a reason"},
+        )
+    return ConnectorResult(
+        connector,
+        {name: SKIP for name in CHECKS},
+        {"skip": skip_reason},
+    )
+
+
+def _read_outcome(called: bool | None) -> tuple[str, str]:
+    if called is None:
+        return (GAP, "no read-only probe call is configured or reachable")
+    return (CHECK_OK, "") if called else (FAIL, "the read-only call failed")
+
+
 async def check_connector(
     ports: AcceptancePorts, connector: str, skip_reason: str | None
 ) -> ConnectorResult:
     """Run the four checks for one connector."""
     if skip_reason is not None:
-        if not skip_reason.strip():
-            return ConnectorResult(
-                connector,
-                {name: GAP for name in CHECKS},
-                {"skip": "a skip needs a reason"},
-            )
-        return ConnectorResult(
-            connector,
-            {name: SKIP for name in CHECKS},
-            {"skip": skip_reason},
-        )
+        return _skipped(connector, skip_reason)
     child = await ports.child(connector)
     pack = await ports.pack(connector)
     called = await ports.read_call(connector)
@@ -111,10 +122,7 @@ async def check_connector(
     health = _health(child)
     count = _tool_count(child, pack)
     digest = _digest(matches)
-    if called is None:
-        read = (GAP, "no read-only probe call is configured or reachable")
-    else:
-        read = (CHECK_OK, "") if called else (FAIL, "the read-only call failed")
+    read = _read_outcome(called)
     outcomes = dict(zip(CHECKS, (health, count, read, digest), strict=True))
     return ConnectorResult(
         connector,

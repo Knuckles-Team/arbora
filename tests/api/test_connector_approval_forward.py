@@ -7,18 +7,18 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke.plan import approval_id_for
-from arbora.api.ops import fleet
-from arbora.fleet import multiplexer as multiplexer_module
-from arbora.fleet.approval_meta import (
+from arbora.api.domain.fleet.approval_meta import (
     APPROVAL_META_KEY,
     ApprovalRefused,
     checked_approval_ref,
 )
+from arbora.api.domain.fleet.service_child import ServiceChildAdapter
+from arbora.api.invoke.plan import approval_id_for
+from arbora.api.ops import fleet
+from arbora.fleet import multiplexer as multiplexer_module
 from arbora.fleet.gateway_ops import (
     oauth_delegated_call_for_mux,
 )
-from arbora.fleet.service_child import ServiceChildAdapter
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 from tests.fleet.conftest import stdio_fleet_authority  # noqa: F401
 from tests.fleet.test_multiplexer_schema_disclosure import SchemaSession

@@ -22,7 +22,7 @@ from typing import Any, Literal, Protocol
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from arbora.deployment.image_digests import is_digest_pinned, load_strict
+from arbora.api.domain.deployment.image_digests import is_digest_pinned, load_strict
 
 __all__ = [
     "ApplyReceipt",
@@ -174,6 +174,57 @@ def _live_state(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _volume_removed(row: Mapping[str, Any], component: Any) -> bool:
+    return bool(
+        set(row.get("persistent_volumes") or ()) - set(component.persistent_volumes)
+    )
+
+
+def _changed_component(
+    cid: str, component: Any, row: Mapping[str, Any]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """The entries and destructive reasons of a component present on both sides."""
+    before, after = _live_state(row), _state(component)
+    removed = _volume_removed(row, component)
+    volume = [{"component_id": cid, "reason": "volume_removed"}] if removed else []
+    if before == after:
+        return [], volume
+    same = {k: before[k] == after[k] for k in ("image", "revision")}
+    change: Change = "scale" if all(same.values()) else "update"
+    entry = {"component_id": cid, "change": change, "from": before, "to": after}
+    below_one = (
+        [{"component_id": cid, "reason": "scale_below_one"}]
+        if after["replicas"] < 1
+        else []
+    )
+    return [entry], [*below_one, *volume]
+
+
+def _component_diff(
+    cid: str, component: Any, row: Mapping[str, Any] | None
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """The diff entries and destructive reasons of one component id."""
+    if component is None:
+        if row is None:
+            return [], []
+        entry = {
+            "component_id": cid,
+            "change": "destroy",
+            "from": _live_state(row),
+            "to": None,
+        }
+        return [entry], [{"component_id": cid, "reason": "destroy"}]
+    if row is None:
+        entry = {
+            "component_id": cid,
+            "change": "create",
+            "from": None,
+            "to": _state(component),
+        }
+        return [entry], []
+    return _changed_component(cid, component, row)
+
+
 def plan_manifest(
     manifest: DeploymentManifest, live: list[Mapping[str, Any]]
 ) -> DeploymentDiff:
@@ -183,47 +234,9 @@ def plan_manifest(
     destructive: list[dict[str, Any]] = []
     wanted = {c.id: c for c in manifest.components}
     for cid in sorted(wanted | by_id):
-        component, row = wanted.get(cid), by_id.get(cid)
-        if component is None:
-            if row is None:
-                continue
-            entries.append(
-                {
-                    "component_id": cid,
-                    "change": "destroy",
-                    "from": _live_state(row),
-                    "to": None,
-                }
-            )
-            destructive.append({"component_id": cid, "reason": "destroy"})
-            continue
-        if row is None:
-            entries.append(
-                {
-                    "component_id": cid,
-                    "change": "create",
-                    "from": None,
-                    "to": _state(component),
-                }
-            )
-            continue
-        before, after = _live_state(row), _state(component)
-        if before == after:
-            removed = set(row.get("persistent_volumes") or ()) - set(
-                component.persistent_volumes
-            )
-            if removed:
-                destructive.append({"component_id": cid, "reason": "volume_removed"})
-            continue
-        same = {k: before[k] == after[k] for k in ("image", "revision")}
-        change: Change = "scale" if all(same.values()) else "update"
-        entries.append(
-            {"component_id": cid, "change": change, "from": before, "to": after}
-        )
-        if after["replicas"] < 1 and change != "create":
-            destructive.append({"component_id": cid, "reason": "scale_below_one"})
-        if set(row.get("persistent_volumes") or ()) - set(component.persistent_volumes):
-            destructive.append({"component_id": cid, "reason": "volume_removed"})
+        found, risky = _component_diff(cid, wanted.get(cid), by_id.get(cid))
+        entries.extend(found)
+        destructive.extend(risky)
     drift = tuple(e for e in entries if e["change"] in {"update", "scale"})
     manifest_digest = canonical_digest(manifest.model_dump(mode="json"))
     return DeploymentDiff(
