@@ -453,13 +453,13 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T383 [US4] ARBORA-OPS-R022.2.10 Wiring and hot-path proof: a scheduled agent run over MCP.
 - [ ] T420 [US4] ARBORA-OPS-R022.2.11 Schedules carry an exclusion group and minimum spacing.
 - [ ] T384 [US5] ARBORA-OPS-R898 Process models run as governed agent DAGs (rollup).
-- [ ] T385 [US5] ARBORA-OPS-R898.1 Process operation models.
-- [ ] T386 [US5] ARBORA-OPS-R898.2 process.plan reads the engine decision.
+- [x] T385 [US5] ARBORA-OPS-R898.1 Process operation models.
+- [x] T386 [US5] ARBORA-OPS-R898.2 process.plan reads the engine decision.
 - [ ] T387 [US5] ARBORA-OPS-R898.3 Build agent steps from bound prompts.
-- [ ] T388 [US5] ARBORA-OPS-R898.4 Approval waiter and approval operations.
+- [x] T388 [US5] ARBORA-OPS-R898.4 Approval waiter and approval operations.
 - [ ] T389 [US5] ARBORA-OPS-R898.5 process.run wiring.
 - [ ] T390 [US5] ARBORA-OPS-R898.6 Process operation refusals.
-- [ ] T391 [US5] ARBORA-OPS-R898.7 Process run evidence.
+- [x] T391 [US5] ARBORA-OPS-R898.7 Process run evidence.
 - [ ] T392 [US5] ARBORA-OPS-R898.8 Process run hot-path proof.
 - [ ] T393 [US5] ARBORA-OPS-R899 Audio and other media prompt the harness through one modality seam (rollup).
 - [ ] T394 [US5] ARBORA-OPS-R899.1 One seam, many modalities.
@@ -545,6 +545,6 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T474 [US1] ARBORA-OPS-R923.4 Hot-path proof: export, download, upload, import.
 - [ ] T475 [US1] ARBORA-OPS-R924 Served Discover carries caller seeds and hop filters (rollup).
 - [ ] T476 [US1] ARBORA-OPS-R924.1 Wiring and refusal: contract fields and engine codes.
-- [ ] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
+- [x] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
 - [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.
 - [ ] T736 ARBORA-OPS-R022.2.13 A worker runs the loop body after the run-now receipt.

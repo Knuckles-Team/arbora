@@ -614,6 +614,6 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R923.2` | Test: `tests/api/test_bundle_ops_served.py::test_routes_stream_chunks_and_import_needs_an_approved_plan` (planned, L3) |
 | `ARBORA-OPS-R923.3` | Test: `tests/api/test_bundle_ops_served.py::test_refusals_and_foreign_ref_is_indistinguishable_from_absent` (planned, L3) |
 | `ARBORA-OPS-R923.4` | Test: `tests/api/test_bundle_ops_served.py::test_export_download_upload_import_between_tenants` (planned, L3) |
-| `ARBORA-OPS-R924` | Test: `tests/api/test_discover_guided_served.py::test_seeds_and_hop_filter_reach_the_engine` (planned, L3) |
+| `ARBORA-OPS-R924` | Test: `tests/api/test_discover_guided_served.py::test_served_discover_sends_equal_seeded_requests_over_http_and_mcp` (served, HTTP and MCP; the generated op is `eg.ingestion.Discover`, a service-only operation) |
 | `ARBORA-OPS-R924.1` | Test: `tests/api/test_discover_guided_served.py::test_older_contract_refuses_unavailable_and_codes_pass_through` (planned, L3) |
-| `ARBORA-OPS-R924.2` | Test: `tests/api/test_discover_guided_served.py::test_seeds_and_hop_filter_reach_the_engine` (planned, L3) |
+| `ARBORA-OPS-R924.2` | Test: `tests/api/test_discover_guided_served.py::test_served_discover_sends_equal_seeded_requests_over_http_and_mcp` (served, HTTP and MCP; the generated op is `eg.ingestion.Discover`, a service-only operation) |
