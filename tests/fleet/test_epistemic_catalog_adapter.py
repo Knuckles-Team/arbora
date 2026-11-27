@@ -189,18 +189,29 @@ async def test_adapter_rejects_cross_tenant_and_non_commons_reads() -> None:
         )
 
 
-@pytest.mark.asyncio
-async def test_search_by_server_and_name_is_unavailable_until_the_engine_serves_it(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """ARBORA-FLEET-R073 (unbound): a filtered search never falls back to a process copy."""
-    from medulla.generated.agent_component import AgentComponentSearchRequest
+def _search_request_shape(*, with_filters: bool) -> type:
+    """A structural double of ``AgentComponentSearchRequest``: pinned or ``origin/main``."""
+    from pydantic import BaseModel, ConfigDict
 
-    from arbora.pin_lag.medulla import (
-        COMPONENT_SEARCH_FILTER_FIELDS,
-        PinLagUnavailable,
-        require_component_search_filters,
-    )
+    class Pinned(BaseModel):
+        model_config = ConfigDict(extra="forbid", frozen=True)
+        capabilities: list[str] = []
+        cursor: str | None = None
+        kinds: list[Any] = []
+        limit: int | None = None
+        read_only: bool | None = None
+        task: str | None = None
+        tenant_id: str
+
+    class Main(Pinned):
+        server_name: str | None = None
+        upstream_name: str | None = None
+
+    return Main if with_filters else Pinned
+
+
+def _install_search_shape(monkeypatch: pytest.MonkeyPatch, shape: type) -> list[Any]:
+    from medulla.generated import models
 
     sent: list[Any] = []
 
@@ -208,23 +219,57 @@ async def test_search_by_server_and_name_is_unavailable_until_the_engine_serves_
         sent.append(request)
         return SimpleNamespace(entries=(), next_cursor=None)
 
+    monkeypatch.setattr(models, "AgentComponentSearchRequest", shape, raising=False)
+    monkeypatch.setattr(adapter, "AgentComponentSearchRequest", shape)
     monkeypatch.setattr(adapter, "send_agent_component_search", search)
+    return sent
+
+
+@pytest.mark.spec("ARBORA-FLEET-R073.1")
+@pytest.mark.asyncio
+async def test_search_by_server_and_name_is_unavailable_on_the_pinned_release(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ARBORA-FLEET-R073: a filtered search never falls back to a process copy."""
+    from arbora.pin_lag.medulla import (
+        PinLagUnavailable,
+        require_component_search_filters,
+    )
+
+    sent = _install_search_shape(monkeypatch, _search_request_shape(with_filters=False))
     port = make_port()
     unfiltered = ComponentSearchRequest(tenant_id="tenant-a", kinds=("tool",), limit=8)
     await port.search_components(unfiltered)  # the unfiltered read is unchanged
-    served = all(
-        field in AgentComponentSearchRequest.model_fields
-        for field in COMPONENT_SEARCH_FILTER_FIELDS
-    )
     filtered = ComponentSearchRequest(
         tenant_id="tenant-a", kinds=("tool",), limit=8, server_name="github"
     )
-    if served:  # pragma: no cover - the re-pin carries the filters; bind R073 then
-        await port.search_components(filtered)
-        assert sent[-1].server_name == "github"
-        return
-    with pytest.raises(PinLagUnavailable):
+    with pytest.raises(PinLagUnavailable, match="server_name"):
         require_component_search_filters()
     with pytest.raises(PinLagUnavailable):
         await port.search_components(filtered)
     assert len(sent) == 1  # nothing reached the engine
+
+
+@pytest.mark.spec("ARBORA-FLEET-R073.1")
+@pytest.mark.asyncio
+async def test_search_by_server_and_name_reaches_the_engine_on_the_main_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ARBORA-FLEET-R073: the filters ride the generated request when the engine serves them."""
+    sent = _install_search_shape(monkeypatch, _search_request_shape(with_filters=True))
+    port = make_port()
+    page = await port.search_components(
+        ComponentSearchRequest(
+            tenant_id="tenant-a",
+            kinds=("tool",),
+            limit=8,
+            server_name="github",
+            upstream_name="create_issue",
+        )
+    )
+    assert page.entries == ()
+    assert (sent[-1].server_name, sent[-1].upstream_name) == ("github", "create_issue")
+    await port.search_components(
+        ComponentSearchRequest(tenant_id="tenant-a", kinds=("tool",), limit=8)
+    )
+    assert (sent[-1].server_name, sent[-1].upstream_name) == (None, None)

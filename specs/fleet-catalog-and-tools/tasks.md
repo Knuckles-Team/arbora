@@ -472,7 +472,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T203 ARBORA-FLEET-R041.17.1 Onboarding writes owner, version, term, lineage-hop and schema nodes with the asset set.
 - [ ] T204 ARBORA-FLEET-R051.2.1 Convergence status is a served read.
 - [ ] T205 ARBORA-FLEET-R052.5 Serve the cross-source questions through the intent surface.
-- [ ] T206 ARBORA-FLEET-R054 Onboarding passes the seed body to the pack import.
+- [x] T206 ARBORA-FLEET-R054 Onboarding sends the seed as SeedPart entries of the pack.
 - [ ] T207 ARBORA-FLEET-R055 Serve the composed execution answer through the intent surface.
 - [ ] T208 ARBORA-FLEET-R056 Intent surface answers the job, downtime and plan questions.
 - [ ] T209 ARBORA-FLEET-R057 Source executor relays read-time access checks.
@@ -508,7 +508,8 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T237 ARBORA-FLEET-R070 Refresh a connector's catalog on list_changed, on probe TTL and by an explicit op, without a restart.
 - [x] T238 ARBORA-FLEET-R071 Re-read a server once before refusing a fleet.call tool the cached catalog lacks.
 - [x] T239 ARBORA-FLEET-R072 Serve each tool's schema and behaviour hints from the engine catalog.
-- [ ] T240 ARBORA-FLEET-R073 Keep only digests in process; read tool pages from the engine by server and name.
+- [ ] T240 ARBORA-FLEET-R073.2 Keep only digests in process; read tool pages from the engine by server and name.
+- [x] T283 ARBORA-FLEET-R073.1 Page one server's tools, or one named tool, from the engine behind the pin-lag guard.
 - [x] T241 ARBORA-FLEET-R068.1 Page resources, resource templates and prompts like tools.
 - [x] T242 ARBORA-FLEET-R070.1 Drop tools, prompts and skills a good probe no longer lists.
 - [x] T243 ARBORA-FLEET-R074 Rank fleet discovery by rarity-weighted, stopword-free, plural-folded terms.

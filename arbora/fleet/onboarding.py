@@ -506,11 +506,21 @@ class FleetOnboarding:
                 contract["outcome"] = "contract_rejected"
                 contract["reason"] = code
             raise
-        self.surfaces[endpoint.name]["contract"]["import_receipt"] = {
+        self._record_import_receipt(endpoint.name, result)
+
+    def _record_import_receipt(self, connector: str, result: Any) -> None:
+        """Record the import answer and the engine's seed digest on the contract surface."""
+        from arbora.deployment.semantic_provisioning import seed_content_digest
+
+        contract = self.surfaces[connector]["contract"]
+        contract["import_receipt"] = {
             "result": str(getattr(result, "result", "")),
             "pack_digest": str(getattr(result, "pack_digest", "")),
             "binding_revision": getattr(result, "binding_revision", None),
         }
+        engine_seed = seed_content_digest(result)
+        if engine_seed:
+            contract["seed_content_digest"] = engine_seed
 
     def _tenant(self) -> str:
         from arbora.deployment.semantic_provisioning import session_context
