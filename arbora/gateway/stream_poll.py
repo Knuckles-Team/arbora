@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 from starlette.websockets import WebSocket, WebSocketDisconnect
@@ -28,10 +29,12 @@ CLOSE_SCOPE = 4403
 CLOSE_STALE_CURSOR = 4409
 CLOSE_UNAVAILABLE = 4503
 POLL_SECONDS = 1.0
-_CLOSE_FOR = {
-    "SCOPE_REQUIRED": CLOSE_SCOPE,
-    "STALE_CURSOR": CLOSE_STALE_CURSOR,
-}
+_CLOSE_FOR = MappingProxyType(
+    {
+        "SCOPE_REQUIRED": CLOSE_SCOPE,
+        "STALE_CURSOR": CLOSE_STALE_CURSOR,
+    }
+)
 
 
 class StopStream(Exception):

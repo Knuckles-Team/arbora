@@ -28,6 +28,7 @@ import threading
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any
 
 from arbora.harness_plugins.profiles import native_redirect_uris
@@ -346,7 +347,9 @@ CONTRACT_EDGES: tuple[ContractEdge, ...] = (
     ContractEdge("C08", _C.CONVERGED, _V.STOP, _C.STOPPED),
     ContractEdge("C09", _C.DEGRADED, _V.STOP, _C.STOPPED),
 )
-_BY_PAIR = {(edge.source, edge.event): edge for edge in CONTRACT_EDGES}
+_BY_PAIR = MappingProxyType(
+    {(edge.source, edge.event): edge for edge in CONTRACT_EDGES}
+)
 TERMINAL_CONTRACT_STATES = frozenset({ContractState.STOPPED})
 
 

@@ -15,6 +15,7 @@ import contextlib
 import contextvars
 import logging
 from collections.abc import Callable, Iterator, Mapping
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.fleet.fleet_tool_call import call_fleet_tool, refused_result
@@ -32,7 +33,9 @@ WORKLOADS_TOOL = "cm_k8s_workloads"
 MULTI_CONTEXT_TOOL = "cm_multi_context"
 
 #: The runtime ids an actuation target may carry, and the workload kind each scales.
-RUNTIMES = {"deployment": "scale_deployment", "statefulset": "scale_statefulset"}
+RUNTIMES = MappingProxyType(
+    {"deployment": "scale_deployment", "statefulset": "scale_statefulset"}
+)
 
 #: The one request-bound dispatcher the sync actuator reads: ``(context, loop)``.
 _REQUEST: contextvars.ContextVar[tuple[Any, asyncio.AbstractEventLoop] | None] = (

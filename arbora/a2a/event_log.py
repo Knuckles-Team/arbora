@@ -19,6 +19,7 @@ import json
 import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from arbora.api.invoke.screening import redact_result
@@ -48,12 +49,14 @@ _EXTERNAL_FENCE = 2**62
 _READ_BATCH = 64
 _POLL_SECONDS = 1.0
 #: The A2A state each terminal WorkItem status projects to (the ``tasks/get`` view).
-_TERMINAL_STATE = {
-    "succeeded": "completed",
-    "failed": "failed",
-    "cancelled": "canceled",
-    "dead_letter": "failed",
-}
+_TERMINAL_STATE = MappingProxyType(
+    {
+        "succeeded": "completed",
+        "failed": "failed",
+        "cancelled": "canceled",
+        "dead_letter": "failed",
+    }
+)
 _DEFAULT_BUFFER_EVENTS = 256
 #: The WorkItem metadata key that marks a ``cancelled`` item as a failed run: the
 #: engine finishes an item whose reclaim was refused with ``CancelWorkItem``

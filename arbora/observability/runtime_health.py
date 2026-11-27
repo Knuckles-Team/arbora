@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from types import MappingProxyType
+
 from arbora.core.environment import read_env
 
 """The ONE shared runtime health-check core for arbora (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics).
@@ -122,9 +124,11 @@ _CHECK_WALL_TIMEOUT_S = 2.0
 # exactly the load it exists to report on gets a healthy pod pulled from
 # Service. 5.0s covers the observed peak with headroom while still bounding
 # a truly wedged check to a single-digit-second delay, not forever.
-_CHECK_TIMEOUT_OVERRIDES: dict[str, float] = {
-    "fleet_supervision": 5.0,
-}
+_CHECK_TIMEOUT_OVERRIDES: Mapping[str, float] = MappingProxyType(
+    {
+        "fleet_supervision": 5.0,
+    }
+)
 
 
 class HealthCheck(TypedDict, total=False):

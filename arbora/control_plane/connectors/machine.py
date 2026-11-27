@@ -10,6 +10,8 @@ for it and refuses a write that no decision supports.
 from __future__ import annotations
 
 import enum
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import get_args
 
 from arbora.control_plane.connectors.models import (
@@ -38,13 +40,17 @@ class DesiredEvent(enum.Enum):
 
 _E = DesiredEvent
 #: The 5 legal edges. Every other pair is refused.
-DESIRED_EDGES: dict[tuple[DesiredStatus, DesiredEvent], DesiredStatus] = {
-    ("disabled", _E.ENABLE): "enabled",
-    ("enabled", _E.DISABLE): "disabled",
-    ("disabled", _E.QUARANTINE): "quarantined",
-    ("enabled", _E.QUARANTINE): "quarantined",
-    ("quarantined", _E.RELEASE): "disabled",
-}
+DESIRED_EDGES: Mapping[tuple[DesiredStatus, DesiredEvent], DesiredStatus] = (
+    MappingProxyType(
+        {
+            ("disabled", _E.ENABLE): "enabled",
+            ("enabled", _E.DISABLE): "disabled",
+            ("disabled", _E.QUARANTINE): "quarantined",
+            ("enabled", _E.QUARANTINE): "quarantined",
+            ("quarantined", _E.RELEASE): "disabled",
+        }
+    )
+)
 DESIRED_STATES: tuple[str, ...] = get_args(DesiredStatus)
 
 
@@ -86,14 +92,16 @@ def event_between(current: DesiredStatus, target: DesiredStatus) -> DesiredEvent
 
 #: One decision state maps to one outcome. The states are the medulla
 #: elevation statuses (MEDULLA-IDENTITY-R720); arbora keeps no table of moves.
-_OUTCOME_BY_DECISION_STATE: dict[str, AuthorizationOutcome] = {
-    "pending": "pending",
-    "requested": "pending",
-    "approved": "approved",
-    "denied": "denied",
-    "revoked": "revoked",
-    "expired": "revoked",
-}
+_OUTCOME_BY_DECISION_STATE: Mapping[str, AuthorizationOutcome] = MappingProxyType(
+    {
+        "pending": "pending",
+        "requested": "pending",
+        "approved": "approved",
+        "denied": "denied",
+        "revoked": "revoked",
+        "expired": "revoked",
+    }
+)
 
 
 def project_outcome(decision: AuthorizationDecision | str) -> AuthorizationOutcome:

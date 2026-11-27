@@ -1,6 +1,9 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
+
 from arbora.core.environment import read_env
 
 """Agent Hook Installer.
@@ -67,31 +70,33 @@ _STALENESS_CMD = "meristem staleness-audit --cwd $PWD"
 # operator opting every already-configured surface into its latency.
 _VENV_SESSION_HINT_CMD = "arbora-venv session-hint --workspace $PWD 2>/dev/null || true"
 
-_CLAUDE_HOOKS = {
-    "hooks": {
-        "SessionStart": [
-            {"type": "command", "command": _CONTEXT_CMD.format(agent="claude")},
-            {"type": "command", "command": _VENV_SESSION_HINT_CMD},
-        ],
-        "SessionEnd": [
-            {"type": "command", "command": _OBSERVE_CMD.format(agent="claude")},
-            {"type": "command", "command": _REFLECTOR_CMD.format(agent="claude")},
-        ],
-        "PreCompact": [
-            {"type": "command", "command": _OBSERVE_CMD.format(agent="claude")}
-        ],
-        # CONCEPT:MERISTEM-OS.deployment.dynamic-two-fail-closed wires the PreToolUse gate here too, so installing
-        # memory hooks also lays the fail-closed permission fence — an unattended
-        # session is governed even before a full `setup-config harness-fence`
-        # run. Command + matcher are the constants above.
-        "PreToolUse": [
-            {
-                "matcher": GATE_MATCHER,
-                "hooks": [{"type": "command", "command": GATE_HOOK_COMMAND}],
-            }
-        ],
+_CLAUDE_HOOKS = MappingProxyType(
+    {
+        "hooks": {
+            "SessionStart": [
+                {"type": "command", "command": _CONTEXT_CMD.format(agent="claude")},
+                {"type": "command", "command": _VENV_SESSION_HINT_CMD},
+            ],
+            "SessionEnd": [
+                {"type": "command", "command": _OBSERVE_CMD.format(agent="claude")},
+                {"type": "command", "command": _REFLECTOR_CMD.format(agent="claude")},
+            ],
+            "PreCompact": [
+                {"type": "command", "command": _OBSERVE_CMD.format(agent="claude")}
+            ],
+            # CONCEPT:MERISTEM-OS.deployment.dynamic-two-fail-closed wires the PreToolUse gate here too, so installing
+            # memory hooks also lays the fail-closed permission fence — an unattended
+            # session is governed even before a full `setup-config harness-fence`
+            # run. Command + matcher are the constants above.
+            "PreToolUse": [
+                {
+                    "matcher": GATE_MATCHER,
+                    "hooks": [{"type": "command", "command": GATE_HOOK_COMMAND}],
+                }
+            ],
+        }
     }
-}
+)
 
 
 def _session_hooks(agent: str) -> dict[str, Any]:
@@ -106,96 +111,100 @@ def _session_hooks(agent: str) -> dict[str, Any]:
     }
 
 
-_GROK_HOOKS = {
-    "name": "meristem-memory",
-    "version": "1.0.0",
-    "hooks": {
-        "SessionStart": {
-            "command": (
-                f"{_CONTEXT_CMD.format(agent='grok')}; {_VENV_SESSION_HINT_CMD}"
-            )
+_GROK_HOOKS = MappingProxyType(
+    {
+        "name": "meristem-memory",
+        "version": "1.0.0",
+        "hooks": {
+            "SessionStart": {
+                "command": (
+                    f"{_CONTEXT_CMD.format(agent='grok')}; {_VENV_SESSION_HINT_CMD}"
+                )
+            },
+            "SessionEnd": {"command": _OBSERVE_CMD.format(agent="grok")},
         },
-        "SessionEnd": {"command": _OBSERVE_CMD.format(agent="grok")},
-    },
-    "compatibility": {"claude_hooks": True},
-}
+        "compatibility": {"claude_hooks": True},
+    }
+)
 
 
 # -- Agent Surface Registry --
 
-AGENT_SURFACES: dict[str, dict[str, Any]] = {
-    "claude": {
-        "name": "Claude Code",
-        "config_path": lambda: _home() / ".claude" / "settings.json",
-        "hook_data": _CLAUDE_HOOKS,
-        "merge_key": "hooks",
-    },
-    "grok": {
-        "name": "Grok Build",
-        "config_path": lambda: _home() / ".grok" / "hooks" / "meristem-memory.json",
-        "hook_data": _GROK_HOOKS,
-        "merge_key": None,
-    },
-    "devin": {
-        "name": "Devin",
-        "config_path": lambda: _home() / ".devin" / "hooks.json",
-        "hook_data": _session_hooks("devin"),
-        "merge_key": "hooks",
-    },
-    "antigravity": {
-        "name": "Antigravity IDE",
-        "config_path": lambda: _home() / ".gemini" / "antigravity" / "hooks.json",
-        "hook_data": _CLAUDE_HOOKS,
-        "merge_key": "hooks",
-    },
-    "windsurf": {
-        "name": "Windsurf",
-        "config_path": lambda: (
-            _localappdata() / "Windsurf" / "hooks.json"
-            if _IS_WINDOWS
-            else _home() / ".codeium" / "windsurf" / "hooks.json"
-        ),
-        "hook_data": _CLAUDE_HOOKS,
-        "merge_key": "hooks",
-    },
-    "opencode": {
-        "name": "OpenCode",
-        "config_path": lambda: _home() / ".opencode" / "hooks.json",
-        "hook_data": _session_hooks("opencode"),
-        "merge_key": "hooks",
-    },
-    "agent-terminal-ui": {
-        "name": "agent-terminal-ui",
-        "config_path": lambda: None,
-        "hook_data": {},
-        "merge_key": None,
-    },
-    "cowork": {
-        "name": "Claude Cowork",
-        "config_path": lambda: (
-            _home()
-            / "Library"
-            / "Application Support"
-            / "Claude"
-            / "local-agent-mode-plugins"
-            / "meristem-memory.json"
-            if platform.system() == "Darwin"
-            else None
-        ),
-        "hook_data": _CLAUDE_HOOKS,
-        "merge_key": "hooks",
-    },
-    "hermes": {
-        "name": "Hermes",
-        "config_path": lambda: (
-            Path(read_env("HERMES_HOME", _home() / ".hermes"))
-            / "plugins"
-            / "meristem-memory.json"
-        ),
-        "hook_data": _CLAUDE_HOOKS,
-        "merge_key": "hooks",
-    },
-}
+AGENT_SURFACES: Mapping[str, dict[str, Any]] = MappingProxyType(
+    {
+        "claude": {
+            "name": "Claude Code",
+            "config_path": lambda: _home() / ".claude" / "settings.json",
+            "hook_data": _CLAUDE_HOOKS,
+            "merge_key": "hooks",
+        },
+        "grok": {
+            "name": "Grok Build",
+            "config_path": lambda: _home() / ".grok" / "hooks" / "meristem-memory.json",
+            "hook_data": _GROK_HOOKS,
+            "merge_key": None,
+        },
+        "devin": {
+            "name": "Devin",
+            "config_path": lambda: _home() / ".devin" / "hooks.json",
+            "hook_data": _session_hooks("devin"),
+            "merge_key": "hooks",
+        },
+        "antigravity": {
+            "name": "Antigravity IDE",
+            "config_path": lambda: _home() / ".gemini" / "antigravity" / "hooks.json",
+            "hook_data": _CLAUDE_HOOKS,
+            "merge_key": "hooks",
+        },
+        "windsurf": {
+            "name": "Windsurf",
+            "config_path": lambda: (
+                _localappdata() / "Windsurf" / "hooks.json"
+                if _IS_WINDOWS
+                else _home() / ".codeium" / "windsurf" / "hooks.json"
+            ),
+            "hook_data": _CLAUDE_HOOKS,
+            "merge_key": "hooks",
+        },
+        "opencode": {
+            "name": "OpenCode",
+            "config_path": lambda: _home() / ".opencode" / "hooks.json",
+            "hook_data": _session_hooks("opencode"),
+            "merge_key": "hooks",
+        },
+        "agent-terminal-ui": {
+            "name": "agent-terminal-ui",
+            "config_path": lambda: None,
+            "hook_data": {},
+            "merge_key": None,
+        },
+        "cowork": {
+            "name": "Claude Cowork",
+            "config_path": lambda: (
+                _home()
+                / "Library"
+                / "Application Support"
+                / "Claude"
+                / "local-agent-mode-plugins"
+                / "meristem-memory.json"
+                if platform.system() == "Darwin"
+                else None
+            ),
+            "hook_data": _CLAUDE_HOOKS,
+            "merge_key": "hooks",
+        },
+        "hermes": {
+            "name": "Hermes",
+            "config_path": lambda: (
+                Path(read_env("HERMES_HOME", _home() / ".hermes"))
+                / "plugins"
+                / "meristem-memory.json"
+            ),
+            "hook_data": _CLAUDE_HOOKS,
+            "merge_key": "hooks",
+        },
+    }
+)
 
 
 class HookInstaller:

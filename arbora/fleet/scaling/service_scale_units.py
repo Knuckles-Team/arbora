@@ -16,9 +16,10 @@ import hashlib
 import json
 import math
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -501,152 +502,162 @@ class SurfaceProfile(ProtocolModel):
     provider_quota_axes: Annotated[tuple[CapacityAxis, ...], Field(max_length=4)] = ()
 
 
-_SURFACE_PROFILES: dict[SurfaceKind, SurfaceProfile] = {
-    "ingest_worker": SurfaceProfile(
-        allowed_signals=(
-            "queue_depth",
-            "consumer_lag",
-            "backlog_age_ms",
-            "p95_latency_ms",
+_SURFACE_PROFILES: Mapping[SurfaceKind, SurfaceProfile] = MappingProxyType(
+    {
+        "ingest_worker": SurfaceProfile(
+            allowed_signals=(
+                "queue_depth",
+                "consumer_lag",
+                "backlog_age_ms",
+                "p95_latency_ms",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "partition_slots",
+                "lease_slots",
+                "engine_write_bytes_per_s",
+                "fsync_iops",
+            ),
+            engine_authority_axes=("engine_write_bytes_per_s", "fsync_iops"),
+            continuity_modes=("stateless", "externalized"),
+            partition_lease_required=True,
         ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "partition_slots",
-            "lease_slots",
-            "engine_write_bytes_per_s",
-            "fsync_iops",
+        "dispatch_worker": SurfaceProfile(
+            allowed_signals=(
+                "queue_depth",
+                "consumer_lag",
+                "active_sessions",
+                "p95_latency_ms",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "partition_slots",
+                "lease_slots",
+            ),
+            continuity_modes=("stateless", "externalized"),
+            partition_lease_required=True,
         ),
-        engine_authority_axes=("engine_write_bytes_per_s", "fsync_iops"),
-        continuity_modes=("stateless", "externalized"),
-        partition_lease_required=True,
-    ),
-    "dispatch_worker": SurfaceProfile(
-        allowed_signals=(
-            "queue_depth",
-            "consumer_lag",
-            "active_sessions",
-            "p95_latency_ms",
+        "arbora_gateway": SurfaceProfile(
+            allowed_signals=(
+                "request_rate",
+                "in_flight",
+                "p95_latency_ms",
+                "error_rate_ppm",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "session_slots",
+                "read_admission_slots",
+                "engine_bytes",
+                "fsync_iops",
+            ),
+            engine_authority_axes=(
+                "read_admission_slots",
+                "engine_bytes",
+                "fsync_iops",
+            ),
+            continuity_modes=("session_affine", "externalized"),
         ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "partition_slots",
-            "lease_slots",
+        "mcp_gateway": SurfaceProfile(
+            allowed_signals=(
+                "request_rate",
+                "in_flight",
+                "p95_latency_ms",
+                "active_sessions",
+                "continuity_load",
+                "provider_in_flight",
+                "error_rate_ppm",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "session_slots",
+                "continuity_slots",
+            ),
+            continuity_modes=("session_affine", "externalized"),
+            provider_quota_required=True,
+            provider_quota_axes=("provider_global_quota",),
         ),
-        continuity_modes=("stateless", "externalized"),
-        partition_lease_required=True,
-    ),
-    "arbora_gateway": SurfaceProfile(
-        allowed_signals=(
-            "request_rate",
-            "in_flight",
-            "p95_latency_ms",
-            "error_rate_ppm",
+        "api_gateway": SurfaceProfile(
+            allowed_signals=(
+                "request_rate",
+                "in_flight",
+                "p95_latency_ms",
+                "error_rate_ppm",
+            ),
+            required_capacity_axes=("cpu_milli", "memory_mib", "session_slots"),
+            continuity_modes=("stateless", "externalized"),
         ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "session_slots",
-            "read_admission_slots",
-            "engine_bytes",
-            "fsync_iops",
+        "query_reader": SurfaceProfile(
+            allowed_signals=(
+                "request_rate",
+                "in_flight",
+                "p95_latency_ms",
+                "error_rate_ppm",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "read_admission_slots",
+                "engine_bytes",
+                "fsync_iops",
+            ),
+            engine_authority_axes=(
+                "read_admission_slots",
+                "engine_bytes",
+                "fsync_iops",
+            ),
+            continuity_modes=("stateless", "externalized"),
         ),
-        engine_authority_axes=("read_admission_slots", "engine_bytes", "fsync_iops"),
-        continuity_modes=("session_affine", "externalized"),
-    ),
-    "mcp_gateway": SurfaceProfile(
-        allowed_signals=(
-            "request_rate",
-            "in_flight",
-            "p95_latency_ms",
-            "active_sessions",
-            "continuity_load",
-            "provider_in_flight",
-            "error_rate_ppm",
+        "connector_pool": SurfaceProfile(
+            allowed_signals=(
+                "queue_depth",
+                "consumer_lag",
+                "request_rate",
+                "provider_in_flight",
+                "p95_latency_ms",
+                "error_rate_ppm",
+            ),
+            required_capacity_axes=("cpu_milli", "memory_mib", "upstream_rate"),
+            continuity_modes=("stateless", "externalized"),
+            provider_quota_required=True,
+            provider_quota_axes=("upstream_rate", "provider_global_quota"),
         ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "session_slots",
-            "continuity_slots",
+        "media_pool": SurfaceProfile(
+            allowed_signals=(
+                "queue_depth",
+                "request_rate",
+                "gpu_utilization_ppm",
+                "p95_latency_ms",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "gpu_count",
+                "gpu_memory_mib",
+            ),
+            continuity_modes=("stateless", "externalized"),
         ),
-        continuity_modes=("session_affine", "externalized"),
-        provider_quota_required=True,
-        provider_quota_axes=("provider_global_quota",),
-    ),
-    "api_gateway": SurfaceProfile(
-        allowed_signals=(
-            "request_rate",
-            "in_flight",
-            "p95_latency_ms",
-            "error_rate_ppm",
+        "rlm_pool": SurfaceProfile(
+            allowed_signals=(
+                "queue_depth",
+                "request_rate",
+                "gpu_utilization_ppm",
+                "active_sessions",
+            ),
+            required_capacity_axes=(
+                "cpu_milli",
+                "memory_mib",
+                "gpu_count",
+                "gpu_memory_mib",
+            ),
+            continuity_modes=("stateless", "externalized"),
         ),
-        required_capacity_axes=("cpu_milli", "memory_mib", "session_slots"),
-        continuity_modes=("stateless", "externalized"),
-    ),
-    "query_reader": SurfaceProfile(
-        allowed_signals=(
-            "request_rate",
-            "in_flight",
-            "p95_latency_ms",
-            "error_rate_ppm",
-        ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "read_admission_slots",
-            "engine_bytes",
-            "fsync_iops",
-        ),
-        engine_authority_axes=("read_admission_slots", "engine_bytes", "fsync_iops"),
-        continuity_modes=("stateless", "externalized"),
-    ),
-    "connector_pool": SurfaceProfile(
-        allowed_signals=(
-            "queue_depth",
-            "consumer_lag",
-            "request_rate",
-            "provider_in_flight",
-            "p95_latency_ms",
-            "error_rate_ppm",
-        ),
-        required_capacity_axes=("cpu_milli", "memory_mib", "upstream_rate"),
-        continuity_modes=("stateless", "externalized"),
-        provider_quota_required=True,
-        provider_quota_axes=("upstream_rate", "provider_global_quota"),
-    ),
-    "media_pool": SurfaceProfile(
-        allowed_signals=(
-            "queue_depth",
-            "request_rate",
-            "gpu_utilization_ppm",
-            "p95_latency_ms",
-        ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "gpu_count",
-            "gpu_memory_mib",
-        ),
-        continuity_modes=("stateless", "externalized"),
-    ),
-    "rlm_pool": SurfaceProfile(
-        allowed_signals=(
-            "queue_depth",
-            "request_rate",
-            "gpu_utilization_ppm",
-            "active_sessions",
-        ),
-        required_capacity_axes=(
-            "cpu_milli",
-            "memory_mib",
-            "gpu_count",
-            "gpu_memory_mib",
-        ),
-        continuity_modes=("stateless", "externalized"),
-    ),
-}
+    }
+)
 
 
 class ScaleUnitContract(ProtocolModel):

@@ -37,8 +37,8 @@ class SourceReconciliationError(ValueError):
         super().__init__(code)
 
 
-_TERMINAL_OUTCOMES = {"added", "updated", "unchanged", "tombstoned"}
-_INCOMPLETE_OUTCOMES = {"failed", "partial", "timeout"}
+_TERMINAL_OUTCOMES = frozenset({"added", "updated", "unchanged", "tombstoned"})
+_INCOMPLETE_OUTCOMES = frozenset({"failed", "partial", "timeout"})
 
 
 def _scope_authority(scope: SourceScope, authority: SourceAuthority) -> None:

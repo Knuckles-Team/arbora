@@ -21,7 +21,9 @@ Usage::
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
 
 @dataclass(frozen=True)
@@ -78,516 +80,518 @@ class MessagingCapabilities:
 # These are modeled after OpenClaw's per-extension capability declarations
 # and the platform API documentation.
 
-CAPABILITY_MATRIX: dict[str, MessagingCapabilities] = {
-    "discord": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        reactions=True,
-        typing_indicator=True,
-        rich_formatting=True,  # Embeds
-        polls=True,
-        inbound_listen=True,  # Gateway WebSocket
-        user_directory=True,
-        slash_commands=True,
-        voice_call=False,  # Voice channels exist but are complex
-        webhooks=True,
-        presence=True,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=False,
-        max_message_length=2000,
-    ),
-    "slack": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        reactions=True,
-        typing_indicator=True,
-        rich_formatting=True,  # Blocks / Block Kit
-        polls=False,  # No native polls
-        inbound_listen=True,  # Socket Mode / Events API
-        user_directory=True,
-        slash_commands=True,
-        voice_call=False,
-        webhooks=True,
-        presence=True,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=False,
-        max_message_length=40000,
-    ),
-    "telegram": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,  # Forum topics
-        reactions=True,
-        typing_indicator=True,
-        rich_formatting=True,  # HTML / Markdown
-        polls=True,
-        inbound_listen=True,  # Polling or Webhooks
-        user_directory=False,  # Limited
-        slash_commands=True,  # Bot commands
-        voice_call=False,
-        webhooks=True,
-        presence=False,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=4096,
-    ),
-    "whatsapp": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        reactions=True,
-        typing_indicator=True,
-        rich_formatting=False,  # Limited formatting
-        polls=True,
-        inbound_listen=True,  # WebSocket (neonize) / Webhooks (Business)
-        user_directory=True,  # Contact list
-        slash_commands=False,
-        voice_call=False,
-        webhooks=True,  # Business API
-        presence=True,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=65536,
-    ),
-    "teams": MessagingCapabilities(
-        send_text=True,
-        send_media=True,  # Adaptive Cards
-        threads=True,
-        reactions=True,  # Limited set
-        typing_indicator=True,
-        rich_formatting=True,  # Adaptive Cards
-        polls=False,
-        inbound_listen=True,  # Bot Framework webhook
-        user_directory=True,  # via Graph API
-        slash_commands=False,
-        voice_call=False,
-        webhooks=True,
-        presence=True,  # via Graph API
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=28000,
-    ),
-    "googlechat": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        reactions=True,
-        typing_indicator=False,
-        rich_formatting=True,  # Cards
-        polls=False,
-        inbound_listen=True,  # Pub/Sub or webhook
-        user_directory=True,
-        slash_commands=True,
-        voice_call=False,
-        webhooks=True,
-        presence=False,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=False,
-        max_message_length=4096,
-    ),
-    "googlemeet": MessagingCapabilities(
-        send_text=False,  # Meet is voice/video, not text
-        send_media=False,
-        threads=False,
-        reactions=False,
-        typing_indicator=False,
-        rich_formatting=False,
-        polls=False,
-        inbound_listen=True,  # Meeting events
-        user_directory=True,  # Participant list
-        slash_commands=False,
-        voice_call=True,
-        webhooks=True,  # Calendar event hooks
-        presence=True,  # In-call status
-        edit_messages=False,
-        delete_messages=False,
-        mentions=False,
-        read_receipts=False,
-        max_message_length=0,
-    ),
-    "mattermost": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        reactions=True,
-        typing_indicator=True,
-        rich_formatting=True,  # Markdown + attachments
-        polls=False,
-        inbound_listen=True,  # WebSocket
-        user_directory=True,
-        slash_commands=True,
-        voice_call=False,
-        webhooks=True,
-        presence=True,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=False,
-        max_message_length=16383,
-    ),
-    "matrix": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        reactions=True,
-        typing_indicator=True,
-        rich_formatting=True,  # HTML
-        polls=True,  # MSC3381
-        inbound_listen=True,  # Sync API
-        user_directory=True,
-        slash_commands=False,
-        voice_call=False,
-        webhooks=False,  # Uses sync, not webhooks
-        presence=True,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=65536,
-    ),
-    "irc": MessagingCapabilities(
-        send_text=True,
-        send_media=False,
-        threads=False,
-        reactions=False,
-        typing_indicator=False,
-        rich_formatting=False,  # IRC formatting codes only
-        polls=False,
-        inbound_listen=True,  # TCP socket
-        user_directory=True,  # NAMES / WHO
-        slash_commands=False,
-        voice_call=False,
-        webhooks=False,
-        presence=True,  # JOIN/PART/QUIT
-        edit_messages=False,
-        delete_messages=False,
-        mentions=True,  # Nick highlighting
-        read_receipts=False,
-        max_message_length=512,
-    ),
-    "signal": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        reactions=True,
-        typing_indicator=False,
-        rich_formatting=False,
-        polls=False,
-        inbound_listen=True,  # signal-cli / semaphore-bot
-        user_directory=False,
-        slash_commands=False,
-        voice_call=False,
-        webhooks=False,
-        presence=False,
-        edit_messages=False,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=65536,
-    ),
-    "imessage": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        reactions=True,  # Tapback
-        typing_indicator=True,
-        rich_formatting=False,
-        polls=False,
-        inbound_listen=True,  # AppleScript polling
-        user_directory=False,
-        slash_commands=False,
-        voice_call=False,
-        webhooks=False,
-        presence=False,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=False,
-        read_receipts=True,
-        max_message_length=20000,
-    ),
-    "line": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        reactions=False,
-        typing_indicator=False,
-        rich_formatting=True,  # Flex Messages
-        polls=False,
-        inbound_listen=True,  # Webhook
-        user_directory=True,  # Group member list
-        slash_commands=False,
-        voice_call=False,
-        webhooks=True,
-        presence=False,
-        edit_messages=False,
-        delete_messages=False,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=5000,
-    ),
-    "twitch": MessagingCapabilities(
-        send_text=True,
-        send_media=False,
-        threads=False,
-        reactions=False,
-        typing_indicator=False,
-        rich_formatting=False,
-        polls=True,  # Channel polls
-        inbound_listen=True,  # IRC / EventSub
-        user_directory=True,  # Chatters list
-        slash_commands=True,  # Chat commands
-        voice_call=False,
-        webhooks=True,  # EventSub
-        presence=True,  # Stream online/offline
-        edit_messages=False,
-        delete_messages=True,  # Mod delete
-        mentions=True,
-        read_receipts=False,
-        max_message_length=500,
-    ),
-    "synology": MessagingCapabilities(
-        send_text=True,
-        send_media=False,
-        threads=False,
-        reactions=False,
-        typing_indicator=False,
-        rich_formatting=False,
-        polls=False,
-        inbound_listen=True,  # Incoming webhook
-        user_directory=False,
-        slash_commands=False,
-        voice_call=False,
-        webhooks=True,
-        presence=False,
-        edit_messages=False,
-        delete_messages=False,
-        mentions=False,
-        read_receipts=False,
-        max_message_length=4096,
-    ),
-    "voicecall": MessagingCapabilities(
-        send_text=True,  # SMS/text via Twilio
-        send_media=False,
-        threads=False,
-        reactions=False,
-        typing_indicator=False,
-        rich_formatting=False,
-        polls=False,
-        inbound_listen=True,  # Webhook for inbound calls/SMS
-        user_directory=False,
-        slash_commands=False,
-        voice_call=True,
-        webhooks=True,
-        presence=False,
-        edit_messages=False,
-        delete_messages=False,
-        mentions=False,
-        read_receipts=False,
-        max_message_length=1600,  # SMS limit
-    ),
-    "nextcloud": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        reactions=True,
-        typing_indicator=False,
-        rich_formatting=True,  # Markdown
-        polls=True,
-        inbound_listen=True,  # Long-polling / SSE
-        user_directory=True,
-        slash_commands=False,
-        voice_call=False,
-        webhooks=False,
-        presence=True,
-        edit_messages=True,
-        delete_messages=True,
-        mentions=True,
-        read_receipts=True,
-        max_message_length=32000,
-    ),
-    "bluebubbles": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=True,
-        max_message_length=20000,
-    ),
-    "buzz": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=8000,
-    ),
-    "dingtalk": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=20000,
-    ),
-    "feishu": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=True,
-        max_message_length=150000,
-    ),
-    "nostr": MessagingCapabilities(
-        send_text=True,
-        send_media=False,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=8000,
-    ),
-    "ntfy": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=4096,
-    ),
-    "photon": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=20000,
-    ),
-    "qqbot": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=2000,
-    ),
-    "raft": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=32000,
-    ),
-    "reef": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=16000,
-    ),
-    "simplex": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=15000,
-    ),
-    "sms": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=True,
-        max_message_length=1600,
-    ),
-    "tlon": MessagingCapabilities(
-        send_text=True,
-        send_media=False,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=8000,
-    ),
-    "webhook": MessagingCapabilities(
-        send_text=True,
-        send_media=False,
-        threads=False,
-        inbound_listen=True,
-        webhooks=True,
-        max_message_length=0,
-    ),
-    "wecom": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=True,
-        max_message_length=2048,
-    ),
-    "weixin": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=4096,
-    ),
-    "x": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=280,
-    ),
-    "yuanbao": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=4096,
-    ),
-    "zalo": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=True,
-        max_message_length=2000,
-    ),
-    "zalouser": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=False,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=2000,
-    ),
-    "email": MessagingCapabilities(
-        send_text=True,
-        send_media=True,
-        threads=True,
-        inbound_listen=True,
-        webhooks=False,
-        max_message_length=0,
-    ),
-}
+CAPABILITY_MATRIX: Mapping[str, MessagingCapabilities] = MappingProxyType(
+    {
+        "discord": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            reactions=True,
+            typing_indicator=True,
+            rich_formatting=True,  # Embeds
+            polls=True,
+            inbound_listen=True,  # Gateway WebSocket
+            user_directory=True,
+            slash_commands=True,
+            voice_call=False,  # Voice channels exist but are complex
+            webhooks=True,
+            presence=True,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=False,
+            max_message_length=2000,
+        ),
+        "slack": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            reactions=True,
+            typing_indicator=True,
+            rich_formatting=True,  # Blocks / Block Kit
+            polls=False,  # No native polls
+            inbound_listen=True,  # Socket Mode / Events API
+            user_directory=True,
+            slash_commands=True,
+            voice_call=False,
+            webhooks=True,
+            presence=True,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=False,
+            max_message_length=40000,
+        ),
+        "telegram": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,  # Forum topics
+            reactions=True,
+            typing_indicator=True,
+            rich_formatting=True,  # HTML / Markdown
+            polls=True,
+            inbound_listen=True,  # Polling or Webhooks
+            user_directory=False,  # Limited
+            slash_commands=True,  # Bot commands
+            voice_call=False,
+            webhooks=True,
+            presence=False,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=4096,
+        ),
+        "whatsapp": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            reactions=True,
+            typing_indicator=True,
+            rich_formatting=False,  # Limited formatting
+            polls=True,
+            inbound_listen=True,  # WebSocket (neonize) / Webhooks (Business)
+            user_directory=True,  # Contact list
+            slash_commands=False,
+            voice_call=False,
+            webhooks=True,  # Business API
+            presence=True,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=65536,
+        ),
+        "teams": MessagingCapabilities(
+            send_text=True,
+            send_media=True,  # Adaptive Cards
+            threads=True,
+            reactions=True,  # Limited set
+            typing_indicator=True,
+            rich_formatting=True,  # Adaptive Cards
+            polls=False,
+            inbound_listen=True,  # Bot Framework webhook
+            user_directory=True,  # via Graph API
+            slash_commands=False,
+            voice_call=False,
+            webhooks=True,
+            presence=True,  # via Graph API
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=28000,
+        ),
+        "googlechat": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            reactions=True,
+            typing_indicator=False,
+            rich_formatting=True,  # Cards
+            polls=False,
+            inbound_listen=True,  # Pub/Sub or webhook
+            user_directory=True,
+            slash_commands=True,
+            voice_call=False,
+            webhooks=True,
+            presence=False,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=False,
+            max_message_length=4096,
+        ),
+        "googlemeet": MessagingCapabilities(
+            send_text=False,  # Meet is voice/video, not text
+            send_media=False,
+            threads=False,
+            reactions=False,
+            typing_indicator=False,
+            rich_formatting=False,
+            polls=False,
+            inbound_listen=True,  # Meeting events
+            user_directory=True,  # Participant list
+            slash_commands=False,
+            voice_call=True,
+            webhooks=True,  # Calendar event hooks
+            presence=True,  # In-call status
+            edit_messages=False,
+            delete_messages=False,
+            mentions=False,
+            read_receipts=False,
+            max_message_length=0,
+        ),
+        "mattermost": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            reactions=True,
+            typing_indicator=True,
+            rich_formatting=True,  # Markdown + attachments
+            polls=False,
+            inbound_listen=True,  # WebSocket
+            user_directory=True,
+            slash_commands=True,
+            voice_call=False,
+            webhooks=True,
+            presence=True,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=False,
+            max_message_length=16383,
+        ),
+        "matrix": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            reactions=True,
+            typing_indicator=True,
+            rich_formatting=True,  # HTML
+            polls=True,  # MSC3381
+            inbound_listen=True,  # Sync API
+            user_directory=True,
+            slash_commands=False,
+            voice_call=False,
+            webhooks=False,  # Uses sync, not webhooks
+            presence=True,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=65536,
+        ),
+        "irc": MessagingCapabilities(
+            send_text=True,
+            send_media=False,
+            threads=False,
+            reactions=False,
+            typing_indicator=False,
+            rich_formatting=False,  # IRC formatting codes only
+            polls=False,
+            inbound_listen=True,  # TCP socket
+            user_directory=True,  # NAMES / WHO
+            slash_commands=False,
+            voice_call=False,
+            webhooks=False,
+            presence=True,  # JOIN/PART/QUIT
+            edit_messages=False,
+            delete_messages=False,
+            mentions=True,  # Nick highlighting
+            read_receipts=False,
+            max_message_length=512,
+        ),
+        "signal": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            reactions=True,
+            typing_indicator=False,
+            rich_formatting=False,
+            polls=False,
+            inbound_listen=True,  # signal-cli / semaphore-bot
+            user_directory=False,
+            slash_commands=False,
+            voice_call=False,
+            webhooks=False,
+            presence=False,
+            edit_messages=False,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=65536,
+        ),
+        "imessage": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            reactions=True,  # Tapback
+            typing_indicator=True,
+            rich_formatting=False,
+            polls=False,
+            inbound_listen=True,  # AppleScript polling
+            user_directory=False,
+            slash_commands=False,
+            voice_call=False,
+            webhooks=False,
+            presence=False,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=False,
+            read_receipts=True,
+            max_message_length=20000,
+        ),
+        "line": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            reactions=False,
+            typing_indicator=False,
+            rich_formatting=True,  # Flex Messages
+            polls=False,
+            inbound_listen=True,  # Webhook
+            user_directory=True,  # Group member list
+            slash_commands=False,
+            voice_call=False,
+            webhooks=True,
+            presence=False,
+            edit_messages=False,
+            delete_messages=False,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=5000,
+        ),
+        "twitch": MessagingCapabilities(
+            send_text=True,
+            send_media=False,
+            threads=False,
+            reactions=False,
+            typing_indicator=False,
+            rich_formatting=False,
+            polls=True,  # Channel polls
+            inbound_listen=True,  # IRC / EventSub
+            user_directory=True,  # Chatters list
+            slash_commands=True,  # Chat commands
+            voice_call=False,
+            webhooks=True,  # EventSub
+            presence=True,  # Stream online/offline
+            edit_messages=False,
+            delete_messages=True,  # Mod delete
+            mentions=True,
+            read_receipts=False,
+            max_message_length=500,
+        ),
+        "synology": MessagingCapabilities(
+            send_text=True,
+            send_media=False,
+            threads=False,
+            reactions=False,
+            typing_indicator=False,
+            rich_formatting=False,
+            polls=False,
+            inbound_listen=True,  # Incoming webhook
+            user_directory=False,
+            slash_commands=False,
+            voice_call=False,
+            webhooks=True,
+            presence=False,
+            edit_messages=False,
+            delete_messages=False,
+            mentions=False,
+            read_receipts=False,
+            max_message_length=4096,
+        ),
+        "voicecall": MessagingCapabilities(
+            send_text=True,  # SMS/text via Twilio
+            send_media=False,
+            threads=False,
+            reactions=False,
+            typing_indicator=False,
+            rich_formatting=False,
+            polls=False,
+            inbound_listen=True,  # Webhook for inbound calls/SMS
+            user_directory=False,
+            slash_commands=False,
+            voice_call=True,
+            webhooks=True,
+            presence=False,
+            edit_messages=False,
+            delete_messages=False,
+            mentions=False,
+            read_receipts=False,
+            max_message_length=1600,  # SMS limit
+        ),
+        "nextcloud": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            reactions=True,
+            typing_indicator=False,
+            rich_formatting=True,  # Markdown
+            polls=True,
+            inbound_listen=True,  # Long-polling / SSE
+            user_directory=True,
+            slash_commands=False,
+            voice_call=False,
+            webhooks=False,
+            presence=True,
+            edit_messages=True,
+            delete_messages=True,
+            mentions=True,
+            read_receipts=True,
+            max_message_length=32000,
+        ),
+        "bluebubbles": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=True,
+            max_message_length=20000,
+        ),
+        "buzz": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=8000,
+        ),
+        "dingtalk": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=20000,
+        ),
+        "feishu": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=True,
+            max_message_length=150000,
+        ),
+        "nostr": MessagingCapabilities(
+            send_text=True,
+            send_media=False,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=8000,
+        ),
+        "ntfy": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=4096,
+        ),
+        "photon": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=20000,
+        ),
+        "qqbot": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=2000,
+        ),
+        "raft": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=32000,
+        ),
+        "reef": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=16000,
+        ),
+        "simplex": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=15000,
+        ),
+        "sms": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=True,
+            max_message_length=1600,
+        ),
+        "tlon": MessagingCapabilities(
+            send_text=True,
+            send_media=False,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=8000,
+        ),
+        "webhook": MessagingCapabilities(
+            send_text=True,
+            send_media=False,
+            threads=False,
+            inbound_listen=True,
+            webhooks=True,
+            max_message_length=0,
+        ),
+        "wecom": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=True,
+            max_message_length=2048,
+        ),
+        "weixin": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=4096,
+        ),
+        "x": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=280,
+        ),
+        "yuanbao": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=4096,
+        ),
+        "zalo": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=True,
+            max_message_length=2000,
+        ),
+        "zalouser": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=False,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=2000,
+        ),
+        "email": MessagingCapabilities(
+            send_text=True,
+            send_media=True,
+            threads=True,
+            inbound_listen=True,
+            webhooks=False,
+            max_message_length=0,
+        ),
+    }
+)
 
 
 def get_capabilities(platform_id: str) -> MessagingCapabilities:

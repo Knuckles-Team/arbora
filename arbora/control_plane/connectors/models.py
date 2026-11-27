@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterable, Mapping
+from types import MappingProxyType
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -437,21 +438,23 @@ DriftCode = Literal[
     "observation_quarantined",
 ]
 
-_DRIFT_SUMMARIES: dict[str, str] = {
-    "no_drift": "connector matches the approved desired state",
-    "no_observation": "no connector observation is available",
-    "probe_failed": "connector probe failed; desired state was retained",
-    "probe_unreachable": "connector probe was unreachable; desired state was retained",
-    "empty_snapshot_unverified": "empty probe was not an authoritative snapshot",
-    "verified_empty": "authoritative connector snapshot is empty",
-    "version_mismatch": "observed connector version differs from desired state",
-    "manifest_mismatch": "observed manifest digest differs from the approved release",
-    "capability_mismatch": "observed capabilities differ from the approved release",
-    "compatibility_mismatch": (
-        "observed compatibility differs from the approved release"
-    ),
-    "observation_quarantined": "connector observation is quarantined",
-}
+_DRIFT_SUMMARIES: Mapping[str, str] = MappingProxyType(
+    {
+        "no_drift": "connector matches the approved desired state",
+        "no_observation": "no connector observation is available",
+        "probe_failed": "connector probe failed; desired state was retained",
+        "probe_unreachable": "connector probe was unreachable; desired state was retained",
+        "empty_snapshot_unverified": "empty probe was not an authoritative snapshot",
+        "verified_empty": "authoritative connector snapshot is empty",
+        "version_mismatch": "observed connector version differs from desired state",
+        "manifest_mismatch": "observed manifest digest differs from the approved release",
+        "capability_mismatch": "observed capabilities differ from the approved release",
+        "compatibility_mismatch": (
+            "observed compatibility differs from the approved release"
+        ),
+        "observation_quarantined": "connector observation is quarantined",
+    }
+)
 
 
 class DriftRecord(ProtocolModel):

@@ -14,6 +14,7 @@ import inspect
 import json
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 from starlette.applications import Starlette
@@ -132,12 +133,16 @@ async def _deactivated(
 
 
 #: (method, has user id) to the handler and its outcome name.
-_DISPATCH: dict[tuple[str, bool], tuple[Callable[..., Awaitable[Response]], str]] = {
-    ("POST", False): (_created, "created"),
-    ("PUT", True): (_updated, "updated"),
-    ("PATCH", True): (_patched, "patched"),
-    ("DELETE", True): (_deactivated, "deactivated"),
-}
+_DISPATCH: Mapping[tuple[str, bool], tuple[Callable[..., Awaitable[Response]], str]] = (
+    MappingProxyType(
+        {
+            ("POST", False): (_created, "created"),
+            ("PUT", True): (_updated, "updated"),
+            ("PATCH", True): (_patched, "patched"),
+            ("DELETE", True): (_deactivated, "deactivated"),
+        }
+    )
+)
 
 
 def scim_app(ports: ScimPorts) -> Starlette:

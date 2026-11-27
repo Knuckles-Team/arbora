@@ -15,10 +15,11 @@ import json
 import re
 import shutil
 import subprocess  # nosec B404 -- fixed-argv harness plugin commands
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.core.environment import read_env
@@ -45,15 +46,19 @@ class InstallEvent(StrEnum):
 
 
 _S, _E = InstallState, InstallEvent
-INSTALL_EDGES: dict[tuple[InstallState, InstallEvent], InstallState] = {
-    (_S.ABSENT, _E.GENERATE): _S.GENERATED,
-    (_S.GENERATED, _E.INSTALL): _S.INSTALLED,
-    (_S.INSTALLED, _E.DRIFT): _S.STALE,
-    (_S.STALE, _E.INSTALL): _S.INSTALLED,
-    (_S.INSTALLED, _E.REMOVE): _S.REMOVED,
-    (_S.STALE, _E.REMOVE): _S.REMOVED,
-    (_S.REMOVED, _E.GENERATE): _S.GENERATED,
-}
+INSTALL_EDGES: Mapping[tuple[InstallState, InstallEvent], InstallState] = (
+    MappingProxyType(
+        {
+            (_S.ABSENT, _E.GENERATE): _S.GENERATED,
+            (_S.GENERATED, _E.INSTALL): _S.INSTALLED,
+            (_S.INSTALLED, _E.DRIFT): _S.STALE,
+            (_S.STALE, _E.INSTALL): _S.INSTALLED,
+            (_S.INSTALLED, _E.REMOVE): _S.REMOVED,
+            (_S.STALE, _E.REMOVE): _S.REMOVED,
+            (_S.REMOVED, _E.GENERATE): _S.GENERATED,
+        }
+    )
+)
 
 
 class IllegalInstallTransition(RuntimeError):

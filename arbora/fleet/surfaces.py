@@ -10,6 +10,7 @@ a silent zero. A connector with no prompt, skill or ontology also carries one
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from types import MappingProxyType
 from typing import Any, Final
 
 NOT_SERVED: Final = "not served"
@@ -24,12 +25,14 @@ SURFACES: Final[tuple[str, ...]] = (
 #: The kinds whose absence is a reported gap, not just a zero.
 GAP_SURFACES: Final[tuple[str, ...]] = ("prompts", "skills", "ontology")
 _ONTOLOGY_SCHEMES: Final = ("ontology://", "shapes://")
-_KIND_SURFACE: Final[Mapping[str, str]] = {
-    "tool": "tools",
-    "skill": "skills",
-    "prompt": "prompts",
-    "mcp_prompt": "prompts",
-}
+_KIND_SURFACE: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "tool": "tools",
+        "skill": "skills",
+        "prompt": "prompts",
+        "mcp_prompt": "prompts",
+    }
+)
 
 
 def resource_surface(uri: str) -> str:

@@ -16,6 +16,7 @@ import logging
 from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
+from types import MappingProxyType
 from typing import Any, Literal
 
 from arbora.security.error_surface import carry_errors
@@ -27,7 +28,9 @@ Check = dict[str, Any]
 Probe = Callable[[], Check]
 
 REQUIRED_CHECKS: tuple[str, ...] = ("engine", "catalog", "synthetic_query")
-_RANK = {"ready": 0, "not_configured": 0, "stale": 1, "degraded": 2, "unavailable": 3}
+_RANK = MappingProxyType(
+    {"ready": 0, "not_configured": 0, "stale": 1, "degraded": 2, "unavailable": 3}
+)
 
 
 def check(state: State, **fields: Any) -> Check:

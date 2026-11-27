@@ -15,6 +15,7 @@ handler runs.
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Iterable, Mapping
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from arbora.core.environment import read_env
@@ -40,11 +41,13 @@ DEFAULT_MAX_MEDIA_BYTES = 25 * 1024 * 1024
 DEFAULT_MAX_AUDIO_DURATION_S = 600.0
 MAX_PARTS = 8
 
-_LABEL = {
-    "transcript": "transcribed from an audio attachment",
-    "description": "described from an image attachment",
-    "extraction": "extracted from a document attachment",
-}
+_LABEL = MappingProxyType(
+    {
+        "transcript": "transcribed from an audio attachment",
+        "description": "described from an image attachment",
+        "extraction": "extracted from a document attachment",
+    }
+)
 
 
 class ModalityHandler(Protocol):

@@ -17,6 +17,7 @@ import contextlib
 import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 from scion_sdk.http.safe_post import SsrfBlockedError
@@ -796,21 +797,25 @@ __all__ = [
 _ROW_MAX_ROWS = (1, 10_000, 1000)
 _ROW_TIMEOUT_MS = (100, 60_000, 10_000)
 #: executor code -> the seam's code (``contracts/mcp-source-fleet-call.md``)
-SEAM_CODES = {
-    "SOURCE_NOT_GRANTED": "FOREIGN_SOURCE_UNGRANTED",
-    "SOURCE_TIMEOUT": "SOURCE_UNREACHABLE",
-    "SOURCE_UNAVAILABLE": "SOURCE_UNREACHABLE",
-    "SOURCE_BAD_RESPONSE": "SOURCE_UNREACHABLE",
-    "SOURCE_OUTBOUND_DENIED": "OUTBOUND_TARGET_DENIED",
-}
-_JSON_TYPES: dict[str, tuple[type, ...]] = {
-    "string": (str,),
-    "integer": (int,),
-    "number": (int, float),
-    "boolean": (bool,),
-    "array": (list, tuple),
-    "object": (dict,),
-}
+SEAM_CODES = MappingProxyType(
+    {
+        "SOURCE_NOT_GRANTED": "FOREIGN_SOURCE_UNGRANTED",
+        "SOURCE_TIMEOUT": "SOURCE_UNREACHABLE",
+        "SOURCE_UNAVAILABLE": "SOURCE_UNREACHABLE",
+        "SOURCE_BAD_RESPONSE": "SOURCE_UNREACHABLE",
+        "SOURCE_OUTBOUND_DENIED": "OUTBOUND_TARGET_DENIED",
+    }
+)
+_JSON_TYPES: Mapping[str, tuple[type, ...]] = MappingProxyType(
+    {
+        "string": (str,),
+        "integer": (int,),
+        "number": (int, float),
+        "boolean": (bool,),
+        "array": (list, tuple),
+        "object": (dict,),
+    }
+)
 
 
 @dataclass(frozen=True)

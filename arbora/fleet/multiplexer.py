@@ -1567,16 +1567,18 @@ def require_fleet_capability(kind: str, extra_scopes: list[str] | None = None) -
 
 # Tokens that carry no identifying signal — stripped before auto-deriving a
 # prefix so e.g. "weather-mcp-server" keys off "weather", not "mcp"/"server".
-_PREFIX_NOISE_TOKENS = {
-    "mcp",
-    "server",
-    "agent",
-    "api",
-    "service",
-    "srv",
-    "tool",
-    "tools",
-}
+_PREFIX_NOISE_TOKENS = frozenset(
+    {
+        "mcp",
+        "server",
+        "agent",
+        "api",
+        "service",
+        "srv",
+        "tool",
+        "tools",
+    }
+)
 
 
 def _tokenize_server_name(name: str) -> list[str]:

@@ -14,6 +14,7 @@ import tomllib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.harness_plugins.compose import (
@@ -33,12 +34,14 @@ ORDER: tuple[str, ...] = (
 LIST_KEYS = ("skills", "personas", "tools", "hooks")
 #: The closed policy keys and which direction is stricter: a boolean is
 #: stricter as ``True``, a count is stricter as it gets lower.
-POLICY_KEYS: dict[str, type] = {
-    "confirm_writes": bool,
-    "max_agents": int,
-    "max_skills": int,
-    "max_tools": int,
-}
+POLICY_KEYS: Mapping[str, type] = MappingProxyType(
+    {
+        "confirm_writes": bool,
+        "max_agents": int,
+        "max_skills": int,
+        "max_tools": int,
+    }
+)
 _KEYS = frozenset({*LIST_KEYS, "policy"})
 BUNDLE_FILE = "bundle.toml"
 LOCAL_FILE = "bundle.local.toml"

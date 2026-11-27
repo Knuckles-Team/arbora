@@ -18,6 +18,7 @@ import json
 import logging
 import re
 from collections.abc import Awaitable, Callable, Iterator, Mapping
+from types import MappingProxyType
 from typing import Any, Literal, TypeVar
 from urllib.parse import urlsplit, urlunsplit
 
@@ -282,135 +283,139 @@ class _KindSpec:
 # (`GET /tools` / `/api/enhanced/tools`) until a real ingester exists for
 # skill-graphs and the `skills` table grows `domain`/`tags` columns.
 #
-KIND_SPECS: dict[str, _KindSpec] = {
-    "servers": _KindSpec(
-        "mcp_servers",
-        ("id", "tenant_id", "name", "transport", "url", "enabled"),
-        RegistryServer,
-    ),
-    "discoveries": _KindSpec(
-        "mcp_server_discovery",
-        (
-            "id",
-            "tenant_id",
-            "server_id",
-            "server_name",
-            "reachable",
-            "last_error",
-            "tool_count",
-            "skill_count",
-            "prompt_count",
-            "resource_count",
-            "observed_at",
-            "discovery_authority_kind",
-            "discovery_principal",
-            "discovery_grant_digest",
+KIND_SPECS: Mapping[str, _KindSpec] = MappingProxyType(
+    {
+        "servers": _KindSpec(
+            "mcp_servers",
+            ("id", "tenant_id", "name", "transport", "url", "enabled"),
+            RegistryServer,
         ),
-        RegistryDiscovery,
-        name_column="server_name",
-        authority_column="discovery_authority_kind",
-        principal_column="discovery_principal",
-        grant_column="discovery_grant_digest",
-    ),
-    "tools": _KindSpec(
-        "mcp_tools",
-        (
-            "id",
-            "tenant_id",
-            "server_id",
-            "server_name",
-            "name",
-            "description",
-            "schema_digest",
-            "tool_mode",
-            "enabled",
-            "discovery_authority_kind",
-            "discovery_principal",
-            "discovery_grant_digest",
+        "discoveries": _KindSpec(
+            "mcp_server_discovery",
+            (
+                "id",
+                "tenant_id",
+                "server_id",
+                "server_name",
+                "reachable",
+                "last_error",
+                "tool_count",
+                "skill_count",
+                "prompt_count",
+                "resource_count",
+                "observed_at",
+                "discovery_authority_kind",
+                "discovery_principal",
+                "discovery_grant_digest",
+            ),
+            RegistryDiscovery,
+            name_column="server_name",
+            authority_column="discovery_authority_kind",
+            principal_column="discovery_principal",
+            grant_column="discovery_grant_digest",
         ),
-        RegistryTool,
-        authority_column="discovery_authority_kind",
-        principal_column="discovery_principal",
-        grant_column="discovery_grant_digest",
-    ),
-    "prompts": _KindSpec(
-        "mcp_prompts",
-        (
-            "id",
-            "tenant_id",
-            "server_id",
-            "server_name",
-            "name",
-            "description",
-            "uri",
-            "discovery_authority_kind",
-            "discovery_principal",
-            "discovery_grant_digest",
+        "tools": _KindSpec(
+            "mcp_tools",
+            (
+                "id",
+                "tenant_id",
+                "server_id",
+                "server_name",
+                "name",
+                "description",
+                "schema_digest",
+                "tool_mode",
+                "enabled",
+                "discovery_authority_kind",
+                "discovery_principal",
+                "discovery_grant_digest",
+            ),
+            RegistryTool,
+            authority_column="discovery_authority_kind",
+            principal_column="discovery_principal",
+            grant_column="discovery_grant_digest",
         ),
-        RegistryPrompt,
-        authority_column="discovery_authority_kind",
-        principal_column="discovery_principal",
-        grant_column="discovery_grant_digest",
-    ),
-    "resources": _KindSpec(
-        "mcp_resources",
-        (
-            "id",
-            "tenant_id",
-            "server_id",
-            "server_name",
-            "uri",
-            "name",
-            "description",
-            "mime_type",
-            "resource_kind",
-            "discovery_authority_kind",
-            "discovery_principal",
-            "discovery_grant_digest",
+        "prompts": _KindSpec(
+            "mcp_prompts",
+            (
+                "id",
+                "tenant_id",
+                "server_id",
+                "server_name",
+                "name",
+                "description",
+                "uri",
+                "discovery_authority_kind",
+                "discovery_principal",
+                "discovery_grant_digest",
+            ),
+            RegistryPrompt,
+            authority_column="discovery_authority_kind",
+            principal_column="discovery_principal",
+            grant_column="discovery_grant_digest",
         ),
-        RegistryResource,
-        authority_column="discovery_authority_kind",
-        principal_column="discovery_principal",
-        grant_column="discovery_grant_digest",
-    ),
-    "skills": _KindSpec(
-        "skills",
-        (
-            "id",
-            "tenant_id",
-            "name",
-            "description",
-            "uri",
-            "skill_type",
-            "classification",
-            "provider",
-            "mcp_server",
-            "enabled",
-            "discovery_authority_kind",
-            "discovery_principal",
-            "discovery_grant_digest",
+        "resources": _KindSpec(
+            "mcp_resources",
+            (
+                "id",
+                "tenant_id",
+                "server_id",
+                "server_name",
+                "uri",
+                "name",
+                "description",
+                "mime_type",
+                "resource_kind",
+                "discovery_authority_kind",
+                "discovery_principal",
+                "discovery_grant_digest",
+            ),
+            RegistryResource,
+            authority_column="discovery_authority_kind",
+            principal_column="discovery_principal",
+            grant_column="discovery_grant_digest",
         ),
-        RegistrySkill,
-        authority_column="discovery_authority_kind",
-        principal_column="discovery_principal",
-        grant_column="discovery_grant_digest",
-    ),
-}
+        "skills": _KindSpec(
+            "skills",
+            (
+                "id",
+                "tenant_id",
+                "name",
+                "description",
+                "uri",
+                "skill_type",
+                "classification",
+                "provider",
+                "mcp_server",
+                "enabled",
+                "discovery_authority_kind",
+                "discovery_principal",
+                "discovery_grant_digest",
+            ),
+            RegistrySkill,
+            authority_column="discovery_authority_kind",
+            principal_column="discovery_principal",
+            grant_column="discovery_grant_digest",
+        ),
+    }
+)
 
-_RESPONSE_MODELS: dict[str, tuple[Any, Any]] = {
-    "servers": (RegistryPage[RegistryServer], RegistryItemEnvelope[RegistryServer]),
-    "discoveries": (
-        RegistryPage[RegistryDiscovery],
-        RegistryItemEnvelope[RegistryDiscovery],
-    ),
-    "tools": (RegistryPage[RegistryTool], RegistryItemEnvelope[RegistryTool]),
-    "prompts": (RegistryPage[RegistryPrompt], RegistryItemEnvelope[RegistryPrompt]),
-    "resources": (
-        RegistryPage[RegistryResource],
-        RegistryItemEnvelope[RegistryResource],
-    ),
-    "skills": (RegistryPage[RegistrySkill], RegistryItemEnvelope[RegistrySkill]),
-}
+_RESPONSE_MODELS: Mapping[str, tuple[Any, Any]] = MappingProxyType(
+    {
+        "servers": (RegistryPage[RegistryServer], RegistryItemEnvelope[RegistryServer]),
+        "discoveries": (
+            RegistryPage[RegistryDiscovery],
+            RegistryItemEnvelope[RegistryDiscovery],
+        ),
+        "tools": (RegistryPage[RegistryTool], RegistryItemEnvelope[RegistryTool]),
+        "prompts": (RegistryPage[RegistryPrompt], RegistryItemEnvelope[RegistryPrompt]),
+        "resources": (
+            RegistryPage[RegistryResource],
+            RegistryItemEnvelope[RegistryResource],
+        ),
+        "skills": (RegistryPage[RegistrySkill], RegistryItemEnvelope[RegistrySkill]),
+    }
+)
 
 
 def _signer_of(request: Any) -> RunTokenSigner:
@@ -1395,11 +1400,13 @@ async def _list_kind(
     )
 
 
-_SERVERS_REFUSAL_STATUS = {
-    "PRINCIPAL_REQUIRED": 401,
-    "TENANT_MISMATCH": 403,
-    "SCOPE_DENIED": 403,
-}
+_SERVERS_REFUSAL_STATUS = MappingProxyType(
+    {
+        "PRINCIPAL_REQUIRED": 401,
+        "TENANT_MISMATCH": 403,
+        "SCOPE_DENIED": 403,
+    }
+)
 
 
 def _servers_caller(request: Request) -> Any:
@@ -1516,14 +1523,18 @@ async def _get_kind(
 # have no evidenced toggle convention and no ``enabled`` field on their
 # models, so they are intentionally absent here — ``include=toggle`` is a
 # no-op for those kinds rather than a guess.
-_TOGGLE_KEY_BUILDERS: dict[str, Callable[[dict[str, Any]], tuple[str, str]]] = {
-    "servers": lambda item: ("mcp_server", str(item.get("name") or "")),
-    "tools": lambda item: (
-        "mcp_tool",
-        f"{item.get('server_name') or ''}:{item.get('name') or ''}",
-    ),
-    "skills": lambda item: ("skill", str(item.get("name") or "")),
-}
+_TOGGLE_KEY_BUILDERS: Mapping[str, Callable[[dict[str, Any]], tuple[str, str]]] = (
+    MappingProxyType(
+        {
+            "servers": lambda item: ("mcp_server", str(item.get("name") or "")),
+            "tools": lambda item: (
+                "mcp_tool",
+                f"{item.get('server_name') or ''}:{item.get('name') or ''}",
+            ),
+            "skills": lambda item: ("skill", str(item.get("name") or "")),
+        }
+    )
+)
 
 
 async def _merge_toggle_states(

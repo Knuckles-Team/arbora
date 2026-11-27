@@ -25,6 +25,7 @@ import json
 import logging
 import re
 import uuid
+from types import MappingProxyType
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -332,14 +333,16 @@ async def daemon_start(request: Request) -> dict[str, Any]:
 
 
 #: Refusal codes of a served operation, mapped to the dashboard's HTTP statuses.
-_REFUSAL_STATUS = {
-    "INVALID_ARGUMENT": 400,
-    "NOT_FOUND": 400,
-    "UNAUTHENTICATED": 401,
-    "SCOPE_REQUIRED": 403,
-    "PRINCIPAL_NOT_ALLOWED": 403,
-    "SURFACE_NOT_ALLOWED": 403,
-}
+_REFUSAL_STATUS = MappingProxyType(
+    {
+        "INVALID_ARGUMENT": 400,
+        "NOT_FOUND": 400,
+        "UNAUTHENTICATED": 401,
+        "SCOPE_REQUIRED": 403,
+        "PRINCIPAL_NOT_ALLOWED": 403,
+        "SURFACE_NOT_ALLOWED": 403,
+    }
+)
 
 
 async def _served(

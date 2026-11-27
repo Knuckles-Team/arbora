@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 __all__ = [
@@ -52,7 +53,7 @@ _LEASE_FIELDS = (
     "expires_at_ms",
     "hard_expires_at_ms",
 )
-_TARGET_BY_DECISION = {"approved": "consumed", "denied": "revoked"}
+_TARGET_BY_DECISION = MappingProxyType({"approved": "consumed", "denied": "revoked"})
 
 
 class ApprovalLeasesUnavailable(RuntimeError):

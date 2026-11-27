@@ -10,6 +10,9 @@ questions; delete this module's callers with it.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
+
 from arbora.pin_lag.medulla import AUTONOMY_MODELS, missing_model, question_kind_served
 
 __all__ = [
@@ -22,15 +25,19 @@ __all__ = [
 ]
 
 #: Each conditional gate and the engine ``QuestionKind`` (wire snake_case) it asks.
-GATE_QUESTIONS: dict[str, str] = {
-    "autonomy": "autonomy_verdict",
-    "tool_relevance": "tool_relevance",
-    "team_coordination": "team_coordination",
-}
+GATE_QUESTIONS: Mapping[str, str] = MappingProxyType(
+    {
+        "autonomy": "autonomy_verdict",
+        "tool_relevance": "tool_relevance",
+        "team_coordination": "team_coordination",
+    }
+)
 
 
 #: The typed request and answer shapes a gate also needs, named when they are missing.
-GATE_SHAPES: dict[str, tuple[str, ...]] = {"autonomy": AUTONOMY_MODELS}
+GATE_SHAPES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {"autonomy": AUTONOMY_MODELS}
+)
 
 
 def _missing(name: str) -> str | None:

@@ -90,21 +90,23 @@ type InventoryState = Literal[
     "present", "missing", "duplicate", "rejected", "malformed"
 ]
 
-_FORBIDDEN_INLINE_KEYS = {
-    "body",
-    "bytes",
-    "content",
-    "credentials",
-    "data",
-    "password",
-    "payload",
-    "private_key",
-    "result",
-    "secret",
-    "text",
-    "token",
-    "values",
-}
+_FORBIDDEN_INLINE_KEYS = frozenset(
+    {
+        "body",
+        "bytes",
+        "content",
+        "credentials",
+        "data",
+        "password",
+        "payload",
+        "private_key",
+        "result",
+        "secret",
+        "text",
+        "token",
+        "values",
+    }
+)
 
 
 def _canonical(value: object) -> object:

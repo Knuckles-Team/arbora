@@ -61,6 +61,7 @@ import time
 from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 import anyio
@@ -91,7 +92,7 @@ MCPError: type[BaseException] = mcp_protocol_error()
 
 logger = logging.getLogger("mcp_multiplexer.child")
 
-_BREAKER_STATE_VALUES = {"closed": 0.0, "half_open": 1.0, "open": 2.0}
+_BREAKER_STATE_VALUES = MappingProxyType({"closed": 0.0, "half_open": 1.0, "open": 2.0})
 
 
 class _CircuitBreaker:

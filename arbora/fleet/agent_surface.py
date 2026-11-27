@@ -9,9 +9,10 @@ receipt.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.fleet.mcp_resource_reconciliation import (
@@ -33,11 +34,13 @@ __all__ = [
 ]
 
 #: The best-practice resources served beside the operation resources.
-BEST_PRACTICES: dict[str, str] = {
-    "discover-first": "Call find before concluding a capability is unavailable.",
-    "preview-then-confirm": "write, act and manage preview first; resubmit with the returned plan_ref and execute=true.",
-    "one-idempotency-key": "Send one idempotency key per intended effect; a replay returns the recorded outcome.",
-}
+BEST_PRACTICES: Mapping[str, str] = MappingProxyType(
+    {
+        "discover-first": "Call find before concluding a capability is unavailable.",
+        "preview-then-confirm": "write, act and manage preview first; resubmit with the returned plan_ref and execute=true.",
+        "one-idempotency-key": "Send one idempotency key per intended effect; a replay returns the recorded outcome.",
+    }
+)
 
 #: ``receipt()`` returns the engine's reconciliation receipt, or ``None``.
 ReceiptSource = Callable[[], Awaitable[ReconciliationReceipt | None]]

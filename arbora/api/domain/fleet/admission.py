@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.fleet.admission_models import (
@@ -45,15 +46,17 @@ __all__ = [
 #: Operations that load a skill or start a workflow.
 ADMITTED_OPERATIONS = frozenset({"agents.run"})
 
-REFUSALS: dict[str, str] = {
-    "SKILL_AUDIT_FAILED": "the skill audit exceeded the high-finding limit",
-    "WORKFLOW_NOT_ADMITTED": "the workflow declaration, tool or dependency is not admitted",
-    "ADMISSION_FIELD_MISSING": "a required admission field is missing",
-    "CERTIFICATION_REQUIRED": "the skill has no certification binding",
-    "CERTIFICATION_STALE": "the attestation digests differ from the binding",
-    "PRODUCER_UNAVAILABLE": "the certification attestation could not be read",
-    "POLICY_UNAVAILABLE": "the narrowing policy could not decide for a workflow tool",
-}
+REFUSALS: Mapping[str, str] = MappingProxyType(
+    {
+        "SKILL_AUDIT_FAILED": "the skill audit exceeded the high-finding limit",
+        "WORKFLOW_NOT_ADMITTED": "the workflow declaration, tool or dependency is not admitted",
+        "ADMISSION_FIELD_MISSING": "a required admission field is missing",
+        "CERTIFICATION_REQUIRED": "the skill has no certification binding",
+        "CERTIFICATION_STALE": "the attestation digests differ from the binding",
+        "PRODUCER_UNAVAILABLE": "the certification attestation could not be read",
+        "POLICY_UNAVAILABLE": "the narrowing policy could not decide for a workflow tool",
+    }
+)
 
 
 def validate_certification(

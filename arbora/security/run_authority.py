@@ -31,6 +31,7 @@ import threading
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from arbora.security.actor_context import (
@@ -337,7 +338,9 @@ async def keep_run_authority_current(
 
 #: The engine's answer to a session-liveness question (``MEDULLA-IDENTITY-R709``).
 SessionLiveness = Callable[[str], Awaitable[str]]
-_SESSION_REASONS = {"revoked": "SESSION_REVOKED", "expired": "SESSION_EXPIRED"}
+_SESSION_REASONS = MappingProxyType(
+    {"revoked": "SESSION_REVOKED", "expired": "SESSION_EXPIRED"}
+)
 
 
 def engine_session_check(

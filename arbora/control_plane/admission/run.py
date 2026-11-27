@@ -20,6 +20,7 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from arbora.control_plane.admission.models import AdmissionIntent
@@ -52,20 +53,22 @@ class AdmissionState(StrEnum):
 
 
 #: Every legal move. A state absent as a key has no move out (terminal).
-TRANSITIONS: Mapping[AdmissionState, frozenset[AdmissionState]] = {
-    AdmissionState.PLANNED: frozenset(
-        {AdmissionState.APPROVED, AdmissionState.ROLLED_BACK}
-    ),
-    AdmissionState.APPROVED: frozenset(
-        {AdmissionState.PROBING, AdmissionState.ROLLED_BACK}
-    ),
-    AdmissionState.PROBING: frozenset(
-        {AdmissionState.ADMITTED, AdmissionState.ROLLED_BACK}
-    ),
-    AdmissionState.ADMITTED: frozenset({AdmissionState.RETIRED}),
-    AdmissionState.ROLLED_BACK: frozenset(),
-    AdmissionState.RETIRED: frozenset(),
-}
+TRANSITIONS: Mapping[AdmissionState, frozenset[AdmissionState]] = MappingProxyType(
+    {
+        AdmissionState.PLANNED: frozenset(
+            {AdmissionState.APPROVED, AdmissionState.ROLLED_BACK}
+        ),
+        AdmissionState.APPROVED: frozenset(
+            {AdmissionState.PROBING, AdmissionState.ROLLED_BACK}
+        ),
+        AdmissionState.PROBING: frozenset(
+            {AdmissionState.ADMITTED, AdmissionState.ROLLED_BACK}
+        ),
+        AdmissionState.ADMITTED: frozenset({AdmissionState.RETIRED}),
+        AdmissionState.ROLLED_BACK: frozenset(),
+        AdmissionState.RETIRED: frozenset(),
+    }
+)
 #: States in which the run holds its tenant's one active slot.
 _ACTIVE = frozenset(
     {AdmissionState.PLANNED, AdmissionState.APPROVED, AdmissionState.PROBING}

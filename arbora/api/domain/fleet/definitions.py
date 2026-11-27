@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -30,13 +31,15 @@ __all__ = [
     "parse_definition",
 ]
 
-REFUSALS: dict[str, str] = {
-    "DEFINITION_VERSION_REQUIRED": "the definition declares no semantic version",
-    "SCHEMA_INVALID": "the definition has an unknown or malformed field",
-    "SCHEMA_INCOMPATIBLE": "the engine did not admit the change as compatible",
-    "DEFINITION_VERSION_CONFLICT": "the version is not newer, or changed under an equal version",
-    "PRODUCER_UNAVAILABLE": "no compatibility decision was produced",
-}
+REFUSALS: Mapping[str, str] = MappingProxyType(
+    {
+        "DEFINITION_VERSION_REQUIRED": "the definition declares no semantic version",
+        "SCHEMA_INVALID": "the definition has an unknown or malformed field",
+        "SCHEMA_INCOMPATIBLE": "the engine did not admit the change as compatible",
+        "DEFINITION_VERSION_CONFLICT": "the version is not newer, or changed under an equal version",
+        "PRODUCER_UNAVAILABLE": "no compatibility decision was produced",
+    }
+)
 
 _SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 

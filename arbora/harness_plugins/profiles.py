@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from types import MappingProxyType
 from urllib.parse import urlsplit
 
 #: The native public client of ``ARBORA-IDENTITY-R030.4``.
@@ -178,7 +179,7 @@ PROFILES: tuple[HarnessProfile, ...] = (
     ),
 )
 
-_BY_ID = {p.id: p for p in PROFILES}
+_BY_ID = MappingProxyType({p.id: p for p in PROFILES})
 
 #: The harness target and version matrix, derived from the one profile table.
 TARGET_MATRIX: tuple[dict[str, str], ...] = tuple(

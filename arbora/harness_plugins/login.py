@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit
 
@@ -56,17 +57,21 @@ class CredentialEvent(StrEnum):
 
 
 S, E = CredentialState, CredentialEvent
-CREDENTIAL_EDGES: dict[tuple[CredentialState, CredentialEvent], CredentialState] = {
-    (S.UNAUTHENTICATED, E.BEGIN): S.AUTHORIZING,
-    (S.AUTHORIZING, E.GRANT): S.AUTHORIZED,
-    (S.AUTHORIZING, E.DENY): S.UNAUTHENTICATED,
-    (S.AUTHORIZED, E.REFRESH_DUE): S.REFRESHING,
-    (S.REFRESHING, E.REFRESH_OK): S.AUTHORIZED,
-    (S.REFRESHING, E.REFRESH_FAIL): S.EXPIRED,
-    (S.AUTHORIZED, E.REVOKE): S.REVOKED,
-    (S.EXPIRED, E.BEGIN): S.AUTHORIZING,
-    (S.REVOKED, E.BEGIN): S.AUTHORIZING,
-}
+CREDENTIAL_EDGES: Mapping[tuple[CredentialState, CredentialEvent], CredentialState] = (
+    MappingProxyType(
+        {
+            (S.UNAUTHENTICATED, E.BEGIN): S.AUTHORIZING,
+            (S.AUTHORIZING, E.GRANT): S.AUTHORIZED,
+            (S.AUTHORIZING, E.DENY): S.UNAUTHENTICATED,
+            (S.AUTHORIZED, E.REFRESH_DUE): S.REFRESHING,
+            (S.REFRESHING, E.REFRESH_OK): S.AUTHORIZED,
+            (S.REFRESHING, E.REFRESH_FAIL): S.EXPIRED,
+            (S.AUTHORIZED, E.REVOKE): S.REVOKED,
+            (S.EXPIRED, E.BEGIN): S.AUTHORIZING,
+            (S.REVOKED, E.BEGIN): S.AUTHORIZING,
+        }
+    )
+)
 
 
 class IllegalCredentialTransition(RuntimeError):

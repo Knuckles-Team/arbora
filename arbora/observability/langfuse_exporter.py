@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from types import MappingProxyType
+
 from arbora.core.environment import read_env
 
 """CONCEPT:MERISTEM-OS.observability.langfuse-exporter — Langfuse exporter for spans, token usage and traces.
@@ -53,12 +55,14 @@ def normalize_run_id(value: str | None, *, tenant_id: str | None = "") -> str:
 
 logger = logging.getLogger(__name__)
 
-_TRACE_EVIDENCE_PATTERNS = {
-    "model_ref": re.compile(r"pref_model_[a-f0-9]{64}"),
-    "skill_ref": re.compile(r"pref_skill_[a-f0-9]{64}"),
-    "skill_body_ref": re.compile(r"pref_skill_body_[a-f0-9]{64}"),
-    "model_class": re.compile(r"(?:economy|standard)"),
-}
+_TRACE_EVIDENCE_PATTERNS = MappingProxyType(
+    {
+        "model_ref": re.compile(r"pref_model_[a-f0-9]{64}"),
+        "skill_ref": re.compile(r"pref_skill_[a-f0-9]{64}"),
+        "skill_body_ref": re.compile(r"pref_skill_body_[a-f0-9]{64}"),
+        "model_class": re.compile(r"(?:economy|standard)"),
+    }
+)
 
 
 def _validated_trace_evidence(evidence: dict[str, str] | None) -> dict[str, str]:

@@ -34,6 +34,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 from starlette.requests import Request
@@ -45,21 +46,23 @@ from arbora.unique_records import create_record
 logger = logging.getLogger(__name__)
 
 # Canonical severity vocabulary (normalized from each sender's own wording).
-_SEVERITY_MAP = {
-    "critical": "critical",
-    "fatal": "critical",
-    "emergency": "critical",
-    "page": "critical",
-    "error": "error",
-    "major": "error",
-    "warning": "warning",
-    "warn": "warning",
-    "minor": "warning",
-    "info": "info",
-    "information": "info",
-    "ok": "info",
-    "none": "info",
-}
+_SEVERITY_MAP = MappingProxyType(
+    {
+        "critical": "critical",
+        "fatal": "critical",
+        "emergency": "critical",
+        "page": "critical",
+        "error": "error",
+        "major": "error",
+        "warning": "warning",
+        "warn": "warning",
+        "minor": "warning",
+        "info": "info",
+        "information": "info",
+        "ok": "info",
+        "none": "info",
+    }
+)
 
 MAX_EVENTS_PER_REQUEST = 256
 MAX_EVENT_BODY_BYTES = 16 * 1024 * 1024
@@ -140,7 +143,7 @@ def _first_value(values: dict[str, Any], *keys: str) -> Any:
 
 
 # Uptime Kuma heartbeat status codes (0=down, 1=up, 2=pending, 3=maintenance).
-_KUMA_STATUS = {0: "down", 1: "up", 2: "pending", 3: "maintenance"}
+_KUMA_STATUS = MappingProxyType({0: "down", 1: "up", 2: "pending", 3: "maintenance"})
 
 
 def _normalize_uptime_kuma(payload: dict[str, Any]) -> list[FleetEvent]:

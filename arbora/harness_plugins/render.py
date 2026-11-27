@@ -19,6 +19,7 @@ import shutil
 from collections.abc import Callable, Mapping
 from importlib import resources
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -390,13 +391,15 @@ def render_hosted(spec: BundleSpec, root: Path) -> None:
     _write(root, "playbook.md", _playbook(spec))
 
 
-RENDERERS: dict[str, Callable[[BundleSpec, Path], None]] = {
-    "claude-code": render_claude_code,
-    "opencode": render_opencode,
-    "codex": render_codex,
-    "grok": render_grok,
-    "hosted": render_hosted,
-}
+RENDERERS: Mapping[str, Callable[[BundleSpec, Path], None]] = MappingProxyType(
+    {
+        "claude-code": render_claude_code,
+        "opencode": render_opencode,
+        "codex": render_codex,
+        "grok": render_grok,
+        "hosted": render_hosted,
+    }
+)
 
 
 def render(spec: BundleSpec, out_dir: Path) -> str:

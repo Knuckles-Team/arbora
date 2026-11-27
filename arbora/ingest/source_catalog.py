@@ -27,6 +27,7 @@ import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -43,11 +44,13 @@ SyncMode = Literal["delta", "full", "reconcile"]
 _REF_RE = re.compile(r"^(?:vault|env|secret)://[A-Za-z0-9_./#-]+$")
 _ALIAS_RE = re.compile(r"^[a-z][a-z0-9_-]{0,62}$")
 _SAFE_RECORD_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,191}$")
-_SYNC_MODES: dict[str, SyncMode] = {
-    "delta": "delta",
-    "full": "full",
-    "reconcile": "reconcile",
-}
+_SYNC_MODES: Mapping[str, SyncMode] = MappingProxyType(
+    {
+        "delta": "delta",
+        "full": "full",
+        "reconcile": "reconcile",
+    }
+)
 
 
 class SourceSyncSupport(BaseModel):
@@ -349,11 +352,13 @@ _DEFINITIONS: tuple[_ProviderDefinition, ...] = (
     ),
 )
 
-_PROVIDER_BY_TOKEN = {
-    token.replace("-", "_"): definition.provider
-    for definition in _DEFINITIONS
-    for token in (definition.provider, *definition.aliases)
-}
+_PROVIDER_BY_TOKEN = MappingProxyType(
+    {
+        token.replace("-", "_"): definition.provider
+        for definition in _DEFINITIONS
+        for token in (definition.provider, *definition.aliases)
+    }
+)
 _PROVIDER_PREFIXES = tuple(
     (token.replace("-", "_"), definition.provider)
     for definition in _DEFINITIONS

@@ -13,6 +13,7 @@ import json
 from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Literal
 
 from arbora.fleet.catalog_items import PACK_ANNOTATION_FIELDS
@@ -85,11 +86,13 @@ def cicd_event(*, tenant: str, source: str, payload: dict[str, Any]) -> FeedEven
     return FeedEvent(kind="cicd", tenant=tenant, source=source, payload=payload)
 
 
-_BUILDERS: dict[str, Callable[..., FeedEvent]] = {
-    "rum": rum_event,
-    "security_audit": security_audit_event,
-    "cicd": cicd_event,
-}
+_BUILDERS: Mapping[str, Callable[..., FeedEvent]] = MappingProxyType(
+    {
+        "rum": rum_event,
+        "security_audit": security_audit_event,
+        "cicd": cicd_event,
+    }
+)
 
 #: Most recent events kept per intake; a bounded window, not a store. The
 #: connector re-sends on reconnect, so nothing here is correctness state.

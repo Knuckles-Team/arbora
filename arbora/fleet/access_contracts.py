@@ -16,6 +16,7 @@ import hashlib
 import logging
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
+from types import MappingProxyType
 from typing import Any, Literal
 
 from scion_sdk.ontology_namespaces import ACCESS_NAMESPACE
@@ -32,12 +33,14 @@ from arbora.fleet.virtual_catalog import (
 logger = logging.getLogger(__name__)
 
 #: SDK access kind to AU virtual-graph source kind.
-SOURCE_KIND_BY_ACCESS = {
-    "mcp_tool": "mcp",
-    "http_endpoint": "api",
-    "graphql_query": "graphql",
-    "a2a_skill": "a2a",
-}
+SOURCE_KIND_BY_ACCESS = MappingProxyType(
+    {
+        "mcp_tool": "mcp",
+        "http_endpoint": "api",
+        "graphql_query": "graphql",
+        "a2a_skill": "a2a",
+    }
+)
 #: Markers that show an ontology body declares an access contract.
 CONTRACT_MARKERS = (
     ACCESS_NAMESPACE,
@@ -68,12 +71,14 @@ class SourceApprovalDecision:
     receipt: Any = None
 
 
-_SOURCE_KIND_BY_ACCESS = {
-    "mcp_tool": "mcp_tool",
-    "http_endpoint": "http_endpoint",
-    "graphql_query": "graphql_query",
-    "a2a_skill": "a2a_skill",
-}
+_SOURCE_KIND_BY_ACCESS = MappingProxyType(
+    {
+        "mcp_tool": "mcp_tool",
+        "http_endpoint": "http_endpoint",
+        "graphql_query": "graphql_query",
+        "a2a_skill": "a2a_skill",
+    }
+)
 
 
 def _mapping(value: Any) -> Mapping[str, Any] | None:

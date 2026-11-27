@@ -20,6 +20,7 @@ import webbrowser
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
+from types import MappingProxyType
 
 from arbora.core.environment import read_env
 from arbora.harness_plugins import install as inst
@@ -439,16 +440,18 @@ def parser() -> argparse.ArgumentParser:
     return top
 
 
-COMMANDS = {
-    "targets": targets_command,
-    "bundle": bundle_command,
-    "install": install_command,
-    "status": status_command,
-    "remove": remove_command,
-    "login": login_command,
-    "hook": hook_command,
-    "statusline": statusline_command,
-}
+COMMANDS = MappingProxyType(
+    {
+        "targets": targets_command,
+        "bundle": bundle_command,
+        "install": install_command,
+        "status": status_command,
+        "remove": remove_command,
+        "login": login_command,
+        "hook": hook_command,
+        "statusline": statusline_command,
+    }
+)
 
 
 def main(argv: Sequence[str]) -> int:

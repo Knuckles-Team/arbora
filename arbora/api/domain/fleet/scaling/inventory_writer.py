@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 import msgpack
@@ -38,13 +39,15 @@ from arbora.security.anonymous import client_scope
 REVISION_NODE = "scale:authority-revision"
 
 #: The identity of each record, per inventory field.
-_KEYS: dict[str, Callable[[Any], str]] = {
-    "failure_domains": lambda record: record.domain_id,
-    "pools": lambda record: record.pool_id,
-    "workloads": lambda record: record.workload_id,
-    "units": lambda record: record.unit_id,
-    "controllers": lambda record: f"{record.unit_id}:{record.controller_id}",
-}
+_KEYS: Mapping[str, Callable[[Any], str]] = MappingProxyType(
+    {
+        "failure_domains": lambda record: record.domain_id,
+        "pools": lambda record: record.pool_id,
+        "workloads": lambda record: record.workload_id,
+        "units": lambda record: record.unit_id,
+        "controllers": lambda record: f"{record.unit_id}:{record.controller_id}",
+    }
+)
 
 
 def node_id(label: str, key: str) -> str:

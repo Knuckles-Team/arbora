@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator, Callable, Iterator, Mapping
 from contextlib import contextmanager
 from functools import partial
 from secrets import token_hex
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from fastapi import FastAPI, Request
@@ -265,10 +266,12 @@ async def _get_task(service: A2AService, raw_params: Any, request_id: Any) -> An
     return result or _error(request_id, -32001, "Task not found", 404)
 
 
-_STREAM_UNAVAILABLE = {
-    "message/stream": "message/stream is not available; use message/send",
-    "tasks/resubscribe": "durable task streaming and resubscribe are not available yet",
-}
+_STREAM_UNAVAILABLE = MappingProxyType(
+    {
+        "message/stream": "message/stream is not available; use message/send",
+        "tasks/resubscribe": "durable task streaming and resubscribe are not available yet",
+    }
+)
 
 
 def _sse_frame(payload: dict[str, Any], event_seq: int | None = None) -> bytes:
@@ -364,9 +367,11 @@ def _op_invoke_stub(raw_params: Any) -> Any:
 
 _STREAM_METHODS = frozenset({"message/stream", "tasks/resubscribe"})
 
-_SYNC_METHODS: dict[str, Callable[[Any], Any]] = {
-    "arbora.op/invoke": _op_invoke_stub,
-}
+_SYNC_METHODS: Mapping[str, Callable[[Any], Any]] = MappingProxyType(
+    {
+        "arbora.op/invoke": _op_invoke_stub,
+    }
+)
 
 
 async def _invoke_method(
@@ -413,17 +418,19 @@ async def _invoke_method(
     return _error(request_id, -32601, "Method not found", 404)
 
 
-_ERROR_CODES: dict[type[Exception], tuple[int, int]] = {
-    A2AContextUnavailable: (-32014, 503),
-    A2ATerminalEventUnavailable: (-32013, 503),
-    A2AIdempotencyConflict: (-32009, 409),
-    A2AAssemblyUnavailable: (-32003, 503),
-    A2ATaskNotCancelable: (-32002, 409),
-    A2AStreamingUnavailable: (-32010, 501),
-    A2AEventGap: (-32010, 409),
-    A2AOperationBridgeUnavailable: (-32011, 501),
-    A2ATransitionHistoryUnavailable: (-32012, 501),
-}
+_ERROR_CODES: Mapping[type[Exception], tuple[int, int]] = MappingProxyType(
+    {
+        A2AContextUnavailable: (-32014, 503),
+        A2ATerminalEventUnavailable: (-32013, 503),
+        A2AIdempotencyConflict: (-32009, 409),
+        A2AAssemblyUnavailable: (-32003, 503),
+        A2ATaskNotCancelable: (-32002, 409),
+        A2AStreamingUnavailable: (-32010, 501),
+        A2AEventGap: (-32010, 409),
+        A2AOperationBridgeUnavailable: (-32011, 501),
+        A2ATransitionHistoryUnavailable: (-32012, 501),
+    }
+)
 
 
 def _application_error(request_id: Any, error: Exception) -> JSONResponse:

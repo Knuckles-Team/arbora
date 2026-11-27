@@ -11,8 +11,9 @@ rollback is claimed.
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from arbora.a2a.work_items import WorkItemView
@@ -41,13 +42,15 @@ __all__ = [
 
 EVIDENCE_KIND = "provision.flow.evidence"
 
-REFUSALS: dict[str, str] = {
-    "SKILL_NOT_FOUND": "no authorized skill answers the request",
-    "PRODUCER_UNAVAILABLE": "a discovery or distribution producer is unavailable",
-    "SCHEMA_INCOMPATIBLE": "the skill identity or schema disagrees across the sources",
-    "CROSS_TENANT_RECEIPT": "a receipt belongs to another tenant",
-    "TOOL_NOT_APPROVED": "the skill needs a tool the decision did not approve",
-}
+REFUSALS: Mapping[str, str] = MappingProxyType(
+    {
+        "SKILL_NOT_FOUND": "no authorized skill answers the request",
+        "PRODUCER_UNAVAILABLE": "a discovery or distribution producer is unavailable",
+        "SCHEMA_INCOMPATIBLE": "the skill identity or schema disagrees across the sources",
+        "CROSS_TENANT_RECEIPT": "a receipt belongs to another tenant",
+        "TOOL_NOT_APPROVED": "the skill needs a tool the decision did not approve",
+    }
+)
 
 
 class ProducerUnavailable(RuntimeError):

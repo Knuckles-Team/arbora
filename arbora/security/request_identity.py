@@ -72,8 +72,10 @@ import json
 import logging
 import re
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import Enum
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from arbora.core.environment import read_env
@@ -795,13 +797,17 @@ class LocalProcessGrant(Enum):
 #: ``kg:read``). ``GRAPH_PROVISIONING`` materializes the packaged local
 #: engine's own tenant graph: ``kg:read`` for ``PlacementRoute``/
 #: ``ListGraphs`` and the exact ``graph:admin`` scope ``CreateGraph`` needs.
-_LOCAL_PROCESS_GRANTS: dict[LocalProcessGrant, tuple[str, tuple[str, ...]]] = {
-    LocalProcessGrant.AMBIENT: (_LOCAL_PROCESS_SUBJECT, ("kg:write",)),
-    LocalProcessGrant.GRAPH_PROVISIONING: (
-        _LOCAL_PROCESS_BOOTSTRAP_SUBJECT,
-        ("kg:read", "graph:admin"),
-    ),
-}
+_LOCAL_PROCESS_GRANTS: Mapping[LocalProcessGrant, tuple[str, tuple[str, ...]]] = (
+    MappingProxyType(
+        {
+            LocalProcessGrant.AMBIENT: (_LOCAL_PROCESS_SUBJECT, ("kg:write",)),
+            LocalProcessGrant.GRAPH_PROVISIONING: (
+                _LOCAL_PROCESS_BOOTSTRAP_SUBJECT,
+                ("kg:read", "graph:admin"),
+            ),
+        }
+    )
+)
 
 #: Scopes a local-process authority can never carry, whatever the table says.
 _LOCAL_PROCESS_FORBIDDEN_SCOPES: frozenset[str] = frozenset({"kg:admin", "*"})

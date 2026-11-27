@@ -62,8 +62,9 @@ import re
 import stat
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
+from types import MappingProxyType
 
 import anyio
 import httpx
@@ -255,11 +256,15 @@ def _rotating_file_bearer_config_problems() -> tuple[list[str], list[str]]:
     return missing, invalid
 
 
-_MODE_CONFIG_PROBLEM_CHECKS: dict[str, Callable[[], tuple[list[str], list[str]]]] = {
-    _MODE_OIDC: _oidc_config_problems,
-    _MODE_BASIC: _basic_config_problems,
-    _MODE_ROTATING_FILE_BEARER: _rotating_file_bearer_config_problems,
-}
+_MODE_CONFIG_PROBLEM_CHECKS: Mapping[str, Callable[[], tuple[list[str], list[str]]]] = (
+    MappingProxyType(
+        {
+            _MODE_OIDC: _oidc_config_problems,
+            _MODE_BASIC: _basic_config_problems,
+            _MODE_ROTATING_FILE_BEARER: _rotating_file_bearer_config_problems,
+        }
+    )
+)
 
 
 def outbound_auth_configuration_status() -> dict[str, object]:

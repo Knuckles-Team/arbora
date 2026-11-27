@@ -74,7 +74,7 @@ class PatternMatch:
 
 
 # -- Shell injection / reverse shell patterns --------------------------------
-_REVERSE_SHELL_PATTERNS: list[ThreatPattern] = [
+_REVERSE_SHELL_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="netcat_reverse_shell",
         regex=re.compile(r"nc\s+.*-e\s+(/bin/(ba)?sh|cmd)", re.IGNORECASE),
@@ -101,10 +101,10 @@ _REVERSE_SHELL_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.CRITICAL,
         description="Perl socket reverse shell detected",
     ),
-]
+)
 
 # -- Data exfiltration patterns ---------------------------------------------
-_EXFIL_PATTERNS: list[ThreatPattern] = [
+_EXFIL_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="curl_pipe_shell",
         regex=re.compile(r"curl\s+.*\|\s*(ba)?sh", re.IGNORECASE),
@@ -132,10 +132,10 @@ _EXFIL_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.CRITICAL,
         description="Encoded payload execution via base64 decode",
     ),
-]
+)
 
 # -- Destructive commands ---------------------------------------------------
-_DESTRUCTIVE_PATTERNS: list[ThreatPattern] = [
+_DESTRUCTIVE_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="rm_rf_root",
         regex=re.compile(
@@ -164,10 +164,10 @@ _DESTRUCTIVE_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="World-writable permissions on root",
     ),
-]
+)
 
 # -- Privilege escalation ---------------------------------------------------
-_PRIVESC_PATTERNS: list[ThreatPattern] = [
+_PRIVESC_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="sudo_nopasswd",
         regex=re.compile(r"echo\s+.*NOPASSWD.*>>\s*/etc/sudoers", re.IGNORECASE),
@@ -186,10 +186,10 @@ _PRIVESC_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="SetUID/SetGID bit manipulation",
     ),
-]
+)
 
 # -- Environment / credential harvesting ------------------------------------
-_CREDENTIAL_PATTERNS: list[ThreatPattern] = [
+_CREDENTIAL_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="env_dump",
         regex=re.compile(r"\benv\b|\bprintenv\b|cat\s+.*/\.env\b", re.IGNORECASE),
@@ -216,10 +216,10 @@ _CREDENTIAL_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="AWS credentials file access",
     ),
-]
+)
 
 # -- Network reconnaissance ------------------------------------------------
-_RECON_PATTERNS: list[ThreatPattern] = [
+_RECON_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="port_scan",
         regex=re.compile(r"nmap\s+|masscan\s+", re.IGNORECASE),
@@ -232,10 +232,10 @@ _RECON_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="DNS-based data exfiltration via command substitution",
     ),
-]
+)
 
 # -- Prompt injection markers -----------------------------------------------
-_INJECTION_PATTERNS: list[ThreatPattern] = [
+_INJECTION_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="ignore_instructions",
         regex=re.compile(
@@ -260,7 +260,7 @@ _INJECTION_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="Unicode tag characters detected (steganographic injection)",
     ),
-]
+)
 
 # -- Jailbreak attack patterns (SoK-derived, CONCEPT:MERISTEM-OS.safety.prompt-injection-scanner) ---------------
 # Derived from: SoK: Robustness in LLMs against Jailbreak Attacks
@@ -282,7 +282,7 @@ class JailbreakCategory(StrEnum):
     MANUAL = "manual"
 
 
-_JAILBREAK_TEMPLATE_PATTERNS: list[ThreatPattern] = [
+_JAILBREAK_TEMPLATE_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="dan_jailbreak",
         regex=re.compile(
@@ -319,9 +319,9 @@ _JAILBREAK_TEMPLATE_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.MEDIUM,
         description="Template-based jailbreak: Grandma exploit",
     ),
-]
+)
 
-_JAILBREAK_OPTIMIZATION_PATTERNS: list[ThreatPattern] = [
+_JAILBREAK_OPTIMIZATION_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="gcg_suffix",
         regex=re.compile(
@@ -338,9 +338,9 @@ _JAILBREAK_OPTIMIZATION_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="Optimization-based jailbreak: token smuggling via encoding",
     ),
-]
+)
 
-_JAILBREAK_LLM_PATTERNS: list[ThreatPattern] = [
+_JAILBREAK_LLM_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="context_confusion",
         regex=re.compile(
@@ -361,9 +361,9 @@ _JAILBREAK_LLM_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.MEDIUM,
         description="LLM-based jailbreak: multi-turn escalation",
     ),
-]
+)
 
-_JAILBREAK_MANUAL_PATTERNS: list[ThreatPattern] = [
+_JAILBREAK_MANUAL_PATTERNS: tuple[ThreatPattern, ...] = (
     ThreatPattern(
         name="roleplay_jailbreak",
         regex=re.compile(
@@ -385,7 +385,7 @@ _JAILBREAK_MANUAL_PATTERNS: list[ThreatPattern] = [
         risk_level=RiskLevel.HIGH,
         description="Manual jailbreak: false authority claim",
     ),
-]
+)
 
 # Composite pattern list
 ALL_PATTERNS: list[ThreatPattern] = (
