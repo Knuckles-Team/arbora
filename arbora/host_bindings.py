@@ -28,7 +28,7 @@ from typing import Any
 
 from fastmcp.server.extensions import ServerExtension
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.unique_records import create_record, has_record_writer
 
 __all__ = [
@@ -85,7 +85,7 @@ def fleet_agent() -> Any:
     if _agent is None:
         from pydantic_ai import Agent
 
-        model = str(setting(MODEL_SETTING, "") or "") or None
+        model = str(read_env(MODEL_SETTING, "") or "") or None
         _agent = Agent(model, name=FLEET_AGENT_NAME, toolsets=[_fleet_toolset])
     return _agent
 
@@ -279,7 +279,7 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
     )
     from arbora.a2a.sdk_app import create_admitted_a2a_app
 
-    base = str(setting("ARBORA_PUBLIC_URL", "") or "").rstrip("/")
+    base = str(read_env("ARBORA_PUBLIC_URL") or "").rstrip("/")
     from arbora.modality.agent_input import MediaNormalizingAgent
 
     storage = _engine_storage()

@@ -771,3 +771,5 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 | Harness host-facing module set (meristem) | [`contracts/harness-host-modules.md`](contracts/harness-host-modules.md) | `ARBORA-HOST-R007` |
 
 The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
+
+Amendment 2026-11-26 (R010.2 migration): every read of the process environment in `arbora/` goes through the accessor `arbora/core/environment.py` (`read_env`, `read_text`, `read_reference`), which refuses a name the manifest of `arbora/core/environment_manifest.py` does not declare. The declarations outside `ArboraConfig` are the table `arbora/core/environment_names.py` (name, type, default, owner row, call sites, secret flag). A caller whose default is computed at the call passes it as `fallback`. The census counts accessor reads and the listed pass-through helpers as reads. The gate `tests/architecture/test_environment_reads_declared.py` fails on any raw `os.environ`, `os.getenv` or SDK `setting` use outside the accessor; it lands with the last migration batch.

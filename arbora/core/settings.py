@@ -1,7 +1,7 @@
 """Arbora configuration reads and the platform configuration location.
 
-Every Arbora module reads a setting through :func:`setting` (the environment
-at call time, typed by the default) and locates its configuration files through
+Every Arbora module reads a setting through :func:`arbora.core.environment.read_env`
+(the declared environment at call time, typed by the declaration) and locates its configuration files through
 :func:`config_dir` / :func:`platform_config_file`. Arbora owns
 ``~/.config/arbora``: ``ARBORA_CONFIG_DIR`` wins, then
 ``$XDG_CONFIG_HOME/arbora``. No other location is read.
@@ -20,6 +20,13 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 from scion_sdk.config import csv_values, setting
 
+from arbora.core.environment import (
+    read_env,
+    read_text,
+    unset_env,
+    write_env,
+)
+
 __all__ = [
     "CONFIG_DIR_SETTING",
     "ArboraConfig",
@@ -36,6 +43,7 @@ __all__ = [
     "read_config_document",
     "runtime_config",
     "save_config_item",
+    "CONFIG_FIELDS",
     "setting",
 ]
 
@@ -45,11 +53,11 @@ _APP_DIR = "arbora"
 
 
 def _config_home() -> Path:
-    return Path(setting("XDG_CONFIG_HOME", "") or Path.home() / ".config")
+    return Path(read_env("XDG_CONFIG_HOME") or Path.home() / ".config")
 
 
 def _env_dir(name: str) -> Path | None:
-    raw = str(setting(name, "") or "").strip()
+    raw = str(read_env(name) or "").strip()
     return Path(raw).expanduser() if raw else None
 
 
@@ -60,7 +68,7 @@ def config_dir() -> Path:
 
 def data_dir() -> Path:
     """``ARBORA_DATA_DIR`` or ``$XDG_DATA_HOME/arbora`` (default ``~/.local/share/arbora``)."""
-    default = Path(setting("XDG_DATA_HOME", "") or Path.home() / ".local" / "share")
+    default = Path(read_env("XDG_DATA_HOME") or Path.home() / ".local" / "share")
     return _env_dir(DATA_DIR_SETTING) or default / _APP_DIR
 
 
@@ -1110,7 +1118,7 @@ def _environment_values() -> dict[str, Any]:
     out: dict[str, Any] = {}
     for info in ArboraConfig.model_fields.values():
         alias = str(info.alias)
-        raw = os.environ.get(alias)
+        raw = read_text(alias)
         if raw is not None and raw != "":
             out[alias] = raw
     return out
@@ -1161,7 +1169,7 @@ def _structured_text(annotation: Any, raw: str) -> Any:
 def read_field(name: str) -> Any:
     """Read one :class:`ArboraConfig` field from the environment now."""
     info = ArboraConfig.model_fields[name]
-    raw = os.environ.get(str(info.alias))
+    raw = read_text(str(info.alias))
     if raw is None or raw == "":
         return info.get_default(call_default_factory=True)
     value = _structured_text(info.annotation, raw)
@@ -1204,6 +1212,9 @@ class _LiveConfig:
     def __delattr__(self, name: str) -> None:
         self._overrides.pop(name, None)
 
+
+#: The typed, declared settings (alias to field), read by the environment manifest.
+CONFIG_FIELDS = ArboraConfig.model_fields
 
 #: The live settings view every Arbora module reads.
 runtime_config: Any = _LiveConfig()
@@ -1268,7 +1279,7 @@ def save_config_item(key: str, value: Any) -> str:
             document = loaded
         if value is None:
             document.pop(env_key, None)
-            os.environ.pop(env_key, None)
+            unset_env(env_key)
         else:
             # config.json holds flat scalars; a list or mapping is JSON text.
             stored = (
@@ -1277,8 +1288,8 @@ def save_config_item(key: str, value: Any) -> str:
                 else value
             )
             document[env_key] = stored
-            os.environ[env_key] = (
-                stored if isinstance(stored, str) else json.dumps(stored)
+            write_env(
+                env_key, stored if isinstance(stored, str) else json.dumps(stored)
             )
         write_private_mapping(target, document)
     return env_key
@@ -1311,5 +1322,5 @@ _PRODUCTION_PROFILES = frozenset({"prod", "production"})
 
 def is_production_profile(profile: str | None = None) -> bool:
     """True when ``profile`` (default ``APP_PROFILE``) names production."""
-    value = setting("APP_PROFILE", "") if profile is None else profile
+    value = read_env("APP_PROFILE", "") if profile is None else profile
     return str(value or "").strip().lower() in _PRODUCTION_PROFILES

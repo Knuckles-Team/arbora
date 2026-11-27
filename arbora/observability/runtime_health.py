@@ -935,10 +935,10 @@ def identity_readiness() -> dict[str, Any]:
         return dict(reconciler.readiness())
     if _IDENTITY_CONFIG_INVALID[0]:
         return {"status": "degraded", "reason": "identity_config_invalid"}
+    from arbora.core.environment import read_env
     from arbora.identity.client_contract import CONFIG_KEY
-    from arbora.security.settings import setting
 
-    return {"status": "checking" if setting(CONFIG_KEY, "") else "unconfigured"}
+    return {"status": "checking" if read_env(CONFIG_KEY, "") else "unconfigured"}
 
 
 def failing_checks(report: Mapping[str, Any]) -> list[str]:

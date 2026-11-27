@@ -11,9 +11,9 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from scion_sdk.config import setting
+from arbora.core.environment import read_env
 
-__all__ = ["SecuritySettings", "security_settings", "setting"]
+__all__ = ["SecuritySettings", "security_settings"]
 
 #: Asymmetric JWT signature algorithms accepted when none are configured.
 DEFAULT_JWT_ALGORITHMS: tuple[str, ...] = (
@@ -44,7 +44,7 @@ def _raw(key: str) -> Any:
             if isinstance(value, (list, dict)):
                 return json.dumps(value)
             return value
-    return setting(key, "")
+    return read_env(key, "")
 
 
 def _text(key: str) -> str | None:
@@ -105,7 +105,7 @@ def security_settings() -> SecuritySettings:
         deployment_profile=_text("DEPLOYMENT_PROFILE") or "tiny",
         graph_service_endpoints=_list("GRAPH_SERVICE_ENDPOINTS") or None,
         identity_group_capability_map=_mapping("IDENTITY_GROUP_CAPABILITY_MAP"),
-        engine_breaker_cooldown=float(setting("ENGINE_BREAKER_COOLDOWN", 15.0)),
+        engine_breaker_cooldown=float(read_env("ENGINE_BREAKER_COOLDOWN")),
         oidc_tls_profile=_text("OIDC_TLS_PROFILE"),
         oidc_tls_profile_ref=_text("OIDC_TLS_PROFILE_REF"),
         oidc_http_allowed_private_hosts=_list("OIDC_HTTP_ALLOWED_PRIVATE_HOSTS"),

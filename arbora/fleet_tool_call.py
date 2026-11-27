@@ -16,7 +16,7 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import Any
 
-from scion_sdk.config import setting
+from arbora.core.environment import read_env
 
 __all__ = ["FleetToolCallError", "call_fleet_tool", "run_coroutine"]
 
@@ -28,7 +28,7 @@ class FleetToolCallError(RuntimeError):
 def _server_entry(server: str) -> dict[str, Any]:
     from scion_sdk.paths import get_mcp_config_path
 
-    path = str(setting("MCP_CONFIG", "") or "").strip() or get_mcp_config_path()
+    path = str(read_env("MCP_CONFIG", "") or "").strip() or get_mcp_config_path()
     if not path:
         raise FleetToolCallError("no MCP configuration is available")
     servers = json.loads(Path(path).read_text("utf-8")).get("mcpServers", {})

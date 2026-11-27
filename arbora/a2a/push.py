@@ -139,12 +139,12 @@ class PushSettings:
 
     @classmethod
     def from_config(cls) -> PushSettings:
-        from arbora.core.settings import setting
+        from arbora.core.environment import read_env
 
         def number(name: str, spec: tuple[Any, tuple[Any, Any]]) -> int:
-            return int(clamp_setting(setting(name, str(spec[0])), spec))
+            return int(clamp_setting(read_env(name), spec))
 
-        raw = str(setting("A2A_PUSH_ALLOWED_PRIVATE_HOSTS", "") or "").strip()
+        raw = str(read_env("A2A_PUSH_ALLOWED_PRIVATE_HOSTS") or "").strip()
         if raw.startswith("["):
             try:
                 hosts = [str(entry) for entry in json.loads(raw)]

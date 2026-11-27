@@ -62,16 +62,16 @@ def is_loopback_url(url: str) -> bool:
 
 def advertised_self_hosts() -> set[str]:
     """The named hosts that address this process: ``MCP_ALLOWED_HOSTS`` and a concrete bind ``HOST``."""
-    from arbora.core.settings import setting
+    from arbora.core.environment import read_env
 
     hosts = {
         token.strip().lower()
-        for token in str(setting("MCP_ALLOWED_HOSTS", "") or "")
+        for token in str(read_env("MCP_ALLOWED_HOSTS", "") or "")
         .replace(",", " ")
         .split()
         if token.strip()
     }
-    bind = str(setting("HOST", "") or "").strip().lower()
+    bind = str(read_env("HOST", "") or "").strip().lower()
     if bind and bind not in {"0.0.0.0", "::", "[::]", "*"}:  # nosec B104 - wildcard names, not a bind
         hosts.add(bind)
     return hosts - _LOOPBACK_HOSTS

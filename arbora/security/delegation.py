@@ -42,7 +42,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from arbora.security.settings import setting
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def delegation_mode() -> DelegationMode:
     clean soak without a code change. An unrecognized value degrades to ``warn`` and is logged
     once-shaped (never silently treated as ``on``/``off``).
     """
-    raw = str(setting("ENABLE_DELEGATED_IDENTITY", "warn") or "warn").strip().lower()
+    raw = str(read_env("ENABLE_DELEGATED_IDENTITY") or "warn").strip().lower()
     try:
         return DelegationMode(raw)
     except ValueError:

@@ -77,6 +77,8 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+from arbora.core.environment import read_env
+
 from .actor_context import (
     ActorContext,
     ActorType,
@@ -87,7 +89,6 @@ from .actor_context import (
     use_actor,
 )
 from .scope_registry import session_scopes
-from .settings import setting
 
 _DEFAULT_GRAPH = "__commons__"
 _TENANT_SLUG_RE = re.compile(r"[^A-Za-z0-9_.-]+")
@@ -98,7 +99,7 @@ _correlation_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 
 def default_graph_name() -> str:
     """The configured default graph (``KG_DEFAULT_GRAPH``, default ``__commons__``)."""
-    return str(setting("KG_DEFAULT_GRAPH", "") or "").strip() or _DEFAULT_GRAPH
+    return str(read_env("KG_DEFAULT_GRAPH") or "").strip() or _DEFAULT_GRAPH
 
 
 def tenant_graph_name(tenant: str | None, base: str = _DEFAULT_GRAPH) -> str:

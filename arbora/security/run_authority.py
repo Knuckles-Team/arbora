@@ -118,9 +118,9 @@ class RunRenewalPolicy:
 def run_renewal_policy() -> RunRenewalPolicy:
     """The configured policy (``ARBORA_RUN_MAX_LIFETIME_SECONDS``)."""
     try:
-        from arbora.core.settings import setting
+        from arbora.core.environment import read_env
 
-        raw = setting("ARBORA_RUN_MAX_LIFETIME_SECONDS", str(DEFAULT_MAX_RUN_SECONDS))
+        raw = read_env("ARBORA_RUN_MAX_LIFETIME_SECONDS", str(DEFAULT_MAX_RUN_SECONDS))
         return RunRenewalPolicy(max_run_seconds=int(raw))
     except Exception:  # noqa: BLE001 — a bad value keeps the bounded default
         logger.warning("Invalid ARBORA_RUN_MAX_LIFETIME_SECONDS; using the default")

@@ -17,7 +17,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from arbora.security.settings import setting
+from arbora.core.environment import read_env
 
 __all__ = ["PromptInjectionScanner", "RiskLevel", "ScanResult", "ThreatPattern"]
 
@@ -445,7 +445,7 @@ class PromptInjectionScanner:
         if self._threshold is not None:
             return self._threshold
         try:
-            return float(setting("SECURITY_PROMPT_THRESHOLD", "0.8"))
+            return float(read_env("SECURITY_PROMPT_THRESHOLD"))
         except (ValueError, TypeError):
             return 0.8
 
