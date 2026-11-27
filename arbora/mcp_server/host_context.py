@@ -17,6 +17,7 @@ from arbora.a2a.engine_decide import HostDecide
 from arbora.a2a.service import A2AService
 from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
+from arbora.agent_host.host_port_adapters import HostPortsSlot
 from arbora.fleet.state import FleetState
 from arbora.run_origin import RunOriginRegistry
 
@@ -37,6 +38,8 @@ class RunState:
     a2a: A2AService
     #: The A2A door's engine ``Decide`` port; the served invocation binds it.
     decide: HostDecide
+    #: The one ``HostPorts`` record every run entry point passes to the harness.
+    ports: HostPortsSlot
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,15 +55,17 @@ def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
     """Build the host state once; ``engine_provider`` resolves the engine lazily."""
     origins = RunOriginRegistry()
     decide = HostDecide()
+    ports = HostPortsSlot()
     a2a = build_a2a_service(
         engine_provider=engine_provider,
         origins=origins,
         decide=decide,
         feature_schema=decide.feature_schema,
         decision_principal=decide.principal,
+        ports=ports,
     )
     return HostContext(
-        runs=RunState(origins=origins, a2a=a2a, decide=decide),
+        runs=RunState(origins=origins, a2a=a2a, decide=decide, ports=ports),
         fleet=FleetState(),
         policy=PolicyState(
             approvals=ApprovalDecisions(verified_approval_session),

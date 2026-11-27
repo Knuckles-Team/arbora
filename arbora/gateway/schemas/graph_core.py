@@ -525,7 +525,7 @@ class GraphConfigureVaultSyncResponse(BaseModel):
 
 class HookDoctorEntry(BaseModel):
     """One agent surface's hook-installation health, as returned by
-    ``HookInstaller.doctor()`` (``agent_utilities/ecosystem/hook_installer.py``).
+    ``HookInstaller.doctor()`` (``meristem/ecosystem/hook_installer.py``).
     """
 
     model_config = ConfigDict(extra="forbid")

@@ -51,10 +51,14 @@ async def admitted_publication_scope(
         yield publisher
 
 
-def register_publication_fixture() -> None:
-    host_ports.register_optional_scaffold_publication_factory(
-        publication.publication_scope
-    )
+def publication_ports() -> host_ports.HostPorts:
+    """The record whose scaffold publication is arbora's own factory."""
+    return host_ports.HostPorts(scaffold_publication=publication.publication_scope)
+
+
+def scaffold_scope(request: Any, state: Any) -> Any:
+    """The harness scaffold publication scope of a run carrying that record."""
+    return publication_ports().scaffold_publication_scope(request, state)
 
 
 @pytest.fixture
@@ -93,9 +97,7 @@ def transport(monkeypatch: pytest.MonkeyPatch) -> Any:
         pass
 
     monkeypatch.setattr(publication, "_admit", admit)
-    register_publication_fixture()
     yield calls
-    host_ports.register_optional_scaffold_publication_factory(None)
 
 
 def engine() -> Any:
@@ -123,7 +125,7 @@ async def test_actual_au_revisions_use_exact_claim_and_close(transport: Any) -> 
         work_item_id="work-item:one",
         claim=claim(),
     ):
-        async with host_ports.scaffold_publication_scope(request, state) as publisher:
+        async with scaffold_scope(request, state) as publisher:
             assert publisher is not None
             await publisher.publish(
                 *state.replace_versioned([PlanItem(text="inspect", status="done")])
@@ -421,7 +423,7 @@ async def test_explicit_anonymous_transport_does_not_gain_verified_authority(
         work_item_id="work-item:one",
         claim={**claim(), "tenant": "local"},
     ):
-        async with host_ports.scaffold_publication_scope(
+        async with scaffold_scope(
             SimpleNamespace(run_id="run", metadata={"session": session}), PlanState()
         ):
             pass
@@ -492,7 +494,7 @@ async def test_host_operation_policy_is_rechecked_around_native_awaits(
         claim=claim(),
     ):
         with pytest.raises(RuntimeError, match="scaffold publication"):
-            async with host_ports.scaffold_publication_scope(
+            async with scaffold_scope(
                 SimpleNamespace(run_id="run", metadata={"session": session}),
                 PlanState(),
             ):
@@ -557,7 +559,7 @@ async def test_lease_expiry_during_policy_await_stops_dispatch(transport, monkey
         claim=claim(),
     ):
         with pytest.raises(RuntimeError, match="scaffold publication failed"):
-            async with host_ports.scaffold_publication_scope(
+            async with scaffold_scope(
                 SimpleNamespace(run_id="run", metadata={"session": session}),
                 PlanState(),
             ):
@@ -637,7 +639,7 @@ async def test_served_client_view_binds_real_transport_not_view(
             else nullcontext()
         )
         with expected:
-            async with host_ports.scaffold_publication_scope(
+            async with scaffold_scope(
                 SimpleNamespace(run_id="run", metadata={"session": session}),
                 PlanState(),
             ):

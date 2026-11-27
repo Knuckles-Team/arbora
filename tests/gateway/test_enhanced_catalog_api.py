@@ -285,7 +285,7 @@ def test_route_module_has_no_webui_or_au_gateway_fallback() -> None:
     assert source is not None
     text = __import__("pathlib").Path(source).read_text(encoding="utf-8")
     assert "overstory" not in text
-    assert "agent_utilities.gateway" not in text
+    assert "meristem.gateway" not in text
 
 
 # spec: ARBORA-HOST-R018

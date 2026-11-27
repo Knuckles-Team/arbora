@@ -50,7 +50,7 @@ backfill, validation, and a scheduled delta flow.
 ### Full ingest — every source in one fan-out
 
 A full ingest exercises every ingestion family in parallel, each on its own task
-lane (`agent_utilities/knowledge_graph/core/task_lanes.py`) so heavy codebase
+lane (`meristem/knowledge_graph/core/task_lanes.py`) so heavy codebase
 indexing in the `ingestion` lane can never head-of-line-block connector/feed syncs
 in the `connectors`/`worldview` lanes:
 

@@ -5,14 +5,13 @@ from arbora.run_origin import RunOriginRegistry
 from types import SimpleNamespace
 
 import pytest
-from meristem import host_ports
 
-from arbora import agent_runs
+from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.mcp_server.task_plan import TaskPlanConfig
 from arbora.pin_lag.meristem import plan_types
 from tests.a2a.test_operation_bridge import session as Session
-from tests.test_current_plan_publication import claim, engine
+from tests.test_current_plan_publication import claim, engine, publication_ports
 from tests.test_current_plan_publication import transport as transport
 
 PlanState = plan_types().PlanState
@@ -22,7 +21,11 @@ pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("native", [True, False])
-async def test_only_native_claim_path_binds_actual_au_callback(transport, native):
+async def test_only_native_claim_path_binds_actual_au_callback(
+    transport, native, monkeypatch
+):
+    # The harness enforces a tool subset now: the run reads its item, which selects none.
+    monkeypatch.setattr(work_items, "get_work_item", lambda engine, key: {})
     session = Session()
     work_engine = engine()
     work_engine.work_item_graph = "__control__"
@@ -35,7 +38,7 @@ async def test_only_native_claim_path_binds_actual_au_callback(transport, native
             )
             owner = agent_runs.current_native_run(au_request)
             assert owner.claim["fencing_token"] == 7
-            async with host_ports.scaffold_publication_scope(
+            async with publication_ports().scaffold_publication_scope(
                 au_request, PlanState()
             ) as publisher:
                 seen.append(publisher is not None)

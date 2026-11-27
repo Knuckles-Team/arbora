@@ -22,7 +22,7 @@ from fastapi import FastAPI, Request
 from medulla.client import EngineResponseError, MedullaClient
 from medulla.generated import coordination as native
 from medulla.generated import graph as native_graph
-from meristem.runtime import AgentRunExecutor, RunPlan, RunRequest
+from meristem.graph import AgentRunExecutor, RunPlan, RunRequest
 
 from .anonymous import AnonymousReadPolicy, AnonymousTaskReadOwner, _unique_object
 
@@ -94,6 +94,18 @@ def _within_output_cap(plan: RunPlan, cap: int | None) -> bool:
     return type(limit) is int and 1 <= limit <= cap
 
 
+def _run_ports(slot: Any) -> Any:
+    """The host's ``HostPorts``, or the harness's empty record without a slot."""
+    from meristem.host_ports import HostPorts
+
+    return HostPorts() if slot is None else slot.current()
+
+
+def _status_value(status: Any) -> Any:
+    """The wire value of a harness run status (an ``Enum`` member since meristem 6)."""
+    return getattr(status, "value", status)
+
+
 class AnonymousTextService:
     """One fixed host plan, native owner and request-bound text operation."""
 
@@ -104,6 +116,7 @@ class AnonymousTextService:
         policy: AnonymousTextPolicy,
         client: MedullaClient,
         plan: RunPlan,
+        ports: Any = None,
     ) -> None:
         if mode != "none" or type(policy) is not AnonymousTextPolicy:
             raise ValueError("Explicit none mode required")
@@ -113,6 +126,8 @@ class AnonymousTextService:
             raise ValueError("Fixed bounded text plan required")
         self._policy = policy
         self._client = client
+        #: The host's ``HostPortsSlot``; ``None`` runs on the harness's empty record.
+        self._ports = ports
         self._plan = replace(
             plan,
             harness=replace(
@@ -527,13 +542,15 @@ class AnonymousTextService:
         from arbora.security.session import suspend_session
 
         with suspend_session(), suspend_actor():
-            result = await AgentRunExecutor().execute_text_only(
-                RunRequest(task=text, run_id=run_id), plan=plan
+            ports = _run_ports(self._ports)
+            result = await AgentRunExecutor(ports=ports).execute_text_only(
+                RunRequest(task=text, run_id=run_id, ports=ports), plan=plan
             )
         self._check()
         outcome = (
             "succeeded"
-            if result.status == "completed" and 0 < len(result.output) <= 65536
+            if _status_value(result.status) == "completed"
+            and 0 < len(result.output) <= 65536
             else "failed"
         )
         usage = {

@@ -91,7 +91,7 @@ def _persist_section_edge(engine: Any, e: dict[str, Any]) -> bool:
 
 def _json_default(obj: Any) -> Any:
     """``json.dumps(default=...)`` helper that dataclass-serializes an
-    :class:`~agent_utilities.knowledge_graph.core.epistemic_row.EpistemicRow`
+    :class:`~meristem.knowledge_graph.core.epistemic_row.EpistemicRow`
     (or any other dataclass instance) instead of stringifying it (CONCEPT:MERISTEM-KB-CURRENCY).
 
     Used wherever a tool's result may carry ``include_epistemic=True`` rows —
@@ -1613,7 +1613,7 @@ def _graph_search_fanout(
 # bindings.md §4): defense-in-depth statement-shape gate in FRONT of every
 # raw-SQL call site this file owns (`graph_table` action='query' and
 # `graph_query` scope='sql'). `QueryMixin.sql()`
-# (agent_utilities/knowledge_graph/orchestration/engine_query.py — owned by a
+# (meristem/knowledge_graph/orchestration/engine_query.py — owned by a
 # sibling lane this wave, NOT this file) already rejects anything whose first
 # 8 characters are not SELECT/WITH/EXPLAIN, but that is a HEAD-TOKEN check
 # only: it does not parse the statement. Probed empirically (see the
@@ -1763,7 +1763,7 @@ def _graph_table_query_checked(engine: Any, sql: str) -> str:
 #
 # No first-class {nodes, links} serialization exists today for a graph query
 # RESULT (as opposed to `GraphComputeEngine.to_json()`'s whole-graph dump,
-# agent_utilities/knowledge_graph/core/graph_compute.py, which uses
+# meristem/knowledge_graph/core/graph_compute.py, which uses
 # {"source","target","properties"} for the FULL graph, not a query
 # projection). Every dialect (Cypher/SQL/SPARQL) can return dict-valued
 # columns shaped like a node ({id, ...}) or a relationship

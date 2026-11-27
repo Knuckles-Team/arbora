@@ -544,7 +544,7 @@ LANE_IN_FLIGHT = _gauge(
 # "document"/"codebase"/hydration types); ``outcome`` is exactly
 # "claimed"|"empty"|"gate_skipped" — no WorkItem id, job id, path, or graph
 # name is ever a label value (this module's cardinality-discipline
-# convention). ``gate_skipped`` (agent_utilities.knowledge_graph.core
+# convention). ``gate_skipped`` (meristem.knowledge_graph.core
 # .engine_tasks.TaskManagerMixin._task_worker_loop) is distinct from
 # "empty": it means a poll never reached the native claim_next call at all
 # because another worker thread already held the process-local

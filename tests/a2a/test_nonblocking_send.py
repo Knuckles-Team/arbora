@@ -8,11 +8,10 @@ from typing import Any
 
 import httpx
 import pytest
-from meristem import host_ports
 
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
-from tests.a2a._route_support import bind_route_decision
+from tests.a2a._route_support import bind_route_decision, bind_run_models
 from tests.a2a._support import streaming_model
 from tests.test_agents_run_end_to_end import FakeEngine, engine  # noqa: F401
 
@@ -50,7 +49,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
         await asyncio.sleep(run_seconds)
         return ModelResponse(parts=[TextPart("long turn done")])
 
-    host_ports.register_model_provider(lambda _id: streaming_model(slow_model))
+    bind_run_models(monkeypatch, lambda _id: streaming_model(slow_model))
     bind_route_decision(monkeypatch)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     return mcp.http_app()

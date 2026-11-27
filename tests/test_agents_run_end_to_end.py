@@ -17,12 +17,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from meristem import host_ports
+from meristem.host_ports import HostPorts
 
 from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.invoke import OpResult, invoke
 from arbora.api.invoke.executor import BoundOperationRuntime
 from arbora.api.ops import agents
@@ -173,6 +174,10 @@ class ServedRuntime(FixtureRuntime):
         return await BoundOperationRuntime.dispatch(self, op, params, context)  # type: ignore[arg-type]
 
 
+#: The host's ports slot every authority in this module runs its agent on.
+PORTS = HostPortsSlot()
+
+
 @pytest.fixture
 def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
@@ -180,11 +185,17 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setitem(runtime_config._overrides, "model_registry_path", str(registry))
     fake = FakeEngine()
     monkeypatch.setattr(mcp_runtime, "_get_engine", lambda: fake)
-    agent_runs.bind_run_ports()
-    yield fake
-    host_ports.register_run_decision_provider(None)
-    host_ports.register_model_provider(None)
-    host_ports.register_run_event_sink(None)
+    PORTS.bind(
+        HostPortsBinding(
+            HostPorts(
+                decide=agent_runs.decide_run,
+                models=agent_runs.resolve_model,
+                events=agent_runs.record_run_event,
+            ),
+            None,
+        )
+    )
+    return fake
 
 
 @pytest.mark.usefixtures("default_agent_registered")
@@ -198,7 +209,9 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
 
     monkeypatch.setattr("arbora.api.ops.agent_library.current_entry", library_entry)
     service = A2AService(
-        authority=WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry()),
+        authority=WorkItemA2AAuthority(
+            lambda: engine, origins=RunOriginRegistry(), ports=PORTS
+        ),
         router=OrchestratorA2ARouter(lambda: engine),
     )
     runtime = ServedRuntime(service)
@@ -314,7 +327,6 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
         return ModelResponse(parts=[TextPart("received")])
 
-    host_ports.register_model_provider(lambda _id: streaming_model(model))
     parts: list[dict[str, Any]] = [{"kind": "text", "text": "say hello"}]
     if attachment_case != "none":
         content = b"attached text: maple"
@@ -350,7 +362,20 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         parts.extend({"kind": "file", "file": file} for _ in range(count))
 
     bind_route_decision(monkeypatch)
-    _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
+    from arbora.mcp_server.host_context import build_host_context
+
+    host = build_host_context(mcp_runtime._get_engine)
+    host.runs.ports.bind(
+        HostPortsBinding(
+            HostPorts(
+                decide=agent_runs.decide_run,
+                models=lambda _id: streaming_model(model),
+                events=agent_runs.record_run_event,
+            ),
+            None,
+        )
+    )
+    _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False, host=host)
     app = mcp.http_app()
 
     async def call() -> httpx.Response:
@@ -419,7 +444,9 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
     from arbora.a2a.models import A2AMessage
     from arbora.security.session import use_session
 
-    authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: engine, origins=RunOriginRegistry(), ports=PORTS
+    )
     service = A2AService(
         authority=authority, router=OrchestratorA2ARouter(lambda: engine)
     )

@@ -75,6 +75,17 @@ class _Disabled(RuntimeError):
 
 @dataclasses.dataclass
 class _HostPorts:
+    decide: Any = None
+    models: Any = None
+    scaffold_publication: Any = None
+    native: Any = None
+    fleet: Any = None
+    remote: Any = None
+    tool_client: Any = None
+    keepalive: Any = None
+    run_history: Any = None
+    caller: Any = None
+    events: Any = None
     engine_decision: Any = None
     decision: Any = None
     approval: Any = None

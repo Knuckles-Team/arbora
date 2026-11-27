@@ -20,12 +20,31 @@ CHECKED_ROOTS = (
     ARBORA_ROOT / "mcp_server",
 )
 ALLOWED_IDENTITY_MODULE = "arbora.identity.ports"
+#: The one composition root that builds the concrete browser identity runtime. It
+#: moved here from ``arbora/identity`` (ARBORA-HOST-R038.5) and is the single caller
+#: of ``build_engine_identity_ports``; every other serving module takes the ports.
+COMPOSITION_ROOTS = frozenset(
+    {
+        ARBORA_ROOT / "mcp_server" / "browser_composition.py",
+        ARBORA_ROOT / "mcp_server" / "browser_app.py",
+    }
+)
 
 
 def _python_files(root: Path) -> list[Path]:
     if not root.exists():
         return []
     return [p for p in root.rglob("*.py") if "test" not in p.parts]
+
+
+def _checked_files() -> list[Path]:
+    """Every serving module except the composition roots that build the identity runtime."""
+    return [
+        p
+        for root in CHECKED_ROOTS
+        for p in _python_files(root)
+        if p not in COMPOSITION_ROOTS
+    ]
 
 
 def _identity_import_violations(source_file: Path) -> list[str]:
@@ -51,11 +70,10 @@ def _identity_import_violations(source_file: Path) -> list[str]:
 @pytest.mark.spec("ARBORA-OPS-R032.1")
 def test_serving_modules_depend_only_on_identity_ports() -> None:
     offenders: dict[str, list[str]] = {}
-    for root in CHECKED_ROOTS:
-        for source_file in _python_files(root):
-            violations = _identity_import_violations(source_file)
-            if violations:
-                offenders[str(source_file)] = violations
+    for source_file in _checked_files():
+        violations = _identity_import_violations(source_file)
+        if violations:
+            offenders[str(source_file)] = violations
     assert not offenders, (
         "serving modules must depend only on arbora.identity.ports, not the "
         f"concrete identity runtime: {offenders}"

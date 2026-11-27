@@ -1,11 +1,6 @@
 """CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
-import pytest
-
 from arbora.mcp_server.backing.server_factory import create_mcp_parser
-
-# Configured toolsets are built by arbora, the harness host.
-pytestmark = pytest.mark.usefixtures("arbora_harness_host")
 
 
 def test_mcp_parser_defaults():

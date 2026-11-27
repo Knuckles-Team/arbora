@@ -7,7 +7,7 @@
 # (`_DELTA_HANDLERS`, the capability registry, `PACKAGE_PRESETS`,
 # `MATERIALIZE_SOURCES`) so adding a source needs no edit to this file or the skill.
 #
-# Each family lands on its own task LANE (agent_utilities/knowledge_graph/core/
+# Each family lands on its own task LANE (meristem/knowledge_graph/core/
 # task_lanes.py) so heavy codebase indexing can never head-of-line-block the
 # connector/feed syncs — they all drain in parallel below the shared queue.
 
@@ -53,7 +53,7 @@ families:
       Package-side NATIVE ingestion (complements the hub-side pull): every agents/*
       connector writes its own data into the ONE engine as it works, in three
       modalities — typed OWL nodes, documents, and raw BLOBS/attachments — via the
-      shared primitive agent_utilities/knowledge_graph/memory/native_ingest.py. Not a
+      shared primitive meristem/knowledge_graph/memory/native_ingest.py. Not a
       hub trigger: it fires from the connector's own fetch/download flow (default-on,
       auto-no-op without an engine). See SKILL.md Section 8c.
     tool: native_ingest                    # ingest_entities / ingest_documents / media_store

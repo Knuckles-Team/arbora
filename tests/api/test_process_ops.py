@@ -271,7 +271,14 @@ async def test_run_refuses_before_any_step_when_a_prompt_or_the_harness_is_missi
     engine = ProcessEngine()
     monkeypatch.setattr(processes, "engine_send", engine.send)
     params = {"workflow_id": "wf", "version": 2, "inputs": {}}
-    # The pinned harness has no host ports: the run refuses UNAVAILABLE naming the gap.
+    # A harness whose host record has no decision or approval port: the run refuses
+    # UNAVAILABLE naming the gap.
+    import dataclasses
+
+    from meristem import host_ports
+
+    bare = dataclasses.make_dataclass("HostPorts", [("events", Any, None)])
+    monkeypatch.setattr(host_ports, "HostPorts", bare)
     ctx = context(key="k1")
     ctx.services.update(task_plan_model="m")
     with pytest.raises(OperationRefused) as refused:

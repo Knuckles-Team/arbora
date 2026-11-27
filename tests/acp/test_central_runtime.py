@@ -13,6 +13,7 @@ import acp
 import httpx
 import pytest
 from meristem import host_ports
+from meristem.host_ports import HostPorts
 from pydantic_ai.messages import ModelResponse, TextPart, ThinkingPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.toolsets import FunctionToolset
@@ -21,6 +22,7 @@ from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.http.auth import (
     AmbientHTTPAuthenticator,
     verified_bearer_session_for_request,
@@ -37,6 +39,10 @@ from tests.mcp_server.test_task_plan_runtime import bridge as bridge
 from tests.mcp_server.test_task_plan_runtime import chain as chain
 
 pytestmark = pytest.mark.spec("ARBORA-ACP-R001.9.3")
+
+
+async def _definition_without_skills(agent):
+    return {"skills": []}
 
 
 @pytest.fixture
@@ -86,16 +92,20 @@ async def central(http_server, chain, monkeypatch):
             )
         ),
     )
+    slot = HostPortsSlot()
     authority = WorkItemA2AAuthority(
         lambda: engine,
         task_plan_config=host.task_plan_config,
         origins=RunOriginRegistry(),
+        ports=slot,
     )
     service = A2AService(authority, OrchestratorA2ARouter(lambda: engine))
     runtime = SessionRuntime()
     runtime.bindings = {
         **getattr(host.services.runtime, "bindings", {}),
         "a2a": service,
+        # The default fleet agent's definition carries no skill to attest.
+        "attestation_definition_reader": _definition_without_skills,
     }
     runtime.dispatch = MethodType(BoundOperationRuntime.dispatch, runtime)
     registry = Registry(
@@ -185,10 +195,8 @@ async def central(http_server, chain, monkeypatch):
         received_tools.append(names)
         return tools
 
-    host_ports.register_native_toolset_provider(
-        host_ports.NativeToolsetProvider(
-            available_tools=lambda: ["find", "act"], build_toolset=bind_tools
-        )
+    native = host_ports.NativeToolsetProvider(
+        available_tools=lambda: ["find", "act"], build_toolset=bind_tools
     )
 
     async def model(messages, info):
@@ -215,7 +223,9 @@ async def central(http_server, chain, monkeypatch):
 
     controlled = FunctionModel(model)
     monkeypatch.setattr(agent_runs, "resolve_model", lambda name: controlled)
-    host_ports.register_model_provider(lambda name: controlled)
+    slot.bind(
+        HostPortsBinding(HostPorts(native=native, models=lambda name: controlled), None)
+    )
     http.headers["authorization"] = "Bearer " + app.state.test_token(
         scope="kg:read kg:write query:decide"
     )
@@ -236,7 +246,6 @@ async def central(http_server, chain, monkeypatch):
         )
     finally:
         await app.state.acp_agent_factory.aclose()
-        host_ports.register_native_toolset_provider(None)
 
 
 @pytest.mark.parametrize("http_server", ["jwt"], indirect=True)

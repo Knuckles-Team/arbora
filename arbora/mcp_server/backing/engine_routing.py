@@ -464,7 +464,7 @@ def _build_tools_payload_sync(
     source of truth: this used to build every section from a fresh
     config/filesystem scan, a second inventory of the SAME MCP/skill fleet
     that ``/api/registry/*`` and the webui BFF already read from the SQL
-    fleet-catalog tables (``agent_utilities.knowledge_graph.core.
+    fleet-catalog tables (``meristem.knowledge_graph.core.
     fleet_catalog_tables``). Evidence-based per section:
 
     - ``mcp_tools`` (despite the key name, this has always been a list of
@@ -485,7 +485,7 @@ def _build_tools_payload_sync(
         * ``builtin_tools`` has no catalog table at all. The fleet catalog
           models MCP servers/tools/prompts/resources and skills-over-MCP;
           these are native, in-process Python callables under
-          ``agent_utilities/tools/*.py``, never MCP-discovered and never
+          ``meristem/tools/*.py``, never MCP-discovered and never
           written to any catalog table.
         * ``skills``/``skill_workflows`` (local ``universal-skills``
           corpus) — the catalog's ``skills`` table CAN represent an
@@ -787,7 +787,7 @@ class GraphSelectionError(ValueError):
 
     CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — ``connection`` (a backend
     alias, CONCEPT:MERISTEM-KG.backend.multi-connection-registry, resolved by
-    :class:`~agent_utilities.knowledge_graph.core.connection_registry.ConnectionRegistry`)
+    :class:`~meristem.knowledge_graph.core.connection_registry.ConnectionRegistry`)
     and ``graph`` (a physical engine graph, the thing ``engine_tenants(action="list")``/
     the engine's own ``ListGraphs`` returns) are two independent axes. Every raise
     of this family is FAIL-CLOSED: the caller gets a typed error, never a silent
@@ -909,7 +909,7 @@ def bound_to_graph(graph: str) -> Any:
 
     A no-op when ``graph`` is empty. Otherwise reuses the SAME sanctioned
     session-retargeting primitive already used by
-    ``agent_utilities.knowledge_graph.pipeline`` and
+    ``meristem.knowledge_graph.pipeline`` and
     ``arbora.access.approval`` —
     :meth:`~arbora.security.session.GraphSession.with_graph`
     scoped for the call's duration via

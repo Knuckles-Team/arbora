@@ -111,7 +111,7 @@
       "pre_stop_seconds": 15,
       "metric": {
         "mode": "hpa",
-        "name": "agent_utilities_gateway_in_flight_requests",
+        "name": "arbora_gateway_in_flight_requests",
         "target": "50",
         "adapter_ref": "evidence://prometheus-adapter/arbora-gateway/example"
       },
@@ -122,8 +122,8 @@
     "dispatch": {
       "name": "graph-os-dispatch",
       "entrypoint": "agent-dispatch-worker",
-      "image": "registry.example.invalid/agent-utilities@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-      "previous_image": "registry.example.invalid/agent-utilities@sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "image": "registry.example.invalid/arbora@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "previous_image": "registry.example.invalid/arbora@sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
       "replicas": {
         "min": 1,
         "desired": 1,
@@ -144,7 +144,7 @@
       "pre_stop_seconds": 15,
       "metric": {
         "mode": "hpa",
-        "name": "agent_utilities_dispatch_queue_depth",
+        "name": "arbora_dispatch_queue_depth",
         "target": "200",
         "adapter_ref": "evidence://prometheus-adapter/arbora-dispatch/example"
       }
@@ -152,8 +152,8 @@
     "ingest": {
       "name": "graph-os-ingest",
       "entrypoint": "kg-ingest-worker",
-      "image": "registry.example.invalid/agent-utilities@sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
-      "previous_image": "registry.example.invalid/agent-utilities@sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+      "image": "registry.example.invalid/arbora@sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "previous_image": "registry.example.invalid/arbora@sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
       "replicas": {
         "min": 1,
         "desired": 1,
@@ -174,7 +174,7 @@
       "pre_stop_seconds": 15,
       "metric": {
         "mode": "hpa",
-        "name": "agent_utilities_kg_ingest_queue_depth",
+        "name": "arbora_kg_ingest_queue_depth",
         "target": "200",
         "adapter_ref": "evidence://prometheus-adapter/arbora-ingest/example"
       }
@@ -182,8 +182,8 @@
     "mining": {
       "name": "graph-os-mining",
       "entrypoint": "arbora-analytics-worker",
-      "image": "registry.example.invalid/agent-utilities@sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
-      "previous_image": "registry.example.invalid/agent-utilities@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "image": "registry.example.invalid/arbora@sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+      "previous_image": "registry.example.invalid/arbora@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       "replicas": {
         "min": 1,
         "desired": 1,

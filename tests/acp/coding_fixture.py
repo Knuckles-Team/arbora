@@ -12,8 +12,8 @@ import acp
 import httpx
 import pytest
 from acp import schema
-from meristem import host_ports
-from meristem.runtime import RunPlan, RunRequest
+from meristem.graph import RunPlan, RunRequest
+from meristem.host_ports import HostPorts
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 from starlette.applications import Starlette
 
@@ -84,7 +84,7 @@ async def coding_server(tmp_path):
             harness=replace(value.harness, client_tools=("read_file", "write_file")),
         )
 
-    host_ports.register_run_decision_provider(plan)
+    ports = HostPorts(decide=plan)
     app = Starlette()
     app.add_middleware(_SyntheticIdentity)
     app.state.acp_agent_factory = lambda provider, **kwargs: HostedACPAgent(
@@ -92,7 +92,7 @@ async def coding_server(tmp_path):
         policy=AcpSessionPolicy(timedelta(minutes=1), timedelta(minutes=5)),
         trusted_roots=frozenset({str(root)}),
         request_factory=lambda principal, session_id, text: RunRequest(
-            task=text, context=session_id
+            task=text, context=session_id, ports=ports
         ),
     )
     register_acp_routes(
@@ -119,7 +119,6 @@ async def coding_server(tmp_path):
         async with asyncio.timeout(3):
             await task
         sock.close()
-        host_ports.register_run_decision_provider(None)
 
 
 @asynccontextmanager

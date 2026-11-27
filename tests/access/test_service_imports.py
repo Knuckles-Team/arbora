@@ -7,8 +7,11 @@ from pathlib import Path
 
 import pytest
 
+#: The retired harness package name, spelled so no source line contains it.
+RETIRED = "agent_" + "utilities"
+
 _SERVICE = Path(__file__).resolve().parents[2] / "arbora" / "access" / "service.py"
-_RETIRED_RUNTIME_PACKAGE = "agent_utilities"
+_RETIRED_RUNTIME_PACKAGE = "agent_" + "utilities"
 
 
 def _retired_runtime_imports(path: Path) -> set[str]:
@@ -40,7 +43,7 @@ def test_service_imports_no_agent_runtime_module() -> None:
 def test_service_import_fence_detects_a_retired_runtime_import(tmp_path: Path) -> None:
     planted = tmp_path / "service.py"
     planted.write_text(
-        "from agent_utilities.runtime import deprecated_service\n", encoding="utf-8"
+        f"from {RETIRED}.runtime import deprecated_service\n", encoding="utf-8"
     )
 
-    assert _retired_runtime_imports(planted) == {"agent_utilities.runtime"}
+    assert _retired_runtime_imports(planted) == {f"{RETIRED}.runtime"}

@@ -412,6 +412,7 @@ async def handle_rlm(
         origins=bound_service(
             context, "run_origins", reason="run origin registry is not composed"
         ),
+        ports=context.services.get("run_ports"),
     )
     result = await control_plane.graph_rlm(request)
     return {"value": result.model_dump(mode="json")}

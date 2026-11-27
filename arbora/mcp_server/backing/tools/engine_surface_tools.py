@@ -9,7 +9,7 @@ leaving them reachable only through the generic ``engine_<domain>`` 1:1 surface
   publish, consume, stats — AMQP-style).
 * ``graph_kvcache``         — the shared, content-addressed KV-cache over the
   MEDULLA-187 HTTP surface, driven through the KG-2.306
-  :class:`~agent_utilities.kvcache.MedullaKVBackend` connector.
+  :class:`~meristem.kvcache.MedullaKVBackend` connector.
 * ``graph_federated_search``— federated search fanned across registered external
   graph references.
 * ``graph_promql``          — PromQL instant/range metric queries (observability).
@@ -72,7 +72,7 @@ logger = logging.getLogger(__name__)
 # CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation — the fleet write-side connector (call
 # a named MCP server's tool once, synchronously, decoded) is the SAME primitive the
 # governed ``fleet.write_record`` ontology Action uses
-# (``agent_utilities/knowledge_graph/actions/fleet_writeback.py``) — reused here,
+# (``meristem/knowledge_graph/actions/fleet_writeback.py``) — reused here,
 # not reinvented, so ``graph_mine_deep`` reaches data-science-mcp exactly like every
 # other fleet-delegation call site. Neither module imports torch/transformers.
 from arbora.core.environment import read_env
@@ -247,7 +247,7 @@ def _checkpoint_outcome(action: str, outcome: Any, *, advisory: bool = False) ->
 
 
 def _checkpoint_error_code(exc: Exception) -> str:
-    """Map a :class:`~agent_utilities.kvcache.KVCheckpointError` to one of the
+    """Map a :class:`~meristem.kvcache.KVCheckpointError` to one of the
     platform's registered public error codes (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource).
 
     Deliberately coarse: :func:`~arbora.security.error_surface.public_error_payload`
@@ -263,7 +263,7 @@ def _checkpoint_error_code(exc: Exception) -> str:
 
 
 def _checkpoint_store(graph: str) -> Any:
-    """Build a :class:`~agent_utilities.kvcache.KVCheckpointStore` bound to the
+    """Build a :class:`~meristem.kvcache.KVCheckpointStore` bound to the
     live engine client for ``graph`` (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource).
 
     Isolated behind this indirection so unit tests can inject a fake compute
@@ -280,7 +280,7 @@ _RAM_CHECKPOINT_STORE: Any | None = None
 
 
 def _checkpoint_manager(graph: str) -> Any:
-    """Build a :class:`~agent_utilities.kvcache.TieredCheckpointManager` over the shared
+    """Build a :class:`~meristem.kvcache.TieredCheckpointManager` over the shared
     RAM tier, binding the durable tier when the engine is reachable.
 
     A durable store that cannot be built is NOT an error here: the manager works
@@ -2355,8 +2355,8 @@ def register_engine_surface_tools(
             default="", description="Target graph (default engine graph)."
         ),
     ) -> str:
-        """Thin verb over :class:`~agent_utilities.kvcache.KVCheckpointStore` (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource)
-        and :class:`~agent_utilities.kvcache.TieredCheckpointManager`
+        """Thin verb over :class:`~meristem.kvcache.KVCheckpointStore` (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource)
+        and :class:`~meristem.kvcache.TieredCheckpointManager`
         (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring)."""
         # ── the intelligence actions: worthiness, tiering, eligibility ──────
         # These route through TieredCheckpointManager (shared RAM tier) rather than

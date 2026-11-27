@@ -1,4 +1,4 @@
-"""Fail-closed regression tests for `agent_utilities/mcp/server_factory.py`.
+"""Fail-closed regression tests for `meristem/mcp/server_factory.py`.
 
 Both defects covered here are the same family -- **a degraded or unrecognised
 input granting permission instead of refusing** -- and both violate this repo's

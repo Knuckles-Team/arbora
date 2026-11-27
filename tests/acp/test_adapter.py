@@ -151,7 +151,7 @@ async def test_real_stdio_refuses_effects_recovery_and_unknown_session(connected
 def admitted_agent():
     from datetime import timedelta
 
-    from meristem.runtime import RunRequest
+    from meristem.graph import RunRequest
 
     from arbora.acp.adapter import HostedACPAgent
     from arbora.acp.session_policy import AcpSessionPolicy, PrincipalContext
@@ -360,11 +360,10 @@ async def test_real_stdio_completed_text_history_isolated_and_cancelled_turn_abs
 
 @pytest.mark.parametrize("when", ["stream", "completion"])
 async def test_authority_loss_stops_updates_and_completion(when):
-    from dataclasses import replace
     from datetime import timedelta
 
-    from meristem import host_ports
-    from meristem.runtime import RunPlan, RunRequest
+    from meristem.graph import RunPlan, RunRequest
+    from meristem.host_ports import HostPorts
     from pydantic_ai.models.function import FunctionModel
 
     from arbora.acp.adapter import HostedACPAgent
@@ -386,14 +385,14 @@ async def test_authority_loss_stops_updates_and_completion(when):
         commits.append(result)
 
     plan = RunPlan(model=FunctionModel(stream_function=model), steps=("prompt",))
-    plan = replace(plan, harness=replace(plan.harness, plan_scaffold="off"))
-    previous = host_ports.run_decision_provider()
-    host_ports.register_run_decision_provider(lambda request: plan)
+    ports = HostPorts(decide=lambda request: plan)
     agent = HostedACPAgent(
         lambda: principal[0],
         policy=AcpSessionPolicy(timedelta(minutes=5), timedelta(hours=1)),
         trusted_roots=frozenset({"/workspace"}),
-        request_factory=lambda identity, session_id, text: RunRequest(task=text),
+        request_factory=lambda identity, session_id, text: RunRequest(
+            task=text, ports=ports
+        ),
         completed=completed,
     )
     agent.on_connect(client)
@@ -411,7 +410,6 @@ async def test_authority_loss_stops_updates_and_completion(when):
         assert "".join(u.content.text for u in client.updates) == "waiting"
     finally:
         await agent.aclose()
-        host_ports.register_run_decision_provider(previous)
 
 
 async def test_completion_save_failure_never_acknowledges_success(connected):

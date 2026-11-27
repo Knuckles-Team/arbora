@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import re
 import shutil
+import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -703,6 +704,44 @@ class HostPortsBinding:
     def __init__(self, ports: Any | None, refusal: Any | None) -> None:
         self.ports = ports
         self.refusal = refusal
+
+
+class HostPortsSlot:
+    """The host's one ``HostPorts`` binding, set once the composition root has built it.
+
+    It lives on ``HostContext.runs`` and owns its lock. A run entry point reads
+    :meth:`current` when it starts a run, so a run that starts before the host binds sees
+    the harness's empty record (every binding port fails closed) and a refused record
+    raises its refusal.
+    """
+
+    __slots__ = ("_binding", "_lock")
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._binding: HostPortsBinding | None = None
+
+    def bind(self, binding: HostPortsBinding) -> None:
+        """Hold ``binding`` as the host's record, or the refusal naming the gap."""
+        with self._lock:
+            self._binding = binding
+
+    @property
+    def binding(self) -> HostPortsBinding | None:
+        """The bound ``HostPortsBinding``, or ``None`` before the host binds."""
+        with self._lock:
+            return self._binding
+
+    def current(self) -> Any:
+        """The bound ``HostPorts``; the harness's empty record before the host binds."""
+        binding = self.binding
+        if binding is None:
+            from arbora.pin_lag.meristem import host_ports_type
+
+            return host_ports_type()()
+        if binding.refusal is not None:
+            raise binding.refusal
+        return binding.ports
 
 
 def bind_host_ports(**bound: Any) -> HostPortsBinding:

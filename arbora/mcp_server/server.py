@@ -210,6 +210,7 @@ def _served_invocation(
                 DefaultAgentDefinition(agent_id=FLEET_AGENT_NAME)
             ),
             "run_origins": host.runs.origins,
+            "run_ports": host.runs.ports,
             "fleet_gateway": fleet,
             "workflow_worker": WorkflowRunStarter(
                 runtime._get_engine, NativeIntentFleet(), worker_ref="arbora-workflow"
@@ -412,11 +413,7 @@ def mcp_server(
     install_gateway_application(
         invocation, fleet=host_context.fleet, approvals=host_context.policy.approvals
     )
-    from arbora.host_bindings import (
-        bind_health_probes,
-        bind_messaging_ports,
-        bind_run_ports,
-    )
+    from arbora.host_bindings import bind_health_probes, bind_messaging_ports
 
     bind_messaging_ports()
     from arbora.a2a.chain_composition import run_plan_binding
@@ -424,9 +421,9 @@ def mcp_server(
     from arbora.agent_host.sandbox_boundary import boundary_verified
 
     chain = getattr(invocation, "approval_chain", None)
-    bind_run_ports(
-        invocation.services if invocation is not None else None,
-        HostSeams(
+    run_composition = {
+        "services": invocation.services if invocation is not None else None,
+        "seams": HostSeams(
             changeset=_changeset_seams(invocation),
             question_schema=getattr(invocation, "ranking_feature_schema", None),
             sandbox_verified=boundary_verified,
@@ -438,7 +435,7 @@ def mcp_server(
                 runtime._get_engine() if runtime._get_engine else None
             ),
         ),
-    )
+    }
     bind_health_probes()
     _preflight_mcp_sdk_floor()
     _configure_arbora_otel()
@@ -474,12 +471,9 @@ def mcp_server(
     fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader, host_context.fleet)
     # The harness's thin client host fails closed until arbora registers
     # its native toolset, fleet catalog and session keepalive bindings.
-    from arbora.mcp_server.harness_host import (
-        register_harness_host,
-        unregister_harness_host,
-    )
+    from arbora.mcp_server.harness_ports import bind_host_ports_of
 
-    register_harness_host(fleet_mux)
+    bind_host_ports_of(host_context, multiplexer=fleet_mux, **run_composition)
     _bind_served_fleet(invocation, fleet_mux, fleet_catalog_reader)
     from arbora.identity.ports import bind_actor_exchange
 
@@ -659,7 +653,6 @@ def mcp_server(
             catalog_warmup.stop()
         if background_host is not None:
             background_host.stop()
-        unregister_harness_host()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()
         runtime._PROCESS_SESSION = None

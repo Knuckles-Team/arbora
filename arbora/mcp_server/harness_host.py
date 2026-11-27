@@ -3,8 +3,8 @@
 CONCEPT:ARBORA-HOST.harness.host-bindings
 
 The harness (``meristem``) never serves tools or parses the fleet
-catalog. Its thin client host (``meristem.host_ports``) fails
-closed until arbora installs these bindings:
+catalog. Its ``HostPorts`` record fails closed until arbora builds these
+bindings (``arbora.mcp_server.harness_ports.build_host_ports``):
 
 * a **native toolset provider** that binds a caller-granted subset of
   arbora's own served operations for one in-process delegation, dispatched
@@ -18,8 +18,8 @@ closed until arbora installs these bindings:
 * an **authority keepalive** factory that renews the caller's renewable
   session lease for the whole of one delegation.
 
-:func:`register_harness_host` installs them; :func:`unregister_harness_host`
-clears them on shutdown so a stopped server never leaves a stale binding.
+This module holds the providers' bodies; the record that carries them lives on
+``HostContext.runs.ports`` and no module-level registration exists.
 """
 
 from __future__ import annotations
@@ -38,20 +38,25 @@ def _runtime() -> Any:
     return runtime
 
 
-def _available_tools() -> tuple[str, ...]:
+def available_tools() -> tuple[str, ...]:
     runtime = _runtime()
     return tuple(
         sorted(runtime.REGISTERED_TOOLS.keys() | runtime.NATIVE_INTENT_TOOLS.keys())
     )
 
 
-def _build_toolset(tool_names: list[str], toolset_id: str) -> Any:
+def build_toolset(
+    tool_names: list[str],
+    toolset_id: str,
+    emit: Callable[[dict[str, Any]], None],
+) -> Any:
+    """One in-process native toolset; ``emit`` receives each served intent call event."""
     return _runtime().build_native_arbora_toolset(
-        list(tool_names), toolset_id=toolset_id
+        list(tool_names), toolset_id=toolset_id, emit=emit
     )
 
 
-def _keepalive() -> contextlib.AbstractAsyncContextManager[None]:
+def keepalive() -> contextlib.AbstractAsyncContextManager[None]:
     return _runtime().authority_keepalive_scope()
 
 
@@ -91,38 +96,4 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
     return view
 
 
-def register_harness_host(multiplexer: Any | None = None) -> None:
-    """Install arbora's native, remote, client, catalog and keepalive bindings."""
-    from meristem import host_ports as host
-
-    from arbora.fleet import client_toolsets
-
-    host.register_native_toolset_provider(
-        host.NativeToolsetProvider(
-            available_tools=_available_tools, build_toolset=_build_toolset
-        )
-    )
-    host.register_fleet_catalog_provider(
-        fleet_catalog_view(multiplexer) if multiplexer is not None else None
-    )
-    host.register_remote_toolset_provider(client_toolsets.remote_toolset_provider())
-    host.register_tool_client_factory(client_toolsets.open_tool_client)
-    host.register_authority_keepalive(_keepalive)
-
-
-def unregister_harness_host() -> None:
-    """Clear every binding arbora installed."""
-    from meristem import host_ports as host
-
-    host.register_native_toolset_provider(None)
-    host.register_fleet_catalog_provider(None)
-    host.register_remote_toolset_provider(None)
-    host.register_tool_client_factory(None)
-    host.register_authority_keepalive(None)
-
-
-__all__ = [
-    "fleet_catalog_view",
-    "register_harness_host",
-    "unregister_harness_host",
-]
+__all__ = ["available_tools", "build_toolset", "fleet_catalog_view", "keepalive"]

@@ -9,7 +9,7 @@ directly-callable MCP/REST surface (D-CE-2).
 ``graph_claims`` already has an action named ``propose`` — the X-3 mining
 flywheel's ``ClaimFlywheel.propose`` (a lifecycle STATE transition on an
 already-identified claim id). This module's
-:class:`~agent_utilities.knowledge_graph.extraction.candidate_claims.
+:class:`~meristem.knowledge_graph.extraction.candidate_claims.
 CandidateClaimExtractor`.propose is a DIFFERENT operation entirely: a
 model-backed EXTRACTION pass over raw text that produces zero or more
 brand-new, richly-shaped candidates (subject/predicate/object, evidence spans,
@@ -29,12 +29,12 @@ routes into the real primitives and renders their result as JSON:
   proposal-only model call, mirroring how ``graph_claims(action="evaluate")``
   is also deliberately ungated (no fact is written until a separate,
   ActionPolicy-gated step).
-* ``resolve_identities`` — :func:`~agent_utilities.knowledge_graph.
+* ``resolve_identities`` — :func:`~meristem.knowledge_graph.
   assimilation.identity_candidates.resolve_identity_candidates`. A PURE
   function (no engine parameter at all) that compares records pairwise and
   returns ambiguity-preserving candidates — never a merge. Also UNGATED for
   the same reason. When ``persist=true``, additionally calls
-  :func:`~agent_utilities.knowledge_graph.assimilation.identity_candidates.
+  :func:`~meristem.knowledge_graph.assimilation.identity_candidates.
   write_candidate` for each result — the ONE write this module's sibling
   performs without a governance decision (a ``POSSIBLE_SAME_AS`` hint edge,
   never a ``SAME_AS`` identity assertion; see that function's own docstring).

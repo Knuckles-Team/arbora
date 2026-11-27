@@ -48,6 +48,7 @@ import logging
 import re
 import threading
 import uuid
+from collections.abc import Callable
 from types import MappingProxyType
 from typing import Any, cast
 
@@ -352,7 +353,16 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
     return await _guarded()
 
 
-def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> Any:
+def discard_event(_event: dict[str, Any]) -> None:
+    """The run-event sink of a native toolset built without a host record."""
+
+
+def build_native_arbora_toolset(
+    tool_names: list[str],
+    *,
+    toolset_id: str,
+    emit: Callable[[dict[str, Any]], None] = discard_event,
+) -> Any:
     """Bind registered Arbora tools for one governed in-process delegation.
 
     Native delegation must not connect Arbora back to its own HTTP endpoint or
@@ -389,7 +399,7 @@ def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> An
         schema_source = Tool(function, name=name)
 
         dispatch = (
-            _intent_dispatch(name, function, run_id)
+            _intent_dispatch(name, function, run_id, emit)
             if name in NATIVE_INTENT_TOOLS
             else _registered_dispatch(name)
         )
@@ -417,15 +427,24 @@ def _registered_dispatch(name: str) -> Any:
     return dispatch
 
 
-def _intent_dispatch(name: str, verb: Any, run_id: str) -> Any:
+def _intent_dispatch(
+    name: str,
+    verb: Any,
+    run_id: str,
+    emit: Callable[[dict[str, Any]], None] = discard_event,
+) -> Any:
     async def dispatch(**kwargs: Any) -> Any:
-        return await _call_native_intent(name, verb, run_id, kwargs)
+        return await _call_native_intent(name, verb, run_id, kwargs, emit)
 
     return dispatch
 
 
 async def _call_native_intent(
-    name: str, verb: Any, run_id: str, kwargs: dict[str, Any]
+    name: str,
+    verb: Any,
+    run_id: str,
+    kwargs: dict[str, Any],
+    emit: Callable[[dict[str, Any]], None] = discard_event,
 ) -> Any:
     """Call one served intent verb for an agent run and record the call.
 
@@ -446,20 +465,21 @@ async def _call_native_intent(
     ):
         payload = await verb(**kwargs)
     if run_id:
-        _emit_native_intent_event(name, run_id, kwargs, payload)
+        _emit_native_intent_event(name, run_id, kwargs, payload, emit)
     return payload
 
 
 def _emit_native_intent_event(
-    name: str, run_id: str, kwargs: dict[str, Any], payload: Any
+    name: str,
+    run_id: str,
+    kwargs: dict[str, Any],
+    payload: Any,
+    emit: Callable[[dict[str, Any]], None] = discard_event,
 ) -> None:
     params = kwargs.get("params")
     params = params if isinstance(params, dict) else {}
-    from arbora.agent_runs import host_ports_binding
-    from arbora.pin_lag.meristem import emit_run_event
-
     error = payload.get("error") if isinstance(payload, dict) else None
-    emit_run_event(
+    emit(
         {
             "type": "tool_call",
             "run_id": run_id,
@@ -469,8 +489,7 @@ def _emit_native_intent_event(
             "tool": params.get("tool") or "",
             "ok": bool(isinstance(payload, dict) and payload.get("ok")),
             "error": (error or {}).get("code") if isinstance(error, dict) else None,
-        },
-        host_ports_binding(),
+        }
     )
 
 

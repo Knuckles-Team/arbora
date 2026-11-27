@@ -25,7 +25,7 @@ def test_entry_points_ready_requires_exact_direct_targets(monkeypatch) -> None:
     )
     assert release_canary._entry_points_ready() is True
 
-    entries[0] = SimpleNamespace(name="arbora", value="agent_utilities.old:main")
+    entries[0] = SimpleNamespace(name="arbora", value="meristem.old:main")
     assert release_canary._entry_points_ready() is False
 
 

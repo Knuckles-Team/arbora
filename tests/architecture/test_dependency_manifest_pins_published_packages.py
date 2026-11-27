@@ -68,7 +68,7 @@ def test_split_repository_dependencies_use_version_specifiers_not_paths() -> Non
 
 @pytest.mark.spec("ARBORA-RELEASE-R003.4.3")
 def test_engine_and_runtime_floors_match_the_release_row() -> None:
-    """The release row's floors: meristem 5.x and one exact medulla release.
+    """The release row's floors: meristem 6.x and one exact medulla release.
 
     The engine is pinned to one exact published version; which version is the
     lock's business, so a pin bump does not have to edit this test.
@@ -78,4 +78,4 @@ def test_engine_and_runtime_floors_match_the_release_row() -> None:
     medulla = [d for d in deps if d.startswith("medulla==")]
     assert len(medulla) == 1, medulla
     assert re.fullmatch(r"medulla==\d+\.\d+\.\d+", medulla[0]), medulla
-    assert "meristem>=5.0.0,<6.0.0" in deps
+    assert "meristem>=6.0.0,<7.0.0" in deps

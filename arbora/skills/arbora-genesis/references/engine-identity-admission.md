@@ -41,7 +41,7 @@ Every admission bridge — tenant (`tenant_admission_cli`), Tier-2
   (the control role,
   `"control:system"`) with exactly Read + Write on the engine's isolated control
   graph (`CONTROL_GRAPH_NAME`, `"__control__"`, defined in
-  `agent_utilities/knowledge_graph/core/shard_topology.py`).
+  `meristem/knowledge_graph/core/shard_topology.py`).
 - **The important admission an operator must not miss:** possessing this credential is
   possessing the ability to register *any* `agent_id` with *any* `roles` on the engine
   (see "Design problem 1"). The narrow role the platform's own code requests is a convention of

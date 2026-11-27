@@ -7,7 +7,7 @@ Exposes the engine's mature Rust hash-chained audit log
 per-graph SHA-256 hash chain, redb ``AUDIT`` table) to Python/MCP for the first
 time (the ``medulla`` client package does not yet wrap
 ``Method::AuditVerify`` as a typed ``LedgerClient`` method, so
-:meth:`~agent_utilities.knowledge_graph.core.graph_compute.GraphComputeEngine.
+:meth:`~meristem.knowledge_graph.core.graph_compute.GraphComputeEngine.
 audit_verify` reaches it via the existing raw wire escape hatch — no Rust
 rebuild required).
 

@@ -13,9 +13,6 @@ import pytest
 
 import arbora.mcp_server.backing.server_factory as server_factory
 
-# Configured toolsets are built by arbora, the harness host.
-pytestmark = pytest.mark.usefixtures("arbora_harness_host")
-
 
 def test_create_mcp_parser():
     parser = server_factory.create_mcp_parser()

@@ -238,8 +238,11 @@ class WorkItemA2AAuthority:
         delegation_reader: Any = None,
         clock: Callable[[], float] = time.time,
         held_output_refs: Callable[[str, Any], Any] | None = None,
+        ports: Any = None,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The host's ``HostPortsSlot`` the default agent executor runs on.
+        self._ports = ports
         #: ``(task_id, session) -> HeldOutputRefs | None``: the refs of the held
         #: output of one run (ARBORA-A2A-R022). ``None`` sets no held output, and the
         #: run then carries no block, so the critique gate holds its output.
@@ -673,7 +676,7 @@ class WorkItemA2AAuthority:
         if self._executor is None:
             from arbora.agent_runs import AgentRunPort
 
-            self._executor = AgentRunPort(origins=self._origins)
+            self._executor = AgentRunPort(origins=self._origins, ports=self._ports)
         return self._executor
 
     def _held_refs(self, task_id: str, session: Any) -> Any:

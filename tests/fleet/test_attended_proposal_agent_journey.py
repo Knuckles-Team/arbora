@@ -12,11 +12,10 @@ import asyncio
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import pytest
-from meristem import host_ports
 from meristem.graph import default_run_plan
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
 from pydantic_ai.models.function import FunctionModel
@@ -24,6 +23,7 @@ from pydantic_ai.models.function import FunctionModel
 from arbora import host_bindings
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.agent_host.host_port_adapters import HostPortsBinding
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.browser_control import browser_control_runtime
@@ -39,10 +39,8 @@ from arbora.fleet.state import FleetState
 from arbora.gateway import ports
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import install_gateway_application
-from arbora.mcp_server.harness_host import (
-    register_harness_host,
-    unregister_harness_host,
-)
+from arbora.mcp_server.harness_ports import build_host_ports
+from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -62,23 +60,13 @@ from tests.browser_control.test_browser_proposals import (
 from tests.fleet.test_attended_proposal_effect_owner import EffectClient
 from tests.test_served_operation_api import FakePool
 
+#: The served host's ports slot of the running journey.
+_PORTS: Any = None
+
 pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 
 
 def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
-    # Public registration APIs mutate these process bindings. Snapshot them so
-    # the production startup/shutdown exercised below restores prior test state.
-    for name in (
-        "_NATIVE",
-        "_FLEET",
-        "_KEEPALIVE",
-        "_REMOTE",
-        "_TOOL_CLIENT",
-        "_DECIDE",
-        "_MODELS",
-        "_EVENTS",
-    ):
-        monkeypatch.setattr(host_ports, name, getattr(host_ports, name))
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {})
     monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", runtime._FULL_TOOL_NAMES)
@@ -124,24 +112,36 @@ async def _served(
     )
     fleet = FleetState()
     install_gateway_application(invocation, fleet=fleet, approvals=ApprovalDecisions())
+    host = build_host_context(runtime._get_engine)
     _args, mcp, middlewares = runtime._build_server(
-        bootstrap=False, invocation=invocation
+        bootstrap=False, invocation=invocation, host=host
     )
     for middleware in middlewares:
         mcp.add_middleware(middleware)
     mux = _attach_fleet_runtime(mcp, DeferredFleetCatalogReader(), fleet)
-    register_harness_host(mux)
     events: list[Any] = []
-    host_ports.register_run_decision_provider(
-        lambda request: default_run_plan(request, {"agent_model": "synthetic"})
+    # The served host's record, with the plan decision and the event sink the
+    # journey observes in place of the engine-backed ones.
+    ports = build_host_ports(host, multiplexer=mux)
+    host.runs.ports.bind(
+        HostPortsBinding(
+            replace(
+                ports,
+                decide=lambda request: default_run_plan(
+                    request, {"agent_model": "synthetic"}
+                ),
+                events=events.append,
+            ),
+            None,
+        )
     )
-    host_ports.register_run_event_sink(events.append)
+    global _PORTS
+    _PORTS = host.runs.ports
     try:
         async with mcp._lifespan_manager():
             with use_actor(session.actor), use_session(session):
                 yield session, events
     finally:
-        unregister_harness_host()
         await mux.aclose()
 
 
@@ -183,7 +183,7 @@ class _Model:
 
 
 async def _run(session: Any, run_id: str) -> Any:
-    return await AgentRunPort(origins=RunOriginRegistry()).execute_agent(
+    return await AgentRunPort(origins=RunOriginRegistry(), ports=_PORTS).execute_agent(
         AgentExecutionRequest(
             agent_name="webui-assistant",
             task="request synthetic attended browser action",
@@ -250,7 +250,11 @@ async def _assert_replays(
 async def _journey(session: Any, label: str, mutation: bool, cancel: bool) -> None:
     service, connection, engine, sent, tool = await _setup(session, mutation=mutation)
     model = _Model(_request(session, tool).model_dump(mode="json"), label, not cancel)
-    host_ports.register_model_provider(lambda _id: FunctionModel(model))
+    _PORTS.bind(
+        HostPortsBinding(
+            replace(_PORTS.current(), models=lambda _id: FunctionModel(model)), None
+        )
+    )
     run_id = "journey-" + label
     with _registered(service):
         task = asyncio.create_task(_run(session, run_id))

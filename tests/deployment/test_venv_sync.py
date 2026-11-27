@@ -386,7 +386,7 @@ def test_verified_backups_survive_retention(workspace: Workspace) -> None:
 @pytest.mark.parametrize(
     ("paths", "expected"),
     [
-        (["agent_utilities/mcp/kg_server.py"], SOURCE_ONLY),
+        (["meristem/mcp/kg_server.py"], SOURCE_ONLY),
         (["README.md", "docs/x.md"], SOURCE_ONLY),
         (["pyproject.toml"], METADATA),
         (["a/setup.cfg", "b/main.py"], METADATA),

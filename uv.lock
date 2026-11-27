@@ -8,6 +8,9 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 
+[manifest]
+overrides = [{ name = "meristem", specifier = ">=6.0.0,<7.0.0" }]
+
 [[package]]
 name = "aenum"
 version = "3.1.17"
@@ -504,7 +507,7 @@ requires-dist = [
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
     { name = "medulla", specifier = "==3.3.5", index = "https://pypi.org/simple" },
-    { name = "meristem", specifier = ">=5.0.0,<6.0.0" },
+    { name = "meristem", specifier = ">=6.0.0,<7.0.0" },
     { name = "msgpack", specifier = ">=1.2.4" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.1" },
     { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.10.0" },
@@ -2554,7 +2557,7 @@ wheels = [
 
 [[package]]
 name = "meristem"
-version = "5.0.0"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
@@ -2563,9 +2566,9 @@ dependencies = [
     { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/03/a3/1ce5188f979fffd015ead58684c71e181d1cbd863064eaa5c98aba6447ef/meristem-5.0.0.tar.gz", hash = "sha256:59cfa268437c9418ace2eb454542a19a5d350744e7bdc789272f1696b2ac22b1", size = 174786, upload-time = "2026-10-30T15:57:26.197Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/b5/c00533e1bde06a31a0166b0dbd52f89b7fcee3ad156e85a11d0617c65a94/meristem-6.0.0.tar.gz", hash = "sha256:ef4506ef2a1c1e37fbeefc33427f3cee831ad38f32a876ad8e060b38f8a0c9fb", size = 305669, upload-time = "2026-11-27T01:20:52.047Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/5b/74a3ac75999e57a6c458a818f49ea446f01a542c53f8bb5816ae65d5a635/meristem-5.0.0-py3-none-any.whl", hash = "sha256:fc8989ce65e363e741cf2015673194639fa9799a93da21c94ccc7e79e540c645", size = 122341, upload-time = "2026-10-30T15:57:24.85Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/3a/65266a775aae0d728ddf73cc9408732be556bc13aa2f8c67aeeee6d97d9a/meristem-6.0.0-py3-none-any.whl", hash = "sha256:37442f669ffaead47d629fc8ac81224d5733888684d8d4e5eee40b7fbeda5a78", size = 262267, upload-time = "2026-11-27T01:20:50.969Z" },
 ]
 
 [[package]]

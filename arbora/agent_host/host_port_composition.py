@@ -14,7 +14,7 @@ import hashlib
 import json
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
 from arbora.agent_host.host_port_adapters import (
@@ -151,6 +151,7 @@ def compose_host_ports(
     method_op: Callable[[str], str | None] = lambda _: None,
     backends: PortBackends | None = None,
     seams: Any = None,
+    base: Mapping[str, Any] = MappingProxyType({}),
 ) -> HostPortsBinding:
     """Bind every port that has a backend; the pinned release refuses ``UNAVAILABLE``.
 
@@ -217,4 +218,4 @@ def compose_host_ports(
         ports["gate_runner"] = gate_runner_factory(
             backends.changeset, backends.sandbox_verified
         )
-    return bind_host_ports(**ports)
+    return bind_host_ports(**{**base, **ports})
