@@ -29,6 +29,8 @@ from arbora import agent_runs, current_plan_publication, work_items  # noqa: E40
 from arbora.a2a.run_identity import A2ARunIdentity  # noqa: E402
 from arbora.api.errors import EngineRefusal as EngineCodeRefusal  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
+from arbora.api.ops import plan_execution as _plan_execution
+from arbora.api.ops import plan_fleet_steps as _plan_fleet_steps
 from arbora.api.ops import plans  # noqa: E402
 from arbora.api.ops.ports import PORTS_BINDING, OperationPorts  # noqa: E402
 from arbora.core.settings import RuntimeConfig
@@ -351,7 +353,7 @@ async def test_c22_dag_runs_in_dependency_order_with_verified_receipt():
 # spec: ARBORA-RELEASE-R003.4.1
 def test_run_plan_maps_engine_plan_without_reordering():
     plan = _canonical(TRIAGE_DAG)
-    run_plan = plans.run_plan_for(plan, model="test")
+    run_plan = _plan_execution.run_plan_for(plan, model="test")
     graph = run_plan.dependency_plan
     assert isinstance(graph, DependencyPlan)
     assert [t.task_id for t in graph.tasks] == [t["task_id"] for t in plan["tasks"]]
@@ -1311,7 +1313,7 @@ async def test_plan_run_maps_tool_steps_to_run_tasks():
     # The proposal reaches the engine unchanged: Arbora validates no binding.
     sent = engine.requests[0]["params"][0]["value"]["value"]
     assert sent["tasks"][1]["call"] == BINDING_PLAN["tasks"][1]["call"]
-    run_plan = plans.run_plan_for({**value["plan"]}, None)
+    run_plan = _plan_execution.run_plan_for({**value["plan"]}, None)
     mapped = {t.task_id: t for t in run_plan.dependency_plan.tasks}
     assert mapped["emit"].call is None
     assert mapped["open"].call.server == "alpha-mcp"
@@ -1396,8 +1398,8 @@ async def test_handle_plan_run_binds_the_governed_caller():
     invoke = ToolInvoke()
     await _serve_tools(BINDING_PLAN, invoke=invoke)
     # The run's ports carry the governed caller; no harness module state holds it.
-    ports = plans._ports_with_caller(BINDING_PLAN, None)
-    assert ports.caller is plans.governed_tool_caller
+    ports = _plan_execution._ports_with_caller(BINDING_PLAN, None)
+    assert ports.caller is _plan_fleet_steps.governed_tool_caller
     # Every typed step went through the invoke pipeline as ``fleet.call``.
     assert [e[:2] for e in invoke.effects] == [
         ("alpha-mcp", "create"),

@@ -329,7 +329,8 @@ async def handle_process_run(
     )
     from arbora.api.domain.processes.run_ports import RunEvidence
     from arbora.api.invoke.screening import screen_settings
-    from arbora.api.ops.plans import _plan_model, execute_task_plan
+    from arbora.api.ops.plan_execution import execute_task_plan
+    from arbora.api.ops.plans import _plan_model
 
     planned = await handle_process_plan(context, params, op)
     plan = planned["plan"]

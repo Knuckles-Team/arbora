@@ -104,6 +104,7 @@ def _env(
 ) -> Any:
     import medulla.decision_client as decision_client
 
+    from arbora.api.ops import plan_execution as _plan_execution
     from arbora.api.ops import plans, processes
 
     app, client = harness
@@ -119,7 +120,7 @@ def _env(
 
     monkeypatch.setattr(plans, "_feature_schema", pin)
     monkeypatch.setattr(plans, "_plan_model", lambda _c: "model:one")
-    monkeypatch.setattr(plans, "execute_task_plan", run_loop)
+    monkeypatch.setattr(_plan_execution, "execute_task_plan", run_loop)
     monkeypatch.setattr(
         processes,
         "_published_schema",
