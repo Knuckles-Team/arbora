@@ -18,7 +18,8 @@ from medulla import client as eg_client  # noqa: E402
 
 from arbora.core.engine_domains import DOMAIN_CLASSES
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
+from arbora.mcp_server.backing.tools import engine_tools  # noqa: E402
+from arbora.mcp_server.backing.tools import query_execution as _query_execution
 from arbora.mcp_server.host_caches import build_host_caches
 
 
@@ -58,7 +59,7 @@ def test_query_uql_dispatches_to_the_engine_uql_method():
         for name in dir(eg_client)
         if name.endswith("Client") and inspect.isclass(getattr(eg_client, name))
     ), "installed medulla exposes no Uql method"
-    rows = query_tools._run_graph_query_uql_rows(
+    rows = _query_execution._run_graph_query_uql_rows(
         "MATCH (n) RETURN n LIMIT 1", _Engine()
     )
     assert calls and calls[0][0] == "MATCH (n) RETURN n LIMIT 1"
