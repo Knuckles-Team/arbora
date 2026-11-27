@@ -114,18 +114,20 @@ class MarketServed:
             {CREDENTIAL_ONE: person("one", extra_scopes=scopes)},
         )
 
-    def http(self, op_id: str, params: dict[str, Any]) -> Any:
+    def http(self, op_id: str, params: dict[str, Any], **headers: str) -> Any:
         from tests.test_served_operation_api import _call
 
-        return _call(self.app, op_id, params)
+        return _call(self.app, op_id, params, **headers)
 
-    def mcp(self, op_id: str, params: dict[str, Any], verb: str = "ask") -> Any:
+    def mcp(
+        self, op_id: str, params: dict[str, Any], verb: str = "ask", **extra: Any
+    ) -> Any:
         ask = McpAsk(
             self.captured["invocation"],
             self.monkeypatch,
             person("one", extra_scopes=self.scopes),
         )
-        return ask(verb, op_id, params)
+        return ask(verb, op_id, params, **extra)
 
 
 def capture_with_bindings(
