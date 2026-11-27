@@ -206,3 +206,26 @@ async def test_the_gateway_binds_the_host_error_store_for_each_request():
     await ErrorsScopeMiddleware(app, mine)({"type": "http"}, None, None)
     assert seen == [mine]
     assert current_errors() is not mine
+
+
+@pytest.mark.spec("ARBORA-HOST-R039.4")
+def test_two_instances_keep_separate_health_windows_and_buffers():
+    from arbora.mcp_server.host_context import build_host_context
+    from arbora.observability.runtime_signals import record_runtime_signal
+
+    first = build_host_context().observability
+    second = build_host_context().observability
+    call = first.health.windows.begin("engine", 1.0)
+    first.health.windows.end("engine", call, ok=False, elapsed=0.5)
+    first.health.probes.bind("engine", lambda _session: {"status": "ok"})
+    record_runtime_signal(first.signals.runtime, "listener_restart", "t", {})
+    first.signals.gateway.append_window({"avg": 1.0}, 50)
+    first.errors.keep("correlation:a", {"error_class": "X"})
+    first.telemetry.install_exporter("exporter")
+    assert second.health.windows.view(("engine",))["engine"] == ([], [])
+    assert second.health.probes.get("engine") is None
+    assert second.signals.runtime.snapshot() == []
+    assert second.signals.gateway.history() == []
+    assert second.errors.detail("correlation:a") is None
+    assert second.telemetry.exporter(lambda: "built") == "built"
+    assert first.metrics is not second.metrics
