@@ -30,6 +30,8 @@ import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from typing import Any, ClassVar
 
+import httpx
+
 from arbora.core.environment import read_env
 from arbora.messaging.base import InboundSignatureInvalid, MessagingBackend
 from arbora.messaging.capabilities import CAPABILITY_MATRIX, MessagingCapabilities
@@ -186,7 +188,7 @@ class HttpChannelBackend(MessagingBackend):
             message_id = ""
             try:
                 message_id = str((response.json() or {}).get("id", ""))
-            except Exception:  # a non-JSON answer still means the send was accepted
+            except ValueError:  # a non-JSON answer still means the send was accepted
                 message_id = ""
             return SendResult(
                 success=True,
@@ -195,6 +197,7 @@ class HttpChannelBackend(MessagingBackend):
                 message_id=message_id,
             )
         except Exception as exc:  # the platform call failed: report, never raise
+            logger.warning("send message failed", exc_info=True)
             return SendResult(
                 success=False,
                 platform=self.platform,
@@ -336,9 +339,7 @@ class HttpChannelBackend(MessagingBackend):
                 logger.warning(
                     "%s stream ended (%s)", self.platform, type(exc).__name__
                 )
-            except (
-                Exception
-            ) as exc:  # an HTTP transport error is a reconnect, not a crash
+            except httpx.HTTPError as exc:  # a transport error is a reconnect
                 logger.warning(
                     "%s stream error (%s)", self.platform, type(exc).__name__
                 )

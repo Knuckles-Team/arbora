@@ -116,6 +116,7 @@ class MessagingService:
                 "[ECO-4.48] connect '%s' failed (%s)",
                 platform,
                 type(exc).__name__,
+                exc_info=True,
             )
             return None
         self._backends[platform] = backend
@@ -285,6 +286,7 @@ class MessagingService:
             logger.warning(
                 "[ECO-4.48] action policy unavailable; outbound send refused (%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             return None
 
@@ -302,7 +304,7 @@ class MessagingService:
                 Message(content=text, channel_id=channel_id, platform=platform), engine
             )
         except Exception as exc:  # best-effort KG mirror of an already-sent message (called only after result.success is True in send()); does not affect the SendResult returned to the caller
-            logger.debug("[ECO-4.48] outbound ingest failed: %s", exc)
+            logger.debug("[ECO-4.48] outbound ingest failed: %s", exc, exc_info=True)
 
     # ── Reach the user (last-active routing) ─────────────────────────
     async def reach_user(
@@ -375,7 +377,7 @@ class MessagingService:
                 },
             )
         except Exception as exc:  # best-effort last-active-channel-pref write; no caller checks a return value, resolve_channel() falls back to the configured default on a subsequent read-miss
-            logger.debug("[ECO-4.49] channel pref write failed: %s", exc)
+            logger.debug("[ECO-4.49] channel pref write failed: %s", exc, exc_info=True)
 
     def _last_channel(self, user_id: str) -> tuple[str, str] | None:
         engine = self._resolve_engine()
@@ -389,7 +391,7 @@ class MessagingService:
                 {"id": node_id},
             )
         except Exception as exc:  # read failure returns None; resolve_channel() already falls back to the configured default on None
-            logger.debug("[ECO-4.49] channel pref read failed: %s", exc)
+            logger.debug("[ECO-4.49] channel pref read failed: %s", exc, exc_info=True)
             return None
         for row in rows or []:
             node = row.get("p", row) if isinstance(row, dict) else row
@@ -495,7 +497,9 @@ class MessagingService:
         except NotImplementedError:
             return False
         except Exception as exc:  # exception path correctly returns False per this method's documented contract ("Returns True if sent")
-            logger.debug("[ECO-4.81] reaction failed on %s: %s", platform, exc)
+            logger.debug(
+                "[ECO-4.81] reaction failed on %s: %s", platform, exc, exc_info=True
+            )
             return False
 
     # ── Introspection ────────────────────────────────────────────────

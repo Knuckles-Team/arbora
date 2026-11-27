@@ -73,7 +73,7 @@ def record_inbound(
         )
         return iid
     except Exception as e:  # durability is best-effort, never blocks the reply
-        logger.debug("[ECO-4.83] inbox record failed: %s", e)
+        logger.debug("[ECO-4.83] inbox record failed: %s", e, exc_info=True)
         return None
 
 
@@ -84,7 +84,7 @@ def _set(engine: Any, inbox_id: str, props: dict[str, Any]) -> None:
     try:
         add_node(inbox_id, "InboundMessage", properties={"id": inbox_id, **props})
     except Exception as e:  # callers only invoke _set to record status AFTER the guarded action already succeeded/failed (mark_answered is called only when the reply actually sent, attempts/dead_letter only after a real retry outcome); a failed persist here just leaves the prior "pending" row in place, so the reaper retries — worst case a harmless duplicate resend, never a silently lost message
-        logger.debug("[ECO-4.83] inbox update failed: %s", e)
+        logger.debug("[ECO-4.83] inbox update failed: %s", e, exc_info=True)
 
 
 def mark_answered(engine: Any, inbox_id: str | None) -> None:
@@ -116,7 +116,7 @@ def pending_unanswered(
             or []
         )
     except Exception as e:  # a failed scan just returns no candidates for this reaper pass; the underlying `pending` rows are untouched, so the next scheduled pass picks them back up
-        logger.debug("[ECO-4.83] inbox query failed: %s", e)
+        logger.debug("[ECO-4.83] inbox query failed: %s", e, exc_info=True)
         return []
     cutoff = datetime.now(UTC).timestamp() - older_than_s
     out: list[dict[str, Any]] = []
@@ -124,7 +124,7 @@ def pending_unanswered(
         ra = r.get("received_at")
         try:
             ts = datetime.fromisoformat(ra).timestamp() if ra else 0.0
-        except Exception:
+        except (ValueError, TypeError, OverflowError, OSError):
             ts = 0.0
         if ts and ts > cutoff:
             continue  # still inside the grace window — the first attempt may yet land
@@ -148,7 +148,7 @@ async def retry_unanswered(
         try:
             ok = bool(await reply_send(m))
         except Exception as e:  # a raised send is treated the same as a returned-False send: ok stays False, so the block below correctly bumps attempts/dead_letter instead of mark_answered — the failure is recorded as a failed attempt, never silently treated as delivered
-            logger.debug("[ECO-4.83] inbox retry send failed: %s", e)
+            logger.debug("[ECO-4.83] inbox retry send failed: %s", e, exc_info=True)
             ok = False
         if ok:
             mark_answered(engine, m["id"])

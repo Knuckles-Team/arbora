@@ -252,7 +252,7 @@ async def test_backend_connect_error_is_sanitized(
     monkeypatch.setattr(
         service_module.logger,
         "warning",
-        lambda message, *args: logged.append(message % args),
+        lambda message, *args, **_kwargs: logged.append(message % args),
     )
     service = MessagingService(_FakeEngine())
     monkeypatch.setattr(

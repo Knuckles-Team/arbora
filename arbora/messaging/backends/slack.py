@@ -209,6 +209,7 @@ class SlackBackend(MessagingBackend):
             logger.error(
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Slack send failed: %s",
                 e,
+                exc_info=True,
             )
             return SendResult(success=False, platform=PlatformId.SLACK, error=str(e))
 

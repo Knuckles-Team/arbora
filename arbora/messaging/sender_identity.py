@@ -86,7 +86,9 @@ def session_for_sender(
     try:
         token = (exchange or _exchange_for_principal)(principal)
     except Exception as exc:  # any exchange failure is one typed refusal
-        logger.warning("sender token exchange refused (%s)", type(exc).__name__)
+        logger.warning(
+            "sender token exchange refused (%s)", type(exc).__name__, exc_info=True
+        )
         raise SenderRefused(TOKEN_EXCHANGE_REFUSED) from None
     if not token:
         raise SenderRefused(TOKEN_EXCHANGE_REFUSED)

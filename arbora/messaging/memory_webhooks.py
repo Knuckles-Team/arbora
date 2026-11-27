@@ -190,7 +190,9 @@ async def run_pump(
                 delivery=cfg,
             )
         except Exception as exc:  # the lease expires and the engine redelivers
-            logger.warning("memory webhook tick failed (%s)", type(exc).__name__)
+            logger.warning(
+                "memory webhook tick failed (%s)", type(exc).__name__, exc_info=True
+            )
         await sleep(interval)
 
 

@@ -355,7 +355,7 @@ class MessagingBackend(ABC):
 
     # ── Inbound Event Stream ─────────────────────────────────────────
 
-    async def listen(self) -> AsyncIterator[InboundEvent]:
+    def listen(self) -> AsyncIterator[InboundEvent]:
         """Listen for inbound events from the messaging platform.
 
         CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
@@ -373,8 +373,6 @@ class MessagingBackend(ABC):
             NotImplementedError: If the platform doesn't support
                 inbound listening (outbound-only mode).
         """
-        if self.id == "__never__":
-            yield None  # type: ignore[misc]
         raise NotImplementedError(  # ABSTRACT-OK: optional backend capability
             f"{self.id} backend does not support inbound listening. "
             "Override listen() to enable bidirectional messaging."

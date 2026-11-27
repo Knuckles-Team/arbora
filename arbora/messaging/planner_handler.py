@@ -61,7 +61,7 @@ async def _send(backend: MessagingBackend, event: InboundEvent, text: str) -> No
         else:
             await backend.send_message(event.channel_id, text)
     except Exception as exc:  # one failed send must not stop intake
-        logger.error("messaging reply send failed: %s", exc)
+        logger.error("messaging reply send failed: %s", exc, exc_info=True)
 
 
 def _burst_responder(service: Any) -> Callable[[str, list[Any]], Awaitable[None]]:

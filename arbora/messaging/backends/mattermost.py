@@ -158,6 +158,7 @@ class MattermostBackend(MessagingBackend):
             logger.debug(
                 "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] could not resolve bot user id: %s",
                 exc,
+                exc_info=True,
             )
             return configured_bot
 
@@ -170,6 +171,7 @@ class MattermostBackend(MessagingBackend):
                     logger.debug(
                         "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] websocket disconnect: %s",
                         exc,
+                        exc_info=True,
                     )
                 self._listening = False
             await asyncio.to_thread(self._driver.logout)
@@ -208,6 +210,7 @@ class MattermostBackend(MessagingBackend):
             logger.error(
                 "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] Mattermost send failed: %s",
                 e,
+                exc_info=True,
             )
             return SendResult(
                 success=False, platform=PlatformId.MATTERMOST, error=str(e)
@@ -243,6 +246,7 @@ class MattermostBackend(MessagingBackend):
             logger.debug(
                 "[CONCEPT:MERISTEM-ORCH.execution.messaging-orchestration-transparency] Mattermost edit failed: %s",
                 e,
+                exc_info=True,
             )
             return SendResult(
                 success=False, platform=PlatformId.MATTERMOST, error=str(e)
@@ -421,6 +425,7 @@ class MattermostBackend(MessagingBackend):
                 logger.error(
                     "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] Mattermost websocket stopped: %s",
                     exc,
+                    exc_info=True,
                 )
 
         asyncio.create_task(asyncio.to_thread(_run_ws))

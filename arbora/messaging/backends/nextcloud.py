@@ -96,6 +96,7 @@ class NextcloudTalkBackend(MessagingBackend):
                 channel_id=channel_id,
             )
         except Exception as e:
+            logger.warning("send message failed", exc_info=True)
             return SendResult(
                 success=False,
                 platform=PlatformId.NEXTCLOUD,
@@ -161,5 +162,6 @@ class NextcloudTalkBackend(MessagingBackend):
                 logger.debug(
                     "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Nextcloud poll error: %s",
                     e,
+                    exc_info=True,
                 )
                 await asyncio.sleep(10)

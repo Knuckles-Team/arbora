@@ -77,6 +77,7 @@ class IMessageBackend(MessagingBackend):
                 success=True, platform=PlatformId.IMESSAGE, channel_id=channel_id
             )
         except Exception as e:
+            logger.warning("send message failed", exc_info=True)
             return SendResult(success=False, platform=PlatformId.IMESSAGE, error=str(e))
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
@@ -142,6 +143,6 @@ class IMessageBackend(MessagingBackend):
 
                 conn.close()
             except Exception as e:
-                logger.error(f"iMessage listen error: {e}")
+                logger.error(f"iMessage listen error: {e}", exc_info=True)
 
             await asyncio.sleep(5)

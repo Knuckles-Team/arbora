@@ -238,6 +238,7 @@ class InboundRouter:
                 logger.debug(
                     "[CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending] inbox reaper pass failed: %s",
                     e,
+                    exc_info=True,
                 )
 
     async def stop(self) -> None:
@@ -403,7 +404,9 @@ class InboundRouter:
                 {"delay_s": round(delay, 2), "ran_for_s": round(ran_for, 2)},
             )
         except Exception as exc:  # emission must never affect supervision
-            logger.debug("listener-restart signal emission skipped: %s", exc)
+            logger.debug(
+                "listener-restart signal emission skipped: %s", exc, exc_info=True
+            )
 
     async def _listen_loop(self, backend: MessagingBackend) -> None:
         """One ``listen()`` attempt for a single backend — consumes its event stream.

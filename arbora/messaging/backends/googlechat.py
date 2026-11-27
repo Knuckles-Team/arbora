@@ -102,6 +102,7 @@ class GoogleChatBackend(MessagingBackend):
                 channel_id=channel_id,
             )
         except Exception as e:
+            logger.warning("send message failed", exc_info=True)
             return SendResult(
                 success=False, platform=PlatformId.GOOGLECHAT, error=str(e)
             )

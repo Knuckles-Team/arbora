@@ -154,6 +154,7 @@ class TeamsBackend(MessagingBackend):
             logger.error(
                 "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Teams send failed: %s",
                 type(e).__name__,
+                exc_info=True,
             )
             return SendResult(
                 success=False, platform=PlatformId.TEAMS, error=type(e).__name__

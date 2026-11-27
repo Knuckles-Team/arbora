@@ -73,7 +73,9 @@ async def _serve(engine: Any, platforms: list[str], router_box: dict[str, Any]) 
         try:
             await backend.register_commands(command_specs("messaging"))
         except Exception as exc:
-            logger.warning("messaging: register_commands(%s) failed: %s", pid, exc)
+            logger.warning(
+                "messaging: register_commands(%s) failed: %s", pid, exc, exc_info=True
+            )
         router.register_backend(backend)
     create_planner_handler = (
         host_ports().planner_handler_factory or default_planner_handler
