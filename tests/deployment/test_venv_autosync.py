@@ -28,7 +28,8 @@ from arbora.deployment.venv_autosync import (
     save_config,
     trigger,
 )
-from arbora.deployment.venv_sync import METADATA, SOURCE_ONLY, Workspace
+from arbora.deployment.venv_plan import Workspace
+from arbora.deployment.venv_sync import METADATA, SOURCE_ONLY
 
 pytestmark = pytest.mark.skipif(
     shutil.which("git") is None, reason="git is required for the merge trigger"
