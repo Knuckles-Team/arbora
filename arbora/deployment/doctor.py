@@ -25,6 +25,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from arbora.core.environment import read_env, read_reference
+from arbora.deployment.doctor_support import PROBE_FAULTS
 
 from . import doctor_a2a as _doctor_a2a
 from . import doctor_certification as _doctor_certification
@@ -380,7 +381,7 @@ def _check_config() -> dict[str, Any]:
         from arbora.deployment.config_generator import config_doctor
 
         rep = config_doctor()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "config", "error", f"config_doctor failed ({type(exc).__name__})"
         )
@@ -412,7 +413,7 @@ def _check_evolution_staging() -> dict[str, Any]:
         from arbora.core.settings import ArboraConfig as AgentConfig
 
         configured = AgentConfig().evolution_staging_root
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "evolution_staging",
             "error",
@@ -445,7 +446,7 @@ def _check_evolution_staging() -> dict[str, Any]:
                 remediation="Restrict the configured staging root to mode 0700.",
                 data={"configured": True, "usable": False},
             )
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "evolution_staging",
             "fail",
@@ -581,7 +582,7 @@ def _check_execution_security() -> dict[str, Any]:
         from arbora.core.settings import ArboraConfig as AgentConfig
 
         cfg = AgentConfig()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "execution_security",
             "error",
@@ -657,7 +658,7 @@ def _check_permission_governance() -> dict[str, Any]:
         if len(signing_key.encode("utf-8")) < 32:
             raise ValueError("signing key is shorter than 32 bytes")
         data.update(signing_authority_ready=True, identity_verified=True)
-    except Exception as exc:  # noqa: BLE001 - details and paths stay redacted
+    except PROBE_FAULTS as exc:  # details and paths stay redacted
         return _result(
             "permission_governance",
             "fail",
@@ -797,7 +798,7 @@ def _check_transport_security() -> dict[str, Any]:
     try:
         cfg, resolver, _secrets_client, tls_data = _resolve_tls_profile_data()
         engine_data = _resolve_engine_transport_data(cfg, resolver)
-    except Exception as exc:  # noqa: BLE001 - doctor must remain defensive
+    except PROBE_FAULTS as exc:  # doctor must remain defensive
         return _result(
             "transport_security",
             "fail",
@@ -841,7 +842,7 @@ def _check_google_workspace_oauth() -> dict[str, Any]:
         from arbora.core.settings import ArboraConfig as AgentConfig
 
         cfg = AgentConfig()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "google_workspace_oauth",
             "error",
@@ -947,7 +948,7 @@ def _check_source_egress() -> dict[str, Any]:
             cfg.model_http_allowed_private_hosts
         )
         model_tls_data, model_proxy_configured = _egress_tls_data(cfg)
-    except Exception as exc:  # noqa: BLE001 - doctor must remain defensive
+    except PROBE_FAULTS as exc:  # doctor must remain defensive
         return _result(
             "source_egress",
             "fail",
@@ -1121,7 +1122,7 @@ def _check_eunomia() -> dict[str, Any]:
         if mode == "embedded":
             return _eunomia_embedded_result(cfg)
         return _eunomia_remote_result(cfg, private_hosts)
-    except Exception as exc:  # noqa: BLE001 - doctor is a defensive boundary
+    except PROBE_FAULTS as exc:  # doctor is a defensive boundary
         return _result(
             "eunomia",
             "fail",
@@ -1137,15 +1138,15 @@ def _check_eunomia() -> dict[str, Any]:
 
 def _inventory_format_ready(inventory_path: Any) -> bool:
     """Whether the inventory file parses as a bounded YAML mapping."""
-    try:
-        import yaml
+    import yaml
 
+    try:
         with inventory_path.open("rb") as stream:
             raw_inventory = stream.read(8 * 1024 * 1024 + 1)
         if len(raw_inventory) > 8 * 1024 * 1024:
             return False
         return isinstance(yaml.safe_load(raw_inventory.decode("utf-8")), dict)
-    except Exception:  # noqa: BLE001 - readiness is redacted
+    except (OSError, ValueError, yaml.YAMLError):  # readiness is redacted
         return False
 
 
@@ -1201,7 +1202,7 @@ def _check_runtime_integrations() -> dict[str, Any]:
             )
         fleet_template_configured = bool(cfg.fleet_mcp_url_template)
         media_endpoint_count = _media_endpoint_count(cfg)
-    except Exception as exc:  # noqa: BLE001 - doctor must remain defensive
+    except PROBE_FAULTS as exc:  # doctor must remain defensive
         return _result(
             "runtime_integrations",
             "fail",
@@ -1309,7 +1310,7 @@ def _check_engine() -> dict[str, Any]:
                 "Arbora requires exactly one configured EG coordinator"
             )
         transport = _transport_for_endpoint(endpoints[0])
-    except Exception as exc:  # noqa: BLE001 - doctor reports bounded metadata only
+    except PROBE_FAULTS as exc:  # doctor reports bounded metadata only
         return _result(
             "engine",
             "fail",
@@ -1365,7 +1366,7 @@ def _check_secrets() -> dict[str, Any]:
         from arbora.deployment.config_generator import _unresolved_secret_refs
 
         unresolved = _unresolved_secret_refs(ArboraConfig())
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "secrets",
             "fail",
@@ -1424,7 +1425,7 @@ def _check_secrets_backend() -> dict[str, Any]:
         cfg = AgentConfig()
         backend = str(getattr(cfg, "secrets_backend", None) or "vault")
         counts = secret_reference_scheme_counts(cfg)
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "secrets_backend",
             "fail",
@@ -1594,7 +1595,7 @@ def _check_outbound_auth() -> dict[str, Any]:
         )
 
         status = outbound_auth_configuration_status()
-    except Exception as exc:  # noqa: BLE001 - never report configured values
+    except PROBE_FAULTS as exc:  # never report configured values
         return _result(
             "outbound_auth",
             "fail",
@@ -1713,7 +1714,7 @@ def _check_graph_identity() -> dict[str, Any]:
             f"graph process identity source is ready ({mode})",
             data={"mode": mode, "ready": True, "redacted": True},
         )
-    except Exception as exc:  # noqa: BLE001 - doctor remains a redacted boundary
+    except PROBE_FAULTS as exc:  # doctor remains a redacted boundary
         return _result(
             "graph_identity",
             "fail",
@@ -1754,7 +1755,7 @@ def _check_mcp_fleet(live: bool = False) -> dict[str, Any]:
         rep = mod.validate(
             cfg, mod.caddy_hosts() if hasattr(mod, "caddy_hosts") else set(), live=live
         )
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "mcp_fleet",
             "skip",
@@ -1808,7 +1809,7 @@ def _fleet_alias_kind(alias: str, reference: Any) -> str:
         ):
             raise ValueError("unavailable runtime reference")
         return "mapped"
-    except Exception:  # noqa: BLE001 - aliases and references stay redacted
+    except PROBE_FAULTS:  # aliases and references stay redacted
         return "unresolved"
 
 
@@ -1831,7 +1832,7 @@ def _check_mcp_fleet_secrets() -> dict[str, Any]:
         data["configured_alias_count"] = len(mappings)
         for alias, reference in mappings.items():
             data[f"{_fleet_alias_kind(alias, reference)}_alias_count"] += 1
-    except Exception as exc:  # noqa: BLE001 - doctor remains a redacted boundary
+    except PROBE_FAULTS as exc:  # doctor remains a redacted boundary
         return _result(
             "mcp_fleet_secrets",
             "fail",
@@ -1866,7 +1867,7 @@ def _check_hooks() -> dict[str, Any]:
         from arbora.ecosystem.hook_installer import HookInstaller
 
         rep = HookInstaller().doctor()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "hooks", "skip", f"hook doctor unavailable ({type(exc).__name__})"
         )
@@ -1998,12 +1999,12 @@ def _check_venv_drift() -> dict[str, Any]:
             "skip",
             "no uv workspace above this checkout (normal for a deployed runtime)",
         )
-    except Exception as exc:  # noqa: BLE001 - a probe must never crash the doctor
+    except PROBE_FAULTS as exc:  # a probe must never crash the doctor
         return _result("venv_drift", "error", f"workspace discovery failed: {exc}")
 
     try:
         report = detect_drift(workspace)
-    except Exception as exc:  # noqa: BLE001 - a probe must never crash the doctor
+    except PROBE_FAULTS as exc:  # a probe must never crash the doctor
         return _result("venv_drift", "error", f"drift detection failed: {exc}")
 
     status = {"ok": "ok", "warn": "warn", "fail": "fail"}[report.status]
@@ -2099,7 +2100,7 @@ def _auto_fix(name: str) -> dict[str, Any]:
                 "result": "re-installed hooks",
                 "errors": inst.errors,
             }
-        except Exception as exc:  # noqa: BLE001
+        except PROBE_FAULTS as exc:
             return {
                 "fixed": name,
                 "error": f"auto-fix failed ({type(exc).__name__})",
@@ -2143,7 +2144,7 @@ def _load_runtime_config(names: list[str]) -> list[dict[str, Any]] | None:
         from arbora.core.settings import load_config
 
         load_config()
-    except Exception as exc:  # noqa: BLE001 - source details may be sensitive
+    except PROBE_FAULTS as exc:  # source details may be sensitive
         return [
             _result(
                 name,
@@ -2169,7 +2170,7 @@ def _run_checks(names: list[str], *, live: bool) -> list[dict[str, Any]]:
             continue
         try:
             res = fn(live=live) if name in _LIVE_CHECK_NAMES else fn()
-        except Exception as exc:  # noqa: BLE001 — a check must never crash the doctor
+        except PROBE_FAULTS as exc:  # a check must never crash the doctor
             res = _result(name, "error", f"check raised ({type(exc).__name__})")
         results.append(res)
     return results
@@ -2183,8 +2184,8 @@ def _apply_auto_fixes(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
             fixes.append(_auto_fix(res["name"]))
             try:
                 res.update(CHECKS[res["name"]]())  # re-run after fix
-            except Exception:  # noqa: BLE001 - auto-fix report remains failed  # nosec B110
-                pass
+            except PROBE_FAULTS:
+                pass  # nosec B110 - auto-fix report remains failed
     return fixes
 
 
@@ -2286,7 +2287,7 @@ def _rerun_check_proof(name: str) -> dict[str, Any] | None:
         return None
     try:
         return rerun(live=True) if name in _LIVE_CHECK_NAMES else rerun()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(name, "error", f"re-run failed ({type(exc).__name__})")
 
 
@@ -2319,7 +2320,7 @@ def _interactive_outcome(
         return outcome
     try:
         exec_result = executor(check)
-    except Exception as exc:  # noqa: BLE001 - interactive_apply is a defensive boundary
+    except PROBE_FAULTS as exc:  # interactive_apply is a defensive boundary
         outcome["reason"] = f"executor failed ({type(exc).__name__})"
         return outcome
     outcome["applied"] = bool(exec_result.get("applied"))

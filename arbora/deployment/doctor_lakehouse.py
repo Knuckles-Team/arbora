@@ -5,6 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import httpx
+
+from arbora.deployment.doctor_support import PROBE_FAULTS
+
 from .doctor_support import _prescription, _result
 
 # ── optional lakehouse / data-plane services (CONCEPT:MERISTEM-OS.deployment.lakehouse-doctor) ──
@@ -111,7 +115,7 @@ def _probe_http(url: str, timeout: float = 2.0) -> tuple[bool, int | None]:
         with create_http_client(timeout=timeout, allow_loopback=True) as client:
             response = client.get(url)
         return True, response.status_code
-    except Exception:  # noqa: BLE001 - doctor is a defensive boundary
+    except (OSError, ValueError, httpx.HTTPError):  # doctor is a defensive boundary
         return False, None
 
 
@@ -122,7 +126,7 @@ def _check_kafka(live: bool = False, *, probe_tcp: Any = None) -> dict[str, Any]
 
         cfg = AgentConfig()
         servers = str(cfg.kafka_bootstrap_servers or "").strip()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "kafka", "error", f"kafka config unavailable ({type(exc).__name__})"
         )
@@ -199,7 +203,7 @@ def _check_fuseki(live: bool = False, *, probe_http: Any = None) -> dict[str, An
 
         cfg = AgentConfig()
         endpoint = str(cfg.kg_fuseki_endpoint or "").strip()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "fuseki", "error", f"fuseki config unavailable ({type(exc).__name__})"
         )
@@ -263,7 +267,7 @@ def _check_seaweedfs_s3(live: bool = False, *, probe_tcp: Any = None) -> dict[st
 
         cfg = AgentConfig()
         endpoint = str(cfg.lakehouse_s3_endpoint or "").strip()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "seaweedfs_s3",
             "error",
@@ -387,7 +391,7 @@ def _check_lakekeeper(live: bool = False, *, probe_http: Any = None) -> dict[str
         cfg = AgentConfig()
         uri = str(cfg.lakekeeper_catalog_uri or "").strip()
         scope = str(cfg.lakekeeper_oauth2_scope or "").strip()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "lakekeeper",
             "error",
@@ -464,7 +468,7 @@ def _check_lakekeeper_db(live: bool = False) -> dict[str, Any]:
 
         cfg = AgentConfig()
         ref = cfg.lakekeeper_db_uri_ref
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "lakekeeper_db",
             "error",
@@ -527,7 +531,7 @@ def _check_trino(live: bool = False, *, probe_http: Any = None) -> dict[str, Any
 
         cfg = AgentConfig()
         endpoint = str(cfg.trino_endpoint or "").strip()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "trino", "error", f"trino config unavailable ({type(exc).__name__})"
         )
@@ -595,7 +599,7 @@ def _check_spark_runner(live: bool = False, *, probe_tcp: Any = None) -> dict[st
 
         cfg = AgentConfig()
         endpoint = str(cfg.spark_runner_endpoint or "").strip()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "spark_runner",
             "error",

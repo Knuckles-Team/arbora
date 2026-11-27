@@ -16,6 +16,8 @@ from collections.abc import Mapping
 from types import SimpleNamespace
 from typing import Any
 
+from arbora.deployment.doctor_support import PROBE_FAULTS
+
 from .doctor_support import _result
 
 
@@ -56,7 +58,7 @@ def _check_engine_domains() -> dict[str, Any]:
         cfg = AgentConfig()
         profile = cfg.deployment_profile
         domain_count = len(engine_tools.ENGINE_DOMAINS)
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return _result(
             "engine_domains",
             "error",
@@ -179,7 +181,7 @@ def _graph_connection_probe_counts(
                 ready_count += 1
             else:
                 probe_failed_count += 1
-        except Exception:  # noqa: BLE001 - never expose connector details
+        except PROBE_FAULTS:  # never expose connector details
             probe_failed_count += 1
     return ready_count, probe_failed_count
 
@@ -281,7 +283,7 @@ def _check_graph_connections(live: bool = False) -> dict[str, Any]:
         from arbora.core.settings import ArboraConfig as AgentConfig
 
         inventory = _graph_connection_inventory(AgentConfig())
-    except Exception:  # noqa: BLE001 - never expose deployment details
+    except PROBE_FAULTS:  # never expose deployment details
         return _result(
             "graph_connections",
             "fail",

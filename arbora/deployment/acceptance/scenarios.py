@@ -239,7 +239,13 @@ async def run_scenario(
             try:
                 async with gate:
                     envelope = await call(step.verb, step.call, params)
-            except Exception as exc:  # noqa: BLE001 - a transport fault is a FAIL row
+            except (
+                ImportError,
+                OSError,
+                ValueError,
+                LookupError,
+                RuntimeError,
+            ) as exc:  # a transport fault is a FAIL row
                 writer.row(
                     scenario.name, step.id, step.call, "FAIL", type(exc).__name__
                 )

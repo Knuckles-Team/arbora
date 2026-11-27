@@ -36,6 +36,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from arbora.deployment.doctor_support import PROBE_FAULTS
+
 logger = logging.getLogger(__name__)
 
 #: The placement targets the engine knows (``placement:<target>`` option ids).
@@ -555,7 +557,7 @@ async def publish_at_startup(
                 results[tenant] = await publish_deployment_library(
                     send, context_for, tenant, bindings
                 )
-            except Exception as exc:  # noqa: BLE001 - logged; the targets stay unpublished
+            except PROBE_FAULTS as exc:  # logged; the targets stay unpublished
                 if attempt == attempts:
                     logger.error(
                         "deployment library not published for %s after %d attempts "

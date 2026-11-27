@@ -20,6 +20,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from arbora.deployment.doctor_support import PROBE_FAULTS
+
 _ENTRY_POINTS = {
     # Certify the native serving composition, not the removed informational
     # shell and never an AU compatibility alias.
@@ -80,7 +82,11 @@ def _served_fastmcp_matches_declared() -> bool:
             and served_major is not None
             and declared_major == served_major
         )
-    except Exception:  # noqa: BLE001 - the result is intentionally aggregate-only
+    except (
+        OSError,
+        ValueError,
+        importlib.metadata.PackageNotFoundError,
+    ):  # the result is intentionally aggregate-only
         return False
 
 
@@ -110,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.parse_args(argv)
     try:
         report = run_canary()
-    except Exception:  # noqa: BLE001 - no environment detail crosses this boundary
+    except PROBE_FAULTS:  # no environment detail crosses this boundary
         report = {
             "status": "failed",
             "checks": {"canary_boundary": False},

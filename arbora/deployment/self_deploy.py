@@ -93,7 +93,10 @@ def execute_redeploy(
                 "plan": plan,
                 "note": "ActionPolicy did not allow restart_service — human approval required",
             }
-    except Exception as exc:  # noqa: BLE001 — no gate available → fail closed
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "no gate available → fail closed", exc_info=True
+        )
         return {"status": "blocked", "executed": False, "error": str(exc), "plan": plan}
 
     # 2. Restart (injected mechanic only — never a built-in shared-host shell-out).

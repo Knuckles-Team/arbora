@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.deployment.doctor_support import PROBE_FAULTS
 
 from .doctor_support import _result
 
@@ -180,7 +181,7 @@ def _check_observability() -> dict[str, Any]:
             "metadata-only OTLP authentication and TLS are ready",
             data=data,
         )
-    except Exception as exc:  # noqa: BLE001 - doctor remains privacy-safe
+    except PROBE_FAULTS as exc:  # doctor remains privacy-safe
         return _result(
             "observability",
             "error",
@@ -282,7 +283,7 @@ def _probe_langfuse_live(cfg: Any) -> dict[str, Any]:
     }
     try:
         result["mcp_visible"] = _probe_langfuse_mcp_visibility(cfg)
-    except Exception:  # noqa: BLE001 - child details may contain local material
+    except PROBE_FAULTS:  # child details may contain local material
         result["mcp_visible"] = False
     result["api_reachable"] = bool(result["mcp_visible"])
     if not result["mcp_visible"]:
@@ -391,7 +392,7 @@ def _langfuse_credential_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any] 
         resolve_langfuse_credentials(agent_config=cfg)
     except LangfuseTrustError as exc:
         data["error_code"] = exc.reason
-    except Exception:  # noqa: BLE001 - never expose provider details
+    except PROBE_FAULTS:  # never expose provider details
         data["error_code"] = "langfuse_credentials_invalid"
     else:
         data["credential_material_ready"] = True
@@ -426,7 +427,7 @@ def _langfuse_persistence_gate(cfg: Any, data: dict[str, Any]) -> dict[str, Any]
         return None
     try:
         resolve_langfuse_persistence_hmac_key(agent_config=cfg)
-    except Exception:  # noqa: BLE001 - keep secret-provider details private
+    except PROBE_FAULTS:  # keep secret-provider details private
         return _result(
             "langfuse",
             "fail",
@@ -561,7 +562,7 @@ def _check_langfuse(
         return _langfuse_ready_result(
             cfg, inputs, data, live=live, probe_live=probe_live
         )
-    except Exception as exc:  # noqa: BLE001 - doctor output remains redacted
+    except PROBE_FAULTS as exc:  # doctor output remains redacted
         return _result(
             "langfuse",
             "error",

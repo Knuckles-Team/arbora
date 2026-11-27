@@ -29,6 +29,7 @@ the same shape (and same human/JSON renderers) as a doctor report.
 from __future__ import annotations
 
 import importlib.util
+import logging
 import platform
 import shutil
 import subprocess  # nosec B404 -- fixed-argv local prerequisite probes
@@ -151,7 +152,7 @@ def _engine_binary_contract(server_path: str) -> str:
             timeout=5,
         )
         haystack = f"{out.stdout}\n{out.stderr}"
-    except Exception:  # noqa: BLE001
+    except (OSError, subprocess.SubprocessError):
         return "invalid"
     if "--idle-shutdown-secs" in haystack:
         return "current"
@@ -274,7 +275,7 @@ def _node_version() -> tuple[int, ...] | None:
             [node, "--version"], capture_output=True, text=True, timeout=5
         ).stdout.strip()
         return tuple(int(p) for p in out.lstrip("v").split(".") if p.isdigit())
-    except Exception:  # noqa: BLE001
+    except (OSError, subprocess.SubprocessError):
         return ()
 
 
@@ -375,7 +376,7 @@ def _check_geniusbot() -> dict[str, Any]:
                     [ldconfig, "-p"], capture_output=True, text=True, timeout=5
                 ).stdout
                 libgl = "libGL.so" in out
-            except Exception:  # noqa: BLE001
+            except (OSError, subprocess.SubprocessError):
                 libgl = None
     if not has_display:
         return _result(
@@ -438,7 +439,8 @@ def run_preflight(
             continue
         try:
             results.append(fn())
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             results.append(_result(comp, "error", f"check raised: {exc}"))
 
     worst = max((_RANK[r["status"]] for r in results), default=0)

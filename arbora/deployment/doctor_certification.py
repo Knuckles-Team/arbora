@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from arbora.api.errors import not_served
+from arbora.deployment.doctor_support import PROBE_FAULTS
 
 from .doctor_support import _result
 
@@ -110,7 +111,7 @@ def _check_skill_certification() -> dict[str, Any]:
         from arbora.core.settings import ArboraConfig as AgentConfig
 
         cfg = AgentConfig()
-    except Exception as exc:  # noqa: BLE001 - report only the error category
+    except PROBE_FAULTS as exc:  # report only the error category
         return _result(
             "skill_certification",
             "fail",
@@ -167,7 +168,7 @@ def _check_skill_certification() -> dict[str, Any]:
 
     try:
         _validate_skill_certification_material(cfg, path_values, command_values)
-    except Exception as exc:  # noqa: BLE001 - never report paths or values
+    except PROBE_FAULTS as exc:  # never report paths or values
         return _result(
             "skill_certification",
             "fail",

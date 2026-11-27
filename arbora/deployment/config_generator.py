@@ -33,6 +33,8 @@ from typing import TYPE_CHECKING, Any
 
 from scion_sdk.utilities import to_boolean
 
+from arbora.deployment.doctor_support import PROBE_FAULTS
+
 if TYPE_CHECKING:
     from arbora.core.config_admin import HostingDeploymentSettings
 from arbora.core.environment import read_env, read_reference
@@ -569,7 +571,7 @@ def config_reference() -> list[dict[str, Any]]:
         try:
             json.dumps(default, default=str)
             default_repr = default
-        except Exception:  # noqa: BLE001
+        except (TypeError, ValueError):
             default_repr = str(default)
         grouped[section].append(
             {
@@ -628,7 +630,7 @@ def _load_and_migrate_config_mapping(path: Path) -> _LoadedConfigMigration:
         )
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001
+    except (OSError, ValueError):
         return _LoadedConfigMigration(
             error={
                 "status": "error",
@@ -751,7 +753,7 @@ def _config_doctor_plaintext_secrets_check(
         _plaintext_secrets = (
             plaintext_secret_keys(_secret_raw) if isinstance(_secret_raw, dict) else []
         )
-    except Exception:  # noqa: BLE001 - privacy-safe: never surface a value or path
+    except PROBE_FAULTS:  # privacy-safe: never surface a value or path
         _plaintext_secrets = []
     if not _plaintext_secrets:
         return None
@@ -823,7 +825,7 @@ def _config_doctor_load_from_path(
         _require_private_source(
             Path(config_path), profile or raw.get("DEPLOYMENT_PROFILE")
         )
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return {
             "status": "error",
             "healthy": False,
@@ -834,7 +836,7 @@ def _config_doctor_load_from_path(
     # builds it from the environment that load_config projects.
     try:
         cfg = config_from_document(raw)
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return {
             "status": "error",
             "healthy": False,
@@ -859,7 +861,7 @@ def _config_doctor_load_live(
 
     try:
         cfg = AgentConfig()
-    except Exception as exc:  # noqa: BLE001
+    except PROBE_FAULTS as exc:
         return {
             "status": "error",
             "healthy": False,
@@ -946,7 +948,7 @@ def _config_doctor_check_secret_refs(cfg: Any, config_path: Any) -> dict[str, An
     """3. Secret references resolvable (vault://, secret://, env://)."""
     try:
         unresolved = _unresolved_secret_refs(cfg, resolve=config_path is None)
-    except Exception as exc:  # noqa: BLE001 - aggregate, privacy-safe boundary
+    except PROBE_FAULTS as exc:  # aggregate, privacy-safe boundary
         return {
             "check": "secret_refs",
             "ok": False,
@@ -1261,7 +1263,7 @@ def _unresolved_secret_refs(cfg: Any, *, resolve: bool = True) -> list[str]:
 
                     client = create_secrets_client()
                 resolved = client.resolve_ref(reference)
-        except Exception:  # noqa: BLE001 - only an opaque marker escapes
+        except PROBE_FAULTS:  # only an opaque marker escapes
             resolved = None
         if not resolved:
             unresolved.append("unresolved")
