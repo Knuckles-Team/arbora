@@ -23,6 +23,11 @@ def print_usage_or_version(argv: list[str]) -> bool:
 
         parser = create_mcp_parser(resolve_secret_defaults=False)
         parser.prog = "arbora"
+        parser.epilog = (
+            "command: arbora lease run --pool CELL --priority land-gate|train|lane "
+            "[--wait-secs N] [--ttl-ms N] -- ARGV...  (run a command under one "
+            "build-slot lease)"
+        )
         parser.add_argument("--version", action="store_true", help="Show the version")
         parser.print_help()
         return True

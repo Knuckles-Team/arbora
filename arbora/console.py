@@ -28,6 +28,18 @@ def _deploy_realm_admin(path: Any) -> Any:
     return Ports.real(DeployConfig.load(path)).admin
 
 
+def _run_before_usage(argv: list[str]) -> None:
+    """Commands whose own arguments may hold ``--help`` or ``--version`` (a child's flags).
+
+    ``arbora lease run`` passes everything after ``--`` to its child, so the console's
+    usage check must not see it.
+    """
+    if argv[1:3] == ["lease", "run"]:
+        from arbora.fleet.lease_runner import main as lease_run_main
+
+        raise SystemExit(lease_run_main(argv[3:]))
+
+
 def main() -> None:
     """Process composition root: inject concrete browser identity exactly once."""
     import sys
@@ -37,6 +49,7 @@ def main() -> None:
     from arbora.security.error_surface import bind_errors
 
     bind_errors(Errors())  # this command-line root owns the process's error store
+    _run_before_usage(sys.argv)
     if print_usage_or_version(sys.argv[1:]):
         return
     if sys.argv[1:2] == ["token"]:
