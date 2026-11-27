@@ -164,6 +164,40 @@ def model_capacity_ask(
     return ask
 
 
+def capacity_verdict_ask(
+    send: Send,
+    *,
+    graph: str,
+    feature_schema: Callable[[str], Mapping[str, Any]],
+    principal: Callable[[], str],
+) -> Judge:
+    """The engine verdict sender of a capacity raise (ARBORA-CAPACITY-R751).
+
+    One typed ``capacity_proposal`` question through the host's ``Decide`` sender, the
+    same ``verdict`` the deployment actuation reads; the record must echo this request
+    for the host principal. A raise on ``allow`` only, so a missing pin or an engine
+    failure raises and the judge holds the limit.
+    """
+    from arbora.deployment.capacity_actuation import verdict
+
+    async def ask(proposal: Mapping[str, Any]) -> str:
+        tenant = str(proposal["tenant_id"])
+
+        async def decide(request: dict[str, Any]) -> Any:
+            return await send("Decide", {"request": request}, tenant)
+
+        return await verdict(
+            decide,
+            tenant=tenant,
+            principal=principal(),
+            graph=graph,
+            feature_schema=feature_schema(tenant),
+            proposal=proposal,
+        )
+
+    return ask
+
+
 class CapacityRunner:
     """Runs the controller loop as one background task."""
 
@@ -246,6 +280,7 @@ def with_capacity(
 
 __all__ = [
     "CapacityRunner",
+    "capacity_verdict_ask",
     "EngineCapacityPort",
     "cell_id_of",
     "model_capacity_ask",

@@ -598,8 +598,13 @@ def _with_capacity(
     pool: Any,
     graph: str,
     connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
 ) -> tuple[Mapping[str, Any], Callable[[], Coroutine[Any, Any, Any]]]:
-    """Bind the throttle controller and its limiter (ARBORA-CAPACITY-R001.4)."""
+    """Bind the throttle controller, its limiter and the engine verdict sender.
+
+    ARBORA-CAPACITY-R001.4 and R751: a raise asks the engine for its verdict through the
+    host's ``Decide`` sender, so the loop can raise as well as narrow.
+    """
     if "throttle_registry" in bindings:
 
         async def nothing() -> None:
@@ -615,8 +620,22 @@ def _with_capacity(
         client = await pool.connected_client(connect_context(tenant), graph)
         return await send_by_id(client, method, params, graph)
 
+    from arbora.api.task_plan_schema import published_pin
+    from arbora.fleet.capacity_binding import capacity_verdict_ask
+
+    def tenant_pin(tenant: str) -> Any:
+        return published_pin(bindings.get("task_plan_schema_pins"), tenant)
+
+    ask = capacity_verdict_ask(
+        send,
+        graph=graph,
+        feature_schema=tenant_pin,
+        principal=lambda: str(session().actor.actor_id),
+    )
     return with_capacity(
-        bindings, send, aimd_section=setting("ARBORA_CAPACITY_AIMD", "")
+        {"capacity_ask": ask, **bindings},
+        send,
+        aimd_section=setting("ARBORA_CAPACITY_AIMD", ""),
     )
 
 
@@ -780,7 +799,7 @@ def compose_served_invocation(
         if loop_startup is not None:
             process_startup = _chained_startup(process_startup, loop_startup)
         bindings, capacity_startup = _with_capacity(
-            bindings, pool, graph, connect_context
+            bindings, pool, graph, connect_context, session
         )
         process_startup = _chained_startup(process_startup, capacity_startup)
     if (

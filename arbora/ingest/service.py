@@ -270,6 +270,23 @@ async def sync_source(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     return {"value": receipt.model_dump(mode="json", exclude_none=True)}
 
 
+async def resource_grant_bytes(context: Any) -> int:
+    """The working bytes one tenant may hold at once: the host grant clamped to the engine knob.
+
+    ARBORA-CAPACITY-R753: ``IndexRepository`` has no ``max_working_bytes`` request field;
+    the engine knob ``ingest.index_max_working_bytes`` bounds each job and is reserved per
+    job. The ``index_knob_reader`` service reads that knob; with none bound (PIN-LAG: the
+    engine publishes no knob read) the host grant alone bounds the tenant, and the engine
+    still refuses a job past its own knob.
+    """
+    from arbora.core.settings import runtime_config
+
+    host = int(runtime_config.resource_grants_max_working_bytes)
+    reader = context.services.get("index_knob_reader")
+    knob = await reader() if reader is not None else None
+    return min(host, int(knob)) if knob else host
+
+
 async def index_repository(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     """Request a durable repository index through the composed ingestion runner."""
     if not context.idempotency_key:
@@ -285,11 +302,8 @@ async def index_repository(context: Any, params: Mapping[str, Any], op: Any) -> 
         )
         return {"value": receipt.model_dump(mode="json")}
     from arbora.api.ops._grants import ResourceGrantLedger
-    from arbora.core.settings import runtime_config
 
-    ledger = ResourceGrantLedger(
-        context, limit=int(runtime_config.resource_grants_max_working_bytes)
-    )
+    ledger = ResourceGrantLedger(context, limit=await resource_grant_bytes(context))
     job_key = f"{repo_id}:{context.idempotency_key}"
     try:
         await ledger.admit(job_key, int(grant))
