@@ -18,6 +18,7 @@ stable labels, never exception text, paths, URLs, credentials, or row values.
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
@@ -292,7 +293,10 @@ def _read_control_store(
                 str(row[0] or "unknown"): int(row[1]) for row in cur.fetchall()
             }
             status_ok = True
-        except Exception as exc:  # noqa: BLE001 - represented in typed evidence
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "represented in typed evidence", exc_info=True
+            )
             diagnostics.append(_diagnostic("control_store.sessions", exc))
 
         try:
@@ -321,7 +325,10 @@ def _read_control_store(
                     "error_rate": round(errored / total, 4) if total else 0.0,
                 }
             domains_ok = True
-        except Exception as exc:  # noqa: BLE001 - represented in typed evidence
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "represented in typed evidence", exc_info=True
+            )
             diagnostics.append(_diagnostic("control_store.domains", exc))
     except PermissionError:
         # Authentication/tenant failures are transport authorization failures,
@@ -329,13 +336,19 @@ def _read_control_store(
         raise
     except AuthorityNotServed:
         not_served = True
-    except Exception as exc:  # noqa: BLE001 - represented in typed evidence
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "represented in typed evidence", exc_info=True
+        )
         diagnostics.append(_diagnostic("control_store.connection", exc))
     finally:
         if conn is not None:
             try:
                 conn.close()
-            except Exception as exc:  # noqa: BLE001 - represented in typed evidence
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "represented in typed evidence", exc_info=True
+                )
                 diagnostics.append(_diagnostic("control_store.close", exc))
 
     if not_served:
@@ -374,7 +387,10 @@ def _read_goal_registry(
         )
     except AuthorityNotServed:
         return _not_served("goal_rehydration", now), None
-    except Exception as exc:  # noqa: BLE001 - represented in typed evidence
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "represented in typed evidence", exc_info=True
+        )
         return (
             _dependency(
                 "unavailable", now, None, (_diagnostic("goal_rehydration", exc),)
@@ -397,7 +413,10 @@ def _read_worker_registry(
         return _dependency("healthy", now, now), workers
     except AuthorityNotServed:
         return _not_served("worker_registry", now), None
-    except Exception as exc:  # noqa: BLE001 - represented in typed evidence
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "represented in typed evidence", exc_info=True
+        )
         return (
             _dependency(
                 "unavailable", now, None, (_diagnostic("worker_registry", exc),)

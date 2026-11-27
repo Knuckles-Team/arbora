@@ -29,6 +29,7 @@ never claim that replicas changed.
 import asyncio
 import hashlib
 import json
+import logging
 import math
 import re
 import threading
@@ -1343,7 +1344,10 @@ class ScaleIntentReconciler:
     ) -> ScaleActuationResult:
         try:
             result = await asyncio.to_thread(self.actuator.apply, request)
-        except Exception as exc:  # noqa: BLE001 — typed failure is persisted, never raised as success
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "typed failure is persisted, never raised as success", exc_info=True
+            )
             return ScaleActuationResult(
                 execution_key=intent.execution_key,
                 target=intent.target,

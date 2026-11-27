@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -641,7 +642,10 @@ class FleetSourceExecutor:
                 )
                 if not isinstance(decisions, Mapping):
                     raise ValueError("access check reply malformed")
-            except Exception:  # noqa: BLE001 - every failure denies every record
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "every failure denies every record", exc_info=True
+                )
                 return AccessCheckResult(
                     allowed={ref: False for ref in refs},
                     error_code=ACCESS_CHECK_UNAVAILABLE,

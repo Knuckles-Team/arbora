@@ -82,7 +82,7 @@ class EngineNativeReservationTransport:
             advertised = supports(name)
         except NativeReservationUnavailable:
             raise
-        except Exception as exc:  # noqa: BLE001 - malformed/old Health fails closed
+        except Exception as exc:  # malformed/old Health fails closed
             if getattr(exc, "code", None) == NativeReservationUnavailable.code:
                 raise NativeReservationUnavailable(
                     NativeReservationUnavailable.code
@@ -105,7 +105,7 @@ class EngineNativeReservationTransport:
             value = operation(request=dict(request))
         except NativeReservationUnavailable:
             raise
-        except Exception as exc:  # noqa: BLE001 - preserve typed transport errors
+        except Exception as exc:  # preserve typed transport errors
             if getattr(exc, "code", None) == NativeReservationUnavailable.code:
                 raise NativeReservationUnavailable(
                     NativeReservationUnavailable.code

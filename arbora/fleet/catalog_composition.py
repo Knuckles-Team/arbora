@@ -130,7 +130,7 @@ class ProbePrimer:
         run = probe(server, force=True) if force else probe(server)
         try:
             info = await asyncio.wait_for(run, timeout=self._timeout_s)
-        except Exception as exc:  # noqa: BLE001 - priming is best-effort
+        except Exception as exc:  # priming is best-effort
             logger.warning(
                 "fleet probe of %s for catalog schema failed: %s",
                 server,

@@ -224,7 +224,7 @@ class OutboxRunner:
         """One tick of every consumer; an engine failure is logged, never raised."""
         try:
             self.last = await tick(self._consumers, self._send, graph=self._graph)
-        except Exception:  # noqa: BLE001 - the next tick retries the same events
+        except Exception:  # the next tick retries the same events
             logger.exception("outbox consumers: tick failed; the events stay queued")
         return self.last
 

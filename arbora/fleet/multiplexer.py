@@ -5703,7 +5703,8 @@ class MCPMultiplexer:
         errors: dict[str, str] = {}
         try:
             raw_resources = await _list_all(session, "list_resources", "resources")
-        except Exception as exc:  # noqa: BLE001 - optional protocol method
+        except Exception as exc:
+            logging.getLogger(__name__).debug("optional protocol method", exc_info=True)
             if not self._optional_method_missing(exc):
                 errors["resources"] = type(exc).__name__
             raw_resources = []
@@ -5726,7 +5727,8 @@ class MCPMultiplexer:
                 key="uriTemplate",
                 family="resource-template",
             )
-        except Exception as exc:  # noqa: BLE001 - optional protocol method
+        except Exception as exc:
+            logging.getLogger(__name__).debug("optional protocol method", exc_info=True)
             if not self._optional_method_missing(exc):
                 errors["resource_templates"] = type(exc).__name__
             templates = []
@@ -5737,7 +5739,8 @@ class MCPMultiplexer:
                 key="name",
                 family="prompt",
             )
-        except Exception as exc:  # noqa: BLE001 - optional protocol method
+        except Exception as exc:
+            logging.getLogger(__name__).debug("optional protocol method", exc_info=True)
             if not self._optional_method_missing(exc):
                 errors["prompts"] = type(exc).__name__
             native_prompts = []
@@ -5765,7 +5768,7 @@ class MCPMultiplexer:
         """
         try:
             resources = await _list_all(session, "list_resources", "resources")
-        except Exception as exc:  # noqa: BLE001 - resources/list is an OPTIONAL
+        except Exception as exc:  # resources/list is an OPTIONAL
             # MCP method; a server that doesn't implement it must still
             # contribute the tools/skills its probe already returned. The
             # cause IS logged so a real transport failure stays diagnosable.
@@ -5779,7 +5782,7 @@ class MCPMultiplexer:
             return []
         try:
             entries = catalog_builder(resources)
-        except Exception as exc:  # noqa: BLE001 - a malformed catalog from one
+        except Exception as exc:  # a malformed catalog from one
             # server must not fail the tool probe that already succeeded.
             # The cause IS logged.
             logger.warning(
@@ -6029,7 +6032,10 @@ class MCPMultiplexer:
                 continue
             try:
                 info = task.result()
-            except BaseException:  # noqa: BLE001 - one server never fails the sweep
+            except BaseException:
+                logging.getLogger(__name__).debug(
+                    "one server never fails the sweep", exc_info=True
+                )
                 continue
             if isinstance(info, dict):
                 result[server] = info
@@ -7337,7 +7343,7 @@ def _context_session_key(get_context: _typing.Any) -> str | None:
     """This request's MCP ``session_id``, when its context carries one."""
     try:
         sid = get_context().session_id
-    except Exception as exc:  # noqa: BLE001 — deliberate DEBUG: a per-request CONTROL-FLOW probe one rung down the key-source cascade (session_id -> token -> unauthenticated). Absence is the NORMAL case for an unauthenticated caller, not a failure; the cause is preserved and the cascade continues in the caller.
+    except RuntimeError as exc:  # deliberate DEBUG: a per-request CONTROL-FLOW probe one rung down the key-source cascade (session_id -> token -> unauthenticated). Absence is the NORMAL case for an unauthenticated caller, not a failure; the cause is preserved and the cascade continues in the caller.
         logger.debug(
             "HTTP context present but no session_id; falling back to token key: %s: %s",
             type(exc).__name__,
@@ -7384,7 +7390,7 @@ def ambient_session_key() -> str:
         get_http_request()
     except RuntimeError:
         return _explicit_local_session_key() or "__local_stdio__"
-    except Exception as exc:  # noqa: BLE001 — deliberate DEBUG: this is a per-request CONTROL-FLOW probe ("is there an HTTP request context?"), not an error path. Every stdio/local call takes it, so WARNING here would emit one line per request. The cause is preserved (interpolated) and the outcome is encoded in the returned key.
+    except ImportError as exc:  # deliberate DEBUG: this is a per-request CONTROL-FLOW probe ("is there an HTTP request context?"), not an error path. Every stdio/local call takes it, so WARNING here would emit one line per request. The cause is preserved (interpolated) and the outcome is encoded in the returned key.
         logger.debug(
             "No HTTP request context; trying next key source: %s: %s",
             type(exc).__name__,

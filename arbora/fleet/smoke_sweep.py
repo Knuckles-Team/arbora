@@ -11,6 +11,7 @@ here: the previous outcomes and the row sink are handed in by the host.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Literal, Protocol
 
@@ -110,7 +111,10 @@ async def run_sweep(
                 error_code=refused.code,
                 detail=_detail(refused.detail),
             )
-        except Exception as exc:  # noqa: BLE001 - one connector never stops the sweep
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "one connector never stops the sweep", exc_info=True
+            )
             row = SmokeRow(
                 server=server,
                 tool=tool,
