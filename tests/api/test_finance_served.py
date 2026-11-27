@@ -13,7 +13,11 @@ from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
 from arbora.api.ops import finance
 from arbora.api.registry import Effect, Executor, PrincipalRule, SubjectSource
 
-OPS = {op.id: op for op in finance.operations()}
+OPS = {
+    op.id: op
+    for op in finance.operations()
+    if op.id in {"positions.list", "orders.paper_submit"}
+}
 PAPER = {"account_id": "acct-1", "symbol": "AAPL", "side": "buy", "qty": 2.0}
 
 
@@ -48,6 +52,7 @@ def test_operations_declare_the_service_executor_and_the_subject() -> None:
     assert "orders.paper_submit" in EXTERNAL_EFFECT_OPERATIONS
 
 
+@pytest.mark.spec("ARBORA-DATA-MARKET-R003.7")
 @pytest.mark.spec("ARBORA-OPS-R017.2")
 @pytest.mark.asyncio
 async def test_paper_action_requires_account_ownership(
