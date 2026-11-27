@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from arbora.fleet.onboarding import CAPTURE_REQUEST_INTERVAL_S, _PacedSession
+from arbora.fleet.onboarding_capture import CAPTURE_REQUEST_INTERVAL_S, _PacedSession
 
 
 class _Session:

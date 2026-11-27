@@ -927,7 +927,7 @@ class ChildTransport:
         if listener is None:
             return
         try:
-            from arbora.fleet.onboarding import served_catalog_digest
+            from arbora.fleet.onboarding_service import served_catalog_digest
 
             # ``server_info`` is set by both an initialize and a discover
             # session; ``initialize_result`` is empty on a discover session.

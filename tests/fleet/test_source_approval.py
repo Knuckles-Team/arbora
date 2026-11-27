@@ -164,7 +164,8 @@ class _Engine:
 
 def _onboard(monkeypatch, engine: _Engine, catalog: VirtualCatalog) -> Any:
     from arbora import semantic_provisioning
-    from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from arbora.fleet.onboarding import FleetOnboarding
+    from arbora.fleet.onboarding_capture import FleetEndpoint
     from arbora.security.session import use_session
     from tests._eg_fakes import service_session
 

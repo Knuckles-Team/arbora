@@ -480,10 +480,9 @@ async def _onboard_fleet(
         select_endpoints,
     )
     from arbora.fleet.declarations import Declarations
-    from arbora.fleet.onboarding import (
-        FleetOnboarding,
+    from arbora.fleet.onboarding import FleetOnboarding, onboard_fleet
+    from arbora.fleet.onboarding_capture import (
         configured_fleet_endpoints,
-        onboard_fleet,
         self_served_connectors,
     )
     from arbora.fleet.virtual_catalog import VirtualCatalog
@@ -526,7 +525,7 @@ async def _check_fleet_coverage(host: OneShotHost) -> dict[str, Any]:
     from arbora.api.domain.fleet.catalog_reader import FleetCatalogReader, ReadContext
     from arbora.fleet.coverage import check_fleet_coverage, registered_connectors
     from arbora.fleet.epistemic_adapter import GeneratedFleetCatalogPort
-    from arbora.fleet.onboarding import (
+    from arbora.fleet.onboarding_capture import (
         configured_fleet_endpoints,
         self_served_connectors,
     )

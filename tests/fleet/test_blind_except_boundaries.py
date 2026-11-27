@@ -14,7 +14,7 @@ from arbora.api.domain.fleet.definitions import VersionedDefinition
 from arbora.api.domain.fleet.scaling import scaling_authority
 from arbora.fleet.catalog_replay import receipts_from_rows
 from arbora.fleet.connect_contract import ConnectContract
-from arbora.fleet.onboarding import HandshakeOnboarder
+from arbora.fleet.onboarding_service import HandshakeOnboarder
 from tests.fleet.test_handshake_onboard import _Registry, _setup
 
 

@@ -9,17 +9,13 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet import onboarding as onboarding_module
+from arbora.fleet import onboarding as _onboarding_module
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.gateway_ops import ConfirmingTools, FleetGateway
 from arbora.fleet.multiplexer_ops import MultiplexerOps
-from arbora.fleet.onboarding import (
-    FleetEndpoint,
-    FleetOnboarding,
-    OnboardingReport,
-    _onboard_all,
-)
+from arbora.fleet.onboarding import FleetOnboarding, OnboardingReport, _onboard_all
+from arbora.fleet.onboarding_capture import FleetEndpoint
 from arbora.fleet.session_loads import SessionLoads
 from arbora.fleet.surfaces import (
     NOT_SERVED,
@@ -219,7 +215,7 @@ async def test_onboarding_record_carries_surfaces_for_changed_and_unchanged(
         capture=capture,
     )
     report = OnboardingReport()
-    monkeypatch.setattr(onboarding_module, "_child_auth", lambda *_: None)
+    monkeypatch.setattr(_onboarding_module, "_child_auth", lambda *_: None)
     endpoint = FleetEndpoint(BARE, "http://bare/mcp")
     await _onboard_all(onboarding, [endpoint], report)
     assert report.renewed == [BARE]

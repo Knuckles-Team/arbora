@@ -377,7 +377,7 @@ def _start_catalog_warmup(
     def onboard() -> None:
         # Register, attest and import each child catalog, then renew leases.
         # A fault logs and retries; it never blocks or stops serving.
-        from arbora.fleet.onboarding import start_fleet_onboarding
+        from arbora.fleet.onboarding_service import start_fleet_onboarding
 
         with use_actor(session.actor), use_session(session):
             start_fleet_onboarding(

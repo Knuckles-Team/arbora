@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet import onboarding as onboarding_module
-from arbora.fleet.onboarding import SLOW_RETRY_S, FleetEndpoint, HandshakeOnboarder
+from arbora.fleet import onboarding_service as onboarding_module
+from arbora.fleet.onboarding_capture import FleetEndpoint
 from arbora.fleet.onboarding_machine import (
     ONBOARDING_EDGES,
     IllegalOnboardingTransition,
@@ -18,6 +18,7 @@ from arbora.fleet.onboarding_machine import (
     OnboardingState,
     transition,
 )
+from arbora.fleet.onboarding_service import SLOW_RETRY_S, HandshakeOnboarder
 from tests.fleet.test_handshake_onboard import (  # noqa: F401  (eg is a fixture)
     DEBOUNCE,
     _handshake,

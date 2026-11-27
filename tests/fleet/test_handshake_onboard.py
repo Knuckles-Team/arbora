@@ -17,15 +17,14 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.fleet.catalog_graph import RESOURCES_URI
 from arbora.fleet.child_mounts import ChildMounts
 from arbora.fleet.child_transport import ChildTransport
-from arbora.fleet.onboarding import (
-    RESOURCES_URI,
+from arbora.fleet.onboarding import FleetOnboarding, OnboardingTrigger
+from arbora.fleet.onboarding_capture import FleetEndpoint
+from arbora.fleet.onboarding_service import (
     SLOW_RETRY_S,
-    FleetEndpoint,
-    FleetOnboarding,
     HandshakeOnboarder,
-    OnboardingTrigger,
     handshake_catalog_digest,
     served_catalog_digest,
 )

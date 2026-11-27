@@ -131,7 +131,7 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
         session_module, "use_session", lambda _s: contextlib.nullcontext()
     )
     monkeypatch.setattr(
-        "arbora.fleet.onboarding.start_fleet_onboarding", lambda **_k: None
+        "arbora.fleet.onboarding_service.start_fleet_onboarding", lambda **_k: None
     )
     slot = WarmupSlot()
     warmup = server._start_catalog_warmup(
