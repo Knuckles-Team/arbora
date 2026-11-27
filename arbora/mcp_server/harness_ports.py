@@ -33,6 +33,7 @@ def build_host_ports(
     from meristem.host_ports import NativeToolsetProvider
 
     from arbora.a2a.checkpoint import checkpoint_store
+    from arbora.agent_host.harness_cycle import HostProbeProvider
     from arbora.agent_host.host_port_adapters import bind_host_ports
     from arbora.agent_runs import decide_run, record_run_event, resolve_model
     from arbora.current_plan_publication import publication_scope
@@ -67,6 +68,7 @@ def build_host_ports(
         "remote": client_toolsets.remote_toolset_provider(),
         "tool_client": client_toolsets.open_tool_client,
         "keepalive": harness_host.keepalive,
+        "probe": HostProbeProvider(slot.current),
     }
     if services is None:
         binding = bind_host_ports(

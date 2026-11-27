@@ -104,6 +104,7 @@ def test_a_structural_double_of_the_record_receives_the_same_providers(
         keepalive: Any = None
         scaffold_publication: Any = None
         checkpoint_store: Any = None
+        probe: Any = None
 
     from arbora.pin_lag import meristem as lag
 

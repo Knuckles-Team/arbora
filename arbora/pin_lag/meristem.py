@@ -40,6 +40,8 @@ HOST_PORT_FIELDS: tuple[str, ...] = (
     "events",
     "changeset_submitter",
     "gate_runner",
+    "cycle",
+    "probe",
 )
 
 _ANSWER_TYPES: tuple[str, ...] = (
