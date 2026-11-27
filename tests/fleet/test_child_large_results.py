@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.fleet import child_transport as _multiplexer_child_transport
 from arbora.fleet import multiplexer
 from tests.fleet.test_relay_session_recovery import _mounted, child_port  # noqa: F401
 
@@ -30,6 +31,6 @@ async def test_a_two_mib_child_result_reaches_arbora(tmp_path, child_port) -> No
 
 def test_the_child_event_bound_covers_the_delegated_value_bound() -> None:
     assert (
-        multiplexer._MAX_CHILD_SSE_EVENT_BYTES
+        _multiplexer_child_transport._MAX_CHILD_SSE_EVENT_BYTES
         >= 2 * multiplexer._MAX_DELEGATED_VALUE_BYTES
     )

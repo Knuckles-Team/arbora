@@ -17,6 +17,7 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.fleet.child_transport import ChildTransport
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.onboarding import (
     RESOURCES_URI,
@@ -114,17 +115,38 @@ def _handshake(
 
     session = _Session(version, prompts, declaration, tools)
     asyncio.run(
-        MCPMultiplexer._announce_handshake(
-            cast(Any, mux), name, session, tools or _tools("lookup")
-        )
+        mux.transport._announce_handshake(name, session, tools or _tools("lookup"))
     )
+
+
+def _transport(
+    probe_cache: dict[str, Any] | None = None,
+    list_changed_tasks: set[Any] | None = None,
+    publish_live_tools: Any = None,
+    handshake_listener: Any = None,
+) -> ChildTransport:
+    """A child transport built from its data, with no multiplexer."""
+
+    async def _no_publish(*_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    transport = ChildTransport(
+        child_catalog_fingerprints={},
+        child_policy_admitted_tools={},
+        fleet=SimpleNamespace(),
+        list_changed_tasks=set() if list_changed_tasks is None else list_changed_tasks,
+        probe_cache={} if probe_cache is None else probe_cache,
+        publish_live_tools=publish_live_tools or _no_publish,
+    )
+    transport.set_handshake_listener(handshake_listener)
+    return transport
 
 
 def _setup(
     registry: _Registry, capture: Any = _served_pack, **kwargs: Any
 ) -> tuple[HandshakeOnboarder, SimpleNamespace, _Clock]:
     clock = _Clock()
-    mux = SimpleNamespace(_fleet_onboarding=None, _handshake_listener=None)
+    mux = SimpleNamespace(_fleet_onboarding=None, transport=_transport())
     onboarder = HandshakeOnboarder(
         onboarding=_onboarding(registry, capture),
         multiplexer=mux,
@@ -133,7 +155,7 @@ def _setup(
         wait=clock,
         **kwargs,
     )
-    mux._handshake_listener = onboarder.notify
+    mux.transport._handshake_listener = onboarder.notify
     return onboarder, mux, clock
 
 
@@ -265,35 +287,34 @@ def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
     import asyncio
 
     seen: list[dict[str, Any]] = []
-    mux = SimpleNamespace(
-        _handshake_listener=lambda name, **kw: seen.append({"name": name, **kw}),
-        _list_changed_tasks=set(),
-        _probe_cache={"alpha-mcp": {"tools": [], "error": None}},
-        children={},
+    probe_cache: dict[str, Any] = {"alpha-mcp": {"tools": [], "error": None}}
+    list_changed_tasks: set[Any] = set()
+    publisher = SimpleNamespace(children={})
+    transport = _transport(
+        probe_cache=probe_cache,
+        list_changed_tasks=list_changed_tasks,
+        publish_live_tools=functools.partial(
+            MCPMultiplexer._publish_live_tools, cast(Any, publisher)
+        ),
     )
-    mux._announce_handshake = functools.partial(
-        MCPMultiplexer._announce_handshake, cast(Any, mux)
-    )
-    mux._publish_live_tools = functools.partial(
-        MCPMultiplexer._publish_live_tools, cast(Any, mux)
+    transport.set_handshake_listener(
+        lambda name, **kw: seen.append({"name": name, **kw})
     )
     session = _Session(prompts=[])
-    handler = MCPMultiplexer._child_message_handler(
-        cast(Any, mux), "alpha-mcp", [session]
-    )
+    handler = transport._child_message_handler("alpha-mcp", [session])
 
     from mcp_types import PromptListChangedNotification
 
     async def drive() -> None:
         await handler(PromptListChangedNotification())
         await handler(RuntimeError("transport fault"))  # not a list change: ignored
-        await asyncio.gather(*mux._list_changed_tasks)
+        await asyncio.gather(*list_changed_tasks)
 
     asyncio.run(drive())
     assert [item["reason"] for item in seen] == ["list_changed"]
     assert seen[0]["name"] == "alpha-mcp"
     # ARBORA-FLEET-R070: the changed child is re-probed on the next read.
-    assert "alpha-mcp" not in mux._probe_cache
+    assert "alpha-mcp" not in probe_cache
 
 
 # spec: ARBORA-FLEET-R041.8
@@ -388,8 +409,8 @@ def test_listener_failure_never_breaks_the_handshake() -> None:
     def boom(*_a: Any, **_k: Any) -> None:
         raise RuntimeError("scheduler down")
 
-    _handshake(SimpleNamespace(_handshake_listener=boom))
-    _handshake(SimpleNamespace(_handshake_listener=None))
+    _handshake(SimpleNamespace(transport=_transport(handshake_listener=boom)))
+    _handshake(SimpleNamespace(transport=_transport(handshake_listener=None)))
 
 
 # spec: ARBORA-FLEET-R041.10

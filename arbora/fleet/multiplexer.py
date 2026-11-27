@@ -22,14 +22,9 @@ import asyncio
 import collections.abc as _collections_abc
 import concurrent.futures
 import contextlib
-import contextvars
 import hashlib
-import hmac
-import importlib.metadata
 import json
 import logging
-import math
-import os
 import re
 import secrets
 import sys
@@ -37,23 +32,14 @@ import tempfile
 import time
 import typing as _typing
 from pathlib import Path
-from types import SimpleNamespace
-from urllib.parse import urlsplit
 
 import fastmcp.exceptions as _fastmcp_exceptions
 import fastmcp.tools as _fastmcp_tools
-import mcp as _mcp
-from mcp.client.session import ClientSession, IncomingMessage, MessageHandlerFnT
+from mcp.client.session import ClientSession
 
-from arbora.core.environment import inherited_environment, read_env, read_reference
+from arbora.core.environment import read_env
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.protocol_compat import mcp_types_module
-
-# Public transport seams are kept as module attributes so tests and embedders can
-# replace a transport without patching the third-party package globally.
-StdioServerParameters = _mcp.StdioServerParameters
-stdio_client = _mcp.stdio_client
-_HTTP_TE_HEADER = "".join(("t", "e"))
 
 if _typing.TYPE_CHECKING:
     from mcp_types import CallToolResult as MCPCallToolResult
@@ -83,8 +69,6 @@ ToolResult = _fastmcp_tools.ToolResult
 # turned the rename into a silent `RuntimeError: mcp SDK has no
 # streamablehttp_client` on EVERY remote child, which is the whole deployed
 # fleet — `deploy/mcp-fleet.registry.yml` defaults to `streamable-http`).
-from mcp.client.sse import sse_client
-from mcp.client.streamable_http import streamable_http_client
 
 import arbora.api.domain.fleet.catalog_reader as _catalog_reader
 import arbora.core.priority as _resource_priority
@@ -113,8 +97,42 @@ logging.basicConfig(
     stream=sys.stderr,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+from arbora.fleet.child_payload_bounds import (
+    _MAX_DELEGATED_NODES,
+    _MAX_DELEGATED_VALUE_BYTES,
+    _assert_bounded_json_value,
+    _bounded_descriptor_catalog,
+    _bounded_prompt_catalog,
+    _bounded_skill_catalog,
+    _bounded_tool_catalog,
+    _child_error_result,
+    _child_failure_result,
+    _child_required_scopes,
+    _child_tool_admitted,
+    _classified_child_error,
+    _list_all,
+    _list_all_tools,
+    _live_tool_entry,
+    _stage_forwarder_components,
+    _tool_catalog_digest,
+    assert_bounded_delegated_value,
+    child_result_payload,
+)
+from arbora.fleet.child_runtime_policy import (
+    _SESSION_KEY,
+    _close_runtime_child_policy,
+    _prepare_runtime_child_policy,
+    _runtime_materialized,
+    _validate_externalized_child_secrets,
+    attest_runtime_child_config,
+)
+from arbora.fleet.child_transport import (
+    _CURRENT_DISCOVERY_BINDING,
+    ChildTransport,
+    _child_transport_values,
+)
+
 logger = logging.getLogger("mcp_multiplexer")
-_SESSION_KEY = secrets.token_bytes(32)
 _CONFIG_MAX_BYTES = 4 * 1024 * 1024
 _ENGINE_CONFIG_FIELDS = frozenset(
     {
@@ -144,37 +162,6 @@ _ENGINE_CONFIG_FIELDS = frozenset(
         "credential_owner",
     }
 )
-_MAX_DELEGATED_VALUE_BYTES = 4 * 1024 * 1024
-#: The largest single SSE event arbora reads from a streamable-http child
-#: (ARBORA-OPS-R020.6.8). One event carries one whole JSON-RPC result, whose
-#: text content is the tool's JSON escaped once more, so the bound is twice the
-#: delegated value bound. The MCP client default (1 MiB) is below arbora's own
-#: value bound and failed every 50-record ServiceNow page.
-_MAX_CHILD_SSE_EVENT_BYTES = 2 * _MAX_DELEGATED_VALUE_BYTES
-_MAX_DELEGATED_NODES = 16_384
-_MAX_DELEGATED_DEPTH = 32
-#: Resource and prompt listings keep a fixed per-child count bound. A tool
-#: catalog has no count bound at all (ARBORA-FLEET-R069): a connector that
-#: serves one tool per upstream operation is admitted whole.
-_MAX_DISCOVERED_DESCRIPTORS = 2_048
-#: One child tool descriptor's structural allowance. Each descriptor is
-#: bounded on its own; a large catalog is never truncated (ARBORA-FLEET-R069).
-_MAX_CATALOG_NODES = 131_072
-# Skills-over-MCP (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider): a probed
-# server's Resources may include ``skill://{name}/SKILL.md`` entries. Bounded
-# the same way as the tool catalog so a hostile/misbehaving child cannot force
-# an unbounded resource listing into the KG.
-_MAX_DISCOVERED_SKILLS = 2_048
-_SKILL_RESOURCE_RE = re.compile(r"^skill://(?P<name>[^/]+)/SKILL\.md$")
-# A skill body is never read back over the wire: the resident local-skill
-# catalog (``arbora.fleet.local_skill_catalog``) is the one source of bodies
-# (ARBORA-FLEET-R006.2 to .5).
-# Prompts-over-MCP (CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the
-# ``prompt://`` sibling of the skill resources above): a probed server's
-# Resources may include ``prompt://{provider}/{name}`` entries served by
-# ``server_factory._register_prompt_providers``, bounded the same way.
-_MAX_DISCOVERED_PROMPTS = 2_048
-_PROMPT_RESOURCE_RE = re.compile(r"^prompt://(?P<provider>[^/]+)/(?P<name>[^/]+)$")
 
 _SERVER_DISCOVERY_STOPWORDS = frozenset({"api", "mcp", "manager", "server", "service"})
 # Fleet-wide concurrent-probe ceiling (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog), shared
@@ -204,22 +191,6 @@ _SERVER_DISCOVERY_STOPWORDS = frozenset({"api", "mcp", "manager", "server", "ser
 # 32 probes inside their deadlines. 8 completes the fleet in ~55s, inside the
 # connectors lane's 108s fleet-probe budget, with room to spare.
 _PROBE_CONCURRENCY = 8
-_RUNTIME_CHILD_POLICY_GROUP = "arbora.mcp_child_policies"
-_RUNTIME_CHILD_POLICY_RE = re.compile(r"^[a-z][a-z0-9-]{1,62}$")
-_RUNTIME_CHILD_POLICY_TRANSPORT_KEYS = frozenset(
-    {
-        "args",
-        "command",
-        "env",
-        "headers",
-        "provider_profile",
-        "tls_profile",
-        "tls_profile_ref",
-        "transport",
-        "url",
-    }
-)
-_RUNTIME_CHILD_POLICY_INTERNAL_KEY = "_runtime_child_policy"
 
 
 class _ProbeOnlyCatalogReader:
@@ -261,1020 +232,6 @@ def _tool_schema_compatible(
     except (TypeError, ValueError):
         return False
     return expected == actual
-
-
-_ENV_RUNTIME_REF_RE = re.compile(r"^env://([A-Z][A-Z0-9_]{0,127})$")
-_STORE_RUNTIME_REF_RE = re.compile(
-    r"^(?:vault|secret)://[A-Za-z0-9][A-Za-z0-9_./#-]{0,511}$"
-)
-_RUNTIME_REF_RE = re.compile(
-    r"^(?:env://[A-Z][A-Z0-9_]{0,127}|"
-    r"(?:vault|secret)://[A-Za-z0-9][A-Za-z0-9_./#-]{0,511})$"
-)
-_ENV_TEMPLATE_RE = re.compile(r"\$\{(?:env:)?([A-Za-z_][A-Za-z0-9_]*)\}")
-_SENSITIVE_CONFIG_KEY_RE = re.compile(
-    r"(?:^|_)(?:AUTHORIZATION|COOKIE|CREDENTIAL|PASSWORD|SECRET|TOKEN|API_KEY|HMAC_KEY)(?:_|$)",
-    re.IGNORECASE,
-)
-_CHILD_ENV_ALLOWLIST = frozenset(
-    {
-        "ARBORA_CONFIG_DIR",
-        "COMSPEC",
-        "APPDATA",
-        "HOME",
-        "LANG",
-        "LC_ALL",
-        "LOCALAPPDATA",
-        "NO_PROXY",
-        "PATH",
-        "PATHEXT",
-        "REQUESTS_CA_BUNDLE",
-        "SSL_CERT_DIR",
-        "SSL_CERT_FILE",
-        "SYSTEMROOT",
-        "TEMP",
-        "TMP",
-        "USERPROFILE",
-        "UV_NATIVE_TLS",
-        "WINDIR",
-        "XDG_CACHE_HOME",
-        "XDG_CONFIG_HOME",
-        "XDG_DATA_HOME",
-        "XDG_RUNTIME_DIR",
-        "XDG_STATE_HOME",
-    }
-)
-_TASK_DELEGATION_CHANNEL_ENV = "ARBORA_MCP_TASK_CHANNEL_SECRET"
-_PROVIDER_CHILD_ENV_KEYS = frozenset({"AGENT_PROVIDER_PROFILE", "PROVIDER_CONFIGS"})
-
-
-def _sensitive_config_key(name: str) -> bool:
-    normalized = str(name).replace("-", "_")
-    return bool(_SENSITIVE_CONFIG_KEY_RE.search(normalized))
-
-
-def _externalized_value(value: _typing.Any) -> bool:
-    rendered = str(value or "")
-    return bool(
-        _RUNTIME_REF_RE.fullmatch(rendered) or _ENV_TEMPLATE_RE.search(rendered)
-    )
-
-
-def _resolve_fleet_runtime_reference(reference: str, config: RuntimeConfig) -> str:
-    """Resolve one fleet reference with direct aliases taking precedence.
-
-    ``env://ALIAS`` first reads the live environment projection, which includes
-    the runtime-secrets source. Only an unavailable direct alias consults the
-    validated ``AgentConfig.mcp_fleet_secret_refs`` mapping. Store references
-    resolve through the central runtime secret resolver. No resolved value is
-    retained in the catalog or configuration model.
-    """
-
-    env_match = _ENV_RUNTIME_REF_RE.fullmatch(reference)
-    if env_match is not None:
-        alias = env_match.group(1)
-        direct = read_reference(alias, None)
-        if direct not in (None, ""):
-            return str(direct)
-
-        mappings = getattr(config, "mcp_fleet_secret_refs", None)
-        if not isinstance(mappings, dict):
-            raise RuntimeError("MCP fleet secret alias mapping is invalid")
-        mapped_reference = mappings.get(alias)
-        if mapped_reference in (None, ""):
-            raise RuntimeError("MCP child runtime reference is unavailable")
-        reference = str(mapped_reference)
-    elif _STORE_RUNTIME_REF_RE.fullmatch(reference) is None:
-        raise RuntimeError("MCP child runtime reference is invalid")
-
-    from scion_sdk.credentials.runtime_references import (
-        resolve_runtime_secret_reference,
-    )
-
-    try:
-        return resolve_runtime_secret_reference(reference)
-    except Exception:
-        logger.warning("_resolve_fleet_runtime_reference failed", exc_info=True)
-        raise RuntimeError("MCP child runtime reference is unavailable") from None
-
-
-def resolve_runtime_value(
-    value: _typing.Any,
-    *,
-    sensitive: bool,
-    config: RuntimeConfig,
-    materialized: bool = False,
-) -> str:
-    """Resolve externalized catalog values without ever expanding the whole file."""
-    rendered = str(value or "")
-    if _RUNTIME_REF_RE.fullmatch(rendered):
-        rendered = _resolve_fleet_runtime_reference(rendered, config)
-    elif rendered.startswith(("env://", "vault://", "secret://")):
-        raise RuntimeError("MCP child runtime reference is invalid")
-    else:
-        had_template = bool(_ENV_TEMPLATE_RE.search(rendered))
-
-        def replace(match: re.Match[str]) -> str:
-
-            variable = match.group(1)
-            if not sensitive and _sensitive_config_key(variable):
-                raise RuntimeError(
-                    "Sensitive MCP runtime values require a credential field"
-                )
-            resolved = read_reference(variable, None)
-            if resolved in (None, ""):
-                raise RuntimeError("MCP child environment reference is unavailable")
-            return str(resolved)
-
-        rendered = _ENV_TEMPLATE_RE.sub(replace, rendered)
-        if sensitive and not (materialized or had_template):
-            raise RuntimeError("MCP child credentials must use runtime references")
-    if "\x00" in rendered or "\r" in rendered or "\n" in rendered:
-        raise RuntimeError("MCP child runtime value is invalid")
-    return rendered
-
-
-# Sentinel for "this decode produced nothing", distinct from a legitimate
-# ``None``/``{}`` payload a child may genuinely have returned.
-_ABSENT: _typing.Any = object()
-
-# One JSON scalar's flat accounting weight, and the per-collection/per-key
-# structural bounds enforced on every node of a delegated value.
-_JSON_SCALAR_BYTES = 16
-_MAX_JSON_COLLECTION = 4_096
-_MAX_JSON_KEY_BYTES = 1_024
-
-
-def _bounded_json_mapping_bytes(
-    current: dict, depth: int, stack: list[tuple[_typing.Any, int]]
-) -> int:
-    """Validate one mapping node's keys and enqueue its values onto ``stack``."""
-    if len(current) > _MAX_JSON_COLLECTION:
-        raise _fastmcp_exceptions.ToolError(
-            "MCP tool arguments exceed the collection boundary"
-        )
-    byte_count = 0
-    for key, item in current.items():
-        if not isinstance(key, str) or len(key.encode("utf-8")) > _MAX_JSON_KEY_BYTES:
-            raise _fastmcp_exceptions.ToolError("MCP tool argument keys are invalid")
-        byte_count += len(key.encode("utf-8"))
-        stack.append((item, depth + 1))
-    return byte_count
-
-
-def _bounded_json_container_bytes(
-    current: _typing.Any, depth: int, stack: list[tuple[_typing.Any, int]]
-) -> int:
-    """Validate one list/dict node and enqueue its children; reject anything else."""
-    if isinstance(current, list):
-        if len(current) > _MAX_JSON_COLLECTION:
-            raise _fastmcp_exceptions.ToolError(
-                "MCP tool arguments exceed the collection boundary"
-            )
-        stack.extend((item, depth + 1) for item in current)
-        return 0
-    if not isinstance(current, dict):
-        raise _fastmcp_exceptions.ToolError(
-            "MCP tool arguments must be JSON-compatible"
-        )
-    return _bounded_json_mapping_bytes(current, depth, stack)
-
-
-def _bounded_json_node_bytes(
-    current: _typing.Any, depth: int, stack: list[tuple[_typing.Any, int]]
-) -> int:
-    """Account for one JSON node, enqueueing any children onto ``stack``."""
-    if current is None or isinstance(current, bool | int):
-        return _JSON_SCALAR_BYTES
-    if isinstance(current, float):
-        if not math.isfinite(current):
-            raise _fastmcp_exceptions.ToolError(
-                "MCP tool arguments must contain finite numbers"
-            )
-        return _JSON_SCALAR_BYTES
-    if isinstance(current, str):
-        return len(current.encode("utf-8"))
-    return _bounded_json_container_bytes(current, depth, stack)
-
-
-def _assert_bounded_json_value(value: _typing.Any, *, max_nodes: int) -> None:
-    """Reject oversized or excessively nested JSON-compatible values."""
-    stack: list[tuple[_typing.Any, int]] = [(value, 0)]
-    nodes = 0
-    byte_count = 0
-    while stack:
-        current, depth = stack.pop()
-        nodes += 1
-        if nodes > max_nodes or depth > _MAX_DELEGATED_DEPTH:
-            raise _fastmcp_exceptions.ToolError(
-                "MCP tool arguments exceed the structural boundary"
-            )
-        byte_count += _bounded_json_node_bytes(current, depth, stack)
-        if byte_count > _MAX_DELEGATED_VALUE_BYTES:
-            raise _fastmcp_exceptions.ToolError(
-                "MCP tool arguments exceed the size boundary"
-            )
-
-
-def assert_bounded_delegated_value(value: _typing.Any) -> None:
-    """Reject oversized or excessively nested MCP tool arguments."""
-
-    _assert_bounded_json_value(value, max_nodes=_MAX_DELEGATED_NODES)
-
-
-def _child_structured_payload(result: _typing.Any) -> _typing.Any:
-    """The decoded ``structuredContent`` half of one child result.
-
-    Returns :data:`_ABSENT` when the child sent no structured half at all, so
-    the caller can fall back to the text half without confusing that with a
-    child that legitimately answered ``None``/``{}``.
-    """
-
-    value = getattr(result, "structuredContent", None)
-    if value in (None, {}):
-        value = getattr(result, "structured_content", None)
-    if value in (None, {}):
-        return _ABSENT
-    if isinstance(value, dict) and set(value) == {"result"}:
-        value = value["result"]
-    if isinstance(value, str):
-        if len(value.encode("utf-8")) > _MAX_DELEGATED_VALUE_BYTES:
-            raise _fastmcp_exceptions.ToolError(
-                "MCP child result exceeds the size boundary"
-            )
-        value = json.loads(value)
-    return value
-
-
-def _child_text_payload(result: _typing.Any) -> _typing.Any:
-    """The decoded text half of one child result, when it sent no structure."""
-
-    texts = [
-        str(getattr(item, "text", ""))
-        for item in (getattr(result, "content", None) or [])
-        if getattr(item, "text", "")
-    ]
-    rendered = "\n".join(texts)
-    if not rendered or len(rendered.encode("utf-8")) > _MAX_DELEGATED_VALUE_BYTES:
-        raise _fastmcp_exceptions.ToolError(
-            "MCP child result is unavailable for parent ingestion"
-        )
-    return json.loads(rendered)
-
-
-def child_result_payload(result: _typing.Any) -> _typing.Any:
-    """Decode one bounded child result without retaining or logging its body."""
-
-    value = _child_structured_payload(result)
-    if value is _ABSENT:
-        value = _child_text_payload(result)
-    assert_bounded_delegated_value(value)
-    return value
-
-
-def _stage_forwarder_components(
-    previous_components: dict, forwarders: dict, changed_names: set[str]
-) -> dict:
-    """The complete provider component registry with changed forwarders swapped in.
-
-    Staged as ONE mapping so a partial native registration can be undone with a
-    single provider-registry swap rather than a doomed series of rollback
-    ``add_tool`` calls.
-    """
-
-    staged = dict(previous_components)
-    for key, component in tuple(staged.items()):
-        if (
-            isinstance(component, _fastmcp_tools.FunctionTool)
-            and component.name in changed_names
-        ):
-            staged.pop(key)
-    for forwarder in forwarders.values():
-        staged[forwarder.key] = forwarder
-    return staged
-
-
-def _child_error_result(text: str) -> _typing.Any:
-    """One ``isError`` CallToolResult carrying a single opaque text label."""
-
-    return mcp_types.CallToolResult.model_validate(
-        {
-            "content": [mcp_types.TextContent(type="text", text=text)],
-            "isError": True,
-        }
-    )
-
-
-def _classified_child_error(code: str, message: str) -> _typing.Any:
-    """One ``isError`` CallToolResult carrying a typed code and the child's message.
-
-    The gateway reads ``structuredContent.error.code`` as the refusal code and
-    redacts and bounds ``message`` (``fleet_detail``) before any caller sees it.
-    """
-
-    return mcp_types.CallToolResult.model_validate(
-        {
-            "content": [mcp_types.TextContent(type="text", text=message)],
-            "structuredContent": {"error": {"code": code, "message": message}},
-            "isError": True,
-        }
-    )
-
-
-def _render_child_failure_leaves(leaves: list[BaseException]) -> str:
-    """Render ordered cause labels with credential-shaped details redacted."""
-    from arbora.api.errors import fleet_detail
-
-    return "; ".join(
-        f"{type(leaf).__name__}: {fleet_detail(str(leaf)) or ''}".rstrip(": ")
-        for leaf in leaves
-    )
-
-
-def _child_failure_result(
-    server_name: str, original_name: str, exc: BaseException
-) -> _typing.Any:
-    """Classify a failed one-shot child call by its real cause (ARBORA-FLEET-R015.1).
-
-    The MCP client runs each session inside an anyio task group, so any failure
-    (including the child's own JSON-RPC error answer) reaches this point wrapped
-    in an ``ExceptionGroup`` whose text is only "unhandled errors in a
-    TaskGroup". The leaves are the cause:
-
-    * a child protocol error from a live child that is not a dead-session
-      signature means the child ran and refused: ``CHILD_REFUSED`` with the
-      child's own message;
-    * a transport leaf or a dead-session signature means the child could not
-      be reached or dropped the session: ``UNAVAILABLE``;
-    * anything else keeps the opaque, correlation-tracked public error.
-
-    The leaf classes and the child's bounded, redacted message are logged so an
-    operator sees the cause; credential-shaped text is redacted first.
-    """
-    from arbora.api.errors import fleet_detail
-
-    leaves = _child_resilience._exc_leaves(exc)
-    rendered = _render_child_failure_leaves(leaves)
-    logger.warning(
-        "fleet child call failed (server=%s tool=%s causes=%s)",
-        server_name,
-        original_name,
-        rendered or type(exc).__name__,
-    )
-    if any(
-        _child_resilience.is_session_dead(leaf)
-        or isinstance(leaf, _child_resilience.TRANSPORT_EXCEPTIONS)
-        for leaf in leaves
-    ):
-        return _classified_child_error(
-            "UNAVAILABLE", fleet_detail(rendered) or "child transport failed"
-        )
-    refusals = [leaf for leaf in leaves if isinstance(leaf, _child_resilience.MCPError)]
-    if refusals:
-        message = fleet_detail(str(refusals[0])) or "child refused the call"
-        return _classified_child_error("CHILD_REFUSED", message)
-    return _child_error_result(public_error_text(exc))
-
-
-def _child_required_scopes(
-    child_config: _collections_abc.Mapping[str, _typing.Any],
-) -> list[str]:
-    """One child's declared ``required_scopes``, validated.
-
-    Accepts either a list or a whitespace-separated string; anything else is a
-    configuration error rather than an implicitly empty requirement.
-    """
-
-    configured_scopes = child_config.get("required_scopes", [])
-    if isinstance(configured_scopes, str):
-        configured_scopes = configured_scopes.split()
-    if not isinstance(configured_scopes, list) or not all(
-        isinstance(scope, str) and 1 <= len(scope) <= 128 for scope in configured_scopes
-    ):
-        raise _fastmcp_exceptions.ToolError("Child MCP scope configuration is invalid")
-    return configured_scopes
-
-
-def _child_tool_admitted(
-    tool_name: str, enabled_tools: _typing.Any, disabled_tools: _typing.Any
-) -> bool:
-    """Whether one child tool passes its catalog entry's enable/disable filters."""
-
-    import fnmatch
-
-    if enabled_tools is not None and not any(
-        fnmatch.fnmatch(tool_name, pat) for pat in enabled_tools
-    ):
-        logger.info("Skipping a non-whitelisted MCP child tool")
-        return False
-    if disabled_tools and any(
-        fnmatch.fnmatch(tool_name, pat) for pat in disabled_tools
-    ):
-        logger.info("Skipping a disabled MCP child tool")
-        return False
-    return True
-
-
-def _bounded_catalog_name(name: _typing.Any) -> bool:
-    """Whether one child-supplied catalog identifier is within its boundary."""
-
-    return (
-        isinstance(name, str)
-        and 1 <= len(name.encode("utf-8")) <= 256
-        and all(ord(character) >= 32 for character in name)
-    )
-
-
-def _bounded_tool_annotations(tool: _typing.Any) -> dict | None:
-    """One child tool's annotations as a plain dict, or ``None`` when absent."""
-
-    annotations = getattr(tool, "annotations", None)
-    if annotations is None or isinstance(annotations, dict):
-        return annotations
-    model_dump = getattr(annotations, "model_dump", None)
-    if not callable(model_dump):
-        raise RuntimeError("MCP child tool catalog is invalid")
-    dumped = model_dump(mode="json")
-    if not isinstance(dumped, dict):
-        raise RuntimeError("MCP child tool catalog is invalid")
-    return dumped
-
-
-def _live_tool_entry(original: str, tobj: _typing.Any) -> dict[str, _typing.Any]:
-    """One mounted tool's probe row: name, description, schema, meta, annotations.
-
-    The catalog classifies a tool's effect from its annotations; a live-child
-    probe without them turns every read-only tool into a write, so a governed
-    READ call is refused.
-    """
-    if tobj is None:
-        return {"name": original, "description": "", "inputSchema": {}}
-    entry: dict[str, _typing.Any] = {
-        "name": original,
-        "description": tobj.description or "",
-        "inputSchema": tobj.input_schema or {},
-    }
-    meta = getattr(tobj, "meta", None)
-    if meta:
-        entry["meta"] = meta
-    annotations = _bounded_tool_annotations(tobj)
-    if annotations is not None:
-        entry["annotations"] = annotations
-    return entry
-
-
-def _bounded_tool_schemas(tool: _typing.Any) -> dict[str, _typing.Any]:
-    """Project typed schemas before the catalog's shared size/depth validation."""
-    input_schema = getattr(tool, "input_schema", None) or {}
-    output_schema = getattr(tool, "output_schema", None)
-    if not isinstance(input_schema, dict):
-        raise RuntimeError("MCP child tool catalog is invalid")
-    schemas = {"inputSchema": input_schema}
-    if output_schema is not None:
-        if not isinstance(output_schema, dict):
-            raise RuntimeError("MCP child tool catalog is invalid")
-        schemas["outputSchema"] = output_schema
-    return schemas
-
-
-def _bounded_tool_entry(tool: _typing.Any) -> dict[str, _typing.Any]:
-    """Project and validate ONE child tool descriptor."""
-
-    name = getattr(tool, "name", None)
-    description = getattr(tool, "description", "") or ""
-    annotations = _bounded_tool_annotations(tool)
-    if not _bounded_catalog_name(name) or not isinstance(description, str):
-        raise RuntimeError("MCP child tool catalog is invalid")
-    item: dict[str, _typing.Any] = {
-        "name": name,
-        "description": description,
-        **_bounded_tool_schemas(tool),
-    }
-    # The same ``meta`` pass-through the live entry keeps: the catalog reads
-    # the connector group from ``scion/upstream`` (ARBORA-FLEET-R061).
-    meta = getattr(tool, "meta", None)
-    if meta:
-        item["meta"] = meta
-    if annotations is not None:
-        item["annotations"] = annotations
-    return item
-
-
-class FleetCatalogPageError(RuntimeError):
-    """One page of a child's ``tools/list`` could not be read.
-
-    Typed (ARBORA-FLEET-R068): the listing is refused whole, never served
-    partial, so a connector can never silently lose tools. The probe records
-    it as the server's error and the primer retries; the last good catalog
-    keeps serving meanwhile.
-    """
-
-
-def _bounded_tool_catalog(raw_tools: _typing.Any) -> list[dict[str, _typing.Any]]:
-    """Project one child catalog into a bounded, JSON-compatible shape.
-
-    The MCP SDK decodes remote responses before returning them to us.  This
-    boundary prevents a child from turning that decoded value into an
-    unbounded in-memory/KG catalog: names, descriptions, schemas, and
-    annotations are validated per descriptor before any caller can cache or
-    register them. The tool count has no bound (ARBORA-FLEET-R069).
-    """
-
-    if not isinstance(raw_tools, list | tuple):
-        raise RuntimeError("MCP child tool catalog exceeded its boundary")
-    tools: list[dict[str, _typing.Any]] = [
-        _bounded_tool_entry(tool) for tool in raw_tools
-    ]
-    try:
-        for entry in tools:
-            _assert_bounded_json_value(entry, max_nodes=_MAX_CATALOG_NODES)
-    except _fastmcp_exceptions.ToolError:
-        raise RuntimeError("MCP child tool catalog exceeded its boundary") from None
-    return tools
-
-
-def _next_cursor(result: _typing.Any) -> str | None:
-    """A ``tools/list`` page's continuation cursor, or ``None`` on the last."""
-    cursor = getattr(result, "next_cursor", None)
-    return cursor if isinstance(cursor, str) and cursor else None
-
-
-async def _list_page(
-    session: _typing.Any, method: str, cursor: str | None
-) -> _typing.Any:
-    """One page of a child ``*/list``; a continuation page failure is typed.
-
-    The first page raises unchanged, so an optional family a child does not
-    implement still reads as "method not found".
-    """
-    call = getattr(session, method)
-    if cursor is None:
-        return await call()
-    try:
-        return await call(params=mcp_types.PaginatedRequestParams(cursor=cursor))
-    except Exception as exc:
-        raise FleetCatalogPageError(
-            f"MCP child {method} page failed ({type(exc).__name__})"
-        ) from exc
-
-
-async def _list_all(session: _typing.Any, method: str, field: str) -> list[_typing.Any]:
-    """Every entry of one child list family, followed to its last page.
-
-    ARBORA-FLEET-R068/R068.1: tools, resources, resource templates and prompts
-    are read cursor by cursor until a page has no ``nextCursor``. A failed
-    continuation page or a repeated cursor refuses the listing whole with
-    :class:`FleetCatalogPageError`; a partial list is never returned.
-    """
-    result = await _list_page(session, method, None)
-    entries = list(getattr(result, field))
-    seen: set[str] = set()
-    cursor = _next_cursor(result)
-    while cursor is not None:
-        if cursor in seen:
-            raise FleetCatalogPageError(f"MCP child {method} cursor repeated")
-        seen.add(cursor)
-        result = await _list_page(session, method, cursor)
-        entries.extend(getattr(result, field))
-        cursor = _next_cursor(result)
-    return entries
-
-
-async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
-    """Every tool a child serves (ARBORA-FLEET-R068)."""
-    return await _list_all(session, "list_tools", "tools")
-
-
-def _tool_catalog_digest(tools: list[MCPTool]) -> str:
-    """Return a stable digest of the client-visible portion of one child catalog.
-
-    A child generation already pays for ``tools/list`` as part of its bounded
-    connection handshake.  Comparing that result here lets the multiplexer
-    refresh only changed forwarding schemas, without polling a provider from
-    ordinary tool calls or churning probe/embedding caches after an equivalent
-    reconnect.
-    """
-    catalog = _bounded_tool_catalog(tools)
-    for entry, tool in zip(catalog, tools, strict=True):
-        meta = getattr(tool, "meta", None)
-        if meta is not None:
-            _assert_bounded_json_value(meta, max_nodes=_MAX_CATALOG_NODES)
-            entry["meta"] = meta
-    # A provider is allowed to return its catalog in a different order after a
-    # reconnect.  Order is not part of a forwarding schema, so make the
-    # no-op comparison insensitive to it and avoid needless cache/host-tool
-    # churn on an otherwise equivalent generation.
-    catalog.sort(key=lambda entry: entry["name"])
-    canonical = json.dumps(
-        catalog, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-    ).encode("utf-8")
-    return hashlib.sha256(canonical).hexdigest()
-
-
-def _assert_bounded_resource_list(raw_resources: _typing.Any) -> None:
-    """Reject a child ``resources/list`` payload that is not a bounded sequence."""
-
-    if not isinstance(raw_resources, list | tuple):
-        raise RuntimeError("MCP child resource catalog is invalid")
-    if len(raw_resources) > _MAX_DISCOVERED_DESCRIPTORS:
-        raise RuntimeError("MCP child resource catalog exceeded its boundary")
-
-
-def _bounded_descriptor_catalog(
-    values: _typing.Any, *, key: str, family: str
-) -> list[dict[str, _typing.Any]]:
-    """Project one native MCP descriptor family through the shared boundary."""
-    if (
-        not isinstance(values, list | tuple)
-        or len(values) > _MAX_DISCOVERED_DESCRIPTORS
-    ):
-        raise RuntimeError(f"MCP child {family} catalog exceeded its boundary")
-    projected: list[dict[str, _typing.Any]] = []
-    for value in values:
-        entry = _descriptor_mapping(value, key)
-        if not _bounded_catalog_name(entry.get(key)):
-            raise RuntimeError(f"MCP child {family} catalog is invalid")
-        projected.append(entry)
-    try:
-        _assert_bounded_json_value(projected, max_nodes=_MAX_CATALOG_NODES)
-    except _fastmcp_exceptions.ToolError:
-        raise RuntimeError(
-            f"MCP child {family} catalog exceeded its boundary"
-        ) from None
-    return projected
-
-
-def _descriptor_mapping(value: _typing.Any, key: str) -> dict[str, _typing.Any]:
-    """Convert one decoded descriptor without trusting a concrete SDK class."""
-    dump = getattr(value, "model_dump", None)
-    if callable(dump):
-        mapped = dump(mode="json", by_alias=True, exclude_none=True)
-        if isinstance(mapped, dict):
-            return mapped
-    attribute = "uri_template" if key == "uriTemplate" else key
-    identity = getattr(value, attribute, None)
-    entry = {key: str(identity) if identity is not None else ""}
-    for field in ("name", "description"):
-        field_value = getattr(value, field, None)
-        if isinstance(field_value, str) and field_value:
-            entry[field] = field_value
-    return entry
-
-
-def _bounded_skill_entry(resource: _typing.Any) -> dict[str, _typing.Any] | None:
-    """Project ONE ``skill://`` resource, or ``None`` when it is not a skill."""
-
-    uri = getattr(resource, "uri", None)
-    uri_text = str(uri) if uri is not None else ""
-    match = _SKILL_RESOURCE_RE.match(uri_text)
-    if not match:
-        return None
-    name = match.group("name")
-    description = getattr(resource, "description", "") or ""
-    if not _bounded_catalog_name(name) or not isinstance(description, str):
-        raise RuntimeError("MCP child resource catalog is invalid")
-    return {"name": name, "uri": uri_text, "description": description}
-
-
-def _bounded_prompt_entry(resource: _typing.Any) -> dict[str, _typing.Any] | None:
-    """Project ONE ``prompt://`` resource, or ``None`` when it is not a prompt."""
-
-    uri = getattr(resource, "uri", None)
-    uri_text = str(uri) if uri is not None else ""
-    match = _PROMPT_RESOURCE_RE.match(uri_text)
-    if not match:
-        return None
-    provider = match.group("provider")
-    name = match.group("name")
-    description = getattr(resource, "description", "") or ""
-    if (
-        not _bounded_catalog_name(name)
-        or not _bounded_catalog_name(provider)
-        or not isinstance(description, str)
-    ):
-        raise RuntimeError("MCP child resource catalog is invalid")
-    return {
-        "name": name,
-        "provider": provider,
-        "uri": uri_text,
-        "description": description,
-    }
-
-
-def _bounded_skill_catalog(raw_resources: _typing.Any) -> list[dict[str, _typing.Any]]:
-    """Project a probed child's Resources into its Skills-over-MCP subset.
-
-    A fastmcp-4 ``SkillProvider``/``ClaudeSkillsProvider`` exposes each skill
-    as ``skill://{name}/SKILL.md`` (+ a sibling ``_manifest`` resource this
-    projection ignores — the manifest is fetched on demand, not during probe).
-    Non-skill resources are silently dropped: this function answers "which
-    skills does this server serve", not "list every resource". Bounded and
-    validated exactly like :func:`_bounded_tool_catalog` so a hostile/
-    misbehaving child cannot force an unbounded catalog into the KG.
-    """
-    _assert_bounded_resource_list(raw_resources)
-
-    skills: list[dict[str, _typing.Any]] = []
-    for resource in raw_resources:
-        entry = _bounded_skill_entry(resource)
-        if entry is None:
-            continue
-        skills.append(entry)
-        if len(skills) > _MAX_DISCOVERED_SKILLS:
-            raise RuntimeError("MCP child skill catalog exceeded its boundary")
-    try:
-        _assert_bounded_json_value(skills, max_nodes=_MAX_CATALOG_NODES)
-    except _fastmcp_exceptions.ToolError:
-        raise RuntimeError("MCP child skill catalog exceeded its boundary") from None
-    return skills
-
-
-def _bounded_prompt_catalog(raw_resources: _typing.Any) -> list[dict[str, _typing.Any]]:
-    """Project a probed child's Resources into its Prompts-over-MCP subset.
-
-    CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the ``prompt://``
-    sibling of :func:`_bounded_skill_catalog`.
-    ``server_factory._register_prompt_providers`` exposes each of a server's
-    own ``prompts/*.json`` files as ``prompt://{provider}/{name}``.
-    Non-prompt resources (including ``skill://`` ones) are silently dropped:
-    this function answers "which prompts does this server serve", not "list
-    every resource". Bounded and validated exactly like
-    :func:`_bounded_skill_catalog` so a hostile/misbehaving child cannot
-    force an unbounded catalog into the KG.
-    """
-    _assert_bounded_resource_list(raw_resources)
-
-    prompts: list[dict[str, _typing.Any]] = []
-    for resource in raw_resources:
-        entry = _bounded_prompt_entry(resource)
-        if entry is None:
-            continue
-        prompts.append(entry)
-        if len(prompts) > _MAX_DISCOVERED_PROMPTS:
-            raise RuntimeError("MCP child prompt catalog exceeded its boundary")
-    try:
-        _assert_bounded_json_value(prompts, max_nodes=_MAX_CATALOG_NODES)
-    except _fastmcp_exceptions.ToolError:
-        raise RuntimeError("MCP child prompt catalog exceeded its boundary") from None
-    return prompts
-
-
-def _resource_body_text(result: _typing.Any) -> str:
-    """Extract the text payload of one ``resources/read`` result.
-
-    CONCEPT:MERISTEM-ECO.mcp.cross-process-skill-harvest — a fastmcp-4
-    ``SkillProvider`` serves ``skill://{name}/SKILL.md`` as ``text/markdown``,
-    so the body arrives as a ``TextResourceContents``. A binary/blob payload is
-    NOT a skill instruction body and is rejected rather than coerced, so a
-    child cannot smuggle an unusable resource into the runnable set.
-    """
-    contents = getattr(result, "contents", None)
-    if not isinstance(contents, list | tuple) or not contents:
-        raise RuntimeError("skill resource returned no contents")
-    parts: list[str] = []
-    for item in contents:
-        text = getattr(item, "text", None)
-        if text is None:
-            raise RuntimeError("skill resource body is not text")
-        if not isinstance(text, str):
-            raise RuntimeError("skill resource body is not text")
-        parts.append(text)
-    return "\n".join(parts)
-
-
-def _validate_externalized_child_secrets(cfg: dict[str, _typing.Any]) -> None:
-    """Reject credentials committed inline in a persistent child catalog."""
-    for container_name in ("env", "headers"):
-        values = cfg.get(container_name) or {}
-        if not isinstance(values, dict):
-            raise RuntimeError("MCP child configuration is invalid")
-        for key, value in values.items():
-            if container_name == "env" and str(key).upper() in _PROVIDER_CHILD_ENV_KEYS:
-                raise RuntimeError(
-                    "MCP child provider selection must use provider_profile"
-                )
-            if _sensitive_config_key(str(key)) and not _externalized_value(value):
-                raise RuntimeError("MCP child credentials must use runtime references")
-
-
-def _selected_child_provider_profile(
-    cfg: dict[str, _typing.Any], *, is_remote: bool
-) -> str | None:
-    """Validate one stdio child's deployment-owned provider profile."""
-
-    selected = cfg.get("provider_profile")
-    if selected in (None, ""):
-        return None
-    profile_name = str(selected).strip()
-    if (
-        profile_name != selected
-        or re.fullmatch(r"[a-z][a-z0-9-]{1,62}", profile_name) is None
-        or is_remote
-    ):
-        raise RuntimeError("MCP child provider profile selection is invalid")
-    return profile_name
-
-
-def _materialization_attestation(cfg: dict[str, _typing.Any]) -> str:
-    """Authenticate one complete process-local child declaration.
-
-    The secret-bearing environment and headers must not be separable from the
-    executable, transport destination, trust policy, or parent-only controls
-    that consume them.  Signing the complete declaration also makes any
-    post-materialization mutation fail closed at the child boundary.
-    """
-
-    payload = {
-        key: value
-        for key, value in cfg.items()
-        if key != "_runtime_materialization_attestation"
-    }
-    canonical = json.dumps(
-        payload,
-        sort_keys=True,
-        separators=(",", ":"),
-        default=str,
-    ).encode("utf-8")
-    return hmac.new(_SESSION_KEY, canonical, hashlib.sha256).hexdigest()
-
-
-def _runtime_materialized(cfg: dict[str, _typing.Any]) -> bool:
-    """Return whether a runtime-only secret payload was minted in this process."""
-
-    supplied = str(cfg.get("_runtime_materialization_attestation") or "")
-    return bool(supplied) and secrets.compare_digest(
-        supplied,
-        _materialization_attestation(cfg),
-    )
-
-
-def attest_runtime_child_config(cfg: dict[str, _typing.Any]) -> dict[str, _typing.Any]:
-    """Mark one in-process child config as safely runtime-materialized.
-
-    Persistent fleet catalogs must carry references rather than credential
-    values.  A caller that builds a child config directly from AgentConfig has
-    already resolved those references in this process, so it must bind the
-    full executable/transport declaration, parent-only controls, sensitive
-    field names, and payload to the same per-process attestation used by
-    :meth:`MCPMultiplexer.load_catalog` before mounting the child.
-    """
-    prepared = dict(cfg)
-    sensitive_keys = {
-        str(key)
-        for container_name in ("env", "headers")
-        for key in (prepared.get(container_name) or {})
-        if _sensitive_config_key(str(key))
-    }
-    prepared["_runtime_materialized_secret_keys"] = sorted(sensitive_keys)
-    prepared["_runtime_materialization_attestation"] = _materialization_attestation(
-        prepared
-    )
-    return prepared
-
-
-def _load_runtime_child_policy_factory(name: str) -> _typing.Any:
-    """Load one unambiguous, installed child-policy factory."""
-
-    try:
-        matches = tuple(
-            importlib.metadata.entry_points(
-                group=_RUNTIME_CHILD_POLICY_GROUP,
-                name=name,
-            )
-        )
-    except Exception:
-        logger.warning("_load_runtime_child_policy_factory failed", exc_info=True)
-        raise RuntimeError("MCP child runtime policy registry is unavailable") from None
-    if len(matches) != 1:
-        raise RuntimeError("MCP child runtime policy is unavailable")
-    try:
-        factory = matches[0].load()
-    except Exception:
-        logger.warning("_load_runtime_child_policy_factory failed", exc_info=True)
-        raise RuntimeError("MCP child runtime policy is unavailable") from None
-    if not callable(factory):
-        raise RuntimeError("MCP child runtime policy is invalid")
-    return factory
-
-
-def _close_runtime_child_policy(policy: _typing.Any) -> None:
-    """Close one policy without exposing provider-owned teardown details."""
-
-    try:
-        policy.close()
-    except Exception:
-        logger.error("MCP child runtime policy cleanup failed", exc_info=True)
-
-
-# The method surface every provider-neutral child policy must implement before
-# it is allowed to shape a child's transport.
-_RUNTIME_CHILD_POLICY_METHODS = (
-    "child_environment",
-    "close",
-    "fingerprint_catalog",
-    "allows_tool",
-    "transport_config",
-    "verify_before_spawn",
-)
-
-
-def _runtime_child_policy_names(cfg: dict[str, _typing.Any]) -> tuple[str, str]:
-    """Validate one child's policy/profile selection and return both names."""
-
-    selected = cfg.get("runtime_policy")
-    policy_name = str(selected)
-    profile_name = cfg.get("provider_profile")
-    if (
-        policy_name != selected
-        or _RUNTIME_CHILD_POLICY_RE.fullmatch(policy_name) is None
-        or not isinstance(profile_name, str)
-        or profile_name != profile_name.strip()
-        or _RUNTIME_CHILD_POLICY_RE.fullmatch(profile_name) is None
-        or any(
-            key in cfg
-            for key in _RUNTIME_CHILD_POLICY_TRANSPORT_KEYS - {"provider_profile"}
-        )
-    ):
-        raise RuntimeError("MCP child runtime policy selection is invalid")
-    return policy_name, profile_name
-
-
-def _runtime_child_policy_transport(policy: _typing.Any) -> dict[str, _typing.Any]:
-    """Verify one materialized policy's method surface and transport config."""
-
-    if not all(
-        callable(getattr(policy, method, None))
-        for method in _RUNTIME_CHILD_POLICY_METHODS
-    ):
-        raise RuntimeError("MCP child runtime policy is invalid")
-    transport = policy.transport_config()
-    if (
-        not isinstance(transport, dict)
-        or not transport
-        or len(transport) > 16
-        or not set(transport).issubset(
-            _RUNTIME_CHILD_POLICY_TRANSPORT_KEYS - {"provider_profile"}
-        )
-        or bool(transport.get("command")) == bool(transport.get("url"))
-    ):
-        raise RuntimeError("MCP child runtime policy transport is invalid")
-    return transport
-
-
-def _runtime_child_policy_config(
-    cfg: dict[str, _typing.Any], transport: dict[str, _typing.Any], policy: _typing.Any
-) -> dict[str, _typing.Any]:
-    """The child config the policy's transport replaces, with the policy attached."""
-
-    prepared = {
-        key: value
-        for key, value in cfg.items()
-        if key not in {"provider_profile", "runtime_policy"}
-    }
-    prepared.update(transport)
-    prepared[_RUNTIME_CHILD_POLICY_INTERNAL_KEY] = policy
-    if len(prepared) > 128:
-        raise RuntimeError("MCP child runtime policy transport is invalid")
-    return prepared
-
-
-def _prepare_runtime_child_policy(
-    cfg: dict[str, _typing.Any], config: RuntimeConfig
-) -> tuple[dict[str, _typing.Any], _typing.Any]:
-    """Resolve and materialize one optional provider-neutral child policy."""
-
-    if cfg.get("runtime_policy") in (None, ""):
-        return cfg, None
-    policy_name, profile_name = _runtime_child_policy_names(cfg)
-
-    factory = _load_runtime_child_policy_factory(policy_name)
-    policy: _typing.Any = _ABSENT
-    try:
-        policy = factory(profile_name=profile_name, config=config)
-        transport = _runtime_child_policy_transport(policy)
-        return _runtime_child_policy_config(cfg, transport, policy), policy
-    except Exception:
-        logger.warning("_prepare_runtime_child_policy failed", exc_info=True)
-        if policy is not _ABSENT:
-            _close_runtime_child_policy(policy)
-        raise RuntimeError("MCP child runtime policy is unavailable") from None
-
-
-def _child_transport_values(
-    cfg: dict, command: _typing.Any, config: RuntimeConfig
-) -> tuple[_typing.Any, str, str, bool | None]:
-    """Resolve child transport fields; ``None`` marks an invalid declaration."""
-    url = resolve_runtime_value(cfg.get("url", ""), sensitive=False, config=config)
-    explicit_transport = str(cfg.get("transport", "")).lower()
-    invalid = (
-        explicit_transport not in {"", "streamable-http", "sse"}
-        or bool(command) == bool(url)
-        or (explicit_transport and not url)
-    )
-    if invalid:
-        return command, url, explicit_transport, None
-    is_remote = bool(url) or explicit_transport in ("streamable-http", "sse")
-    return command, url, explicit_transport, is_remote
 
 
 def _child_transport_is_remote(cfg: dict, config: RuntimeConfig) -> bool | None:
@@ -1855,35 +812,6 @@ def _swap_local_provider_components(
     provider._components = components
 
 
-# ---------------------------------------------------------------------------
-# NE-008 (GOC-85 Deliverable 3): per-principal remote-OAuth wiring.
-#
-# A catalog entry opts into per-user delegated authorization by declaring an
-# admin-configured ``oauth_provider`` block (the exact shape
-# ``arbora.fleet.remote_oauth_broker.ProviderDescriptor`` accepts) on
-# its config -- the SAME "administrator-populated, never caller-supplied"
-# catalog these config dicts already are (headers/env/tls_profile/
-# allowed_private_hosts all come from here today). Such a server is
-# structurally excluded from the fleet-global, principal-agnostic pool
-# (``_start_child`` skips it, see below) and from the shared probe-result
-# cache (``_probe_cache_hit``/``_cache_probe``, see below) -- it is served
-# EXCLUSIVELY through ephemeral, per-request sessions
-# (``_open_one_session``, already used this way by ``probe_server`` for any
-# un-pooled server), each one bound to the CURRENT caller's own delegated
-# grant. This deliberately reuses the broker's own reserved seam
-# (``bearer_headers_for``) and this repo's existing verified-actor primitive
-# (``brain_context.current_actor``) rather than any of the specific outbound
-# delegated-identity primitive names the U-44/U-45 canary in
-# ``tests/unit/mcp/test_remote_oauth_fail_closed.py`` fences (see that test's
-# own module docstring for the list) -- those would mean a per-user token
-# reached the ONE shared session-per-server pool every other caller also
-# uses, which this wiring never does.
-# ---------------------------------------------------------------------------
-_CURRENT_DISCOVERY_BINDING: contextvars.ContextVar[_typing.Any | None] = (
-    contextvars.ContextVar("current_discovery_binding", default=None)
-)
-
-
 def _tenant_local_discovery_binding() -> _typing.Any | None:
     """Mint the non-OAuth discovery visibility contract from verified state.
 
@@ -2258,8 +1186,6 @@ class MCPMultiplexer:
         self._fleet_catalog_loaded_at: float | None = None
         # The last background onboarding pass (arbora.fleet.onboarding).
         self._fleet_onboarding: dict[str, _typing.Any] | None = None
-        # Called once per completed child handshake (ARBORA-FLEET-R041.7).
-        self._handshake_listener: _typing.Callable[..., None] | None = None
         self._list_changed_tasks: set[_typing.Any] = set()
         self.exit_stack = contextlib.AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
@@ -2435,6 +1361,16 @@ class MCPMultiplexer:
         # reporting the same tool unknown — this budget makes the total
         # retries per child generation finite instead of relying on caller
         # good behavior.
+        self.transport = ChildTransport(
+            child_catalog_fingerprints=self._child_catalog_fingerprints,
+            child_policy_admitted_tools=self._child_policy_admitted_tools,
+            fleet=self._fleet,
+            list_changed_tasks=self._list_changed_tasks,
+            probe_cache=self._probe_cache,
+            publish_live_tools=lambda *a, **k: self._publish_live_tools(*a, **k),
+        )
+        #: Installs the callback that schedules onboarding after a handshake.
+        self.set_handshake_listener = self.transport.set_handshake_listener
         fleet.multiplexers.add(self)
 
     @property
@@ -3193,7 +2129,7 @@ class MCPMultiplexer:
         """Apply policy without modifying the shared session's admitted-tool map."""
         if runtime_policy is None:
             return tools
-        admitted = self._admit_runtime_policy_tools(
+        admitted = self.transport._admit_runtime_policy_tools(
             server_name, runtime_policy, tools, record_state=False
         )
         if original_name not in {tool.name for tool in admitted}:
@@ -3236,7 +2172,9 @@ class MCPMultiplexer:
         )
         try:
             async with contextlib.AsyncExitStack() as stack:
-                session = await self._open_one_session(server_name, runtime_cfg, stack)
+                session = await self.transport._open_one_session(
+                    server_name, runtime_cfg, stack
+                )
                 return await self._invoke_oauth_tool(
                     session,
                     server_name,
@@ -3271,7 +2209,9 @@ class MCPMultiplexer:
         )
         try:
             async with contextlib.AsyncExitStack() as stack:
-                session = await self._open_one_session(server_name, runtime_cfg, stack)
+                session = await self.transport._open_one_session(
+                    server_name, runtime_cfg, stack
+                )
 
                 return await self._invoke_oauth_tool(
                     session,
@@ -3532,796 +2472,6 @@ class MCPMultiplexer:
             )
         return result
 
-    def _admit_runtime_policy_tools(
-        self,
-        server_name: str,
-        policy: _typing.Any,
-        tools: list[MCPTool],
-        *,
-        record_state: bool = True,
-    ) -> list[MCPTool]:
-        """Apply live catalog admission and fingerprinting fail closed."""
-
-        catalog = [
-            {
-                "annotations": getattr(tool, "annotations", None),
-                "inputSchema": tool.input_schema,
-                "name": tool.name,
-            }
-            for tool in tools
-        ]
-        try:
-            fingerprint = policy.fingerprint_catalog(catalog)
-            if not isinstance(fingerprint, str) or not re.fullmatch(
-                r"[0-9a-f]{64}", fingerprint
-            ):
-                raise RuntimeError("invalid fingerprint")
-            admitted = [
-                tool
-                for tool in tools
-                if policy.allows_tool(tool.name, getattr(tool, "annotations", None))
-            ]
-        except Exception:
-            logger.warning("_admit_runtime_policy_tools failed", exc_info=True)
-            raise RuntimeError(
-                "MCP child runtime policy rejected live catalog"
-            ) from None
-        if record_state:
-            self._child_catalog_fingerprints[server_name] = fingerprint
-            self._child_policy_admitted_tools[server_name] = frozenset(
-                tool.name for tool in admitted
-            )
-        return admitted
-
-    def _resolve_transport_kind_for_child(
-        self, server_name: str, cfg: dict
-    ) -> tuple[str, str, str, bool]:
-        """``(command, url, explicit_transport, is_remote)``.
-
-        ``command`` is ``""`` exactly when ``is_remote`` — the guard below
-        refuses a local child with no command, so a non-remote result always
-        carries a real one. Returning ``""`` rather than ``None`` for the
-        remote case states that in the type: the sole caller passes ``command``
-        only into the local branch.
-        """
-        command, url, explicit_transport, is_remote = _child_transport_values(
-            cfg, self._child_command(cfg), self._fleet.config
-        )
-        if is_remote is None:
-            raise RuntimeError("MCP child transport declaration is invalid")
-        if not command and not is_remote:
-            raise RuntimeError("MCP child requires a command or URL")
-        if not is_remote:
-            if self._fleet.config.mcp_stdio_prohibited:
-                raise RuntimeError(
-                    "stdio transport is not permitted in this process "
-                    f"(server={server_name!r}): MCP_STDIO_PROHIBITED is set"
-                )
-        return command, url, explicit_transport, is_remote
-
-    @staticmethod
-    def _child_command(cfg: dict) -> str:
-        """The configured stdio command, or ``""`` for a URL-only child."""
-        return str(cfg.get("command") or "")
-
-    @staticmethod
-    def _resolve_child_initialization_timeout(cfg: dict) -> float:
-        try:
-            initialization_timeout = float(
-                cfg.get("initialization_timeout", cfg.get("timeout", 300.0))
-            )
-        except (TypeError, ValueError) as exc:
-            raise RuntimeError("MCP child initialization timeout is invalid") from exc
-        if not 0.001 <= initialization_timeout <= 3_600.0:
-            raise RuntimeError("MCP child initialization timeout is invalid")
-        return initialization_timeout
-
-    @staticmethod
-    def _runtime_policy_environment(runtime_policy: _typing.Any) -> dict[str, str]:
-        try:
-            policy_environment = runtime_policy.child_environment()
-        except Exception:
-            logger.warning("_runtime_policy_environment failed", exc_info=True)
-            raise RuntimeError(
-                "MCP child runtime policy environment is unavailable"
-            ) from None
-        if (
-            not isinstance(policy_environment, _collections_abc.Mapping)
-            or len(policy_environment) > 256
-        ):
-            raise RuntimeError("MCP child runtime policy environment is invalid")
-        provider_environment: dict[str, str] = {}
-        for raw_key, raw_value in policy_environment.items():
-            key = str(raw_key)
-            if (
-                not isinstance(raw_key, str)
-                or not isinstance(raw_value, str)
-                or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,127}", key)
-                or len(raw_value.encode("utf-8")) > 65_536
-                or "\x00" in raw_value
-            ):
-                raise RuntimeError("MCP child runtime policy environment is invalid")
-            provider_environment[key] = raw_value
-        return provider_environment
-
-    @staticmethod
-    async def _resolve_provider_profile_environment(
-        provider_profile: _typing.Any,
-        stack: contextlib.AsyncExitStack,
-        initialization_timeout: float,
-    ) -> dict[str, str]:
-        """Refuse a child that selects a provider profile.
-
-        Arbora serves no provider runtime profiles, so a child that names one
-        fails closed before its process starts.
-        """
-        del stack, initialization_timeout
-        raise RuntimeError(
-            f"MCP child provider profile {provider_profile!r} is not served by this host"
-        )
-
-    async def _resolve_child_provider_environment(
-        self,
-        cfg: dict,
-        is_remote: bool,
-        stack: contextlib.AsyncExitStack,
-        initialization_timeout: float,
-    ) -> tuple[dict[str, str], _typing.Any]:
-        """Returns (provider_environment, runtime_policy). ``provider_environment``
-        is populated from the runtime policy, then REPLACED (not merged) by the
-        provider profile's environment if a profile is also configured — matching
-        the original code's exact (possibly surprising) precedence."""
-        provider_profile = _selected_child_provider_profile(cfg, is_remote=is_remote)
-        runtime_policy = cfg.get(_RUNTIME_CHILD_POLICY_INTERNAL_KEY)
-        provider_environment: dict[str, str] = {}
-        if runtime_policy is not None:
-            provider_environment = self._runtime_policy_environment(runtime_policy)
-        if provider_profile is not None:
-            provider_environment = await self._resolve_provider_profile_environment(
-                provider_profile, stack, initialization_timeout
-            )
-        return provider_environment, runtime_policy
-
-    @staticmethod
-    def _validate_remote_child_url(url: str) -> _typing.Any:
-        parsed_url = urlsplit(url)
-        if (
-            parsed_url.scheme.lower() not in {"http", "https"}
-            or not parsed_url.hostname
-            or parsed_url.username is not None
-            or parsed_url.password is not None
-            or parsed_url.fragment
-            or parsed_url.query
-            or len(url) > 8_192
-        ):
-            raise RuntimeError("Remote MCP child URL is invalid")
-        return parsed_url
-
-    @staticmethod
-    def _resolve_remote_allowed_private_hosts(
-        cfg: dict, parsed_url: _typing.Any, url: str, config: RuntimeConfig
-    ) -> list[str]:
-        # Computed here (not just at the transport-pinning site below) so the
-        # scheme gate consults the SAME allowlist as the actual DNS-pinned
-        # egress: MCP_HTTP_ALLOWED_PRIVATE_HOSTS was already a config field
-        # for exactly this (mirroring OIDC_HTTP_ALLOWED_PRIVATE_HOSTS /
-        # MODEL_HTTP_ALLOWED_PRIVATE_HOSTS), but this gate never read it —
-        # so a deployment that legitimately reaches its MCP fleet over
-        # plain HTTP behind a TLS-terminating ingress (MCP_TLS_TERMINATED)
-        # could never declare that trust; it always hard-failed here first.
-        child_private_hosts = cfg.get("allowed_private_hosts", [])
-        if not isinstance(child_private_hosts, list):
-            raise RuntimeError("Remote MCP child private-host policy is invalid")
-        allowed_private_hosts = [
-            *config.mcp_http_allowed_private_hosts,
-            *(str(value) for value in child_private_hosts),
-        ]
-        if parsed_url.scheme.lower() == "http" and parsed_url.hostname.lower() not in {
-            "localhost",
-            "127.0.0.1",
-            "::1",
-            *(host.lower() for host in allowed_private_hosts),
-        }:
-            raise RuntimeError("Remote MCP child requires HTTPS outside loopback")
-        return allowed_private_hosts
-
-    @staticmethod
-    def _validate_one_remote_header(
-        name: str, value: str, materialized: set[str], config: RuntimeConfig
-    ) -> str:
-        lowered = name.lower()
-        if lowered in {
-            "connection",
-            "content-length",
-            "host",
-            "proxy-connection",
-            _HTTP_TE_HEADER,
-            "trailer",
-            "transfer-encoding",
-            "upgrade",
-        }:
-            raise RuntimeError("Remote MCP child headers are invalid")
-        rendered = resolve_runtime_value(
-            value,
-            sensitive=_sensitive_config_key(name),
-            materialized=name in materialized,
-            config=config,
-        )
-        if (
-            not re.fullmatch(r"[!#$%&'*+.^_`|~0-9A-Za-z-]{1,128}", name)
-            or len(rendered) > 16_384
-            or "\r" in rendered
-            or "\n" in rendered
-        ):
-            raise RuntimeError("Remote MCP child headers are invalid")
-        return rendered
-
-    @staticmethod
-    def _validate_remote_child_headers(
-        cfg: dict, config: RuntimeConfig
-    ) -> dict[str, str] | None:
-        headers = cfg.get("headers")
-        if not headers:
-            return headers
-        if not isinstance(headers, dict) or len(headers) > 64:
-            raise RuntimeError("Remote MCP child headers are invalid")
-        materialized = (
-            set(cfg.get("_runtime_materialized_secret_keys") or [])
-            if _runtime_materialized(cfg)
-            else set()
-        )
-        validated_headers: dict[str, str] = {}
-        for key, value in headers.items():
-            name = str(key)
-            validated_headers[name] = MCPMultiplexer._validate_one_remote_header(
-                name, value, materialized, config
-            )
-        return validated_headers
-
-    async def _resolve_actor_exchange_bearer(self, cfg: dict) -> dict[str, str] | None:
-        """The one exchange call site of delegated identity (ARBORA-IDENTITY-R028.3).
-
-        An actor-required tool (``requires_actor`` from ``tools/list`` ``_meta``) gets an
-        exchanged bearer for the verified acting user; a refusal makes no connector call
-        and a process credential never stands in.
-        """
-        from arbora.access.delegation import resolve_actor_exchange_bearer
-        from arbora.security.actor_context import current_actor
-        from arbora.security.session import current_session
-
-        needs = cfg.get("requires_actor") is True
-        if not needs:
-            return None
-        session = current_session()
-        actor = current_actor() if session is not None else None
-        caller = None
-        claims = None
-        if actor is not None and session is not None:
-            caller = SimpleNamespace(
-                principal=actor.actor_id,
-                tenant=actor.tenant_id,
-                principal_kind="user"
-                if actor.actor_type.value == "human"
-                else "service",
-                authenticated=actor.authenticated,
-                effective_scopes=frozenset(getattr(session, "scopes", ()) or ()),
-                request_id="",
-            )
-            claims = getattr(self._fleet, "actor_claims", lambda _a: None)(actor)
-        return await resolve_actor_exchange_bearer(
-            str(cfg.get("name", "")),
-            str(cfg.get("tool", "")),
-            needs_actor=needs,
-            caller=caller,
-            claims=claims,
-            connector_client_id=str(cfg.get("client_id") or cfg.get("name") or ""),
-            issuer=getattr(self._fleet, "actor_issuer", None),
-            emit=getattr(self._fleet, "actor_audit", lambda _event: None),
-        )
-
-    async def _reused_credential_headers(self, cfg: dict, url: str) -> dict[str, str]:
-        """The one production caller of scoped credential reuse (ARBORA-IDENTITY-R023.2).
-
-        The verified caller reuses the declared owner's provider credential only under an
-        engine grant for this agent, connector and purpose; a refusal opens no session.
-        """
-        from arbora.security.actor_context import current_actor
-
-        actor = current_actor()
-        caller = SimpleNamespace(
-            tenant=actor.tenant_id,
-            principal=actor.actor_id,
-            client=actor.actor_id,
-        )
-        from arbora.fleet.remote_oauth_broker import ProviderDescriptor
-
-        descriptor = ProviderDescriptor(**cfg["oauth_provider"])
-        return await self._fleet.credentials.bearer(caller, cfg, url, descriptor)
-
-    async def _apply_remote_child_oauth_grant(
-        self, cfg: dict, url: str, headers: dict[str, str] | None
-    ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
-        """A reused credential of a declared owner, else the caller's own grant."""
-        if not (cfg.get("credential_owner") and oauth_gated(cfg)):
-            return await self._apply_caller_oauth_grant(cfg, url, headers)
-        reused = await self._reused_credential_headers(cfg, url)
-        return {**(headers or {}), **reused}, reused
-
-    async def _apply_caller_oauth_grant(
-        self, cfg: dict, url: str, headers: dict[str, str] | None
-    ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
-        # NE-008 (GOC-85 Deliverable 3): per-principal remote-OAuth bearer,
-        # for a child catalog entry that declares ``oauth_provider``.
-        # ``None`` for every other (unchanged) child. Offloaded to a thread
-        # -- secrets-backend I/O is synchronous. Raises fail-closed
-        # (missing/expired/revoked grant) rather than falling back to any
-        # shared/service credential; the caller sees that failure as this
-        # session never opening, exactly like any other connect failure.
-        actor_headers = await self._resolve_actor_exchange_bearer(cfg)
-        if actor_headers is not None:
-            headers = {**(headers or {}), **actor_headers}
-        oauth_grant = await asyncio.to_thread(self._fleet.oauth_brokers.grant, cfg, url)
-        if oauth_grant is not None:
-            oauth_bearer_headers, discovery_binding = oauth_grant
-            _CURRENT_DISCOVERY_BINDING.set(discovery_binding)
-            headers = {**(headers or {}), **oauth_bearer_headers}
-        else:
-            oauth_bearer_headers = None
-        return headers, oauth_bearer_headers
-
-    @staticmethod
-    def _resolve_remote_child_tls_trust(
-        cfg: dict, stack: contextlib.AsyncExitStack, config: RuntimeConfig
-    ) -> _typing.Any:
-        from arbora.core.transport import (
-            resolve_configured_tls_profile,
-        )
-
-        profile_name = str(cfg.get("tls_profile") or "").strip() or None
-        profile_ref = str(cfg.get("tls_profile_ref") or "").strip() or None
-        trust = resolve_configured_tls_profile(
-            "MCP_CHILD",
-            profile_name=profile_name,
-            profile_ref=profile_ref,
-            config=config,
-        )
-        stack.callback(trust.cleanup)
-        if trust.proxy_url:
-            raise RuntimeError("Remote MCP child cannot use an inline proxy")
-        return trust
-
-    async def _open_remote_child_transport(
-        self,
-        url: str,
-        explicit_transport: str,
-        headers: dict[str, str] | None,
-        oauth_bearer_headers: dict[str, str] | None,
-        trust: _typing.Any,
-        allowed_private_hosts: list[str],
-        stack: contextlib.AsyncExitStack,
-    ) -> tuple[_typing.Any, _typing.Any]:
-        from arbora.core.transport import create_async_http_client
-
-        def _secure_httpx_factory(
-            headers: dict[str, str] | None = None,
-            timeout: _typing.Any = None,
-            auth: _typing.Any = None,
-        ):
-            return create_async_http_client(
-                timeout=timeout or 30.0,
-                verify=trust.ssl_context,
-                headers=headers,
-                auth=auth,
-                trust_env=False,
-                follow_redirects=False,
-                pin_egress=True,
-                allowed_private_hosts=allowed_private_hosts,
-            )
-
-        # A0 (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children): authenticate jwt-protected children with the
-        # multiplexer's service-account bearer. Opt-in via
-        # MCP_CLIENT_AUTH=oidc-client-credentials; never overrides a child's
-        # own Authorization header; a mint failure aborts the connection.
-        # Use a per-request httpx.Auth (not a frozen header): the child's
-        # pooled session is long-lived, so a baked-in short-lived token would
-        # expire mid-session and wedge calls on a 401 (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children).
-        #
-        # NE-008: an oauth-gated child's authorization model IS the
-        # caller's own per-principal delegated grant (just placed into
-        # ``headers`` above) -- Arbora's own service-to-child credential
-        # is deliberately NOT also computed for it, so the two credential
-        # lifetimes (service <-> child, and user <-> provider) are never
-        # merged onto the same outbound request.
-        if oauth_bearer_headers is not None:
-            _svc_auth = None
-        else:
-            from arbora.security.client_credentials import child_auth
-
-            _svc_auth = child_auth(headers, self._fleet.config)
-        use_sse = explicit_transport == "sse" or url.rstrip("/").endswith("/sse")
-        if use_sse:
-            # D-MTT-1: `_svc_auth` is a local `httpx.Auth` (see
-            # `child_auth`'s docstring); `sse_client`'s `auth` param is
-            # typed `httpx2.Auth | None` (fastmcp's vendored SDK v2 HTTP
-            # client, a distinct package from this repo's own `httpx` —
-            # see `arbora/core/httpx_boundary/py`). Coerce at
-            # this boundary rather than passing the foreign-typed object
-            # straight through.
-            from arbora.core.httpx_boundary import coerce_httpx2_auth
-
-            transport = sse_client(
-                url,
-                headers=headers,
-                auth=coerce_httpx2_auth(_svc_auth),
-                httpx_client_factory=_secure_httpx_factory,
-            )
-        else:
-            # MCP SDK v2 takes the already-built client instead of
-            # headers/auth/httpx_client_factory, so the security-hardened
-            # client (pinned TLS trust, DNS-pinned egress, no ambient
-            # proxy, no redirects) is constructed here and handed over.
-            # It is entered on the stack BEFORE the transport so teardown
-            # closes the transport first and the client second; the SDK
-            # deliberately does not close a caller-provided client.
-            http_client = _secure_httpx_factory(headers=headers, auth=_svc_auth)
-            await stack.enter_async_context(http_client)
-            transport = streamable_http_client(
-                url,
-                http_client=http_client,
-                max_sse_event_size=_MAX_CHILD_SSE_EVENT_BYTES,
-            )
-        # streamable-http and sse both yield (read, write); SDK v2 dropped
-        # streamable-http's third `get_session_id` element. Take the first
-        # two streams either way.
-        streams = await stack.enter_async_context(transport)
-        return streams[0], streams[1]
-
-    async def _open_remote_child_session_streams(
-        self,
-        cfg: dict,
-        url: str,
-        explicit_transport: str,
-        stack: contextlib.AsyncExitStack,
-    ) -> tuple[_typing.Any, _typing.Any]:
-        parsed_url = self._validate_remote_child_url(url)
-        allowed_private_hosts = self._resolve_remote_allowed_private_hosts(
-            cfg, parsed_url, url, self._fleet.config
-        )
-        headers = self._validate_remote_child_headers(cfg, self._fleet.config)
-        headers, oauth_bearer_headers = await self._apply_remote_child_oauth_grant(
-            cfg, url, headers
-        )
-        trust = self._resolve_remote_child_tls_trust(cfg, stack, self._fleet.config)
-        return await self._open_remote_child_transport(
-            url,
-            explicit_transport,
-            headers,
-            oauth_bearer_headers,
-            trust,
-            allowed_private_hosts,
-            stack,
-        )
-
-    @staticmethod
-    def _local_child_process_config_valid(
-        command: str, args: list, configured_env: dict
-    ) -> bool:
-        return not (
-            not 1 <= len(command) <= 4_096
-            or "\x00" in command
-            or not isinstance(args, list)
-            or len(args) > 128
-            or not all(
-                isinstance(value, str) and len(value) <= 8_192 and "\x00" not in value
-                for value in args
-            )
-            or not isinstance(configured_env, dict)
-            or len(configured_env) > 256
-        )
-
-    @staticmethod
-    def _validate_local_child_command_and_args(
-        command: str, cfg: dict, config: RuntimeConfig
-    ) -> tuple[str, list, dict]:
-        # `command` is guaranteed set here: the earlier guard raises unless
-        # `command` or `is_remote` is truthy, and this is the `not is_remote`
-        # branch.
-        assert command, "unreachable: non-remote server must have a 'command'"
-        command = resolve_runtime_value(command, sensitive=False, config=config)
-        raw_args = cfg.get("args", [])
-        args = (
-            [
-                resolve_runtime_value(value, sensitive=False, config=config)
-                for value in raw_args
-            ]
-            if isinstance(raw_args, list)
-            else raw_args
-        )
-        configured_env = cfg.get("env") or {}
-        if not MCPMultiplexer._local_child_process_config_valid(
-            command, args, configured_env
-        ):
-            raise RuntimeError("Local MCP child process configuration is invalid")
-        return command, args, configured_env
-
-    @staticmethod
-    def _apply_one_configured_env_var(
-        merged_env: dict[str, str],
-        raw_key: _typing.Any,
-        raw_value: _typing.Any,
-        provider_controlled_keys: set[str],
-        materialized: set[str],
-        config: RuntimeConfig,
-    ) -> None:
-        key = str(raw_key)
-        if key.upper() in (
-            _PROVIDER_CHILD_ENV_KEYS
-            | provider_controlled_keys
-            | {_TASK_DELEGATION_CHANNEL_ENV}
-        ):
-            raise RuntimeError("MCP child provider environment is parent-controlled")
-        value = resolve_runtime_value(
-            raw_value,
-            sensitive=_sensitive_config_key(key),
-            materialized=key in materialized,
-            config=config,
-        )
-        if (
-            not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,127}", key)
-            or len(value) > 65_536
-            or "\x00" in value
-        ):
-            raise RuntimeError("Local MCP child environment is invalid")
-        merged_env[key] = value
-
-    @staticmethod
-    def _apply_generation_secret(
-        merged_env: dict[str, str], generation_secret: str | None
-    ) -> None:
-        if generation_secret is not None:
-            if not 32 <= len(generation_secret) <= 512:
-                raise RuntimeError("Local MCP task channel secret is invalid")
-            merged_env[_TASK_DELEGATION_CHANNEL_ENV] = generation_secret
-
-    @staticmethod
-    def _build_local_child_environment(
-        cfg: dict,
-        provider_environment: dict[str, str],
-        configured_env: dict,
-        generation_secret: str | None,
-        config: RuntimeConfig,
-    ) -> dict[str, str]:
-        # A child receives only execution/runtime trust variables plus the
-        # variables explicitly delegated in its own catalog entry. Copying
-        # the entire parent environment leaks unrelated fleet credentials.
-        provider_controlled_keys = {key.upper() for key in provider_environment}
-        merged_env = {
-            key: value
-            for key, value in inherited_environment().items()
-            if key.upper() in _CHILD_ENV_ALLOWLIST
-            and key.upper() not in provider_controlled_keys
-        }
-        merged_env.update(provider_environment)
-        materialized = (
-            set(cfg.get("_runtime_materialized_secret_keys") or [])
-            if _runtime_materialized(cfg)
-            else set()
-        )
-        for raw_key, raw_value in configured_env.items():
-            MCPMultiplexer._apply_one_configured_env_var(
-                merged_env,
-                raw_key,
-                raw_value,
-                provider_controlled_keys,
-                materialized,
-                config,
-            )
-        MCPMultiplexer._apply_generation_secret(merged_env, generation_secret)
-        return merged_env
-
-    @staticmethod
-    def _verify_child_runtime_policy_before_spawn(runtime_policy: _typing.Any) -> None:
-        if runtime_policy is not None:
-            try:
-                runtime_policy.verify_before_spawn()
-            except Exception:
-                logger.warning(
-                    "_verify_child_runtime_policy_before_spawn failed", exc_info=True
-                )
-                raise RuntimeError(
-                    "MCP child runtime policy pre-spawn verification failed"
-                ) from None
-
-    @staticmethod
-    async def _open_stdio_child_transport(
-        server_params: _mcp.StdioServerParameters, stack: contextlib.AsyncExitStack
-    ) -> tuple[_typing.Any, _typing.Any]:
-        # The MCP SDK otherwise forwards a child's raw stderr to the parent
-        # process. Import and native-loader failures routinely contain
-        # interpreter, checkout, and trust-material locations. The parent
-        # already emits bounded transport/error codes, so discard that raw
-        # channel and keep the sink alive for the complete child generation.
-        child_error_sink = stack.enter_context(
-            Path(os.devnull).open("w", encoding="utf-8")
-        )
-        read_stream, write_stream = await stack.enter_async_context(
-            stdio_client(server_params, errlog=child_error_sink)
-        )
-        return read_stream, write_stream
-
-    async def _open_local_child_session_streams(
-        self,
-        cfg: dict,
-        command: str,
-        provider_environment: dict[str, str],
-        runtime_policy: _typing.Any,
-        generation_secret: str | None,
-        stack: contextlib.AsyncExitStack,
-    ) -> tuple[_typing.Any, _typing.Any]:
-        command, args, configured_env = self._validate_local_child_command_and_args(
-            command, cfg, self._fleet.config
-        )
-        merged_env = self._build_local_child_environment(
-            cfg,
-            provider_environment,
-            configured_env,
-            generation_secret,
-            self._fleet.config,
-        )
-        server_params = StdioServerParameters(
-            command=command, args=args, env=merged_env
-        )
-        self._verify_child_runtime_policy_before_spawn(runtime_policy)
-        return await self._open_stdio_child_transport(server_params, stack)
-
-    def set_handshake_listener(
-        self, listener: _typing.Callable[..., None] | None
-    ) -> None:
-        """Install the callback that schedules onboarding after a handshake."""
-        self._handshake_listener = listener
-
-    async def _announce_handshake(
-        self,
-        server_name: str,
-        session: _typing.Any,
-        tools: list[_typing.Any],
-        reason: str = "handshake",
-    ) -> None:
-        """Tell the listener a child handshake completed; never raises.
-
-        Runs after ``initialize`` or ``server/discover`` and ``tools/list``.
-        The change signal is a content digest of the served tool, prompt and
-        resource lists and of ``connector://resources``, never the serverInfo
-        version (ARBORA-FLEET-R041.8). The listener only schedules work off
-        this path, so serving is never delayed or failed by onboarding
-        (ARBORA-FLEET-R041.7, R041.9).
-        """
-        listener = self._handshake_listener
-        if listener is None:
-            return
-        try:
-            from arbora.fleet.onboarding import served_catalog_digest
-
-            # ``server_info`` is set by both an initialize and a discover
-            # session; ``initialize_result`` is empty on a discover session.
-            info = getattr(session, "server_info", None)
-            listener(
-                server_name,
-                server_version=str(getattr(info, "version", "") or ""),
-                digest=await served_catalog_digest(session, tools),
-                reason=reason,
-            )
-        except Exception as exc:
-            logger.warning(
-                "handshake onboarding not scheduled: %s",
-                redact_for_log(exc),
-                exc_info=True,
-            )
-
-    def _child_message_handler(
-        self, server_name: str, holder: list[_typing.Any]
-    ) -> MessageHandlerFnT:
-        """Re-capture a child whose lists change (ARBORA-FLEET-R041.8).
-
-        A server that advertises ``listChanged`` sends tool, prompt or resource
-        list-changed notifications; each one re-digests the child and asks the
-        one onboarding pass to run again. A server that sends none is covered
-        by the next handshake.
-        """
-        changed = (
-            mcp_types.ToolListChangedNotification,
-            mcp_types.PromptListChangedNotification,
-            mcp_types.ResourceListChangedNotification,
-        )
-
-        async def refresh() -> None:
-            session = holder[0] if holder else None
-            if session is None:
-                return
-            try:
-                tools = await _list_all_tools(session)
-                _bounded_tool_catalog(tools)
-            except Exception as exc:
-                logger.warning(
-                    "list_changed refresh of %s failed: %s",
-                    server_name,
-                    redact_for_log(exc),
-                    exc_info=True,
-                )
-                return
-            # ARBORA-FLEET-R070: the new list replaces the served one now,
-            # without a restart; the next catalog read re-probes the child.
-            self._probe_cache.pop(server_name, None)
-            await self._publish_live_tools(server_name, tools)
-            await self._announce_handshake(server_name, session, tools, "list_changed")
-
-        async def handler(message: IncomingMessage) -> None:
-            if isinstance(message, changed):
-                task = asyncio.ensure_future(refresh())
-                self._list_changed_tasks.add(task)
-                task.add_done_callback(self._list_changed_tasks.discard)
-
-        return handler
-
-    async def _open_one_session(
-        self,
-        server_name: str,
-        cfg: dict,
-        stack: contextlib.AsyncExitStack,
-        generation_secret: str | None = None,
-    ) -> ClientSession:
-        """Open + initialize ONE ``ClientSession`` for a child (stdio or remote),
-        entering its transports on ``stack``. Raises on failure. Shared by
-        :meth:`_start_child` (session pool) and :meth:`probe_server` (catalog
-        probe) so the transport-construction logic lives in one place."""
-        command, url, explicit_transport, is_remote = (
-            self._resolve_transport_kind_for_child(server_name, cfg)
-        )
-        initialization_timeout = self._resolve_child_initialization_timeout(cfg)
-
-        (
-            provider_environment,
-            runtime_policy,
-        ) = await self._resolve_child_provider_environment(
-            cfg, is_remote, stack, initialization_timeout
-        )
-
-        if is_remote:
-            read_stream, write_stream = await self._open_remote_child_session_streams(
-                cfg, url, explicit_transport, stack
-            )
-        else:
-            read_stream, write_stream = await self._open_local_child_session_streams(
-                cfg,
-                command,
-                provider_environment,
-                runtime_policy,
-                generation_secret,
-                stack,
-            )
-
-        holder: list[_typing.Any] = []
-        session = await stack.enter_async_context(
-            ClientSession(
-                read_stream,
-                write_stream,
-                message_handler=self._child_message_handler(server_name, holder),
-                # ARBORA-FLEET-R015.2: confirm only a plan-confirmed armed call.
-                elicitation_callback=self._fleet.confirmations.answer_elicitation,
-            )
-        )
-        holder.append(session)
-        # Cold starts can legitimately exceed 30 seconds on constrained hosts
-        # (for example, a Python MCP child importing from a WSL-mounted volume).
-        # Keep the handshake bounded, but honor the same per-child connect
-        # budget rather than imposing a second, hidden fixed ceiling.
-        await asyncio.wait_for(session.initialize(), timeout=initialization_timeout)
-        # Production capability state is read directly from the live
-        # _child_resilience.ChildRuntime session pool. A retired runtime can finish a late
-        # reconnect after a catalog epoch changes, so this transport-open path
-        # mutates no shared handshake record.
-        return session
-
     async def _start_child(
         self, server_name: str, cfg: dict
     ) -> tuple[str, _child_resilience.ChildRuntime, list[MCPTool], dict] | None:
@@ -4368,7 +2518,7 @@ class MCPMultiplexer:
         async def _connect_one(
             stack: contextlib.AsyncExitStack, generation_secret: str | None
         ):
-            return await self._open_one_session(
+            return await self.transport._open_one_session(
                 server_name, cfg, stack, generation_secret
             )
 
@@ -4385,9 +2535,9 @@ class MCPMultiplexer:
             ]
             tools = await _list_all_tools(sessions[0])
             _bounded_tool_catalog(tools)
-            await self._announce_handshake(server_name, sessions[0], tools)
+            await self.transport._announce_handshake(server_name, sessions[0], tools)
             if runtime_policy is not None:
-                tools = self._admit_runtime_policy_tools(
+                tools = self.transport._admit_runtime_policy_tools(
                     server_name,
                     runtime_policy,
                     tools,
@@ -4891,7 +3041,9 @@ class MCPMultiplexer:
             return
         policy = self._child_runtime_policies.get(server_name)
         if policy is not None:
-            tools = self._admit_runtime_policy_tools(server_name, policy, tools)
+            tools = self.transport._admit_runtime_policy_tools(
+                server_name, policy, tools
+            )
         await self._refresh_child_tools(
             server_name, runtime, cfg, self._catalog_epoch, tools
         )
@@ -4902,7 +3054,7 @@ class MCPMultiplexer:
         tools = await _list_all_tools(session)
         _bounded_tool_catalog(tools)
         await self._publish_live_tools(server_name, tools)
-        await self._announce_handshake(server_name, session, tools)
+        await self.transport._announce_handshake(server_name, session, tools)
 
     async def _refresh_child_tools(
         self,
@@ -5667,7 +3819,7 @@ class MCPMultiplexer:
             binding_token = _CURRENT_DISCOVERY_BINDING.set(None)
             try:
                 async with contextlib.AsyncExitStack() as stack:
-                    session = await self._open_one_session(
+                    session = await self.transport._open_one_session(
                         server_name, runtime_cfg, stack
                     )
                     tools = await _list_all_tools(session)
@@ -5675,9 +3827,11 @@ class MCPMultiplexer:
                     if force:
                         # An explicit refresh also re-onboards a changed
                         # catalog into the engine (ARBORA-FLEET-R070).
-                        await self._announce_handshake(server_name, session, tools)
+                        await self.transport._announce_handshake(
+                            server_name, session, tools
+                        )
                     if runtime_policy is not None:
-                        tools = self._admit_runtime_policy_tools(
+                        tools = self.transport._admit_runtime_policy_tools(
                             server_name,
                             runtime_policy,
                             tools,

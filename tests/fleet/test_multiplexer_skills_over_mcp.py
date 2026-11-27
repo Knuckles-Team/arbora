@@ -11,9 +11,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-from arbora.fleet.multiplexer import (
-    _bounded_skill_catalog,
-)
+from arbora.fleet.child_payload_bounds import _bounded_skill_catalog
 from tests.fleet.test_multiplexer_dynamic_gateway import (
     CNT,
     CNT_TOOL,
@@ -79,7 +77,7 @@ async def _probe_server_info(tmp_path, open_fn):
     probe it -- shared scaffold for the best-effort-skills degrade tests
     below."""
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "manage containers")]})
-    mux._open_one_session = AsyncMock(side_effect=open_fn)
+    mux.transport._open_one_session = AsyncMock(side_effect=open_fn)
     return await mux.probe_server(CNT)
 
 
@@ -130,7 +128,7 @@ async def test_probe_server_captures_skill_resources_alongside_tools(tmp_path):
             [_fake_skill_resource("skill://onboarding/SKILL.md", "onboard a user")],
         )
 
-    mux._open_one_session = AsyncMock(side_effect=_open)
+    mux.transport._open_one_session = AsyncMock(side_effect=_open)
     info = await mux.probe_server(CNT)
 
     assert info["error"] is None

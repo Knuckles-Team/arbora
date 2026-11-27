@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from arbora.fleet import child_transport as _mod_child_transport
 from arbora.fleet import multiplexer as mod
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
@@ -61,11 +62,17 @@ def transports(monkeypatch):
     rec = {"stdio": [], "http": [], "sse": []}
     # MCP SDK v2 yields (read, write) for BOTH streamable-http and sse — the
     # third `get_session_id` element streamable-http used to return is gone.
-    monkeypatch.setattr(mod, "stdio_client", _fake_client(("r", "w"), rec["stdio"]))
     monkeypatch.setattr(
-        mod, "streamable_http_client", _fake_client(("r", "w"), rec["http"])
+        _mod_child_transport, "stdio_client", _fake_client(("r", "w"), rec["stdio"])
     )
-    monkeypatch.setattr(mod, "sse_client", _fake_client(("r", "w"), rec["sse"]))
+    monkeypatch.setattr(
+        _mod_child_transport,
+        "streamable_http_client",
+        _fake_client(("r", "w"), rec["http"]),
+    )
+    monkeypatch.setattr(
+        _mod_child_transport, "sse_client", _fake_client(("r", "w"), rec["sse"])
+    )
     monkeypatch.setattr(mod, "ClientSession", _FakeSessionCM)
     return rec
 
@@ -149,7 +156,7 @@ async def test_child_initialization_honors_configured_connect_budget(
     monkeypatch.setattr(mod.asyncio, "wait_for", recording_wait_for)
     mux = _mux(tmp_path / "c.json")
     async with contextlib.AsyncExitStack() as stack:
-        await mux._open_one_session(
+        await mux.transport._open_one_session(
             "slow-cold-start",
             {"command": "child", "args": [], "timeout": 91.0},
             stack,
@@ -181,7 +188,7 @@ async def test_open_one_session_raises_stated_reason_when_stdio_prohibited(
     mux = _mux(tmp_path / "c.json", mcp_stdio_prohibited=True)
     with pytest.raises(RuntimeError, match="stdio transport is not permitted"):
         async with contextlib.AsyncExitStack() as stack:
-            await mux._open_one_session(
+            await mux.transport._open_one_session(
                 "arbora", {"command": "arbora", "args": []}, stack
             )
 
@@ -228,7 +235,7 @@ async def test_child_initialization_rejects_unbounded_timeout(transports, tmp_pa
     mux = _mux(tmp_path / "c.json")
     async with contextlib.AsyncExitStack() as stack:
         with pytest.raises(RuntimeError, match="initialization timeout is invalid"):
-            await mux._open_one_session(
+            await mux.transport._open_one_session(
                 "invalid-cold-start",
                 {
                     "command": "child",

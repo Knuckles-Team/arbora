@@ -219,7 +219,7 @@ async def test_multiplexer_opens_pool_size_connections_for_http_child(
     import contextlib
     from unittest.mock import MagicMock
 
-    from arbora.fleet import multiplexer as mod
+    from arbora.fleet import child_transport as _mod_child_transport
 
     connects: list[str] = []
 
@@ -252,8 +252,8 @@ async def test_multiplexer_opens_pool_size_connections_for_http_child(
         async def __aexit__(self, *a):
             return False
 
-    monkeypatch.setattr(mod, "streamable_http_client", fake_http)
-    monkeypatch.setattr(mod, "ClientSession", FakeSessionCM)
+    monkeypatch.setattr(_mod_child_transport, "streamable_http_client", fake_http)
+    monkeypatch.setattr(_mod_child_transport, "ClientSession", FakeSessionCM)
 
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     # A non-loopback remote child must be HTTPS (fail-closed transport gate
@@ -273,7 +273,7 @@ async def test_stdio_child_ignores_pool_size_and_keeps_one_pipe(tmp_path, monkey
     import contextlib
     from unittest.mock import MagicMock
 
-    from arbora.fleet import multiplexer as mod
+    from arbora.fleet import child_transport as _mod_child_transport
 
     connects: list[Any] = []
 
@@ -305,8 +305,8 @@ async def test_stdio_child_ignores_pool_size_and_keeps_one_pipe(tmp_path, monkey
         async def __aexit__(self, *a):
             return False
 
-    monkeypatch.setattr(mod, "stdio_client", fake_stdio)
-    monkeypatch.setattr(mod, "ClientSession", FakeSessionCM)
+    monkeypatch.setattr(_mod_child_transport, "stdio_client", fake_stdio)
+    monkeypatch.setattr(_mod_child_transport, "ClientSession", FakeSessionCM)
 
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     res = await mux._start_child(

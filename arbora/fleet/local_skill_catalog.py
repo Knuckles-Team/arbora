@@ -142,7 +142,7 @@ def build_local_skill_catalog(
     resolver instead, so this stays hermetic without meristem installed.
 
     Returns ``(entries, problems)``: ``entries`` in the exact shape
-    ``arbora.fleet.multiplexer._bounded_skill_catalog`` produces for a
+    ``arbora.fleet.child_payload_bounds._bounded_skill_catalog`` produces for a
     harvested skill (``name``, ``uri``, ``description``, ``instructions``),
     and ``problems`` naming each individually skipped, unreadable, or
     malformed skill (never a bulk/silent drop).
