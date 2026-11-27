@@ -31,6 +31,7 @@ def test_redacted_traceback_keeps_frames_and_drops_messages() -> None:
         text = redacted_traceback(exc)
     assert SECRET not in text
     assert "_raise_chain" in text
+    assert "raise OSError" not in text
     assert f"OSError: {redact_for_log(SECRET)}" in text
     assert text.index("OSError") < text.index("RuntimeError")
 
