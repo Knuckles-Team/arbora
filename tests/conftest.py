@@ -62,3 +62,43 @@ def _granting_run_capacity(
 
     monkeypatch.setattr(EngineRunCapacity, "reserve", reserve)
     monkeypatch.setattr(EngineRunCapacity, "release", release)
+
+
+def _rebound_globals(module: object) -> tuple[str, ...]:
+    """Names a module rebinds through ``global`` statements (its registration slots)."""
+    import ast
+    import inspect
+
+    tree = ast.parse(inspect.getsource(module))  # type: ignore[arg-type]
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Global):
+            names.update(node.names)
+    return tuple(sorted(names))
+
+
+@pytest.fixture(autouse=True)
+def _isolated_host_port_registrations() -> object:
+    """A test's host-port registrations never outlive the test.
+
+    ``meristem.host_ports`` and ``arbora.agent_runs`` keep one process-wide slot per port
+    (checkpoint factory, decision provider, event sink, ...). A served test that composes
+    the host binds them for the process, so a later unit test of a run saw a checkpoint
+    factory it never registered and tried to start a local engine. Each test starts from
+    the slots it found and restores them on exit.
+    """
+
+    from meristem import host_ports
+
+    from arbora import agent_runs
+
+    modules = [host_ports, agent_runs]
+    saved = [
+        (module, name, getattr(module, name))
+        for module in modules
+        for name in _rebound_globals(module)
+        if hasattr(module, name)
+    ]
+    yield
+    for module, name, value in saved:
+        setattr(module, name, value)
