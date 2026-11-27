@@ -396,7 +396,6 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 | T-ARBORA-FLEET-R003.2 | ARBORA-FLEET-R003.2 | Test: `tests/api/test_write_back_ops.py::test_preview_commit_replay_and_refusals` (L2) covers preview-then-commit, replayed commit returning the original receipt, no preview and a mismatched key. |
 | T-ARBORA-FLEET-R008.2 | ARBORA-FLEET-R008.2 | Test: `tests/fleet/test_feed_catalog_served.py::test_feed_events_sanitized_and_tenant_scoped` (L3) feeds one event per kind and a rejected one through `find` over HTTP and MCP. |
 | T-ARBORA-FLEET-R009.2 | ARBORA-FLEET-R009.2 | Test: `tests/a2a/test_run_admission_capacity_served.py::test_evaluate_commit_publish_with_capacity` (L3) drives grant, one re-decision, publish and release on stop. |
-| T-ARBORA-FLEET-R009.3 | ARBORA-FLEET-R009.3 | Test: `tests/a2a/test_run_admission_capacity_served.py::test_all_or_nothing_and_release` (L3) asserts no partial hold on denial and release on stop. |
 | T-ARBORA-FLEET-R003.3 | ARBORA-FLEET-R003.3 | Test: `tests/fleet/test_write_back_restart.py::test_write_back_survives_restart` (L3) rebuilds the registry mid-sequence and asserts one effect and an unchanged receipt. |
 | T-ARBORA-FLEET-R006.3.2 | ARBORA-FLEET-R006.3.2 | The inventory test confirms `_harvest_resource_bodies` no longer exists and the skill/prompt discovery tests still pass. |
 | T-ARBORA-FLEET-R006.3.3 | ARBORA-FLEET-R006.3.3 | Test: `tests/fleet/test_harvest_inventory.py::test_deadline_helpers_absent` (L1) asserts the symbols are gone; the probe deadline tests still pass. |
@@ -464,7 +463,6 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-023 | ARBORA-FLEET-R007.2 | `tests/mcp_server/test_arbora_surface_native_primitives.py::test_backing_surface_exposes_prompts_resources_and_templates` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-024 | ARBORA-FLEET-R008 | `tests/fleet/test_feed_catalog_served.py::test_feed_events_sanitized_and_tenant_scoped` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-025 | ARBORA-FLEET-R009 | `tests/a2a/test_run_admission_capacity_served.py::test_evaluate_commit_publish_with_capacity` (planned) | The result the row states holds. | Each refusal the row states is returned. |
-| PT-026 | ARBORA-FLEET-R009.3 | `tests/a2a/test_run_admission_capacity_served.py::test_all_or_nothing_and_release` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-027 | ARBORA-FLEET-R012.1 | `tests/api/test_registry_factory.py::test_engine_operations_come_from_served_descriptors` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-028 | ARBORA-FLEET-R015.2 | `tests/fleet/test_plan_confirmation_relay.py::test_destructive_relay_answers_from_confirmed_plan` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-029 | ARBORA-FLEET-R019 | `tests/api/test_policy_eunomia.py::test_discover_load_call_modes` (planned) | The result the row states holds. | Each refusal the row states is returned. |

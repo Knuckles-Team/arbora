@@ -30,7 +30,11 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import Confirm, Effect, OpSpec
-from arbora.control_plane.runs.engine_policy import ENGINE_POLICY_DENIALS
+from arbora.control_plane.runs.engine_policy import (
+    ENGINE_POLICY_DENIALS,
+    RunPolicyDenied,
+    RunPolicyUnavailable,
+)
 from arbora.deployment.policy_bundle import BundleRefused, load_bundle
 from arbora.pin_lag.medulla import (
     PinLagUnavailable,
@@ -223,15 +227,34 @@ def policy_guard() -> Iterator[None]:
     """
     try:
         yield
-    except EngineRefusal as refused:
-        if refused.code not in ENGINE_POLICY_DENIALS:
+    except _POLICY_ERRORS as error:
+        refused = _policy_refusal(error)
+        if refused is None:
             raise
-        details = {"engine_code": refused.code}
-        if refused.details.get("policy_ref"):
-            details["policy_ref"] = str(refused.details["policy_ref"])
-        raise OperationRefused("POLICY_DENIED", details) from refused
-    except (OSError, TimeoutError) as unreachable:
-        raise OperationRefused("POLICY_UNAVAILABLE") from unreachable
+        raise refused from error
+
+
+_POLICY_ERRORS = (
+    EngineRefusal,
+    RunPolicyDenied,
+    RunPolicyUnavailable,
+    OSError,
+    TimeoutError,
+)
+
+
+def _policy_refusal(error: BaseException) -> OperationRefused | None:
+    """The row's code for one policy failure, or ``None`` when it is not a policy one."""
+    if isinstance(error, RunPolicyDenied):
+        return OperationRefused("POLICY_DENIED", {"engine_code": error.engine_code})
+    if isinstance(error, EngineRefusal):
+        if error.code not in ENGINE_POLICY_DENIALS:
+            return None
+        details = {"engine_code": error.code}
+        if error.details.get("policy_ref"):
+            details["policy_ref"] = str(error.details["policy_ref"])
+        return OperationRefused("POLICY_DENIED", details)
+    return OperationRefused("POLICY_UNAVAILABLE")
 
 
 async def _policy_engine(context: Any, method: str, params: dict[str, Any]) -> Any:

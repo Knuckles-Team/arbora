@@ -22,6 +22,7 @@ from meristem.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
 
+from arbora.api.errors import EngineRefusal as EngineCodeRefusal  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
 from arbora.security.actor_context import ActorContext, ActorType  # noqa: E402
@@ -550,6 +551,69 @@ async def test_native_plan_admission_uses_engine_identity_and_claim(monkeypatch)
     assert seen["submit"]["run_id"] == run_id
     assert seen["submit"]["idempotency_key"] == run_id
     assert seen["submit"]["metadata"]["a2a_owner_ref"] == owner
+
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("raised", "code"),
+    [
+        (EngineCodeRefusal("SCOPE_EXCEEDS_POLICY"), "POLICY_DENIED"),
+        (EngineCodeRefusal("POLICY_REVIEW_MISSING"), "POLICY_DENIED"),
+        (TimeoutError(), "POLICY_UNAVAILABLE"),
+    ],
+)
+async def test_native_plan_admission_refuses_through_the_policy_port(
+    monkeypatch, raised, code
+):
+    from arbora import work_items
+    from arbora.api.ops.policy import policy_guard
+
+    context = _native_plan_context(FakeEngine())
+    context.caller.request_id = "d" * 32
+    reached: list[str] = []
+
+    def submit(_engine, **kwargs):
+        raise raised
+
+    monkeypatch.setattr(work_items, "submit_work_item_atomic", submit)
+    monkeypatch.setattr(
+        work_items, "get_work_item", lambda *a, **k: reached.append("get")
+    )
+    monkeypatch.setattr(
+        work_items, "claim_specific", lambda *a, **k: reached.append("claim")
+    )
+    plan = {"plan_digest": "sha256:" + "d" * 64}
+    with pytest.raises(OperationRefused) as refused, policy_guard():
+        await plans._admit_native_plan_run(context, plan)
+    assert refused.value.code == code
+    # A refused admission reads, claims and records nothing.
+    assert reached == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+@pytest.mark.asyncio
+async def test_native_plan_admission_uses_the_composed_policy_port(monkeypatch):
+    from arbora import work_items
+    from arbora.control_plane.runs import RunPolicyDenied
+
+    context = _native_plan_context(FakeEngine())
+    asked: list[object] = []
+
+    class Port:
+        async def decide(self, subject, *, now):
+            asked.append(subject)
+            raise RunPolicyDenied("SCOPE_EXCEEDS_POLICY")
+
+    context.services["run_policy"] = Port()
+    monkeypatch.setattr(
+        work_items, "submit_work_item_atomic", lambda *a, **k: pytest.fail("bypassed")
+    )
+    with pytest.raises(RunPolicyDenied):
+        await plans._admit_native_plan_run(
+            context, {"plan_digest": "sha256:" + "e" * 64}
+        )
+    assert len(asked) == 1 and asked[0]["run_id"].startswith("run-")
 
 
 @pytest.mark.asyncio

@@ -1,11 +1,5 @@
-"""Resolved-run references, native admission, observations, and audit."""
+"""Resolved-run references, the engine policy port, observations, and audit."""
 
-from .admission import (
-    InMemoryNativeAdmission,
-    NativeAdmissionError,
-    NativeWorkItemAdmissionProtocol,
-    ReplayDriftError,
-)
 from .audit import AuditChain, AuditDiscontinuityError, AuditEvent
 from .capacity import (
     CapacityDecision,
@@ -53,17 +47,13 @@ __all__ = [
     "CapacityError",
     "CapacityLedger",
     "CapacityReDecisionExhaustedError",
-    "InMemoryNativeAdmission",
     "InMemoryObservationLedger",
     "InvocationRef",
     "JobRef",
-    "NativeAdmissionError",
     "NativeAdmissionRequest",
     "NativeWorkItemAdmission",
-    "NativeWorkItemAdmissionProtocol",
     "ObservationDiscontinuityError",
     "RelationalObservation",
-    "ReplayDriftError",
     "ENGINE_POLICY_DENIALS",
     "EngineRunPolicy",
     "RunPolicyDecision",

@@ -80,9 +80,9 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUIG-RUNTIME-R002.2 through R002.6. These cases have not been run.
 
-- `tests/agent_host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
-- `tests/agent_host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
-- `tests/agent_host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle`: two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
+- `tests/agent_host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated` (planned): start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
+- `tests/agent_host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix` (planned): use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
+- `tests/agent_host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle` (planned): two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
 
 Missing receipt fields or public consumer exports block positive served acceptance. Helper success or a log file alone cannot satisfy it. Record both revisions and the authenticated handoff identity; never credentials.
 
@@ -314,7 +314,7 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R001.2.5` | `tests/test_agent_runs_engine_port.py::test_bound_port_invokes_registry_with_run_principal` | Planned, not yet written |
 | `ARBORA-HOST-R007.3` | `tests/observability/test_gateway_metrics.py::test_no_series_uses_the_retired_prefix` | Planned, not yet written |
 | `ARBORA-HOST-R007.3` | `tests/gateway/test_rate_limit.py::test_rate_limit_counter_renamed` | Planned, not yet written |
-| `ARBORA-HOST-R031.1` | `arbora/control_plane/runs/admission.py::NativeWorkItemAdmissionProtocol` | Planned, not yet written |
+| `ARBORA-HOST-R031.1` | `arbora/api/ops/plans.py::_admit_native_plan_run` | Planned, not yet written |
 | `ARBORA-HOST-R031.1` | `tests/control_plane/test_sandbox_admission_served.py::test_agents_run_admits_and_records_allocation` | Planned, not yet written |
 | `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Planned, not yet written |
 | `ARBORA-HOST-R034` | `tests/mcp_server/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |
