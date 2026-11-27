@@ -889,6 +889,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ONTOLOGY_REVISION_UNKNOWN": (404, False),
     "ORDER_LIMIT_BREACH": (400, False),
     "ORDER_PROMOTION_VETOED": (400, False),
+    "ORDER_RECEIPT_NOT_FOUND": (404, False),
     "OWNERSHIP_LAST_ADMIN": (400, False),
     "OWNERSHIP_NO_ROLLBACK": (400, False),
     "OWNERSHIP_WIDENS_TENANT": (400, False),

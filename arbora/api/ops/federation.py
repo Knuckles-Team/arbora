@@ -86,22 +86,113 @@ def redact(value: Any) -> Any:
     return value
 
 
+class EngineForeignSources:
+    """The ``federation_sources`` port over the engine's foreign-source catalog.
+
+    The durable record, its owner and its grantees live in medulla (ARBORA-OPS-R019);
+    Arbora holds no catalog. Each request binds the port to the caller's own session
+    (:meth:`bind`), and the engine answers a source the caller may not see exactly as
+    an absent one, so ``engine_authorized`` tells the handlers not to re-decide
+    visibility. PIN-LAG: a pinned engine without the methods refuses ``UNAVAILABLE``
+    naming the first missing one.
+    """
+
+    def bind(self, context: Any) -> _BoundForeignSources:
+        return _BoundForeignSources(context)
+
+
+class _BoundForeignSources:
+    @staticmethod
+    def sees(record: Mapping[str, Any], principal: str) -> bool:
+        return True
+
+    @staticmethod
+    def owns(record: Mapping[str, Any], principal: str) -> bool:
+        return True
+
+    def __init__(self, context: Any) -> None:
+        self._context = context
+
+    async def _send(self, method: str, params: dict[str, Any], **kw: Any) -> Any:
+        from arbora.pin_lag.medulla import send_main
+
+        return await send_main(self._context, method, params, **kw)
+
+    @staticmethod
+    def _record(name: str, value: Any) -> dict[str, Any]:
+        if hasattr(value, "model_dump"):
+            value = value.model_dump(mode="json")
+        record = dict(value) if isinstance(value, Mapping) else {}
+        return {"source_id": record.get("name", name), **record}
+
+    async def get(self, source_id: str, *, tenant: str) -> dict[str, Any] | None:
+        return self._record(
+            source_id, await self._send("GetForeignSource", {"name": source_id})
+        )
+
+    async def list(self, *, tenant: str) -> list[dict[str, Any]]:
+        listed = await self._send("ListForeignSources", {})
+        if hasattr(listed, "model_dump"):
+            listed = listed.model_dump(mode="json")
+        rows = listed.get("sources", listed) if isinstance(listed, Mapping) else listed
+        return [self._record("", row) for row in rows or ()]
+
+    async def probe(self, source_id: str, *, tenant: str) -> dict[str, Any]:
+        return self._record(
+            source_id, await self._send("ProbeForeignSource", {"name": source_id})
+        )
+
+    async def grant(
+        self, source_id: str, grantee: str, *, tenant: str
+    ) -> dict[str, Any]:
+        return self._record(
+            source_id,
+            await self._send(
+                "ShareForeignSource",
+                {"name": source_id, "grantees": [grantee]},
+                idempotent=True,
+            ),
+        )
+
+    async def revoke(
+        self, source_id: str, grantee: str, *, tenant: str
+    ) -> dict[str, Any]:
+        return self._record(
+            source_id,
+            await self._send(
+                "UnshareForeignSource",
+                {"name": source_id, "grantees": [grantee]},
+                idempotent=True,
+            ),
+        )
+
+
 def _port(context: Any) -> Any:
-    return bound_service(
+    port = bound_service(
         context,
         "federation_sources",
         reason="federation source catalog is not composed",
     )
+    return getattr(port, "bind", lambda _context: port)(context)
 
 
-def _can_see(record: Mapping[str, Any], principal: str) -> bool:
+def _owner_or_grantee(record: Mapping[str, Any], principal: str) -> bool:
     return principal == record.get("owner") or principal in record.get("grantees", ())
+
+
+def _is_owner(record: Mapping[str, Any], principal: str) -> bool:
+    return record.get("owner") == principal
+
+
+def _can_see(record: Mapping[str, Any], principal: str, port: Any) -> bool:
+    """The engine port decides visibility itself; a plain catalog port is Arbora's rule."""
+    return getattr(port, "sees", _owner_or_grantee)(record, principal)
 
 
 async def _visible(context: Any, source_id: str) -> tuple[Any, dict[str, Any]]:
     port = _port(context)
     record = await port.get(source_id, tenant=context.caller.tenant)
-    if record is None or not _can_see(record, context.caller.principal):
+    if record is None or not _can_see(record, context.caller.principal, port):
         raise LookupError("federation source not found")
     return port, dict(record)
 
@@ -110,43 +201,53 @@ def _public(record: Mapping[str, Any]) -> dict[str, Any]:
     return redact(dict(record))
 
 
-async def handle_federation(
+async def _list(context: Any, params: Mapping[str, Any], op: OpSpec) -> dict[str, Any]:
+    port = _port(context)
+    principal = context.caller.principal
+    records = await port.list(tenant=context.caller.tenant)
+    sources = [_public(r) for r in records if _can_see(r, principal, port)]
+    return {"value": {"sources": sources}}
+
+
+async def _get(context: Any, params: Mapping[str, Any], op: OpSpec) -> dict[str, Any]:
+    _, record = await _visible(context, params["source_id"])
+    return {"value": _public(record)}
+
+
+async def _probe(context: Any, params: Mapping[str, Any], op: OpSpec) -> dict[str, Any]:
+    port, _ = await _visible(context, params["source_id"])
+    probed = await port.probe(params["source_id"], tenant=context.caller.tenant)
+    return {"value": _public(probed)}
+
+
+async def _change(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    principal = context.caller.principal
-    if op.id == "federation.sources.list":
-        records = await _port(context).list(tenant=context.caller.tenant)
-        return {
-            "value": {
-                "sources": [_public(r) for r in records if _can_see(r, principal)]
-            }
-        }
-    _, record = await _visible(context, params["source_id"])
-    if op.id == "federation.sources.get":
-        return {"value": _public(record)}
-    if op.id == "federation.sources.probe":
-        port = _port(context)
-        return {
-            "value": _public(
-                await port.probe(params["source_id"], tenant=context.caller.tenant)
-            )
-        }
-    if record.get("owner") != principal:
+    port, record = await _visible(context, params["source_id"])
+    if not getattr(port, "owns", _is_owner)(record, context.caller.principal):
         raise PermissionError("only the owner can change who a source is shared with")
     if not context.idempotency_key:
         raise ValueError("Idempotency-Key is required")
-    port = _port(context)
-    if op.id == "federation.sources.share":
-        updated = await port.grant(
-            params["source_id"], params["grantee"], tenant=context.caller.tenant
-        )
-    elif op.id == "federation.sources.unshare":
-        updated = await port.revoke(
-            params["source_id"], params["grantee"], tenant=context.caller.tenant
-        )
-    else:
-        raise ValueError("unknown federation operation")
+    change = port.grant if op.id == "federation.sources.share" else port.revoke
+    updated = await change(
+        params["source_id"], params["grantee"], tenant=context.caller.tenant
+    )
     return {"value": _public(updated)}
+
+
+_HANDLERS = {
+    "federation.sources.list": _list,
+    "federation.sources.get": _get,
+    "federation.sources.probe": _probe,
+    "federation.sources.share": _change,
+    "federation.sources.unshare": _change,
+}
+
+
+async def handle_federation(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    return await _HANDLERS[op.id](context, params, op)
 
 
 async def connected_sources(tenant: str, *, catalog: Any) -> tuple[str, ...]:
@@ -258,3 +359,9 @@ def operations() -> tuple[OpSpec, ...]:
 
 
 specs = operations
+
+#: The engine replays a share or unshare by the request key.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "federation.sources.share": "medulla:ShareForeignSource",
+    "federation.sources.unshare": "medulla:UnshareForeignSource",
+}

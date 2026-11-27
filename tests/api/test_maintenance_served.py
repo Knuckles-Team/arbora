@@ -1,12 +1,14 @@
-"""Paper-shortfall maintenance refuses before any effect (ARBORA-OPS-R072, pin-lag)."""
+"""Paper-shortfall maintenance: sealed verdict, zero-effect refusals, one governed purge (ARBORA-OPS-R072)."""
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import maintenance
-from arbora.api.ops.registry_factory import get_registry
 from tests.api._lane_double import EngineDouble, context
 
 _PARAMS = {
@@ -14,69 +16,133 @@ _PARAMS = {
     "expected_revision": 3,
     "cost_ceiling": 500,
     "admission_verdict_ref": "verdict-1",
-    "cost": 100,
+    "purge_ids": ["p1", "p2"],
 }
 
 
-@pytest.mark.spec("ARBORA-OPS-R072")
-def test_the_operation_is_absent_until_the_engine_publishes_the_method() -> None:
-    assert maintenance.method_published() is False
-    assert maintenance.operations() == ()
-    assert get_registry().get("maintenance.paper_shortfall.run") is None
+def _score(name: str) -> dict:
+    return {"option_id": name, "score": {"value": 1}}
 
 
-@pytest.mark.spec("ARBORA-OPS-R072")
-async def test_pre_effect_refusals_and_the_missing_method(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    client = EngineDouble()
-    ctx = context(client, monkeypatch)
+def _verdict(**changes: object) -> dict:
+    record = {
+        "question_kind": "ingest_shortfall",
+        "outcome": {
+            "outcome": "advisory",
+            "scores": [_score("goal:g1"), _score("purge:p1"), _score("purge:p2")],
+        },
+        "params": [
+            {
+                "name": "purge_candidates",
+                "value": {
+                    "type": "text",
+                    "value": json.dumps(
+                        [
+                            {"purge_id": "p1", "cost": 200},
+                            {"purge_id": "p2", "cost": 250},
+                            {"purge_id": "p3", "cost": 10},
+                        ]
+                    ),
+                },
+            }
+        ],
+    }
+    return {**record, **changes}
 
-    async def refused(params: dict) -> OperationRefused:
-        with pytest.raises(OperationRefused) as caught:
-            await maintenance.handle_paper_shortfall_run(ctx, params, None)  # type: ignore[arg-type]
-        return caught.value
 
-    assert (
-        await refused({**_PARAMS, "owner_authorization_ref": None})
-    ).code == "SCOPE_REQUIRED"
-    over = await refused({**_PARAMS, "cost": 501})
-    assert (
-        over.code == "POLICY_DENIED" and over.details["reason"] == "cost_over_ceiling"
-    )
-    missing = await refused(_PARAMS)
-    assert (
-        missing.code == "UNAVAILABLE"
-        and missing.details["missing"] == "PaperMaintenanceApply"
-    )
-    assert client.sent == []
-
-
-@pytest.mark.spec("ARBORA-OPS-R072")
-async def test_shortfall_receipt_and_zero_effect_refusals(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def _serve(monkeypatch: pytest.MonkeyPatch, client: EngineDouble):
     import medulla.generated as generated
 
-    monkeypatch.setattr(maintenance, "require_methods", lambda *_names: None)
     monkeypatch.setattr(
-        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {maintenance.METHOD}
+        generated,
+        "METHOD_IDS",
+        frozenset(generated.METHOD_IDS) | {maintenance.METHOD, "DecisionLog"},
     )
 
     async def send(client, method, params, graph, **kw):
         return await client._send(method, params, graph, **kw)
 
     monkeypatch.setattr(generated, "send_by_id", send)
-    client = EngineDouble(PaperMaintenanceApply={"receipt_ref": "r-1", "purged": 2})
-    ctx = context(client, monkeypatch)
+    return context(client, monkeypatch)
+
+
+async def _refused(ctx, params: dict) -> OperationRefused:
+    with pytest.raises(OperationRefused) as caught:
+        await maintenance.handle_paper_shortfall_run(ctx, params, None)  # type: ignore[arg-type]
+    return caught.value
+
+
+@pytest.mark.spec("ARBORA-OPS-R072")
+async def test_admitted_purge_is_one_revision_guarded_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = EngineDouble(
+        DecisionLog=_verdict(), ApplyChangeEnvelopeDraft={"status": "applied"}
+    )
+    ctx = _serve(monkeypatch, client)
     answer = await maintenance.handle_paper_shortfall_run(ctx, _PARAMS, None)  # type: ignore[arg-type]
-    assert answer["value"]["receipt_ref"] == "r-1"
-    assert [method for method, *_ in client.sent] == [maintenance.METHOD]
-    # Each refusal runs before the engine call: the sent list does not grow.
-    for bad in (
-        {**_PARAMS, "owner_authorization_ref": None},
-        {**_PARAMS, "cost": 501},
-    ):
-        with pytest.raises(OperationRefused):
-            await maintenance.handle_paper_shortfall_run(ctx, bad, None)  # type: ignore[arg-type]
-    assert len(client.sent) == 1
+    assert answer["value"]["purged"] == ["p1", "p2"] and answer["value"]["cost"] == 450
+    applied = [s for s in client.sent if s[0] == "ApplyChangeEnvelopeDraft"]
+    ((_, params, _, key),) = applied
+    mutation = params["draft"]["mutation"]
+    assert key == "key-1" and mutation["expected_graph_version"] == 3
+    assert [o["method"]["params"]["node_id"] for o in mutation["operations"]] == [
+        "p1",
+        "p2",
+    ]
+
+
+@pytest.mark.spec("ARBORA-OPS-R072")
+async def test_pre_effect_refusals_send_no_purge(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = EngineDouble(DecisionLog=_verdict())
+    ctx = _serve(monkeypatch, client)
+    assert (
+        await _refused(ctx, {**_PARAMS, "owner_authorization_ref": None})
+    ).code == "SCOPE_REQUIRED"
+    over = await _refused(ctx, {**_PARAMS, "cost_ceiling": 449})
+    assert (
+        over.code == "POLICY_DENIED" and over.details["reason"] == "cost_over_ceiling"
+    )
+    unlisted = await _refused(ctx, {**_PARAMS, "purge_ids": ["p3"]})
+    assert unlisted.details["reason"] == "purge_not_admitted"
+    assert [s[0] for s in client.sent if s[0] == "ApplyChangeEnvelopeDraft"] == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R072")
+async def test_a_foreign_verdict_and_a_stale_revision_purge_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    other = EngineDouble(DecisionLog=_verdict(question_kind="task_plan"))
+    refused = await _refused(_serve(monkeypatch, other), _PARAMS)
+    assert refused.code == "RECEIPT_MISMATCH"
+    assert [s[0] for s in other.sent] == ["DecisionLog"]
+    stale = EngineDouble(
+        DecisionLog=_verdict(),
+        ApplyChangeEnvelopeDraft=EngineRefusal("GRAPH_REVISION_STALE"),
+    )
+    ctx = _serve(monkeypatch, stale)
+    with pytest.raises(EngineRefusal) as caught:
+        await maintenance.handle_paper_shortfall_run(ctx, _PARAMS, None)  # type: ignore[arg-type]
+    assert caught.value.code == "GRAPH_REVISION_STALE"
+
+
+@pytest.mark.spec("ARBORA-OPS-R072")
+async def test_the_missing_method_refuses_naming_it_before_any_read(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import medulla.generated as generated
+
+    monkeypatch.setattr(
+        generated,
+        "METHOD_IDS",
+        frozenset(generated.METHOD_IDS) - {maintenance.METHOD},
+    )
+    client = EngineDouble()
+    missing = await _refused(context(client, monkeypatch), _PARAMS)
+    assert (
+        missing.code == "UNAVAILABLE"
+        and missing.details["missing"] == maintenance.METHOD
+    )
+    assert client.sent == []

@@ -21,7 +21,7 @@ def test_the_operation_is_absent_until_the_engine_publishes_the_receipt() -> Non
 
 
 @pytest.mark.spec("ARBORA-OPS-R070")
-async def test_the_handler_refuses_naming_the_missing_receipt_type(
+async def test_the_handler_refuses_naming_the_missing_receipt_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = EngineDouble()
@@ -32,7 +32,7 @@ async def test_the_handler_refuses_naming_the_missing_receipt_type(
             None,  # type: ignore[arg-type]
         )
     assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == "OrderAdmissionReceipt"
+    assert refused.value.details["missing"] == "FinanceOrderReceiptGet"
     assert client.sent == []
 
 
@@ -42,7 +42,6 @@ async def test_confirmation_binds_digest_and_refuses_stale(
 ) -> None:
     import medulla.generated as generated
 
-    monkeypatch.setattr(finance_orders, "require_models", lambda _names: None)
     monkeypatch.setattr(finance_orders, "require_methods", lambda *_names: None)
     monkeypatch.setattr(
         generated,
@@ -55,11 +54,16 @@ async def test_confirmation_binds_digest_and_refuses_stale(
 
     monkeypatch.setattr(generated, "send_by_id", send)
     client = EngineDouble(
-        FinanceOrderReceiptGet={"snapshot_digest": "s", "admission_digest": D}
+        FinanceOrderReceiptGet={
+            "receipt_id": "rcpt-1",
+            "receipt_digest": D,
+            "receipt": {"proposal_id": "p1"},
+        }
     )
     ctx = context(client, monkeypatch)
     issued = await finance_orders.handle_order_proposal_confirm(ctx, _PARAMS, None)  # type: ignore[arg-type]
     assert issued["value"]["admission_digest"] == D
+    assert issued["value"]["receipt_id"] == "rcpt-1"
     assert issued["value"]["receipt_digest"]
     stale = {**_PARAMS, "admission_digest": "c" * 64}
     with pytest.raises(OperationRefused) as refused:
@@ -68,3 +72,37 @@ async def test_confirmation_binds_digest_and_refuses_stale(
     # A refused confirmation issues no receipt and calls no provider: the only
     # engine call is the receipt read.
     assert {method for method, *_ in client.sent} == {"FinanceOrderReceiptGet"}
+
+
+@pytest.mark.spec("ARBORA-OPS-R070")
+async def test_an_absent_unpromoted_or_foreign_proposal_answers_alike(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import medulla.generated as generated
+
+    from arbora.api.errors import EngineRefusal
+
+    monkeypatch.setattr(finance_orders, "require_methods", lambda *_names: None)
+    monkeypatch.setattr(
+        generated,
+        "METHOD_IDS",
+        frozenset(generated.METHOD_IDS) | {"FinanceOrderReceiptGet"},
+    )
+
+    async def send(client, method, params, graph, **kw):
+        return await client._send(method, params, graph, **kw)
+
+    monkeypatch.setattr(generated, "send_by_id", send)
+    codes = set()
+    for proposal in ("absent", "unpromoted", "foreign"):
+        client = EngineDouble(
+            FinanceOrderReceiptGet=EngineRefusal("ORDER_RECEIPT_NOT_FOUND")
+        )
+        with pytest.raises(EngineRefusal) as refused:
+            await finance_orders.handle_order_proposal_confirm(
+                context(client, monkeypatch),
+                {**_PARAMS, "proposal_id": proposal},
+                None,  # type: ignore[arg-type]
+            )
+        codes.add((refused.value.code, str(refused.value)))
+    assert len(codes) == 1 and codes.pop()[0] == "ORDER_RECEIPT_NOT_FOUND"
