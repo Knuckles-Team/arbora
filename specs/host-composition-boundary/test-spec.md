@@ -332,9 +332,9 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | ARBORA-HOST-R038.6 | `tests/core/test_task_plan_config.py::test_core_settings_load_without_importing_api_or_mcp_server` (L2). | The named conditions hold. |
 | ARBORA-HOST-R038.7 | `tests/architecture/test_unit_layers.py::test_no_cycle_remains_between_units_of_one_layer` (L2). | The named conditions hold. |
 | ARBORA-HOST-R038.8 | `tests/architecture/test_unit_layers.py::test_no_unit_imports_another_units_private_name` (L2). | The named conditions hold. |
-| ARBORA-HOST-R038.9 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` and `tests/fleet/test_multiplexer_collaborators.py::test_each_collaborator_is_built_without_a_multiplexer` (L2). | The named conditions hold. |
-| ARBORA-HOST-R038.10 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (L2). | The named conditions hold. |
-| ARBORA-HOST-R038.11 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.9 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (planned) and `tests/fleet/test_multiplexer_collaborators.py::test_each_collaborator_is_built_without_a_multiplexer` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.10 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (planned) (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.11 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (planned) (L2). | The named conditions hold. |
 | ARBORA-HOST-R038.12 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (L2). | The named conditions hold. |
 | ARBORA-HOST-R039.1 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` (L2). | The named conditions hold. |
 | ARBORA-HOST-R039.2 | `tests/fleet/test_fleet_state.py::test_two_fleet_states_share_no_registry` (L2). | The named conditions hold. |
