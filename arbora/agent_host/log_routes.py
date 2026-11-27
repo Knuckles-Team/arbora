@@ -16,6 +16,7 @@ from arbora.agent_host.log_access import (
     _normalize_endpoint,
 )
 from arbora.deployment.host_config import load_hosting_deployment_settings
+from arbora.identity.browser import require_mutation_proof, session_from_scope
 from arbora.identity.engine import IdentityUnavailable
 from arbora.security.http_boundary import normalize_host_authorities
 
@@ -34,13 +35,43 @@ class LogReadRequest(BaseModel):
 
 
 def host_log_credential(request: Request) -> str:
-    if request.headers.getlist("cookie") or request.url.query:
+    """The one credential a host-log request presents.
+
+    A bearer token serves non-browser callers. A browser presents its signed-in
+    session cookie instead, admitted by the shared browser-session proof (exact
+    origin and session-bound CSRF). Both together, or any query string, refuse.
+    """
+    if request.url.query:
         raise HTTPException(403, "workspace_denied")
+    cookies = request.headers.getlist("cookie")
     values = request.headers.getlist("authorization")
+    if cookies and values:
+        raise HTTPException(403, "workspace_denied")
+    if cookies:
+        return _browser_session_credential(request)
+    return _bearer_credential(values)
+
+
+def _bearer_credential(values: list[str]) -> str:
     if len(values) != 1:
         raise HTTPException(403, "workspace_denied")
     scheme, _, token = values[0].partition(" ")
     if scheme.lower() != "bearer" or not token or any(c.isspace() for c in token):
+        raise HTTPException(403, "workspace_denied")
+    return token
+
+
+def _browser_session_credential(request: Request) -> str:
+    """Admit the browser session cookie only with its exact-origin CSRF proof."""
+    origin = _trusted_request_origin(request).rstrip("/")
+    try:
+        require_mutation_proof(request.scope, trusted_origin=origin)
+        token = session_from_scope(request.scope)
+    except PermissionError:
+        raise HTTPException(403, "workspace_denied") from None
+    except IdentityUnavailable:
+        raise HTTPException(503, "log_unavailable") from None
+    if token is None:
         raise HTTPException(403, "workspace_denied")
     return token
 
