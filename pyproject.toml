@@ -338,7 +338,7 @@ units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connec
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "host"
-units = ["__init__", "client", "console", "host_bindings", "identity_cli", "local_browser_boundary", "local_browser_channel", "mcp_server", "webui_host"]
+units = ["__init__", "client", "console", "host_bindings", "identity_cli", "local_browser_boundary", "local_browser_channel", "mcp_server", "testing", "webui_host"]
 
 # State-machine census (PIPE-GATES-R086.7, R086.8): adopted in mode `staged`,
 # which prints findings and exits 0; it moves to `blocking` in the PR that
