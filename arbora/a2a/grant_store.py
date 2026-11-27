@@ -16,6 +16,7 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.invoke.plan import PLAN_TTL_MS, PlanBinding
@@ -67,11 +68,13 @@ class GrantView:
         )
 
 
-_STATUS_REFUSAL = {
-    "consumed": GrantRefusal.REPLAYED,
-    "revoked": GrantRefusal.REVOKED,
-    "expired": GrantRefusal.EXPIRED,
-}
+_STATUS_REFUSAL = MappingProxyType(
+    {
+        "consumed": GrantRefusal.REPLAYED,
+        "revoked": GrantRefusal.REVOKED,
+        "expired": GrantRefusal.EXPIRED,
+    }
+)
 
 
 class HumanGrantStore:

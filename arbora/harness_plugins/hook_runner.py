@@ -13,6 +13,7 @@ import json
 import logging
 import time
 from collections.abc import Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 import httpx
@@ -21,11 +22,13 @@ from arbora.harness_plugins.login import CredentialState, TokenStore, renew
 from arbora.harness_plugins.profiles import HarnessProfile, Lifecycle
 
 TIMEOUT_S = 5.0
-OPS = {
-    Lifecycle.FIRST_PROMPT: "workstream.attach",
-    Lifecycle.BEFORE_COMPACTION: "workstream.checkpoint",
-    Lifecycle.SESSION_END: "workstream.detach",
-}
+OPS = MappingProxyType(
+    {
+        Lifecycle.FIRST_PROMPT: "workstream.attach",
+        Lifecycle.BEFORE_COMPACTION: "workstream.checkpoint",
+        Lifecycle.SESSION_END: "workstream.detach",
+    }
+)
 
 Post = Callable[[str, Mapping[str, Any], Mapping[str, str]], httpx.Response]
 

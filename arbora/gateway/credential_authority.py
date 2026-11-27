@@ -14,6 +14,7 @@ import contextlib
 import logging
 from collections.abc import AsyncIterator, Callable, Mapping
 from contextvars import ContextVar
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from arbora.pin_lag.scion_sdk import require_credential_binding
@@ -32,11 +33,13 @@ REFUSALS: tuple[str, ...] = (
 #: The engine's closed ``ResourceAccessDecision.reason_code`` set, mapped exactly
 #:. A revoked grant leaves the ledger and reads as missing, so a
 #: revoked, a foreign and an absent grant answer alike.
-DENIAL_REASONS: dict[str, str] = {
-    "RESOURCE_UNKNOWN": "binding_mismatch",
-    "RESOURCE_GRANT_MISSING": "binding_mismatch",
-    "GRANT_EXPIRED": "grant_expired",
-}
+DENIAL_REASONS: Mapping[str, str] = MappingProxyType(
+    {
+        "RESOURCE_UNKNOWN": "binding_mismatch",
+        "RESOURCE_GRANT_MISSING": "binding_mismatch",
+        "GRANT_EXPIRED": "grant_expired",
+    }
+)
 
 
 class CredentialDenied(PermissionError):

@@ -17,6 +17,7 @@ import hashlib
 import logging
 import secrets
 from collections.abc import Awaitable, Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 from starlette.responses import JSONResponse, Response
@@ -32,12 +33,14 @@ RESET_CONFIRM = "/auth/password/reset/confirm"
 ACCOUNT_ROUTES = frozenset({REGISTER, CHANGE_ROUTE, RESET_REQUEST, RESET_CONFIRM})
 #: Reset tokens live fifteen minutes at the engine.
 RESET_TTL_MS = 900_000
-_FIELDS = {
-    REGISTER: frozenset({"username", "password"}),
-    CHANGE_ROUTE: frozenset({"current", "new"}),
-    RESET_REQUEST: frozenset({"username"}),
-    RESET_CONFIRM: frozenset({"token", "new_password"}),
-}
+_FIELDS = MappingProxyType(
+    {
+        REGISTER: frozenset({"username", "password"}),
+        CHANGE_ROUTE: frozenset({"current", "new"}),
+        RESET_REQUEST: frozenset({"username"}),
+        RESET_CONFIRM: frozenset({"token", "new_password"}),
+    }
+)
 #: Engine refusals that mean the new password breaks the policy.
 _POLICY = frozenset({"IDENTITY_WEAK_PASSWORD", "IDENTITY_PASSWORD_REUSED"})
 _audit_log = logging.getLogger("arbora.identity.audit")

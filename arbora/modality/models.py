@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import enum
 import hashlib
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -44,14 +46,16 @@ RefusalCode = Literal[
 ]
 
 #: The Arbora envelope code each modality refusal answers with.
-ARBORA_CODE: dict[str, str] = {
-    "MODALITY_UNSUPPORTED": "INVALID_ARGUMENT",
-    "TRANSCRIPTION_UNAVAILABLE": "UNAVAILABLE",
-    "TRANSCRIPTION_REFUSED": "INVALID_ARGUMENT",
-    "MEDIA_TOO_LARGE": "INVALID_ARGUMENT",
-    "MEDIA_TOO_LONG": "INVALID_ARGUMENT",
-    "MEDIA_UNREADABLE": "INVALID_ARGUMENT",
-}
+ARBORA_CODE: Mapping[str, str] = MappingProxyType(
+    {
+        "MODALITY_UNSUPPORTED": "INVALID_ARGUMENT",
+        "TRANSCRIPTION_UNAVAILABLE": "UNAVAILABLE",
+        "TRANSCRIPTION_REFUSED": "INVALID_ARGUMENT",
+        "MEDIA_TOO_LARGE": "INVALID_ARGUMENT",
+        "MEDIA_TOO_LONG": "INVALID_ARGUMENT",
+        "MEDIA_UNREADABLE": "INVALID_ARGUMENT",
+    }
+)
 
 
 class ModalityRefused(Exception):

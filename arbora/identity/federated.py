@@ -24,6 +24,7 @@ import secrets
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any, Protocol
 from urllib.parse import urlencode
 
@@ -56,14 +57,16 @@ LOGIN_STATE_TTL_MS = 600_000
 HINT_COOKIE = "__Host-arbora_oidc_hint"
 _SPENT = "IDENTITY_TOKEN_SPENT"
 _REPLAY = "IDENTITY_REPLAY"
-_SAML_CODES = {
-    SamlRefusalReason.WRONG_AUDIENCE: "SAML_AUDIENCE_MISMATCH",
-    SamlRefusalReason.WRONG_RECIPIENT: "SAML_AUDIENCE_MISMATCH",
-    SamlRefusalReason.NOT_YET_VALID: "SAML_EXPIRED",
-    SamlRefusalReason.EXPIRED: "SAML_EXPIRED",
-    SamlRefusalReason.INVALID_SIGNATURE: "SAML_SIGNATURE_INVALID",
-    SamlRefusalReason.REPLAYED: "SAML_REPLAYED",
-}
+_SAML_CODES = MappingProxyType(
+    {
+        SamlRefusalReason.WRONG_AUDIENCE: "SAML_AUDIENCE_MISMATCH",
+        SamlRefusalReason.WRONG_RECIPIENT: "SAML_AUDIENCE_MISMATCH",
+        SamlRefusalReason.NOT_YET_VALID: "SAML_EXPIRED",
+        SamlRefusalReason.EXPIRED: "SAML_EXPIRED",
+        SamlRefusalReason.INVALID_SIGNATURE: "SAML_SIGNATURE_INVALID",
+        SamlRefusalReason.REPLAYED: "SAML_REPLAYED",
+    }
+)
 
 
 class FederatedRefused(PermissionError):

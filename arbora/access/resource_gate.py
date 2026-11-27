@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Awaitable, Callable, Iterable, Mapping
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
 from arbora.access.resource_grants import (
@@ -27,16 +27,20 @@ __all__ = ["ENFORCERS", "PUBLIC_DENIAL", "ResourceGate", "public_code"]
 #: The shared public code of a denied or unknown resource.
 PUBLIC_DENIAL = "RESOURCE_ACCESS_DENIED"
 #: Protocol enforcement is the connector call itself. No ``rdp`` connector declares it.
-ENFORCERS: Mapping[str, frozenset[str]] = {
-    "ssh": frozenset({"tunnel-manager"}),
-    "database": frozenset({"sql-mcp"}),
-    "web": frozenset(),  # any admitted web connector that declares the protocol
-    "rdp": frozenset(),
-}
-_PASS_THROUGH = {
-    ResourceRefusal.AUTHORITY_UNAVAILABLE,
-    ResourceRefusal.UNSUPPORTED_ENFORCEMENT,
-}
+ENFORCERS: Mapping[str, frozenset[str]] = MappingProxyType(
+    {
+        "ssh": frozenset({"tunnel-manager"}),
+        "database": frozenset({"sql-mcp"}),
+        "web": frozenset(),  # any admitted web connector that declares the protocol
+        "rdp": frozenset(),
+    }
+)
+_PASS_THROUGH = frozenset(
+    {
+        ResourceRefusal.AUTHORITY_UNAVAILABLE,
+        ResourceRefusal.UNSUPPORTED_ENFORCEMENT,
+    }
+)
 
 #: Asks the engine ``CheckResourceAccess`` and answers its ``ResourceAccessDecision``.
 Decide = Callable[[ResourceAccessRequest], Awaitable[Mapping[str, Any]]]

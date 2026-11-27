@@ -16,6 +16,7 @@ import io
 import time
 import wave
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from arbora.modality.fleet_port import FleetCallFailed, FleetPort, find_payload
@@ -32,11 +33,13 @@ CAPABILITY = "speech-to-text"
 CONTRACT_FIELDS = frozenset({"artifact_b64", "digest", "media_type"})
 SCHEMA_VERSION = "speech-transcript/1"
 _DISCOVERY_QUERY = "speech-to-text transcribe speech audio"
-_PROVIDER_REFUSALS: dict[str, RefusalCode] = {
-    "MEDIA_TOO_LARGE": "MEDIA_TOO_LARGE",
-    "MEDIA_TOO_LONG": "MEDIA_TOO_LONG",
-    "UNSUPPORTED_MEDIA": "MEDIA_UNREADABLE",
-}
+_PROVIDER_REFUSALS: Mapping[str, RefusalCode] = MappingProxyType(
+    {
+        "MEDIA_TOO_LARGE": "MEDIA_TOO_LARGE",
+        "MEDIA_TOO_LONG": "MEDIA_TOO_LONG",
+        "UNSUPPORTED_MEDIA": "MEDIA_UNREADABLE",
+    }
+)
 
 
 def is_speech_tool(item: Mapping[str, Any]) -> bool:

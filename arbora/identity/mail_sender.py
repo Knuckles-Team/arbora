@@ -18,6 +18,7 @@ import ssl
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from email.message import EmailMessage
+from types import MappingProxyType
 from typing import Any
 
 __all__ = [
@@ -30,11 +31,13 @@ __all__ = [
 
 SEND_TIMEOUT_SECONDS = 10
 KINDS = ("reset", "verify", "invite")
-_SUBJECTS = {
-    "reset": "Reset your password",
-    "verify": "Verify your email address",
-    "invite": "You are invited",
-}
+_SUBJECTS = MappingProxyType(
+    {
+        "reset": "Reset your password",
+        "verify": "Verify your email address",
+        "invite": "You are invited",
+    }
+)
 logger = logging.getLogger(__name__)
 
 

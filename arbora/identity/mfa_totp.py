@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from starlette.responses import JSONResponse
@@ -23,12 +25,14 @@ from starlette.responses import JSONResponse
 from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 
 #: Route path to the engine ``mfa`` operation.
-TOTP_ROUTES: dict[str, str] = {
-    "/auth/mfa/totp/enroll": "enroll",
-    "/auth/mfa/totp/confirm": "confirm",
-    "/auth/mfa/totp/verify": "verify",
-    "/auth/mfa/totp/disable": "disable",
-}
+TOTP_ROUTES: Mapping[str, str] = MappingProxyType(
+    {
+        "/auth/mfa/totp/enroll": "enroll",
+        "/auth/mfa/totp/confirm": "confirm",
+        "/auth/mfa/totp/verify": "verify",
+        "/auth/mfa/totp/disable": "disable",
+    }
+)
 #: The operations that take a code; ``enroll`` takes none.
 CODE_OPERATIONS = frozenset({"confirm", "verify", "disable"})
 TOTP_MODELS: tuple[str, ...] = (

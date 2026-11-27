@@ -10,6 +10,8 @@ of an error message. ``attempts`` and ``last_error`` are data, not state.
 from __future__ import annotations
 
 import enum
+from collections.abc import Mapping
+from types import MappingProxyType
 
 __all__ = [
     "ONBOARDING_EDGES",
@@ -44,21 +46,23 @@ _S, _E = OnboardingState, OnboardingEvent
 #: The 11 legal edges: (state, event, guard) -> state. The guard is
 #: ``attempts_left`` for ``pass_err``, ``lease_live`` for ``authority_live``
 #: and ``None`` elsewhere; the value of the guard is the key's third part.
-ONBOARDING_EDGES: dict[
+ONBOARDING_EDGES: Mapping[
     tuple[OnboardingState, OnboardingEvent, str | None, bool], OnboardingState
-] = {
-    (_S.IDLE, _E.REGISTERED, None, True): _S.DEBOUNCING,
-    (_S.DEBOUNCING, _E.REGISTERED, None, True): _S.DEBOUNCING,
-    (_S.DEBOUNCING, _E.DEBOUNCE_ELAPSED, None, True): _S.RUNNING,
-    (_S.RUNNING, _E.REGISTERED, None, True): _S.RUNNING,
-    (_S.RUNNING, _E.PASS_OK, None, True): _S.IDLE,
-    (_S.RUNNING, _E.PASS_ERR, "attempts_left", True): _S.BACKOFF,
-    (_S.RUNNING, _E.PASS_ERR, "attempts_left", False): _S.FAILED,
-    (_S.RUNNING, _E.HELD, None, True): _S.AWAITING_APPROVAL,
-    (_S.BACKOFF, _E.RETRY_ELAPSED, None, True): _S.RUNNING,
-    (_S.AWAITING_APPROVAL, _E.APPROVED, None, True): _S.RUNNING,
-    (_S.FAILED, _E.AUTHORITY_LIVE, "lease_live", True): _S.BACKOFF,
-}
+] = MappingProxyType(
+    {
+        (_S.IDLE, _E.REGISTERED, None, True): _S.DEBOUNCING,
+        (_S.DEBOUNCING, _E.REGISTERED, None, True): _S.DEBOUNCING,
+        (_S.DEBOUNCING, _E.DEBOUNCE_ELAPSED, None, True): _S.RUNNING,
+        (_S.RUNNING, _E.REGISTERED, None, True): _S.RUNNING,
+        (_S.RUNNING, _E.PASS_OK, None, True): _S.IDLE,
+        (_S.RUNNING, _E.PASS_ERR, "attempts_left", True): _S.BACKOFF,
+        (_S.RUNNING, _E.PASS_ERR, "attempts_left", False): _S.FAILED,
+        (_S.RUNNING, _E.HELD, None, True): _S.AWAITING_APPROVAL,
+        (_S.BACKOFF, _E.RETRY_ELAPSED, None, True): _S.RUNNING,
+        (_S.AWAITING_APPROVAL, _E.APPROVED, None, True): _S.RUNNING,
+        (_S.FAILED, _E.AUTHORITY_LIVE, "lease_live", True): _S.BACKOFF,
+    }
+)
 
 
 class IllegalOnboardingTransition(Exception):

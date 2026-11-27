@@ -52,10 +52,11 @@ import math
 import threading
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, ClassVar
 
 from arbora.access.approval_leases import file_approval, granted_approval
@@ -107,7 +108,7 @@ TIER_AUTO = "auto"
 TIER_AUTO_NOTIFY = "auto_notify"
 TIER_APPROVAL = "approval_required"
 TIER_FORBIDDEN = "forbidden"
-_TIERS = {TIER_AUTO, TIER_AUTO_NOTIFY, TIER_APPROVAL, TIER_FORBIDDEN}
+_TIERS = frozenset({TIER_AUTO, TIER_AUTO_NOTIFY, TIER_APPROVAL, TIER_FORBIDDEN})
 
 DECISION_ALLOW = "allow"
 DECISION_ALLOW_NOTIFY = "allow_notify"
@@ -115,7 +116,7 @@ DECISION_QUEUE = "queue_approval"
 DECISION_DENY = "deny"
 DECISION_UNAVAILABLE = "unavailable"
 
-_ALLOWING = {DECISION_ALLOW, DECISION_ALLOW_NOTIFY}
+_ALLOWING = frozenset({DECISION_ALLOW, DECISION_ALLOW_NOTIFY})
 
 # How many recent audit rows the durable rate/blast accounting scans.
 _LEDGER_SCAN_LIMIT = 500
@@ -254,164 +255,170 @@ def _spends_blast_budget(kind: Any, target: Any) -> bool:
 # The conservative shipped policy (kept byte-for-byte in sync with
 # ``deploy/action-policy.default.yml`` — tests assert the parity) so an
 # installed wheel without the repo's ``deploy/`` tree gets identical behavior.
-DEFAULT_POLICY: dict[str, Any] = {
-    "version": 1,
-    "defaults": {
-        "tier": TIER_APPROVAL,
-        "rate_limit": {"max": 3, "window_s": 3600},
-        "blast_radius": {"max_targets": 3, "window_s": 3600},
-    },
-    "rules": [
-        # No-op / diagnostic kinds run automatically; everything mutating
-        # falls through to the approval_required default.
-        {"kind": "diagnose", "target": "*", "tier": TIER_AUTO},
-        {"kind": "observe", "target": "*", "tier": TIER_AUTO},
-        {"kind": "notify", "target": "*", "tier": TIER_AUTO},
-        # Outbound user messaging (CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed): governed but default-on —
-        # auto+notify so reaching the user is auditable; operators may tighten a
-        # ``message.send`` rule to approval_required for a stricter posture.
-        {"kind": "message.send", "target": "*", "tier": TIER_AUTO_NOTIFY},
-        # Reactions/emotes (CONCEPT:MERISTEM-ECO.reactions.one-emote-registry-governance) are cosmetic, low-risk output any
-        # entrypoint may render — auto by default. Tighten to forbidden to disable
-        # reactions for a principal/context, or scope by target (the channel/surface).
-        {"kind": "reaction", "target": "*", "tier": TIER_AUTO},
-        # Agent-to-agent bus traffic (CONCEPT:MERISTEM-ECO.bus.agentbus-federated-agent-agent): a message between sessions is
-        # auto+notify so it's auditable but frictionless; a dispatch (CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical)
-        # hands an objective to the fleet — also auto+notify, since the Loop's own mutating
-        # steps re-enter this gate individually (same posture as run_playbook). Tighten a
-        # ``bus.send``/``bus.dispatch`` rule to approval_required for a stricter posture.
-        {"kind": "bus.send", "target": "*", "tier": TIER_AUTO_NOTIFY},
-        {"kind": "bus.dispatch", "target": "*", "tier": TIER_AUTO_NOTIFY},
-        # Durable WorkItem execution (agent_dispatch_worker.execute_work_item_turn):
-        # the assignment itself was
-        # already approved into its DAG at creation time (out of scope for
-        # this gate) — auto+notify so the claim->execute->outcome fleet loop
-        # runs unattended while every execution is audited via the
-        # AgentPolicyDecision this same gate writes. Tighten to
-        # approval_required for a stricter posture.
-        {"kind": "work_item.execute", "target": "*", "tier": TIER_AUTO_NOTIFY},
-        {"kind": "record_dry_run", "target": "*", "tier": TIER_AUTO},
-        # Sandboxed developer-workspace actions (CONCEPT:MERISTEM-OS.scaling.bridge-developer-workspace-mutating) default to
-        # auto: the workspace container/process IS the containment boundary.
-        # Operators override any of these to approval_required to require human
-        # sign-off on in-sandbox shell/file mutations.
-        {"kind": "workspace.cmd", "target": "*", "tier": TIER_AUTO},
-        {"kind": "workspace.write", "target": "*", "tier": TIER_AUTO},
-        {"kind": "workspace.edit", "target": "*", "tier": TIER_AUTO},
-        {"kind": "workspace.browse", "target": "*", "tier": TIER_AUTO},
-        # GUI computer-use (CONCEPT:MERISTEM-OS.governance.action-policy-rule): driving a desktop in a gui-sandbox
-        # container. The sandbox is the containment boundary (like the other
-        # workspace.* actions), but a click/type is more notable than a file write
-        # and per-click approval would make the agent loop unusable — so auto+notify:
-        # the loop runs, every desktop mutation is audited. (Capture is read-only and
-        # bypasses the gate.) Tighten to approval_required for human sign-off on input.
-        {"kind": "workspace.computer_use", "target": "*", "tier": TIER_AUTO_NOTIFY},
-        # Playbook *dispatch* is auto+notify: a playbook's mutating steps
-        # re-enter this gate individually with their concrete kinds.
-        {"kind": "run_playbook", "target": "*", "tier": TIER_AUTO_NOTIFY},
-        {"kind": "restart_service", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "rollback_service", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "scale_service", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "deploy_service", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "redeploy_stack", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "merge_promotion", "target": "*", "tier": TIER_APPROVAL},
-        # Arbora provisions its first-party content packs at deploy time
-        # through the pack import authority (``BUILTIN_CONTENT_PACKS``).
-        # Only those exact connector targets run unattended (audited); any
-        # other connector-pack import falls through to the approval_required
-        # default.
-        *(
-            {"kind": PACK_IMPORT_KIND, "target": target, "tier": TIER_AUTO_NOTIFY}
-            for target in BUILTIN_CONTENT_PACKS
-        ),
-        # Insight Engine closed loop (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,
-        # workstream C4): a mined finding (:AssociationRule/:Anomaly/:PredictedEdge)
-        # that cleared its confidence floor and the promotion-governance validator
-        # still requires a human before it is promoted from a proposal Claim to a
-        # verified one — SAFETY-CRITICAL, this tier must never silently become
-        # auto/auto_notify (see
-        # tests/unit/test_action_policy.py::test_promote_mined_claim_default_never_auto).
-        {"kind": "promote_mined_claim", "target": "*", "tier": TIER_APPROVAL},
-        # SkillOpt-native ReflACT skill evolution (CONCEPT:MERISTEM-AHE.optimization.skillopt-native-reflact):
-        # a candidate :SkillVersion that beat its incumbent on the held-out
-        # benchmark still requires a human before it flips proposal -> active —
-        # SAFETY-CRITICAL, this tier must never silently become auto/auto_notify
-        # (see tests/unit/knowledge_graph/test_skill_evolution.py::
-        # test_winning_candidate_default_never_auto_promotes).
-        {"kind": "promote_skill_version", "target": "*", "tier": TIER_APPROVAL},
-        # Unified evolution matrix (CONCEPT:MERISTEM-AHE.harness.unified-promotion-gate):
-        # the native eg-program optimizer's system-prompt and MCP tool-description
-        # candidates now flow through the SAME promotion gate as promote_skill_version
-        # instead of being gated only by the bare KG_AGENT_AUTO_APPLY boolean
-        # (EvolveAgent.apply_edits, previously ungoverned) — SAFETY-CRITICAL, these
-        # tiers must never silently become auto/auto_notify (see
-        # tests/unit/harness/test_agent_hardening_loop.py::
-        # test_apply_blocked_when_action_policy_denies_even_with_auto_apply_on).
-        {"kind": "promote_prompt_version", "target": "*", "tier": TIER_APPROVAL},
-        {
-            "kind": "promote_tool_description_version",
-            "target": "*",
+DEFAULT_POLICY: Mapping[str, Any] = MappingProxyType(
+    {
+        "version": 1,
+        "defaults": {
             "tier": TIER_APPROVAL,
+            "rate_limit": {"max": 3, "window_s": 3600},
+            "blast_radius": {"max_targets": 3, "window_s": 3600},
         },
-        # Closed-loop agent mining (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,
-        # workstream C6): a mined repeated-failure tool-call pattern
-        # (:SequentialPattern) that cleared its confidence floor and governance
-        # still requires a human before ``trace_pattern_miner`` applies any
-        # routing/prompt/tool change AND records the pattern's outcome via the
-        # EXISTING ``OutcomeRouter`` — SAFETY-CRITICAL, this tier must never
-        # silently become auto/auto_notify (see
-        # tests/unit/knowledge_graph/test_trace_pattern_miner.py::
-        # test_route_policy_update_default_never_auto).
-        {"kind": "route_policy_update", "target": "*", "tier": TIER_APPROVAL},
-        # Spec-level review/veto (CONCEPT:MERISTEM-OS.config.autonomous-spec-develop-off): a distilled :SpecProposal must
-        # clear this gate before it becomes a develop Loop — the EARLY checkpoint
-        # before any code is synthesized (merge_promotion is the LATE, publish-time
-        # gate). Default approval_required so the 24/7 loop holds specs for Claude/
-        # human review; relax this tier to auto-develop selected specs.
-        {"kind": "spec_promotion", "target": "*", "tier": TIER_APPROVAL},
-        # Secret-store mutations (CONCEPT:MERISTEM-OS.identity.encrypted-secret-store): writing or deleting a secret in
-        # the engine-encrypted ``__secrets__`` store is sensitive — approval_required.
-        # (Reads — secret.get / secret.list — are not gated, mirroring read posture.)
-        {"kind": "secret.set", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "secret.delete", "target": "*", "tier": TIER_APPROVAL},
-        # Live AgentConfig mutation through ``graph_config(action="set")``
-        # (CONCEPT:MERISTEM-OS.config.two-surfaces-by-default). A tool that can change
-        # production configuration reaches every subsystem at once — the eager
-        # MCP always-load set, auth mode, backend selection — so it is
-        # approval_required and stated explicitly rather than relying on the
-        # unmatched-kind fallback. Reads (get/describe/diff/reload) are not
-        # gated, mirroring the read posture of the other graph surfaces.
-        {"kind": "config.set", "target": "*", "tier": TIER_APPROVAL},
-        # Retained run-output review gate (CONCEPT:MERISTEM-ORCH.runvcs.retained-output-gate):
-        # a completed run's world delta is HELD as a proposal and materialized only on
-        # accept. ``run.select`` (materialize the held fs/KG delta into the real world) is
-        # the review itself — approval_required. ``run.discard`` (drop the proposal, world
-        # untouched) is always safe — auto.
-        {"kind": "run.select", "target": "*", "tier": TIER_APPROVAL},
-        {"kind": "run.discard", "target": "*", "tier": TIER_AUTO},
-        # Workload-aware data-placement mining (X-5, CONCEPT:MERISTEM-KG.evolution.placement-mining-canary-loop):
-        # a mined co-occurrence/hot-access finding (:PlacementProposal — shard_split/
-        # replica/cache_prewarm/materialized_join/embedding_refresh/index_change)
-        # that cleared its confidence floor and the promotion-governance validator
-        # still requires a human before ``placement_mining`` even ENTERS the measured
-        # canary (small-scope apply → measure → promote/rollback) — SAFETY-CRITICAL,
-        # this tier must never silently become auto/auto_notify (see
-        # tests/unit/knowledge_graph/test_placement_mining.py::
-        # test_apply_placement_change_default_never_auto).
-        {"kind": "apply_placement_change", "target": "*", "tier": TIER_APPROVAL},
-        # Ontology evolution as a governed proposal (CONCEPT:MERISTEM-KG.ontology.evolution-governed-loop,
-        # program item 7.5): an ``:OntologyProposal`` that parsed, passed OWL-RL/SHACL
-        # validation, and shadow-replayed its competency queries clean still requires
-        # a human/policy decision before `ontology_evolution.promote_ontology_proposal`
-        # flips it from a shadow-graph candidate to the tenant's ACTIVE ontology —
-        # SAFETY-CRITICAL, this tier must never silently become auto/auto_notify (see
-        # tests/unit/knowledge_graph/ontology/test_evolution.py::
-        # test_promote_ontology_proposal_default_never_auto). Preserves the
-        # pre-existing CONCEPT:MERISTEM-KG.ontology.do-not-auto-merge guarantee: nothing
-        # auto-merges into the canonical ontology.
-        {"kind": "ontology_proposal_promotion", "target": "*", "tier": TIER_APPROVAL},
-    ],
-}
+        "rules": [
+            # No-op / diagnostic kinds run automatically; everything mutating
+            # falls through to the approval_required default.
+            {"kind": "diagnose", "target": "*", "tier": TIER_AUTO},
+            {"kind": "observe", "target": "*", "tier": TIER_AUTO},
+            {"kind": "notify", "target": "*", "tier": TIER_AUTO},
+            # Outbound user messaging (CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed): governed but default-on —
+            # auto+notify so reaching the user is auditable; operators may tighten a
+            # ``message.send`` rule to approval_required for a stricter posture.
+            {"kind": "message.send", "target": "*", "tier": TIER_AUTO_NOTIFY},
+            # Reactions/emotes (CONCEPT:MERISTEM-ECO.reactions.one-emote-registry-governance) are cosmetic, low-risk output any
+            # entrypoint may render — auto by default. Tighten to forbidden to disable
+            # reactions for a principal/context, or scope by target (the channel/surface).
+            {"kind": "reaction", "target": "*", "tier": TIER_AUTO},
+            # Agent-to-agent bus traffic (CONCEPT:MERISTEM-ECO.bus.agentbus-federated-agent-agent): a message between sessions is
+            # auto+notify so it's auditable but frictionless; a dispatch (CONCEPT:MERISTEM-ORCH.routing.resolve-body-single-canonical)
+            # hands an objective to the fleet — also auto+notify, since the Loop's own mutating
+            # steps re-enter this gate individually (same posture as run_playbook). Tighten a
+            # ``bus.send``/``bus.dispatch`` rule to approval_required for a stricter posture.
+            {"kind": "bus.send", "target": "*", "tier": TIER_AUTO_NOTIFY},
+            {"kind": "bus.dispatch", "target": "*", "tier": TIER_AUTO_NOTIFY},
+            # Durable WorkItem execution (agent_dispatch_worker.execute_work_item_turn):
+            # the assignment itself was
+            # already approved into its DAG at creation time (out of scope for
+            # this gate) — auto+notify so the claim->execute->outcome fleet loop
+            # runs unattended while every execution is audited via the
+            # AgentPolicyDecision this same gate writes. Tighten to
+            # approval_required for a stricter posture.
+            {"kind": "work_item.execute", "target": "*", "tier": TIER_AUTO_NOTIFY},
+            {"kind": "record_dry_run", "target": "*", "tier": TIER_AUTO},
+            # Sandboxed developer-workspace actions (CONCEPT:MERISTEM-OS.scaling.bridge-developer-workspace-mutating) default to
+            # auto: the workspace container/process IS the containment boundary.
+            # Operators override any of these to approval_required to require human
+            # sign-off on in-sandbox shell/file mutations.
+            {"kind": "workspace.cmd", "target": "*", "tier": TIER_AUTO},
+            {"kind": "workspace.write", "target": "*", "tier": TIER_AUTO},
+            {"kind": "workspace.edit", "target": "*", "tier": TIER_AUTO},
+            {"kind": "workspace.browse", "target": "*", "tier": TIER_AUTO},
+            # GUI computer-use (CONCEPT:MERISTEM-OS.governance.action-policy-rule): driving a desktop in a gui-sandbox
+            # container. The sandbox is the containment boundary (like the other
+            # workspace.* actions), but a click/type is more notable than a file write
+            # and per-click approval would make the agent loop unusable — so auto+notify:
+            # the loop runs, every desktop mutation is audited. (Capture is read-only and
+            # bypasses the gate.) Tighten to approval_required for human sign-off on input.
+            {"kind": "workspace.computer_use", "target": "*", "tier": TIER_AUTO_NOTIFY},
+            # Playbook *dispatch* is auto+notify: a playbook's mutating steps
+            # re-enter this gate individually with their concrete kinds.
+            {"kind": "run_playbook", "target": "*", "tier": TIER_AUTO_NOTIFY},
+            {"kind": "restart_service", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "rollback_service", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "scale_service", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "deploy_service", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "redeploy_stack", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "merge_promotion", "target": "*", "tier": TIER_APPROVAL},
+            # Arbora provisions its first-party content packs at deploy time
+            # through the pack import authority (``BUILTIN_CONTENT_PACKS``).
+            # Only those exact connector targets run unattended (audited); any
+            # other connector-pack import falls through to the approval_required
+            # default.
+            *(
+                {"kind": PACK_IMPORT_KIND, "target": target, "tier": TIER_AUTO_NOTIFY}
+                for target in BUILTIN_CONTENT_PACKS
+            ),
+            # Insight Engine closed loop (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,
+            # workstream C4): a mined finding (:AssociationRule/:Anomaly/:PredictedEdge)
+            # that cleared its confidence floor and the promotion-governance validator
+            # still requires a human before it is promoted from a proposal Claim to a
+            # verified one — SAFETY-CRITICAL, this tier must never silently become
+            # auto/auto_notify (see
+            # tests/unit/test_action_policy.py::test_promote_mined_claim_default_never_auto).
+            {"kind": "promote_mined_claim", "target": "*", "tier": TIER_APPROVAL},
+            # SkillOpt-native ReflACT skill evolution (CONCEPT:MERISTEM-AHE.optimization.skillopt-native-reflact):
+            # a candidate :SkillVersion that beat its incumbent on the held-out
+            # benchmark still requires a human before it flips proposal -> active —
+            # SAFETY-CRITICAL, this tier must never silently become auto/auto_notify
+            # (see tests/unit/knowledge_graph/test_skill_evolution.py::
+            # test_winning_candidate_default_never_auto_promotes).
+            {"kind": "promote_skill_version", "target": "*", "tier": TIER_APPROVAL},
+            # Unified evolution matrix (CONCEPT:MERISTEM-AHE.harness.unified-promotion-gate):
+            # the native eg-program optimizer's system-prompt and MCP tool-description
+            # candidates now flow through the SAME promotion gate as promote_skill_version
+            # instead of being gated only by the bare KG_AGENT_AUTO_APPLY boolean
+            # (EvolveAgent.apply_edits, previously ungoverned) — SAFETY-CRITICAL, these
+            # tiers must never silently become auto/auto_notify (see
+            # tests/unit/harness/test_agent_hardening_loop.py::
+            # test_apply_blocked_when_action_policy_denies_even_with_auto_apply_on).
+            {"kind": "promote_prompt_version", "target": "*", "tier": TIER_APPROVAL},
+            {
+                "kind": "promote_tool_description_version",
+                "target": "*",
+                "tier": TIER_APPROVAL,
+            },
+            # Closed-loop agent mining (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,
+            # workstream C6): a mined repeated-failure tool-call pattern
+            # (:SequentialPattern) that cleared its confidence floor and governance
+            # still requires a human before ``trace_pattern_miner`` applies any
+            # routing/prompt/tool change AND records the pattern's outcome via the
+            # EXISTING ``OutcomeRouter`` — SAFETY-CRITICAL, this tier must never
+            # silently become auto/auto_notify (see
+            # tests/unit/knowledge_graph/test_trace_pattern_miner.py::
+            # test_route_policy_update_default_never_auto).
+            {"kind": "route_policy_update", "target": "*", "tier": TIER_APPROVAL},
+            # Spec-level review/veto (CONCEPT:MERISTEM-OS.config.autonomous-spec-develop-off): a distilled :SpecProposal must
+            # clear this gate before it becomes a develop Loop — the EARLY checkpoint
+            # before any code is synthesized (merge_promotion is the LATE, publish-time
+            # gate). Default approval_required so the 24/7 loop holds specs for Claude/
+            # human review; relax this tier to auto-develop selected specs.
+            {"kind": "spec_promotion", "target": "*", "tier": TIER_APPROVAL},
+            # Secret-store mutations (CONCEPT:MERISTEM-OS.identity.encrypted-secret-store): writing or deleting a secret in
+            # the engine-encrypted ``__secrets__`` store is sensitive — approval_required.
+            # (Reads — secret.get / secret.list — are not gated, mirroring read posture.)
+            {"kind": "secret.set", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "secret.delete", "target": "*", "tier": TIER_APPROVAL},
+            # Live AgentConfig mutation through ``graph_config(action="set")``
+            # (CONCEPT:MERISTEM-OS.config.two-surfaces-by-default). A tool that can change
+            # production configuration reaches every subsystem at once — the eager
+            # MCP always-load set, auth mode, backend selection — so it is
+            # approval_required and stated explicitly rather than relying on the
+            # unmatched-kind fallback. Reads (get/describe/diff/reload) are not
+            # gated, mirroring the read posture of the other graph surfaces.
+            {"kind": "config.set", "target": "*", "tier": TIER_APPROVAL},
+            # Retained run-output review gate (CONCEPT:MERISTEM-ORCH.runvcs.retained-output-gate):
+            # a completed run's world delta is HELD as a proposal and materialized only on
+            # accept. ``run.select`` (materialize the held fs/KG delta into the real world) is
+            # the review itself — approval_required. ``run.discard`` (drop the proposal, world
+            # untouched) is always safe — auto.
+            {"kind": "run.select", "target": "*", "tier": TIER_APPROVAL},
+            {"kind": "run.discard", "target": "*", "tier": TIER_AUTO},
+            # Workload-aware data-placement mining (X-5, CONCEPT:MERISTEM-KG.evolution.placement-mining-canary-loop):
+            # a mined co-occurrence/hot-access finding (:PlacementProposal — shard_split/
+            # replica/cache_prewarm/materialized_join/embedding_refresh/index_change)
+            # that cleared its confidence floor and the promotion-governance validator
+            # still requires a human before ``placement_mining`` even ENTERS the measured
+            # canary (small-scope apply → measure → promote/rollback) — SAFETY-CRITICAL,
+            # this tier must never silently become auto/auto_notify (see
+            # tests/unit/knowledge_graph/test_placement_mining.py::
+            # test_apply_placement_change_default_never_auto).
+            {"kind": "apply_placement_change", "target": "*", "tier": TIER_APPROVAL},
+            # Ontology evolution as a governed proposal (CONCEPT:MERISTEM-KG.ontology.evolution-governed-loop,
+            # program item 7.5): an ``:OntologyProposal`` that parsed, passed OWL-RL/SHACL
+            # validation, and shadow-replayed its competency queries clean still requires
+            # a human/policy decision before `ontology_evolution.promote_ontology_proposal`
+            # flips it from a shadow-graph candidate to the tenant's ACTIVE ontology —
+            # SAFETY-CRITICAL, this tier must never silently become auto/auto_notify (see
+            # tests/unit/knowledge_graph/ontology/test_evolution.py::
+            # test_promote_ontology_proposal_default_never_auto). Preserves the
+            # pre-existing CONCEPT:MERISTEM-KG.ontology.do-not-auto-merge guarantee: nothing
+            # auto-merges into the canonical ontology.
+            {
+                "kind": "ontology_proposal_promotion",
+                "target": "*",
+                "tier": TIER_APPROVAL,
+            },
+        ],
+    }
+)
 
 
 def _now() -> float:

@@ -17,6 +17,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal, get_args, get_origin
 
 from arbora.core.environment import environment_view
@@ -362,22 +363,24 @@ _READ_CALLS = frozenset(
 )
 #: Helpers that pass their first argument to the accessor, by module: a call with a
 #: literal (or a module constant) is a read of that name.
-_READ_HELPERS: dict[str, frozenset[str]] = {
-    "arbora/a2a/push.py": frozenset({"number"}),
-    "arbora/core/settings.py": frozenset({"_env_dir"}),
-    "arbora/deployment/production_ops.py": frozenset({"_required_env"}),
-    "arbora/api/domain/fleet/catalog_reader.py": frozenset({"_bounded_setting"}),
-    "arbora/identity/deployment_settings.py": frozenset({"_text"}),
-    "arbora/identity/host_services.py": frozenset({"read"}),
-    "arbora/messaging/backends/email.py": frozenset({"self._setting"}),
-    "arbora/observability/langfuse_trust.py": frozenset({"_value"}),
-    "arbora/mcp_server/backing/server_factory.py": frozenset({"_csv_setting"}),
-    "arbora/mcp_server/composition.py": frozenset({"_ranged"}),
-    "arbora/security/client_credentials.py": frozenset(
-        {"_configured_text", "_runtime_secret_reference"}
-    ),
-    "arbora/security/settings.py": frozenset({"_text", "_list", "_mapping"}),
-}
+_READ_HELPERS: Mapping[str, frozenset[str]] = MappingProxyType(
+    {
+        "arbora/a2a/push.py": frozenset({"number"}),
+        "arbora/core/settings.py": frozenset({"_env_dir"}),
+        "arbora/deployment/production_ops.py": frozenset({"_required_env"}),
+        "arbora/api/domain/fleet/catalog_reader.py": frozenset({"_bounded_setting"}),
+        "arbora/identity/deployment_settings.py": frozenset({"_text"}),
+        "arbora/identity/host_services.py": frozenset({"read"}),
+        "arbora/messaging/backends/email.py": frozenset({"self._setting"}),
+        "arbora/observability/langfuse_trust.py": frozenset({"_value"}),
+        "arbora/mcp_server/backing/server_factory.py": frozenset({"_csv_setting"}),
+        "arbora/mcp_server/composition.py": frozenset({"_ranged"}),
+        "arbora/security/client_credentials.py": frozenset(
+            {"_configured_text", "_runtime_secret_reference"}
+        ),
+        "arbora/security/settings.py": frozenset({"_text", "_list", "_mapping"}),
+    }
+)
 
 
 def _string_constant(node: ast.AST) -> tuple[str, str] | None:
@@ -396,25 +399,29 @@ def _string_constant(node: ast.AST) -> tuple[str, str] | None:
 
 #: Variables whose literal values are environment names read through a pass-through
 #: helper, by module: the platform-native variable tables of the messaging registry.
-_NAME_TABLES: dict[str, frozenset[str]] = {
-    "arbora/messaging/registry.py": frozenset({"native_token_vars", "app_id_vars"}),
-    "arbora/observability/telemetry.py": frozenset({"_ENDPOINT_NAMES"}),
-    "arbora/observability/langfuse_trust.py": frozenset(
-        {
-            "_AGENT_CONFIG_FIELDS",
-            "_CHILD_POLICY_KEYS",
-            "_MATERIALIZED_TRUST_FLAG",
-            "_PARENT_TRUST_SELECTORS",
-            "_TRUST_RELEVANT_ENV_KEYS",
-        }
-    ),
-}
+_NAME_TABLES: Mapping[str, frozenset[str]] = MappingProxyType(
+    {
+        "arbora/messaging/registry.py": frozenset({"native_token_vars", "app_id_vars"}),
+        "arbora/observability/telemetry.py": frozenset({"_ENDPOINT_NAMES"}),
+        "arbora/observability/langfuse_trust.py": frozenset(
+            {
+                "_AGENT_CONFIG_FIELDS",
+                "_CHILD_POLICY_KEYS",
+                "_MATERIALIZED_TRUST_FLAG",
+                "_PARENT_TRUST_SELECTORS",
+                "_TRUST_RELEVANT_ENV_KEYS",
+            }
+        ),
+    }
+)
 _NAME_SHAPE = re.compile(r"^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$")
 
 
 #: Modules that read ``<PREFIX><suffix>`` for each ``"env_prefix": "<PREFIX>"`` entry of
 #: their service table: the gateway's discovered service URLs.
-_PREFIXED_NAMES: dict[str, str] = {"arbora/gateway/config.py": "_URL"}
+_PREFIXED_NAMES: Mapping[str, str] = MappingProxyType(
+    {"arbora/gateway/config.py": "_URL"}
+)
 
 
 def _prefixed_reads(path: str, tree: ast.AST) -> list[EnvironmentRead]:
@@ -555,12 +562,14 @@ def _truthy(environ: Mapping[str, str], name: str) -> bool:
     return environ.get(name, "").strip().lower() in _TRUE
 
 
-_PATTERNS: dict[str, re.Pattern[str]] = {
-    "int": re.compile(r"[+-]?\d+"),
-    "float": re.compile(r"[+-]?\d+(\.\d+)?"),
-    "bool": re.compile("|".join(sorted(_TRUE | _FALSE)), re.IGNORECASE),
-    "secret_reference": _SECRET,
-}
+_PATTERNS: Mapping[str, re.Pattern[str]] = MappingProxyType(
+    {
+        "int": re.compile(r"[+-]?\d+"),
+        "float": re.compile(r"[+-]?\d+(\.\d+)?"),
+        "bool": re.compile("|".join(sorted(_TRUE | _FALSE)), re.IGNORECASE),
+        "secret_reference": _SECRET,
+    }
+)
 
 
 def _valid(kind: str, text: str) -> bool:

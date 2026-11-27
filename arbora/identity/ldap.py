@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Protocol
 
 from .engine import IdentityUnavailable
@@ -73,7 +74,9 @@ class DirectoryPort(Protocol):
         """Bind to the directory, raising on failure."""
 
 
-_FILTER_ESCAPES = {"\\": r"\5c", "*": r"\2a", "(": r"\28", ")": r"\29", "\x00": r"\00"}
+_FILTER_ESCAPES = MappingProxyType(
+    {"\\": r"\5c", "*": r"\2a", "(": r"\28", ")": r"\29", "\x00": r"\00"}
+)
 
 
 def escape_filter_value(value: str) -> str:

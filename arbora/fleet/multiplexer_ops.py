@@ -6,6 +6,7 @@ import builtins
 import logging
 import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, cast
 
 from arbora.api.domain.fleet.job_loads import JobLoadResult
@@ -122,10 +123,12 @@ def _require_discover_scope(caller: Any) -> None:
 
 
 #: Catalog kinds that each relayed MCP list family covers.
-RELAY_KINDS: dict[str, tuple[ItemKind, ...]] = {
-    "prompts": ("prompt",),
-    "resources": ("resource", "resource_template", "skill"),
-}
+RELAY_KINDS: Mapping[str, tuple[ItemKind, ...]] = MappingProxyType(
+    {
+        "prompts": ("prompt",),
+        "resources": ("resource", "resource_template", "skill"),
+    }
+)
 _SKILL_SCHEME = "skill://"
 _SKILL_MAIN = "/SKILL.md"
 

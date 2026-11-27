@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from enum import Enum
+from types import MappingProxyType
 
 __all__ = [
     "PRIORITY_HEADER",
@@ -44,12 +45,14 @@ class PriorityClass(Enum):
         return self is PriorityClass.BACKGROUND_INGESTION
 
 
-_RANKS: dict[PriorityClass, int] = {
-    PriorityClass.INTERACTIVE: 0,
-    PriorityClass.ORCHESTRATION: 1,
-    PriorityClass.HYDRATION: 1,
-    PriorityClass.BACKGROUND_INGESTION: 3,
-}
+_RANKS: Mapping[PriorityClass, int] = MappingProxyType(
+    {
+        PriorityClass.INTERACTIVE: 0,
+        PriorityClass.ORCHESTRATION: 1,
+        PriorityClass.HYDRATION: 1,
+        PriorityClass.BACKGROUND_INGESTION: 3,
+    }
+)
 
 _priority: contextvars.ContextVar[PriorityClass | None] = contextvars.ContextVar(
     "arbora_priority_class", default=None

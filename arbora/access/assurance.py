@@ -56,7 +56,9 @@ intent of this hardening pass).
 """
 
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 __all__ = [
@@ -88,14 +90,16 @@ class KindInvariant:
 # (unset ``source``) and stays unrestricted — a human operator / ungoverned
 # caller is scoped by the tier gate, not this RBAC layer.
 # ---------------------------------------------------------------------------
-ROLE_ALLOWED_KINDS: dict[str, frozenset[str]] = {
-    "manual": frozenset({"*"}),
-    "reconciler": frozenset({"stop_service", "restart_service", "scale_service"}),
-    "playbook": frozenset({"restart_service", "investigate_resource_pressure"}),
-    "autoscaler": frozenset({"scale_service"}),
-    "deploy_watch": frozenset({"rollback_service"}),
-    "self_deploy": frozenset({"restart_service"}),
-}
+ROLE_ALLOWED_KINDS: Mapping[str, frozenset[str]] = MappingProxyType(
+    {
+        "manual": frozenset({"*"}),
+        "reconciler": frozenset({"stop_service", "restart_service", "scale_service"}),
+        "playbook": frozenset({"restart_service", "investigate_resource_pressure"}),
+        "autoscaler": frozenset({"scale_service"}),
+        "deploy_watch": frozenset({"rollback_service"}),
+        "self_deploy": frozenset({"restart_service"}),
+    }
+)
 
 
 def _role_allows(role: str, kind: str) -> bool:
@@ -118,35 +122,41 @@ def _role_allows(role: str, kind: str) -> bool:
 # merge_promotion = proposed→active, spec_promotion = proposed→develop) plus
 # the argument shape a well-formed payload for each mutating kind must carry.
 # ---------------------------------------------------------------------------
-INVARIANTS: dict[str, KindInvariant] = {
-    "scale_service": KindInvariant(
-        kind="scale_service", required_params={"replicas": int}
-    ),
-    "deploy_service": KindInvariant(
-        kind="deploy_service", required_params={"image": str}
-    ),
-    "secret.set": KindInvariant(
-        kind="secret.set", required_params={"path": str, "value": str}
-    ),
-    "secret.delete": KindInvariant(kind="secret.delete", required_params={"path": str}),
-    # NOTE: the id for these lifecycle kinds is already carried in
-    # ``request.target`` (the dataclass already requires a target) — no
-    # separate required_params id is declared, so no schema check is added
-    # beyond what ActionRequest itself already enforces structurally.
-    "run.select": KindInvariant(kind="run.select", requires_state=frozenset({"held"})),
-    "run.discard": KindInvariant(
-        kind="run.discard", requires_state=frozenset({"held"})
-    ),
-    "merge_promotion": KindInvariant(
-        kind="merge_promotion", requires_state=frozenset({"proposed"})
-    ),
-    "spec_promotion": KindInvariant(
-        kind="spec_promotion", requires_state=frozenset({"proposed"})
-    ),
-    "workspace.computer_use": KindInvariant(
-        kind="workspace.computer_use", ref_params=("tool",)
-    ),
-}
+INVARIANTS: Mapping[str, KindInvariant] = MappingProxyType(
+    {
+        "scale_service": KindInvariant(
+            kind="scale_service", required_params={"replicas": int}
+        ),
+        "deploy_service": KindInvariant(
+            kind="deploy_service", required_params={"image": str}
+        ),
+        "secret.set": KindInvariant(
+            kind="secret.set", required_params={"path": str, "value": str}
+        ),
+        "secret.delete": KindInvariant(
+            kind="secret.delete", required_params={"path": str}
+        ),
+        # NOTE: the id for these lifecycle kinds is already carried in
+        # ``request.target`` (the dataclass already requires a target) — no
+        # separate required_params id is declared, so no schema check is added
+        # beyond what ActionRequest itself already enforces structurally.
+        "run.select": KindInvariant(
+            kind="run.select", requires_state=frozenset({"held"})
+        ),
+        "run.discard": KindInvariant(
+            kind="run.discard", requires_state=frozenset({"held"})
+        ),
+        "merge_promotion": KindInvariant(
+            kind="merge_promotion", requires_state=frozenset({"proposed"})
+        ),
+        "spec_promotion": KindInvariant(
+            kind="spec_promotion", requires_state=frozenset({"proposed"})
+        ),
+        "workspace.computer_use": KindInvariant(
+            kind="workspace.computer_use", ref_params=("tool",)
+        ),
+    }
+)
 
 
 @dataclass

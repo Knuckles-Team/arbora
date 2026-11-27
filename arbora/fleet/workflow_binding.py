@@ -9,8 +9,9 @@ used; no second authority exists here.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 from arbora.api.domain.fleet.admission import WorkflowAdmission
 
@@ -18,10 +19,12 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["REFUSALS", "WorkflowBindings"]
 
-REFUSALS: dict[str, str] = {
-    "WORKFLOW_NOT_ADMITTED": "a workflow tool has no admitted binding for this session",
-    "WORKFLOW_GRANT_REVOKED": "the grant revision of the binding changed or was revoked",
-}
+REFUSALS: Mapping[str, str] = MappingProxyType(
+    {
+        "WORKFLOW_NOT_ADMITTED": "a workflow tool has no admitted binding for this session",
+        "WORKFLOW_GRANT_REVOKED": "the grant revision of the binding changed or was revoked",
+    }
+)
 
 
 @dataclass(frozen=True)

@@ -7,6 +7,7 @@ import json
 import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
+from types import MappingProxyType
 from typing import Any, Literal
 
 from arbora.api.domain.fleet.ranking import FLOOR_ONLY, RankCandidate, RankingPort
@@ -472,10 +473,12 @@ def compute_schema_fingerprint(schema: Mapping[str, Any]) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-_PROBE_IDENTITY_KEYS: dict[str, tuple[str, ...]] = {
-    "resource": ("uri", "name"),
-    "resource_template": ("uriTemplate", "name"),
-}
+_PROBE_IDENTITY_KEYS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "resource": ("uri", "name"),
+        "resource_template": ("uriTemplate", "name"),
+    }
+)
 _SKILL_SCHEME = "skill://"
 _SKILL_MAIN = "/SKILL.md"
 

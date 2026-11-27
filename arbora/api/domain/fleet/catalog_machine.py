@@ -10,6 +10,8 @@ functions of the state; no site stores a readiness boolean.
 from __future__ import annotations
 
 import enum
+from collections.abc import Mapping
+from types import MappingProxyType
 
 __all__ = [
     "CATALOG_EDGES",
@@ -42,21 +44,25 @@ class CatalogEvent(enum.Enum):
 
 _S, _E = CatalogState, CatalogEvent
 #: The 13 legal edges. ``read_err`` has two, split by the ``has_snapshot`` guard.
-CATALOG_EDGES: dict[tuple[CatalogState, CatalogEvent, bool | None], CatalogState] = {
-    (_S.COLD, _E.LOAD_START, None): _S.LOADING,
-    (_S.LOADING, _E.READ_OK, None): _S.SNAPSHOT,
-    (_S.LOADING, _E.READ_ERR, False): _S.COLD,
-    (_S.LOADING, _E.READ_ERR, True): _S.DEGRADED,
-    (_S.SNAPSHOT, _E.CHILDREN_UP, None): _S.SERVING,
-    (_S.SERVING, _E.EPOCH_BUMP, None): _S.LOADING,
-    (_S.SNAPSHOT, _E.EPOCH_BUMP, None): _S.LOADING,
-    (_S.DEGRADED, _E.LOAD_START, None): _S.LOADING,
-    (_S.COLD, _E.CLOSE, None): _S.CLOSING,
-    (_S.LOADING, _E.CLOSE, None): _S.CLOSING,
-    (_S.SNAPSHOT, _E.CLOSE, None): _S.CLOSING,
-    (_S.SERVING, _E.CLOSE, None): _S.CLOSING,
-    (_S.DEGRADED, _E.CLOSE, None): _S.CLOSING,
-}
+CATALOG_EDGES: Mapping[tuple[CatalogState, CatalogEvent, bool | None], CatalogState] = (
+    MappingProxyType(
+        {
+            (_S.COLD, _E.LOAD_START, None): _S.LOADING,
+            (_S.LOADING, _E.READ_OK, None): _S.SNAPSHOT,
+            (_S.LOADING, _E.READ_ERR, False): _S.COLD,
+            (_S.LOADING, _E.READ_ERR, True): _S.DEGRADED,
+            (_S.SNAPSHOT, _E.CHILDREN_UP, None): _S.SERVING,
+            (_S.SERVING, _E.EPOCH_BUMP, None): _S.LOADING,
+            (_S.SNAPSHOT, _E.EPOCH_BUMP, None): _S.LOADING,
+            (_S.DEGRADED, _E.LOAD_START, None): _S.LOADING,
+            (_S.COLD, _E.CLOSE, None): _S.CLOSING,
+            (_S.LOADING, _E.CLOSE, None): _S.CLOSING,
+            (_S.SNAPSHOT, _E.CLOSE, None): _S.CLOSING,
+            (_S.SERVING, _E.CLOSE, None): _S.CLOSING,
+            (_S.DEGRADED, _E.CLOSE, None): _S.CLOSING,
+        }
+    )
+)
 
 
 class IllegalCatalogTransition(Exception):

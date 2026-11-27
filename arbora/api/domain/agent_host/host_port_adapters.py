@@ -16,6 +16,7 @@ import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.deployment.placement import decide_params
@@ -31,10 +32,12 @@ PLAN_REQUIRED = "CONFIRMATION_REQUIRED"
 
 DECIDE_OP = "eg.query.Decide"
 #: The harness's control-step questions, as the engine's snake_case ``QuestionKind``.
-CONTROL_QUESTION_KINDS: Mapping[str, str] = {
-    "BranchSelect": "branch_select",
-    "DecisionTableEval": "decision_table_eval",
-}
+CONTROL_QUESTION_KINDS: Mapping[str, str] = MappingProxyType(
+    {
+        "BranchSelect": "branch_select",
+        "DecisionTableEval": "decision_table_eval",
+    }
+)
 #: ``(tenant id, question id) -> the pinned feature schema`` or ``None`` when none is pinned.
 SchemaOf = Callable[[str, str], Mapping[str, Any] | None]
 TenantOf = Callable[[str], str]

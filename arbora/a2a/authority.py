@@ -8,8 +8,9 @@ import json
 import logging
 import time
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any, Protocol, cast, runtime_checkable
 
 from scion_sdk.privacy import persistence_reference
@@ -88,16 +89,18 @@ def task_output_artifacts(task_id: str) -> list[A2AArtifact] | None:
     ]
 
 
-_STATE_MAP: dict[str, A2ATaskState] = {
-    "submitted": "submitted",
-    "ready": "submitted",
-    "leased": "working",
-    "running": "working",
-    "succeeded": "completed",
-    "failed": "failed",
-    "cancelled": "canceled",
-    "dead_letter": "failed",
-}
+_STATE_MAP: Mapping[str, A2ATaskState] = MappingProxyType(
+    {
+        "submitted": "submitted",
+        "ready": "submitted",
+        "leased": "working",
+        "running": "working",
+        "succeeded": "completed",
+        "failed": "failed",
+        "cancelled": "canceled",
+        "dead_letter": "failed",
+    }
+)
 
 
 class _ReplyUnavailable(RuntimeError):

@@ -19,17 +19,20 @@ import time
 from collections import OrderedDict
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.agent_host.host_port_adapters import RunCall
 from arbora.api.domain.agent_host.port_services import LeaseReader, SandboxProcessTable
 
-_STATUS_OF_STATE: Mapping[str, str] = {
-    "approved": "consumed",
-    "denied": "revoked",
-    "pending": "active",
-    "expired": "active",
-}
+_STATUS_OF_STATE: Mapping[str, str] = MappingProxyType(
+    {
+        "approved": "consumed",
+        "denied": "revoked",
+        "pending": "active",
+        "expired": "active",
+    }
+)
 CLAIM_IDENTITY = (
     "capability_digest",
     "catalog_digest",

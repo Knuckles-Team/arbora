@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
+from types import MappingProxyType
 from typing import Any, cast
 
 from medulla.generated.agent_component import (
@@ -42,13 +43,15 @@ from arbora.api.domain.fleet.catalog_reader import (
 from arbora.api.domain.fleet.mcp_resource_reconciliation import receipt_from_engine
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
-_KINDS = {
-    "mcp_server": AgentComponentKind.MCP_SERVER,
-    "tool": AgentComponentKind.TOOL,
-    "skill": AgentComponentKind.SKILL,
-    "mcp_prompt": AgentComponentKind.MCP_PROMPT,
-    "mcp_resource": AgentComponentKind.MCP_RESOURCE,
-}
+_KINDS = MappingProxyType(
+    {
+        "mcp_server": AgentComponentKind.MCP_SERVER,
+        "tool": AgentComponentKind.TOOL,
+        "skill": AgentComponentKind.SKILL,
+        "mcp_prompt": AgentComponentKind.MCP_PROMPT,
+        "mcp_resource": AgentComponentKind.MCP_RESOURCE,
+    }
+)
 
 
 GraphBinder = Callable[[str], AbstractContextManager[object]]

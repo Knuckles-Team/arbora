@@ -16,6 +16,7 @@ a record that does not answer this request raises, and the admitters read a rais
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 from arbora.access.credential_reuse_decider import CREDENTIAL_REUSE_KIND, AskDecide
@@ -26,23 +27,25 @@ from .engine_deciders import HELD_ITEM_KIND, TOOL_ACTION_KIND
 ADMISSION_OPTION = "admission"
 
 #: The text params each family requires besides ``graph`` (engine ``constraints``).
-FAMILY_PARAMS: Mapping[str, tuple[str, ...]] = {
-    TOOL_ACTION_KIND: (
-        "pending_call_id",
-        "params_digest",
-        "trust_mark_ref",
-        "action_class",
-    ),
-    HELD_ITEM_KIND: ("item_kind", "item_ref", "content_digest"),
-    CREDENTIAL_REUSE_KIND: (
-        "owner",
-        "agent_id",
-        "connector",
-        "provider",
-        "scopes",
-        "purpose",
-    ),
-}
+FAMILY_PARAMS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        TOOL_ACTION_KIND: (
+            "pending_call_id",
+            "params_digest",
+            "trust_mark_ref",
+            "action_class",
+        ),
+        HELD_ITEM_KIND: ("item_kind", "item_ref", "content_digest"),
+        CREDENTIAL_REUSE_KIND: (
+            "owner",
+            "agent_id",
+            "connector",
+            "provider",
+            "scopes",
+            "purpose",
+        ),
+    }
+)
 
 Send = Callable[[str, dict[str, Any], str], Awaitable[Any]]
 

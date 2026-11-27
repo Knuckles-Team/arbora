@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from threading import RLock
 from time import time
+from types import MappingProxyType
 from typing import Literal
 
 from pydantic import BaseModel
@@ -68,24 +69,28 @@ _ENTITY_TYPES: tuple[tuple[type[BaseModel], EntityKind], ...] = (
     (FeedbackIdentity, "feedback"),
     (SupportIdentity, "support"),
 )
-_PILOT_AUTHORITY_KINDS = {"tenant", "workspace", "user", "profile"}
-_RETENTION_TARGETS = {
-    "active",
-    "retained",
-    "deletion_pending",
-    "deleted",
-    "legal_hold",
-}
-_RETENTION_ADMIN_TARGETS = {"deletion_pending", "deleted", "legal_hold"}
+_PILOT_AUTHORITY_KINDS = frozenset({"tenant", "workspace", "user", "profile"})
+_RETENTION_TARGETS = frozenset(
+    {
+        "active",
+        "retained",
+        "deletion_pending",
+        "deleted",
+        "legal_hold",
+    }
+)
+_RETENTION_ADMIN_TARGETS = frozenset({"deletion_pending", "deleted", "legal_hold"})
 type RetentionResumeState = Literal["active", "retained", "deletion_pending"]
-_STANDARD_RETENTION_TRANSITIONS: dict[
+_STANDARD_RETENTION_TRANSITIONS: Mapping[
     tuple[LifecycleState, LifecycleState], LifecycleState
-] = {
-    ("active", "retained"): "retained",
-    ("active", "deletion_pending"): "deletion_pending",
-    ("retained", "deletion_pending"): "deletion_pending",
-    ("deletion_pending", "deleted"): "deleted",
-}
+] = MappingProxyType(
+    {
+        ("active", "retained"): "retained",
+        ("active", "deletion_pending"): "deletion_pending",
+        ("retained", "deletion_pending"): "deletion_pending",
+        ("deletion_pending", "deleted"): "deleted",
+    }
+)
 
 
 def entity_kind_for(entity: WebUiEntity) -> EntityKind:

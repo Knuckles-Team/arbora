@@ -94,24 +94,26 @@ type EntityKind = Literal[
 ]
 type Visibility = Literal["private", "workspace"]
 
-_FORBIDDEN_INLINE_KEYS = {
-    "body",
-    "content",
-    "credentials",
-    "grant",
-    "graph_permissions",
-    "password",
-    "permission_grant",
-    "prompt",
-    "provider_grant",
-    "public_share",
-    "result",
-    "secret",
-    "text",
-    "token",
-    "values",
-    "vector",
-}
+_FORBIDDEN_INLINE_KEYS = frozenset(
+    {
+        "body",
+        "content",
+        "credentials",
+        "grant",
+        "graph_permissions",
+        "password",
+        "permission_grant",
+        "prompt",
+        "provider_grant",
+        "public_share",
+        "result",
+        "secret",
+        "text",
+        "token",
+        "values",
+        "vector",
+    }
+)
 
 
 def _canonical(value: object) -> object:

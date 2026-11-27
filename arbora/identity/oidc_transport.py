@@ -13,7 +13,7 @@ from typing import Any
 
 from .engine import IdentityUnavailable
 
-_ALGORITHMS = ["RS256", "RS384", "RS512", "ES256", "ES384", "PS256", "EdDSA"]
+_ALGORITHMS = ("RS256", "RS384", "RS512", "ES256", "ES384", "PS256", "EdDSA")
 _TIMEOUT_SECONDS = 5.0
 
 
