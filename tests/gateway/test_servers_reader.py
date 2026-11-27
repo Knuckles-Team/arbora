@@ -17,6 +17,8 @@ from arbora.gateway.servers_reader import (
     ServersPageRequest,
     ServersRefused,
 )
+from arbora.security.process_authority import ProcessAuthority
+from arbora.security.run_token import RunTokenSigner
 from arbora.security.session import ScopeError
 
 ROWS = [
@@ -67,6 +69,15 @@ def _session(tenant: str, principal: str, scopes: frozenset[str]) -> Any:
     return SimpleNamespace(actor=actor, tenant=tenant, require_scope=require_scope)
 
 
+def _host_app(secret: str) -> FastAPI:
+    """An application over a host whose authority signs with ``secret``."""
+    app = FastAPI()
+    authority = ProcessAuthority(lambda: secret)
+    app.state.host = SimpleNamespace(authority=authority)
+    registry_api.register_registry_routes(app)
+    return app
+
+
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch) -> Any:
     state = {"session": _session("acme", "alice", frozenset({"kg:read"}))}
@@ -75,8 +86,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setattr(registry_api, "get_catalog_engine", lambda _request: object())
     monkeypatch.setattr(registry_api, "_require_sql_exec", lambda _e: _sql)
     monkeypatch.setattr(session_module, "resolve_session", lambda: state["session"])
-    app = FastAPI()
-    registry_api.register_registry_routes(app)
+    app = _host_app("s" * 48)
     test_client = TestClient(app)
     test_client.state = state  # type: ignore[attr-defined]
     return test_client
@@ -119,9 +129,31 @@ def test_refusals_leak_no_records(client: Any) -> None:
 @pytest.mark.spec("ARBORA-FLEET-R033.1")
 @pytest.mark.asyncio
 async def test_reader_refuses_before_any_read() -> None:
-    reader = FleetCatalogServersReader(object())
+    reader = FleetCatalogServersReader(object(), RunTokenSigner(lambda: "s" * 48))
     with pytest.raises(ServersRefused) as refused:
         await reader.list(
             ServersCaller("acme", "alice", frozenset()), ServersPageRequest(limit=5)
         )
     assert refused.value.code == "SCOPE_DENIED"
+
+
+@pytest.mark.spec("ARBORA-HOST-R039.9")
+def test_two_hosts_with_different_signers_refuse_each_others_cursors(
+    client: Any,
+) -> None:
+    cursor = registry_api._cursor_token(
+        RunTokenSigner(lambda: "s" * 48),
+        kind="servers",
+        query="",
+        after=("alpha", "s1"),
+        tenant="acme",
+        principal="alice",
+    )
+    own = client.get("/api/registry/servers", params={"cursor": cursor})
+    assert own.status_code != 400
+    other = TestClient(_host_app("t" * 48))
+    refused = other.get("/api/registry/servers", params={"cursor": cursor})
+    assert (refused.status_code, refused.json()) == (
+        400,
+        {"detail": "invalid registry cursor"},
+    )

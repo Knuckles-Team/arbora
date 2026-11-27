@@ -93,7 +93,7 @@ def _session(monkeypatch: pytest.MonkeyPatch) -> Any:
 @asynccontextmanager
 async def _served(
     monkeypatch: pytest.MonkeyPatch,
-) -> AsyncIterator[tuple[Any, list[Any]]]:
+) -> AsyncIterator[tuple[Any, list[Any], Any]]:
     session, client = _session(monkeypatch), EffectClient()
     _isolate_registration(monkeypatch, client)
     host = compose_host_context(FixedEngineHandles(client))
@@ -120,7 +120,9 @@ async def _served(
     )
     for middleware in middlewares:
         mcp.add_middleware(middleware)
-    mux = _attach_fleet_runtime(mcp, DeferredFleetCatalogReader(), fleet)
+    mux = _attach_fleet_runtime(
+        mcp, DeferredFleetCatalogReader(), fleet, host.authority
+    )
     events: list[Any] = []
     # The served host's record, with the plan decision and the event sink the
     # journey observes in place of the engine-backed ones.
@@ -142,7 +144,7 @@ async def _served(
     try:
         async with mcp._lifespan_manager():
             with use_actor(session.actor), use_session(session):
-                yield session, events
+                yield session, events, host.caches.tools
     finally:
         await mux.aclose()
 
@@ -283,8 +285,8 @@ async def test_actual_agent_journal_consent_replay_cancel_and_lifecycle(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with monkeypatch.context() as scoped:
-        async with _served(scoped) as (session, events):
-            helpers = webui_mcp_delegation_helpers()
+        async with _served(scoped) as (session, events, tools):
+            helpers = webui_mcp_delegation_helpers(tools)
             inventory = await helpers["list_mcp_server_tools"](server_name="arbora")
             assert {"find", "act"} <= {item["name"] for item in inventory}
             refused = await helpers["call_mcp_tool"](

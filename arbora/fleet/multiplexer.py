@@ -104,6 +104,7 @@ from arbora.fleet.workflow_binding import WorkflowBindings
 from arbora.pin_lag.unavailable import PinLagUnavailable
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
+from arbora.security.run_token import RunTokenSigner
 
 # Direct all logs to stderr so stdout remains perfectly clean for stdio JSON-RPC
 logging.basicConfig(
@@ -2029,6 +2030,7 @@ def _tasks_caller_identity(
 
 
 def _build_task_request(
+    signer: RunTokenSigner | None,
     route: _TaskRoute,
     params: _collections_abc.Mapping[str, _typing.Any],
     current_secret: str | None,
@@ -2037,6 +2039,7 @@ def _build_task_request(
     from arbora.mcp_server.backing.tasks_extension import (
         TASKS_EXTENSION_ID,
         TASKS_EXTENSION_REVISION,
+        bound_signer,
         channel_proof,
         mint_delegation_token,
     )
@@ -2044,6 +2047,7 @@ def _build_task_request(
     server_name = route["server"]
     try:
         delegation_token = mint_delegation_token(
+            bound_signer(signer),
             route["method"],
             params,
             server=server_name,
@@ -2228,8 +2232,12 @@ class MCPMultiplexer:
         catalog_reader: _catalog_reader.FleetCatalogSource,
         *,
         fleet: FleetState,
+        signer: RunTokenSigner | None = None,
     ):
         self._fleet = fleet
+        #: The host's run-token signer; ``None`` on a probe-only multiplexer, which
+        #: then refuses to mint a delegation proof.
+        self._signer = signer
         self._fleet_catalog_reader = catalog_reader
         self._fleet_catalog: _catalog_reader.FleetCatalog | None = None
         # Wall-clock epoch of the installed snapshot above (ARBORA-FLEET-R031):
@@ -3475,7 +3483,7 @@ class MCPMultiplexer:
         def _factory(
             _current_generation: int, current_secret: str | None
         ) -> _typing.Any:
-            return _build_task_request(route, params, current_secret)
+            return _build_task_request(self._signer, route, params, current_secret)
 
         def _before_send(current_generation: int, current_secret: str | None) -> None:
             _assert_task_route_current(
@@ -7409,6 +7417,7 @@ def attach_fleet_loader(
     fleet: FleetState,
     self_server: str = "arbora",
     authority_scope=None,
+    signer: RunTokenSigner | None = None,
 ) -> MCPMultiplexer:
     """Attach on-demand MCP fleet access to an EXISTING FastMCP server (arbora).
 
@@ -7440,7 +7449,7 @@ def attach_fleet_loader(
     ``fleet`` is the host context's fleet state (ARBORA-HOST-R039.2).
     """
     logger.info("arbora fleet loader initializing")
-    mux = MCPMultiplexer(catalog_reader, fleet=fleet)
+    mux = MCPMultiplexer(catalog_reader, fleet=fleet, signer=signer)
     # Keep the host solely for lifecycle replacement of mux-owned forwarding
     # schemas after a child generation recovers.  Standalone mux/probe paths
     # deliberately leave this unset.

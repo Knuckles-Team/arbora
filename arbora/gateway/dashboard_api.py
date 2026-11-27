@@ -319,7 +319,7 @@ async def daemon_start(request: Request) -> dict[str, Any]:
     from arbora.gateway.daemon import daemon_status as _status
     from arbora.gateway.daemon import start_host_daemon
 
-    start_host_daemon()
+    start_host_daemon(request.app.state.host.authority.signer)
     return _status(_gateway_engine_or_none(request))
 
 

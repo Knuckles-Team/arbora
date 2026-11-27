@@ -32,6 +32,7 @@ from arbora.fleet.discovery_authority import (
     DISCOVERY_AUTHORITY_OAUTH_GRANT,
     DISCOVERY_AUTHORITY_TENANT_LOCAL,
 )
+from arbora.security.run_token import RunTokenSigner, TokenError
 
 logger = logging.getLogger(__name__)
 
@@ -411,6 +412,11 @@ _RESPONSE_MODELS: dict[str, tuple[Any, Any]] = {
 }
 
 
+def _signer_of(request: Any) -> RunTokenSigner:
+    """The run-token signer of the host that serves ``request``."""
+    return request.app.state.host.authority.signer
+
+
 class CatalogUnavailable(RuntimeError):
     """Raised when the authoritative engine catalog cannot be read."""
 
@@ -581,6 +587,7 @@ def _parse_kind_cursors(params: Any, kinds: list[str]) -> dict[str, str]:
 
 
 def _cursor_token(
+    signer: RunTokenSigner,
     *,
     kind: str,
     query: str,
@@ -591,8 +598,6 @@ def _cursor_token(
     grant_digest: str | None = None,
 ) -> str:
     """Mint an existing HMAC run token bound to the registry read scope."""
-
-    from arbora.security.run_token import mint_token
 
     if grant_digest is not None:
         grant_digests = (grant_digest,)
@@ -607,7 +612,7 @@ def _cursor_token(
         separators=(",", ":"),
         sort_keys=True,
     )
-    return mint_token(
+    return signer.mint(
         payload,
         project="registry",
         endpoints=("registry",),
@@ -619,6 +624,7 @@ def _cursor_token(
 
 
 def _decode_cursor(
+    signer: RunTokenSigner,
     token: str,
     *,
     kind: str,
@@ -629,10 +635,8 @@ def _decode_cursor(
 ) -> tuple[str, str]:
     """Verify cursor integrity and bind it to this tenant/principal/filter."""
 
-    from arbora.security.run_token import TokenError, validate_token
-
     try:
-        decoded = validate_token(token, endpoint="registry", operation="read")
+        decoded = signer.validate(token, endpoint="registry", operation="read")
         _check_cursor_authority(decoded, tenant=tenant, principal=principal)
         payload = json.loads(decoded.run_id)
         _check_cursor_binding(
@@ -644,8 +648,6 @@ def _decode_cursor(
 
 
 def _check_cursor_authority(decoded: Any, *, tenant: str, principal: str) -> None:
-    from arbora.security.run_token import TokenError
-
     if decoded.tenant_id != tenant or decoded.actor_id != principal:
         raise TokenError("cursor authority mismatch")
 
@@ -657,8 +659,6 @@ def _check_cursor_binding(
     query: str,
     grant_digests: tuple[str, ...],
 ) -> None:
-    from arbora.security.run_token import TokenError
-
     payload_grants = payload.get("grant_digests")
     if not isinstance(payload_grants, list) or not all(
         isinstance(value, str) and value for value in payload_grants
@@ -673,8 +673,6 @@ def _check_cursor_binding(
 
 
 def _cursor_after_position(payload: dict[str, Any]) -> tuple[str, str]:
-    from arbora.security.run_token import TokenError
-
     after = payload.get("after")
     if (
         not isinstance(after, list)
@@ -1281,6 +1279,7 @@ def _catalog_unavailable(
 
 
 def _next_page_cursor(
+    signer: RunTokenSigner,
     spec: Any,
     page_rows: list[Any],
     has_more: bool,
@@ -1294,6 +1293,7 @@ def _next_page_cursor(
         return None
     tenant, principal, grant_digests = authority
     return _cursor_token(
+        signer,
         kind=kind,
         query=query,
         after=row_key(spec, page_rows[-1]),
@@ -1320,6 +1320,7 @@ async def _list_kind(
     after: tuple[str, str] | None = None
     if cursor:
         after = _decode_cursor(
+            _signer_of(request),
             cursor,
             kind=kind,
             query=query,
@@ -1366,6 +1367,7 @@ async def _list_kind(
         )
         return _catalog_unavailable(kind, exc)
     next_cursor = _next_page_cursor(
+        _signer_of(request),
         spec,
         page_rows,
         has_more,
@@ -1433,9 +1435,9 @@ async def _list_servers(
 
     try:
         caller = _servers_caller(request)
-        page = await FleetCatalogServersReader(get_catalog_engine(request)).list(
-            caller, ServersPageRequest(limit=limit, query=query, cursor=cursor)
-        )
+        page = await FleetCatalogServersReader(
+            get_catalog_engine(request), _signer_of(request)
+        ).list(caller, ServersPageRequest(limit=limit, query=query, cursor=cursor))
     except ServersRefused as refused:
         return JSONResponse(
             {"status": "refused", "code": refused.code},
@@ -1606,6 +1608,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
         cursor = cursors.get(kind)
         afters[kind] = (
             _decode_cursor(
+                _signer_of(request),
                 cursor,
                 kind=kind,
                 query=query,
@@ -1658,6 +1661,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
             )
 
         next_cursor = _next_page_cursor(
+            _signer_of(request),
             spec,
             page_rows,
             has_more,

@@ -43,6 +43,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from arbora.core.environment import read_env
+from arbora.security.run_token import RunTokenSigner
 
 logger = logging.getLogger(__name__)
 
@@ -312,6 +313,7 @@ DEFAULT_RUN_TOKEN_TTL_S = 3600.0
 
 
 def mint_spawn_run_token(
+    signer: RunTokenSigner,
     run_id: str,
     *,
     principal: str = "",
@@ -329,12 +331,10 @@ def mint_spawn_run_token(
     mint an over-long run credential. Fails closed (via :mod:`run_token`) when delegation is on
     and no signing secret is configured.
     """
-    from arbora.security.run_token import mint_token
-
     endpoints = tuple(_dedup(allowed_tools)) if allowed_tools else ("*",)
     ttl = max(1.0, min(float(ttl_seconds), DEFAULT_RUN_TOKEN_TTL_S))
     issued = time.time() if now is None else now
-    token = mint_token(
+    token = signer.mint(
         run_id,
         endpoints=endpoints,
         operations=tuple(_dedup(operations)) or ("read",),
@@ -352,7 +352,10 @@ def mint_spawn_run_token(
 
 
 def is_delegation_live(
-    delegation: SpawnDelegation | None = None, *, now: float | None = None
+    signer: RunTokenSigner,
+    delegation: SpawnDelegation | None = None,
+    *,
+    now: float | None = None,
 ) -> bool:
     """False when a delegated credential/run-token has expired — the revocation bound.
 
@@ -368,9 +371,7 @@ def is_delegation_live(
         return False
     if delegation.run_token:
         try:
-            from arbora.security.run_token import decode_token
-
-            if moment >= decode_token(delegation.run_token).expires_at:
+            if moment >= signer.decode(delegation.run_token).expires_at:
                 return False
         except Exception as exc:  # a bad/expired token is not-live, fail closed
             logger.warning(

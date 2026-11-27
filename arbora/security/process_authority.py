@@ -9,7 +9,10 @@ authorities and no module holds any of them.
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from typing import Any
+
+from arbora.security.run_token import RunTokenSigner, token_secret_from_config
 
 __all__ = ["ProcessAuthority"]
 
@@ -20,12 +23,16 @@ class ProcessAuthority:
     The session slot is bound only on the stdio transport; a network request
     never falls back to it. ``refresh_lock`` serializes renewals of the one
     credential lease, ``stop`` ends the supervisor loop and every wait that
-    must yield to shutdown.
+    must yield to shutdown. ``signer`` mints and validates this host's run tokens.
     """
 
-    __slots__ = ("_lock", "_session", "_thread", "refresh_lock", "stop")
+    __slots__ = ("_lock", "_session", "_thread", "refresh_lock", "signer", "stop")
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        token_secret: Callable[[], str | None] = token_secret_from_config,
+    ) -> None:
+        self.signer = RunTokenSigner(token_secret)
         self._lock = threading.Lock()
         self._session: Any = None
         self._thread: threading.Thread | None = None

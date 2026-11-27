@@ -12,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from arbora.security.run_token import RunTokenSigner
+
 ServersRefusalCode = Literal["PRINCIPAL_REQUIRED", "TENANT_MISMATCH", "SCOPE_DENIED"]
 
 #: The scope a registry read needs (the same scope the other kinds require).
@@ -56,8 +58,9 @@ class ServersPage:
 class FleetCatalogServersReader:
     """Reads the ``mcp_servers`` table for one verified caller."""
 
-    def __init__(self, engine: Any) -> None:
+    def __init__(self, engine: Any, signer: RunTokenSigner) -> None:
         self._engine = engine
+        self._signer = signer
 
     def check(self, caller: ServersCaller) -> None:
         """Refuse before any read; the order is principal, tenant, scope."""
@@ -79,6 +82,7 @@ class FleetCatalogServersReader:
         after = None
         if page.cursor:
             after = api._decode_cursor(
+                self._signer,
                 page.cursor,
                 kind="servers",
                 query=page.query,
@@ -116,6 +120,7 @@ class FleetCatalogServersReader:
             ),
         )
         next_cursor = api._next_page_cursor(
+            self._signer,
             spec,
             page_rows,
             has_more,

@@ -25,6 +25,7 @@ from arbora.gateway.state import GatewayState
 from arbora.security.anonymous import session_context
 from arbora.security.error_surface import public_error_payload
 from arbora.security.log_redaction import redact_for_log
+from arbora.security.run_token import RunTokenSigner
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +226,7 @@ def refresh_process_identity(session: Any) -> Any:
     return session
 
 
-def start_host_daemon() -> NoReturn:
+def start_host_daemon(signer: RunTokenSigner) -> NoReturn:
     """Refuse to start the consolidated KG daemon: the engine owns it.
 
     Delegated identity is validated first so a mis-configured host fails at
@@ -237,9 +238,7 @@ def start_host_daemon() -> NoReturn:
     # secret resolves, so the daemon refuses to boot (config-contract) instead
     # of failing lazily on the first spawn. No-op in the shipped `warn`/`off`
     # posture.
-    from arbora.security.run_token import require_token_secret
-
-    require_token_secret()
+    signer.require_configured()
     # The gateway process is the authoritative daemon host.
     write_env("KG_DAEMON_ROLE", "host")
     raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")

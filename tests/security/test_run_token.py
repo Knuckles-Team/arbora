@@ -4,17 +4,22 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.security.run_token import TokenError, mint_token, validate_token
+from arbora.security.run_token import (
+    RunTokenSecretUnavailable,
+    RunTokenSigner,
+    TokenError,
+    token_secret_from_config,
+)
 
 
-@pytest.fixture(autouse=True)
-def _secret(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ARBORA_TOKEN_SECRET", "s" * 48)
+@pytest.fixture
+def signer() -> RunTokenSigner:
+    return RunTokenSigner(lambda: "s" * 48)
 
 
-def test_round_trip_keeps_scope() -> None:
-    token = mint_token("run-1", endpoints=("graph",), operations=("read",), now=100.0)
-    decoded = validate_token(token, endpoint="graph", operation="read", now=101.0)
+def test_round_trip_keeps_scope(signer: RunTokenSigner) -> None:
+    token = signer.mint("run-1", endpoints=("graph",), operations=("read",), now=100.0)
+    decoded = signer.validate(token, endpoint="graph", operation="read", now=101.0)
     assert decoded.run_id == "run-1"
 
 
@@ -28,21 +33,25 @@ def test_round_trip_keeps_scope() -> None:
     ],
     ids=["expired", "endpoint", "operation", "tampered"],
 )
-def test_refusals(mutate, kwargs) -> None:
-    token = mint_token(
+def test_refusals(signer: RunTokenSigner, mutate, kwargs) -> None:
+    token = signer.mint(
         "run-1", endpoints=("graph",), operations=("read",), ttl_seconds=60, now=100.0
     )
     with pytest.raises(TokenError):
-        validate_token(mutate(token), **kwargs)
+        signer.validate(mutate(token), **kwargs)
 
 
 def test_retired_secret_names_are_not_read(monkeypatch: pytest.MonkeyPatch) -> None:
-    from arbora.security.run_token import (  # noqa: PLC0415
-        RunTokenSecretUnavailable,
-    )
-    from arbora.security.run_token import _secret as _resolve_secret  # noqa: PLC0415
-
     monkeypatch.delenv("ARBORA_TOKEN_SECRET", raising=False)
     monkeypatch.setenv("MERISTEM_TOKEN_SECRET", "old" * 16)
+    assert token_secret_from_config() is None
     with pytest.raises(RunTokenSecretUnavailable):
-        _resolve_secret()
+        RunTokenSigner(token_secret_from_config).mint("run-1")
+
+
+def test_two_signers_with_different_secrets_refuse_each_other() -> None:
+    first, second = RunTokenSigner(lambda: "a" * 48), RunTokenSigner(lambda: "b" * 48)
+    token = first.mint("run-1", now=100.0)
+    assert first.validate(token, now=101.0).run_id == "run-1"
+    with pytest.raises(TokenError):
+        second.validate(token, now=101.0)

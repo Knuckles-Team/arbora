@@ -784,6 +784,7 @@ def _build_server(
         metrics=host.observability.metrics,
         engine_provider=host.engine.served,
         process_session=host.authority.session,
+        token_signer=host.authority.signer,
     )
 
     # Unauthenticated liveness + readiness for HTTP deployments (CONCEPT:MERISTEM-OS.deployment.liveness-vs-readiness-split).
@@ -1145,6 +1146,7 @@ def _attach_headless_fleet_loader(
             catalog_reader=DeferredFleetCatalogReader(),
             fleet=fleet,
             authority_scope=partial(verified_tool_session_scope, authority),
+            signer=authority.signer,
         )
     except Exception as exc:  # cause recorded verbatim below, never swallowed
         mcp._fleet_mux_unavailable_reason = (
