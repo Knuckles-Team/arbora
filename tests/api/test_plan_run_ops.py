@@ -17,7 +17,10 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("meristem.graph", reason="meristem run loop")
+pytest.importorskip(
+    "meristem.graph",
+    reason="meristem.graph ships from meristem 6.0.0; the pinned meristem lacks it",
+)
 from meristem.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
