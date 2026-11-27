@@ -205,7 +205,8 @@ class BrowserProposalMixin(BrowserControlMixinState):
             if not pending.result.done():
                 pending.result.cancel()
             raise
-        except Exception as exc:
+        except Exception as exc:  # delivered to the awaiting caller via the future
+            logger.debug("browser proposal execution failed", exc_info=True)
             if not pending.result.done():
                 pending.result.set_exception(exc)
         finally:
@@ -288,10 +289,10 @@ class BrowserProposalMixin(BrowserControlMixinState):
                         proposal_id=pending.proposal_id, reason=reason
                     )
                 )
-            except Exception as exc:
+            except Exception:  # withdrawal is best-effort over a closing channel
                 logger.info(
-                    "browser proposal withdrawal transport unavailable: %s",
-                    type(exc).__name__,
+                    "browser proposal withdrawal transport unavailable",
+                    exc_info=True,
                 )
 
     def _close_proposal(

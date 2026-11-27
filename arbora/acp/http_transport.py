@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+import logging
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -26,6 +27,8 @@ from .session_policy import PrincipalContext
 
 if TYPE_CHECKING:
     from .adapter import HostedACPAgent
+
+logger = logging.getLogger(__name__)
 
 
 class _CarrierRefusal(ValueError):
@@ -369,7 +372,8 @@ class _Gateway:
             authority.ensure_authority_current()
             if _authorization_profile(authority) != profile:
                 raise PermissionError("Connection authorization profile changed")
-        except Exception:
+        except Exception:  # injected factory/authority: refuse the carrier
+            logger.warning("chat adapter construction failed", exc_info=True)
             raise _CarrierRefusal("chat_adapter_unavailable", 503) from None
         if not isinstance(agent, agent_type):
             raise _CarrierRefusal("chat_adapter_unavailable", 503)

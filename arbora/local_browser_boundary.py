@@ -14,7 +14,7 @@ from arbora.local_browser_channel import LocalBrowserChannelOwner
 from arbora.security import anonymous
 from arbora.security.session import use_session
 
-_LOG = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def local_browser_boundary(owner: LocalBrowserChannelOwner) -> LocalBrowserBoundary:
@@ -32,7 +32,10 @@ def local_browser_boundary(owner: LocalBrowserChannelOwner) -> LocalBrowserBound
             await _serve(owner, scope, receive, bounded_send)
             return
         except Exception:  # no native/source details cross the socket
-            _LOG.warning("Local browser channel refused; retirement may be unresolved")
+            logger.warning(
+                "Local browser channel refused; retirement may be unresolved",
+                exc_info=True,
+            )
         async with asyncio.timeout(1):
             await send({"type": "websocket.close", "code": 4403})
 

@@ -59,7 +59,7 @@ _CREDENTIAL_REF = f"env://{_CREDENTIAL_ENV}"
 _TLS_PROFILE_REF = f"env://{_TLS_PROFILE_ENV}"
 _BEARER_SCHEME = "Bearer"
 _BASIC_AUTH = "basic"
-_LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 _SOCKET_DEADLINE_SECONDS = 3.0
 _MAX_REQUESTS = 256
 _MAX_REQUEST_LINE_BYTES = 2_048
@@ -521,7 +521,7 @@ def _send_error_response(
     try:
         _send_json(connection, status, {"error": error})
     except OSError as exc:
-        _LOGGER.info("Could not send certification error response: %s", exc)
+        logger.info("Could not send certification error response: %s", exc)
 
 
 class _Handler(socketserver.BaseRequestHandler):
@@ -544,7 +544,8 @@ class _Handler(socketserver.BaseRequestHandler):
             _send_json(self.request, status, payload)
         except _RequestError as exc:
             _send_error_response(self.request, exc.status, exc.oauth_error)
-        except Exception:
+        except Exception:  # request boundary: a stable server_error response
+            logger.warning("certification request failed", exc_info=True)
             _send_error_response(
                 self.request, HTTPStatus.INTERNAL_SERVER_ERROR, "server_error"
             )
@@ -775,7 +776,7 @@ class EphemeralLoopbackOidcAuthority:
                         server.handle_request()
                     except OSError as exc:
                         if self._stop_event.is_set():
-                            _LOGGER.info("Loopback authority stopped: %s", exc)
+                            logger.info("Loopback authority stopped: %s", exc)
                             break
                         raise
 
@@ -978,7 +979,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     try:
         ok = self_check()
-    except Exception:
+    except Exception:  # the self-check reports ok=false for any failure
+        logger.warning("certification self-check failed", exc_info=True)
         ok = False
     print(json.dumps({"ok": ok}, sort_keys=True))
     return 0 if ok else 1

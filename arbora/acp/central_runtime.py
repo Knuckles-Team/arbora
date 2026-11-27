@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -21,6 +22,8 @@ from arbora.security.session import use_session
 
 from .adapter import HostedACPAgent
 from .session_policy import AcpSessionPolicy, PrincipalContext
+
+logger = logging.getLogger(__name__)
 
 
 def _committed_answer(result: Any, receipt: Any) -> str:
@@ -207,6 +210,7 @@ class CentralACPFactory:
                 except (Exception, asyncio.CancelledError):
                     # An unfinished admission remains owned and bounded by the
                     # factory. Its callback will request owner cancellation.
+                    logger.warning("central cancellation unconfirmed", exc_info=True)
                     details = {"reason": "cancellation_unconfirmed"}
                     if receipt is not None:
                         details["task_id"] = receipt.task_id

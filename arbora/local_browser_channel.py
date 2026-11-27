@@ -19,6 +19,8 @@ from arbora.identity.local_browser import LocalBrowserTransport
 from arbora.mcp_server.served_engine import ServedEngine
 from arbora.security.session import GraphSession, resolve_session
 
+logger = logging.getLogger(__name__)
+
 _CHANNEL_LIFETIME_SECONDS = 60
 
 
@@ -329,6 +331,7 @@ class LocalBrowserChannelOwner:
                     cancelled = cancelled or error
         except (Exception, asyncio.CancelledError) as error:
             primary = cancelled or error
+            logger.debug("local browser issuance failed", exc_info=error)
             from medulla.client import EngineResponseError
 
             # A native idempotency conflict is a definite refusal, not our lease.

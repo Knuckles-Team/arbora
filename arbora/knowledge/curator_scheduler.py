@@ -126,7 +126,7 @@ class CuratorScheduler:
             )
         except Exception as exc:  # one tenant must not stop the rest
             code = _code(exc)
-            logger.warning("curation tick failed for a tenant: %s", code)
+            logger.warning("curation tick failed for a tenant: %s", code, exc_info=True)
             await self._curation.release(tenant, self._loop_id, epoch)
             return TickReport(tenant, "failed", code=code)
         return TickReport(tenant, "started", run_id=run_id)
@@ -136,7 +136,9 @@ class CuratorScheduler:
             epoch = await self._curation.claim(tenant, self._loop_id)
         except Exception as exc:  # one tenant must not stop the rest
             code = _code(exc)
-            logger.warning("curation claim failed for a tenant: %s", code)
+            logger.warning(
+                "curation claim failed for a tenant: %s", code, exc_info=True
+            )
             return TickReport(tenant, "failed", code=code)
         if epoch is None:
             return TickReport(tenant, "lease_held")
