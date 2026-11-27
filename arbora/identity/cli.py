@@ -110,32 +110,6 @@ class Environment:
         )
 
 
-def default_environment() -> Environment:
-    """The composition-owned engine client under Arbora's own process session."""
-    from arbora.core.settings import config_dir, runtime_config
-    from arbora.identity.composition import build_engine_identity_ports
-    from arbora.mcp_server import bootstrap, runtime
-    from arbora.security.anonymous import session_context
-
-    session = runtime._mint_process_session("http")
-    engine = runtime._get_engine()
-    bootstrap._wait_for_engine_materialization(engine)
-    graph = str(session.graph)
-    client = engine.graph_compute.for_graph(graph).async_client
-    ports = build_engine_identity_ports(client, graph=graph)
-    overlap = int(
-        getattr(runtime_config, "identity_issuer_key_overlap_seconds", 0) or 0
-    )
-    low, high = OVERLAP_RANGE
-    return Environment(
-        admin=ports.admin,
-        client=client,
-        claims=dict(session_context(session)),
-        ring=KeyRing(config_dir() / "identity" / "issuer-signing-keys"),
-        overlap_seconds=min(max(overlap or DEFAULT_OVERLAP_SECONDS, low), high),
-    )
-
-
 def _refusal_code(error: Exception) -> str:
     return str(getattr(error, "code", "")) or ""
 
@@ -347,10 +321,19 @@ async def _run(env: Environment, args: argparse.Namespace) -> dict[str, Any]:
             return await rotate(env)
 
 
+def _no_environment() -> Environment:
+    """The default of :func:`main`: no composition root supplied an engine environment."""
+    from arbora.identity.engine import IdentityUnavailable
+
+    raise IdentityUnavailable("no engine environment is composed")
+
+
 def main(
     argv: Sequence[str] | None = None,
-    environment: Callable[[], Environment] = default_environment,
+    environment: Callable[[], Environment] = _no_environment,
 ) -> int:
+    """Run one command; the composition root (``arbora.identity_cli``) supplies
+    ``environment``, so this package never imports a served package."""
     args = list(sys.argv[1:] if argv is None else argv)
     if not args or args[0] not in COMMANDS:
         print(json.dumps({"status": "usage", "commands": list(COMMANDS)}))

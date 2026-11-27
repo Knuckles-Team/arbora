@@ -196,14 +196,15 @@ def _local_actor_authority(actor: Any) -> bool:
 
 
 def validate_session(value: Any) -> None:
-    from arbora.security.scope_registry import SCOPE_CLASSES
+    from arbora.security.scope_registry import scope_classes
 
+    classes = scope_classes()
     if (
         not admitted_actor(value.actor)
         or value.tenant != TENANT
         or value.policy_version != POLICY
         or value.audience != AUDIENCE
-        or any(SCOPE_CLASSES.get(scope) in {None, "approver"} for scope in value.scopes)
+        or any(classes.get(scope) in {None, "approver"} for scope in value.scopes)
     ):
         raise PermissionError("Anonymous session authority is invalid")
 
@@ -212,11 +213,11 @@ def session() -> Any:
     if not enabled():
         raise PermissionError("Anonymous mode is not configured")
     from arbora.security.actor_context import ActorContext, ActorType
-    from arbora.security.scope_registry import SCOPE_CLASSES
+    from arbora.security.scope_registry import scope_classes
     from arbora.security.session import GraphSession
 
     scopes = frozenset(
-        name for name, kind in SCOPE_CLASSES.items() if kind != "approver"
+        name for name, kind in scope_classes().items() if kind != "approver"
     )
     actor = ActorContext(
         actor_id=PRINCIPAL,

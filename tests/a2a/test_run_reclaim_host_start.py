@@ -65,7 +65,7 @@ def test_started_service_reclaims_one_expired_item_from_the_engine_list(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     engine, store, checkpoints, clock = _world(monkeypatch)
-    who = session(frozenset({"kg:read", "kg:write"}))
+    who = session(frozenset({"kg:read", "kg:write", "identity:delegate"}))
     asked: list[int] = []
 
     def process_session() -> Any:

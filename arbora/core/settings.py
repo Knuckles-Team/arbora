@@ -173,6 +173,13 @@ class ArboraConfig(BaseModel):
         alias="RESOURCE_GRANTS_MAX_WORKING_BYTES",
         description="Per-tenant ceiling on the working bytes of the repository index jobs held at once (ARBORA-OPS-R073). The engine holds the ledger; an index request that would exceed the ceiling is refused LOAD_CAP_EXCEEDED before the job is admitted.",
     )
+    source_run_branch: str = Field(
+        default="main",
+        min_length=1,
+        max_length=256,
+        alias="SOURCE_RUN_BRANCH",
+        description="The repository branch a native run's changesets target (ARBORA-OPS-R894). The engine's path grants name a repository and prefixes, never a branch, so the host names the one working branch; the engine still checks every path against the caller's grants.",
+    )
     allowed_hosts: str | None = Field(
         default=None,
         alias="ALLOWED_HOSTS",

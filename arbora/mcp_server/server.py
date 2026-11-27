@@ -212,7 +212,7 @@ def _served_invocation(
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
-            "source_grants": EngineSourceGrants(),
+            "source_grants": EngineSourceGrants(runtime_config.source_run_branch),
             "run_trace_reader": NativeRunReader(
                 runtime._get_engine, origins=host.runs.origins
             ),

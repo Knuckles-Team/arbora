@@ -180,7 +180,7 @@ def test_attachment_edges_match_the_ontology() -> None:
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R004.6")
 def test_operations_and_scopes_are_registered() -> None:
     from arbora.api.ops.registry_factory import get_registry
-    from arbora.security.scope_registry import SCOPE_CLASSES
+    from arbora.security.scope_registry import scope_classes
 
     ops = {op.id: op for op in ws.operations()}
     assert set(ops) == {
@@ -198,4 +198,4 @@ def test_operations_and_scopes_are_registered() -> None:
     assert ops["workstream.list"].verb is Verb.FIND
     registered = {op.id for op in get_registry()}
     assert set(ops) <= registered
-    assert {"workstream:read", "workstream:write"} <= set(SCOPE_CLASSES)
+    assert {"workstream:read", "workstream:write"} <= set(scope_classes())

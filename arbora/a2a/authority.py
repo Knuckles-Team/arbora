@@ -191,6 +191,21 @@ def _delegated_tools(preloaded: Any, operations: tuple[str, ...] | None) -> Any:
     return tuple(tool for tool in preloaded if tool in held)
 
 
+def _acting_scope(session: Any, acting_session: Any) -> tuple[Any, Any]:
+    """The session a run executes under and the scope that binds it.
+
+    A reclaimed run carries the host session with its delegation; any other run keeps
+    the session it was admitted under and binds nothing new.
+    """
+    from contextlib import nullcontext
+
+    from arbora.security.session import use_session
+
+    if acting_session is None:
+        return session, nullcontext()
+    return acting_session, use_session(acting_session)
+
+
 class WorkItemA2AAuthority:
     """A2A projection over AU's sole durable WorkItem and dispatch authorities."""
 
@@ -649,8 +664,13 @@ class WorkItemA2AAuthority:
         media: dict[str, Any] | None = None,
         observer: Any = None,
         delegated_operations: tuple[str, ...] | None = None,
+        acting_session: Any = None,
     ) -> Any:
-        """Execute only inside the host's revocable native owner scope."""
+        """Execute only inside the host's revocable native owner scope.
+
+        A reclaimed run passes ``acting_session``: the host session carrying the run's
+        delegation, so every engine call of the run is made as the run's owner.
+        """
         from arbora import work_items
         from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 
@@ -662,13 +682,15 @@ class WorkItemA2AAuthority:
         from arbora.current_plan_publication import bind_admitted_claim
         from arbora.host_bindings import preloaded_agent_tools
 
+        run_session, acting_scope = _acting_scope(session, acting_session)
         with (
+            acting_scope,
             native_run_scope(
                 run_id=run_id or task_id,
                 task_id=task_id,
                 context_id=context_id,
                 work_item_id=item_id,
-                session=session,
+                session=run_session,
                 claim=claim,
                 owner_graph=(
                     work_items.native_owner_graph(work_engine)
@@ -680,7 +702,7 @@ class WorkItemA2AAuthority:
             (
                 bind_admitted_claim(
                     work_engine,
-                    session=session,
+                    session=run_session,
                     run_id=run_id or task_id,
                     work_item_id=item_id,
                     claim=claim,
@@ -691,7 +713,7 @@ class WorkItemA2AAuthority:
                 else nullcontext()
             ),
             (
-                native_stream_scope(session, observer)
+                native_stream_scope(run_session, observer)
                 if observer is not None
                 else nullcontext()
             ),
@@ -706,7 +728,7 @@ class WorkItemA2AAuthority:
                     ),
                     **(media or {}),
                 ),
-                session=session,
+                session=run_session,
             )
 
     async def _run(
@@ -774,7 +796,7 @@ class WorkItemA2AAuthority:
         operations. A foreign, absent, revoked or expired delegation raises
         ``RunDelegationRefused`` before any step runs.
         """
-        from .run_delegation import resolve_run_delegation
+        from .run_delegation import acting_session, resolve_run_delegation
 
         delegation = await resolve_run_delegation(
             item,
@@ -782,6 +804,7 @@ class WorkItemA2AAuthority:
             read=self.delegation_reader,
             tenant=str(session.tenant),
         )
+        acting = acting_session(session, delegation)
         metadata = item["metadata"]
         item_id = str(item["work_item_id"])
         route = metadata.get("a2a_route") or {}
@@ -799,6 +822,7 @@ class WorkItemA2AAuthority:
             run_id=str(metadata.get("a2a_run_id") or task_id),
             resumed=True,
             delegated_operations=delegation.operations,
+            acting_session=acting,
         )
 
     async def _run_claimed(
@@ -816,6 +840,7 @@ class WorkItemA2AAuthority:
         media: dict[str, Any] | None = None,
         resumed: bool = False,
         delegated_operations: tuple[str, ...] | None = None,
+        acting_session: Any = None,
     ) -> dict[str, int] | None:
         """Run the agent under a lease already held and commit its outcome."""
         outcome, result_ref, error_ref = "succeeded", None, None
@@ -847,6 +872,7 @@ class WorkItemA2AAuthority:
                 media=media,
                 observer=observer,
                 delegated_operations=delegated_operations,
+                acting_session=acting_session,
             )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")

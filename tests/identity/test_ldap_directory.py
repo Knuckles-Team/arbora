@@ -63,12 +63,33 @@ def test_snapshot_reads_groups_and_the_disabled_flag() -> None:
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R010.2.2")
-def test_a_host_without_the_transport_refuses_the_bind() -> None:
+def test_the_installed_transport_binds_over_tls_with_the_service_account(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ldap3
+
+    seen: dict[str, object] = {}
+
+    def server(host: str, port: int, use_ssl: bool) -> str:
+        seen["server"] = (host, port, use_ssl)
+        return "server"
+
+    def connection(srv: object, **kwargs: object) -> str:
+        seen["connection"] = (srv, kwargs)
+        return "bound"
+
+    monkeypatch.setattr(ldap3, "Server", server)
+    monkeypatch.setattr(ldap3, "Connection", connection)
     directory = LdapDirectory(base_dn="dc=x", password=lambda: "pw")
-    try:
-        import ldap3  # noqa: F401
-    except ImportError:
-        with pytest.raises(IdentityUnavailable):
-            directory.bind(BIND)
+    directory.bind(BIND)
+    assert seen["server"] == ("ldap.test", 636, True)
+    assert seen["connection"] == (
+        "server",
+        {"user": "cn=svc", "password": "pw", "auto_bind": True, "read_only": True},
+    )
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R010.2.2")
+def test_a_directory_without_a_base_dn_refuses() -> None:
     with pytest.raises(IdentityUnavailable):
         LdapDirectory(base_dn="", password=lambda: "pw")

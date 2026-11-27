@@ -86,7 +86,7 @@ from .actor_context import (
     set_actor,
     use_actor,
 )
-from .scope_registry import SESSION_SCOPES
+from .scope_registry import session_scopes
 from .settings import setting
 
 _DEFAULT_GRAPH = "__commons__"
@@ -174,14 +174,12 @@ SERVED_TRANSPORTS: frozenset[str] = frozenset({"streamable-http", "sse"})
 
 # The only graph authorization scopes a served identity may project into a
 # GraphSession: exactly the scopes medulla registers (MERISTEM-SEC-R008),
-# GENERATED from EG's scope registry into ``scope_registry.py`` -- never a
-# hand-maintained list. They come from validated JWT capabilities
+# the scopes the engine and connectors serve, held in ``scope_registry.py`` --
+# never a hand-maintained list. They come from validated JWT capabilities
 # (``ActorContext.roles``), never from request JSON/headers; EG re-checks
 # every one against the verified token and enforces each scope's class. Only
 # the explicit ``kg:admin`` capability grants graph administration; a generic
 # application role named ``admin`` is not equivalent.
-_GRAPH_AUTH_SCOPES: frozenset[str] = SESSION_SCOPES
-
 # Exact, non-hierarchical engine capabilities that the Arbora service identity
 # needs to provision its own semantic connector packs (attest the self-served
 # catalog, import, reproject and attach). They project only when the validated
@@ -426,7 +424,7 @@ CARRIER_CLAIM_FIELDS: frozenset[str] = frozenset(
 # Present only when applicable; never required, never rejected for being
 # absent. Present together they form the full key set a claims dict may use.
 OPTIONAL_CARRIER_CLAIM_FIELDS: frozenset[str] = frozenset(
-    {"node", "priority", "oidc_token"}
+    {"node", "priority", "oidc_token", "delegation_id"}
 )
 
 
@@ -566,7 +564,7 @@ def _resolve_authenticated_scopes(actor: ActorContext) -> frozenset[str]:
     both. Expand the hierarchy once at the trusted claims boundary so the
     facade and the engine receive the same capability set."""
     roles = frozenset(str(role) for role in actor.roles)
-    scopes = roles & _GRAPH_AUTH_SCOPES
+    scopes = roles & session_scopes()
     provisioning = roles & _PACK_PROVISIONING_SCOPES
     if "kg:admin" in scopes:
         return scopes | provisioning | frozenset({"kg:read", "kg:write"})

@@ -50,6 +50,7 @@ __all__ = [
     "guard_certification_read",
     "guard_skill_upgrade",
     "require_agent_run_delegation",
+    "require_delegated_identity",
     "admission_models",
     "require_claim_identity",
     "OUTBOX_MODELS",
@@ -253,6 +254,26 @@ def require_agent_run_delegation() -> None:
     claim = getattr(models, "ClaimWorkItemResult", None)
     if "delegation_id" not in getattr(claim, "model_fields", {}):
         raise PinLagUnavailable("ClaimWorkItemResult.delegation_id")
+
+
+#: The service-only host scope that lets a host act under an engine delegation
+#: (MEDULLA-IDENTITY-R744; engine ``main``, unreleased).
+DELEGATE_SCOPE = "identity:delegate"
+
+
+def require_delegated_identity() -> None:
+    """Return once the engine serves the acting delegation, else name what is missing.
+
+    PIN-LAG: two pieces must exist. The envelope claim shape must declare
+    ``RequestContextClaims.delegation_id``, and the engine's served scope registry
+    must carry ``identity:delegate``. A release without either cannot run a call as
+    a delegation's principal, so nothing sends the claim.
+    """
+    require_model_field("RequestContextClaims", "delegation_id")
+    from arbora.security.scope_registry import session_scopes
+
+    if DELEGATE_SCOPE not in session_scopes():
+        raise PinLagUnavailable(f"scope {DELEGATE_SCOPE}")
 
 
 def require_pack_import_seed() -> None:

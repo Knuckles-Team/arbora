@@ -151,6 +151,9 @@ def test_native_client_is_public_pkce_with_declared_scopes() -> None:
     assert {s.name: s.audience for s in contract.scopes} == {
         "mcp-fleet": None,
         "agent-services": "agent-services",
+        # The native default scopes name the workstream scopes, so they are declared.
+        "workstream:read": None,
+        "workstream:write": None,
     }
     mapper = cc.audience_mapper(contract.scopes[1])
     assert mapper["protocolMapper"] == "oidc-audience-mapper"

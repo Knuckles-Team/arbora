@@ -293,3 +293,26 @@ def engine_delegation_reader(
         return dump(mode="json") if callable(dump) else state
 
     return read
+
+
+def acting_session(session: Any, delegation: ResolvedRunDelegation) -> Any:
+    """The session a reclaimed run acts under: the host's, carrying the run's delegation.
+
+    The engine then runs every call of the run as the delegation's principal, the run's
+    owner (``MEDULLA-IDENTITY-R744``). A release that cannot carry the claim, or a host
+    session without the service-only ``identity:delegate`` scope, refuses: the run must
+    not fall back to acting as the host.
+    """
+    from arbora.pin_lag.medulla import (
+        DELEGATE_SCOPE,
+        PinLagUnavailable,
+        require_delegated_identity,
+    )
+
+    try:
+        require_delegated_identity()
+    except PinLagUnavailable as unavailable:
+        raise RunDelegationRefused(f"unavailable:{unavailable.missing}") from None
+    if DELEGATE_SCOPE not in session.scopes:
+        raise RunDelegationRefused("host_scope")
+    return session.with_delegation(delegation.delegation_id)
