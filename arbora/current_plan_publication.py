@@ -264,8 +264,8 @@ async def _initialize(binding: _Binding) -> None:
 
 async def _admit(binding: _Binding, operation: str) -> None:
     """Native ownership does not replace the host operation policy gate."""
+    from arbora.api.domain.mcp_server.task_plan_runtime import admit as admit_operation
     from arbora.api.mcp.caller import caller_from_session
-    from arbora.mcp_server.task_plan_runtime import admit as admit_operation
 
     binding.require_active()
     caller = caller_from_session(binding.session, credential_kind="session")

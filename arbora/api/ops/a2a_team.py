@@ -14,7 +14,7 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.a2a.team import read_team
+from arbora.api.domain.a2a.team import read_team
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops.engine_calls import engine_send

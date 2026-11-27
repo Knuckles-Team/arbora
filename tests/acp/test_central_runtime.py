@@ -25,6 +25,7 @@ from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
 from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
+from arbora.api.domain.mcp_server import task_plan_runtime
 from arbora.api.http.auth import (
     AmbientHTTPAuthenticator,
     verified_bearer_session_for_request,
@@ -33,7 +34,6 @@ from arbora.api.invoke.executor import BoundOperationRuntime
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.ops.agents import operations
 from arbora.api.registry import Registry
-from arbora.mcp_server import task_plan_runtime
 from arbora.security.key_cache import JwksCache
 from tests.a2a.test_operation_bridge import SessionRuntime
 from tests.acp.test_http_transport import connected

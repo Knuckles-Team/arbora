@@ -14,8 +14,8 @@ from typing import Any
 
 from pydantic import Field
 
+from arbora.api.domain.mcp_server.backing import engine_routing
 from arbora.api.errors import not_served
-from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
 )

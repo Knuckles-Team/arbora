@@ -243,7 +243,7 @@ class _KindSpec:
 #
 # PHASE A investigation — three sections `/api/enhanced/tools` still serves
 # from the filesystem/KG (`builtin_tools`, `skill_graphs`, `skill_workflows`,
-# see `arbora.mcp_server.backing.engine_routing._build_tools_payload_sync`'s own
+# see `arbora.api.domain.mcp_server.backing.engine_routing._build_tools_payload_sync`'s own
 # docstring, "FIX LANE (collapse-tool-endpoints)") were evaluated as
 # candidate additional `_KindSpec` entries here. None were added. Evidence:
 #
@@ -1506,7 +1506,7 @@ async def _get_kind(
 
 # Toggle-store item_type/key convention per kind, evidenced from the two
 # places that already write/read this preference store today:
-# ``arbora.mcp_server.backing.engine_routing._build_tools_payload_sync`` (servers,
+# ``arbora.api.domain.mcp_server.backing.engine_routing._build_tools_payload_sync`` (servers,
 # keyed by name — ``("mcp_server", name)``; skills, keyed by the skill's
 # frontmatter name, which is the same value as this catalog's ``name``
 # column — ``("skill", name)``) and
@@ -1547,7 +1547,9 @@ async def _merge_toggle_states(
     precedent for ``mcp_tools``/servers.
     """
 
-    from arbora.mcp_server.backing.engine_routing import get_toggle_states_batch
+    from arbora.api.domain.mcp_server.backing.engine_routing import (
+        get_toggle_states_batch,
+    )
 
     toggleable = list(_iter_toggleable_items(kinds_map))
     if not toggleable:

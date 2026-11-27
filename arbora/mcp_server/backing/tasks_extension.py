@@ -1049,7 +1049,7 @@ class WorkItemTasksExtension(ServerExtension):
         if not isinstance(caller, Mapping):
             raise mcp_protocol_exception(-32001, "Invalid delegated task identity")
         expected = self._caller_metadata(session)
-        from arbora.mcp_server.backing.context_helpers import (
+        from arbora.api.domain.mcp_server.backing.context_helpers import (
             caller_identity_fields,
         )
 

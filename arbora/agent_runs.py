@@ -398,7 +398,7 @@ def decide_run(request: Any) -> Any:
     plan = plan_for_owner(plan, owner)  # ARBORA-A2A-R022: the held-output block
     plan = plan_with_subset(plan, owner)  # ARBORA-A2A-R002.2.1: the enforced subset
     if owner is not None and owner.hosted_invocation is not None:
-        from arbora.mcp_server.task_plan_runtime import admitted_run_plan
+        from arbora.api.domain.mcp_server.task_plan_runtime import admitted_run_plan
 
         return admitted_run_plan(request, plan, owner)
     return plan
@@ -542,7 +542,7 @@ def record_run_event(
         logger.warning("run event not persisted: invalid event identity")
         return
     from arbora.agent_host.port_backends import TERMINALS
-    from arbora.agent_host.usage_ledger import forward_step_usage
+    from arbora.api.domain.agent_host.usage_ledger import forward_step_usage
 
     if event_type == "step_usage":
         forward_step_usage(event)
@@ -680,7 +680,7 @@ class AgentRunPort:
             ):
                 raise RuntimeError("UPGRADE_REQUIRED: native run stream observer")
             kwargs["stream_observer"] = observer
-        from arbora.agent_host.usage_ledger import LEDGER, flush_usage
+        from arbora.api.domain.agent_host.usage_ledger import LEDGER, flush_usage
 
         LEDGER.bind(
             request.run_id,

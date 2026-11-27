@@ -135,7 +135,9 @@ def _graph_connection_inventory(cfg: Any) -> SimpleNamespace:
     declaration with the same alias. Duplicates within either source are invalid
     and cannot be hidden by that precedence rule.
     """
-    from arbora.mcp_server.backing.engine_routing import get_connection_registry
+    from arbora.api.domain.mcp_server.backing.engine_routing import (
+        get_connection_registry,
+    )
 
     external_declarations, kg_declarations = _graph_connection_declarations(cfg)
     invalid_declaration_count = _invalid_declaration_count(

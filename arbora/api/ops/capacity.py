@@ -166,6 +166,7 @@ async def handle_capacity_adjust_apply(
     from medulla import EngineResponseError
     from medulla.decision_client import DecisionClient
 
+    from arbora.api.domain.deployment.capacity_actuation import actuate
     from arbora.api.errors import EngineRefusal
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
     from arbora.api.invoke.pipeline import OperationRefused
@@ -173,7 +174,6 @@ async def handle_capacity_adjust_apply(
     from arbora.api.ops.deploy import deploy_config_of, feature_schema_of
     from arbora.api.ops.engine_calls import refusal_code
     from arbora.deployment.assembly import require_confirmed_plan
-    from arbora.deployment.capacity_actuation import actuate
     from arbora.security.anonymous import client_scope
 
     require_confirmed_plan(op)
@@ -214,7 +214,7 @@ async def handle_capacity_adjust_apply(
 #: The engine replays the verdict question by its record identity, and the
 #: scale step is one ``fleet.call`` reserved under ``capacity:<proposal_digest>``.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "capacity.adjust.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    "capacity.adjust.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
 }
 
 

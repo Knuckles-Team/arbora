@@ -15,11 +15,11 @@ from typing import Any, Literal
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
+from arbora.api.domain.mcp_server.backing import engine_routing
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
-from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json, public_error_text
 

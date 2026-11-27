@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host.usage_ledger import UsageLedger
+from arbora.api.domain.agent_host.usage_ledger import UsageLedger
 
 
 class _Callers:

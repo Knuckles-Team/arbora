@@ -435,7 +435,7 @@ def replay_record(caller: Any) -> str:
 #: the run and the plan digest. A replayed run therefore returns each recorded
 #: step outcome and starts no second effect.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "agents.plan_run": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    "agents.plan_run": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
 }
 
 
@@ -1361,8 +1361,8 @@ async def _publish_and_execute_native_plan(
     """Run native plans through the existing publication/owner scopes."""
     import arbora.work_items as work_items
     from arbora import agent_runs
+    from arbora.api.domain.mcp_server import task_plan_runtime
     from arbora.current_plan_publication import bind_admitted_claim
-    from arbora.mcp_server import task_plan_runtime
     from arbora.security.session import use_session
 
     try:

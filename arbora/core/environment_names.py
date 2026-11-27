@@ -975,7 +975,7 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "string",
         None,
         "ARBORA-FLEET-R007.3",
-        ("arbora.mcp_server.backing.engine_routing",),
+        ("arbora.api.domain.mcp_server.backing.engine_routing",),
         False,
     ),
     (

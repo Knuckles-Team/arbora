@@ -86,7 +86,7 @@ def graph_write_and_engine(tmp_path, monkeypatch):
         host = compose_host_context(FixedEngineHandles(engine))
         _build_server(bootstrap=False, host=host)
 
-    from arbora.mcp_server.backing import engine_routing
+    from arbora.api.domain.mcp_server.backing import engine_routing
 
     registry = MagicMock()
     registry.is_writable.return_value = True

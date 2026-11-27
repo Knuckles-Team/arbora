@@ -367,9 +367,9 @@ def build_invoke_services(
 
 
 def _admission_gate_from_config(gate_send: Any = None, bindings: Any = None) -> Any:
+    from arbora.api.domain.fleet.admission_policy import AdmissionConfig
     from arbora.core.settings import platform_config_file, read_config_document
     from arbora.fleet.admission import AdmissionGate
-    from arbora.fleet.admission_policy import AdmissionConfig
 
     path = platform_config_file("config.json")
     document = read_config_document(path) if path.is_file() else {}
@@ -405,15 +405,15 @@ def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:
     reads one topic and notifies through ``notifier``. The engine holds each
     cursor, so the process keeps no state between ticks.
     """
+    from arbora.api.domain.fleet.approval_notifier import (
+        APPROVALS_TOPIC,
+        approval_handler,
+        role_holders,
+    )
     from arbora.api.domain.fleet.outbox_consumer import (
         TRUST_FLAG_TOPIC,
         OutboxConsumer,
         trust_flag_handler,
-    )
-    from arbora.fleet.approval_notifier import (
-        APPROVALS_TOPIC,
-        approval_handler,
-        role_holders,
     )
 
     return (

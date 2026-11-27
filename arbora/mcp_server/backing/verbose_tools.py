@@ -32,6 +32,7 @@ from fastmcp import Context
 from fastmcp.dependencies import Depends
 from pydantic import Field
 
+from arbora.api.domain.mcp_server.backing.context_helpers import ctx_confirm_destructive
 from arbora.core.concurrency import invoke_client_method
 from arbora.core.environment import read_tool_family_toggle
 from arbora.mcp_server.backing.action_dispatch import (
@@ -40,7 +41,6 @@ from arbora.mcp_server.backing.action_dispatch import (
     parse_json_object,
     public_actions,
 )
-from arbora.mcp_server.backing.context_helpers import ctx_confirm_destructive
 
 logger = logging.getLogger(__name__)
 

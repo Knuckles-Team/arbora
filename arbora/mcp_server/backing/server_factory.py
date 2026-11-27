@@ -1791,7 +1791,9 @@ def _rate_limit_client_id(context: Any) -> str:
         token = None
     if token is None:
         return "anonymous"
-    from arbora.mcp_server.backing.context_helpers import token_caller_material
+    from arbora.api.domain.mcp_server.backing.context_helpers import (
+        token_caller_material,
+    )
 
     raw = token_caller_material(token)
     if not raw.strip("\x00"):

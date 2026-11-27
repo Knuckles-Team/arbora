@@ -10,7 +10,7 @@ import msgpack
 import pytest
 
 from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
-from arbora.a2a.team import TeamCoordinator, bind_team_coordination
+from arbora.api.domain.a2a.team import TeamCoordinator, bind_team_coordination
 from arbora.security.session import use_session
 from tests._support import unwrap_decide
 from tests.a2a.test_checkpoint_resume_served import Host, _world, lenient_decode
