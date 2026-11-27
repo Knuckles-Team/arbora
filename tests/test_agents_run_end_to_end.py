@@ -30,6 +30,7 @@ from arbora.api.registry import Registry, Surface
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.run_origin import RunOriginRegistry
+from tests.a2a._route_support import bind_route_decision
 from tests.a2a._support import streaming_model
 from tests.a2a.test_operation_bridge import session
 from tests.api._support import make_verified_caller
@@ -328,6 +329,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
         parts.extend({"kind": "file", "file": file} for _ in range(count))
 
+    bind_route_decision(monkeypatch)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     app = mcp.http_app()
 
