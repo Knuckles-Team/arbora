@@ -36,6 +36,7 @@ from arbora.ingest.service import (
     IngestJobControlReceipt,
     IngestJobInventory,
     IngestJobRecord,
+    IngestJobStatus,
     IngestPackInventory,
     IngestPackRecord,
     IngestSourceInventory,
@@ -418,13 +419,17 @@ class ConnectorIngestRunner:
         reason: str | None = None,
         engine_code: str | None = None,
     ) -> IngestSyncReceipt:
-        mapped = {"succeeded": "completed", "failed": "failed", "running": "running"}
+        mapped: dict[str, IngestJobStatus] = {
+            "succeeded": "completed",
+            "failed": "failed",
+            "running": "running",
+        }
         return IngestSyncReceipt(
             job_id=item_id,
             source_id=source_id,
             tenant=tenant,
             mode="full" if mode == "full" else "incremental",
-            status=mapped.get(str(status), "queued"),  # type: ignore[arg-type]
+            status=mapped.get(str(status), "queued"),
             reason=reason,
             engine_code=engine_code,
         )
@@ -462,12 +467,16 @@ class ConnectorIngestRunner:
     def _job_record(
         tenant: str, job_id: str, item: Mapping[str, Any]
     ) -> IngestJobRecord:
-        mapped = {"succeeded": "completed", "failed": "failed", "leased": "running"}
+        mapped: dict[str, IngestJobStatus] = {
+            "succeeded": "completed",
+            "failed": "failed",
+            "leased": "running",
+        }
         reason, engine_code = _parse_error_ref(item.get("error_ref"))
         return IngestJobRecord(
             job_id=job_id,
             tenant=tenant,
-            status=mapped.get(str(item.get("status")), "queued"),  # type: ignore[arg-type]
+            status=mapped.get(str(item.get("status")), "queued"),
             reason=reason,
             engine_code=engine_code,
         )
@@ -581,12 +590,16 @@ class ConnectorIngestRunner:
             item = await _seam(work_items.get_work_item, control, job_id)
         if item is None:
             raise OperationRefused("NOT_FOUND", {"reason": "job is not known"})
-        mapped = {"succeeded": "completed", "failed": "failed", "leased": "running"}
+        mapped: dict[str, IngestJobStatus] = {
+            "succeeded": "completed",
+            "failed": "failed",
+            "leased": "running",
+        }
         reason, engine_code = _parse_error_ref(item.get("error_ref"))
         return IngestJobRecord(
             job_id=job_id,
             tenant=tenant,
-            status=mapped.get(str(item.get("status")), "queued"),  # type: ignore[arg-type]
+            status=mapped.get(str(item.get("status")), "queued"),
             reason=reason,
             engine_code=engine_code,
         )

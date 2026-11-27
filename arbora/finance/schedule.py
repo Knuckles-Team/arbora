@@ -151,10 +151,10 @@ def due_occurrences(
     entry_id: str, trigger: str, zone_name: str, after: datetime, now: datetime
 ) -> list[Occurrence]:
     """Every occurrence with ``after < instant <= now`` (UTC), oldest first."""
-    kind, spec = parse_trigger(trigger)
+    _kind, spec = parse_trigger(trigger)
     zone = _zone(zone_name)
-    if kind == "interval":
-        step = int(spec)  # type: ignore[arg-type]
+    if isinstance(spec, int):
+        step = spec
         first = int(after.timestamp()) // step + 1
         last = int(now.timestamp()) // step
         found = []
@@ -167,7 +167,7 @@ def due_occurrences(
                 )
             )
         return found
-    weekday, clock = spec  # type: ignore[misc]
+    weekday, clock = spec
     day = after.astimezone(zone).date() - timedelta(days=1)
     end = now.astimezone(zone).date() + timedelta(days=1)
     found = []

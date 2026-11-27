@@ -219,6 +219,13 @@ async def install_package(
     return InstalledPackage(package.name, package.version, generation, previous)
 
 
+def _asset_rows(value: object) -> Sequence[Mapping[str, object]]:
+    """The wire ``assets`` value, checked to be a non-string sequence."""
+    if not isinstance(value, Sequence) or isinstance(value, str | bytes):
+        raise TypeError("assets must be a sequence")
+    return value
+
+
 def package_from_mapping(body: Mapping[str, object]) -> SpecialistPackage:
     """A package from its wire form; asset ``content_hex`` is the asset's bytes in hex."""
     import binascii
@@ -230,7 +237,7 @@ def package_from_mapping(body: Mapping[str, object]) -> SpecialistPackage:
                 sha256=str(a["sha256"]),
                 content=bytes.fromhex(str(a["content_hex"])),
             )
-            for a in body["assets"]  # type: ignore[union-attr]
+            for a in _asset_rows(body["assets"])
         ]
         return SpecialistPackage(
             name=str(body["name"]),
