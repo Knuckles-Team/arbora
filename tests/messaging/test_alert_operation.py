@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
+from operator import attrgetter
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -74,7 +75,8 @@ def _context(**services: Any) -> SimpleNamespace:
 
 
 def _op() -> Any:
-    return alert_ops.operations()[0]
+    ops = alert_ops.operations()
+    return dict(zip(map(attrgetter("id"), ops), ops, strict=False))["messaging.alert"]
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R008")
