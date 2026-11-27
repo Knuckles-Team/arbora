@@ -40,27 +40,37 @@ def redact_for_log(value: object) -> str:
     return f"<redacted:{digest[:12]}>"
 
 
-def redacted_traceback(exc: BaseException) -> str:
-    """Render ``exc`` and its cause chain with every message redacted.
-
-    Frames (file, line, function, source line) are kept, because they carry no
-    runtime values; the message of each exception is replaced by
-    :func:`redact_for_log`, so a secret carried in an exception message never
-    reaches a log sink.
-    """
+def _cause_chain(exc: BaseException) -> list[BaseException]:
     chain: list[BaseException] = []
     node: BaseException | None = exc
     while node is not None and node not in chain:
         chain.append(node)
         node = node.__cause__ or node.__context__
-    parts: list[str] = []
-    for item in reversed(chain):
-        frames = "".join(traceback.format_tb(item.__traceback__))
-        parts.append(
-            f"Traceback (most recent call last):\n{frames}"
-            f"{type(item).__qualname__}: {redact_for_log(str(item))}\n"
-        )
-    return "\n".join(parts).rstrip("\n")
+    return chain
+
+
+def _render_one(item: BaseException) -> str:
+    frames = "".join(
+        f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}\n'
+        for frame in traceback.extract_tb(item.__traceback__)
+    )
+    return (
+        f"Traceback (most recent call last):\n{frames}"
+        f"{type(item).__qualname__}: {redact_for_log(str(item))}\n"
+    )
+
+
+def redacted_traceback(exc: BaseException) -> str:
+    """Render ``exc`` and its cause chain with every message redacted.
+
+    Frames keep only file, line and function name: source lines can quote a
+    literal and are dropped. The message of each exception is replaced by
+    :func:`redact_for_log`, so a secret carried in a message never reaches a
+    log sink.
+    """
+    return "\n".join(_render_one(item) for item in reversed(_cause_chain(exc))).rstrip(
+        "\n"
+    )
 
 
 _RECORD_FACTORY_MARK = "_arbora_traceback_redaction"
