@@ -18,6 +18,7 @@ from arbora.a2a.engine_decide import build_ask_decide, decide_request_for
 from arbora.a2a.engine_deciders import EngineHeldItemDecider, EngineToolActionDecider
 from arbora.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
 from arbora.a2a.tool_action_admission import ToolActionAdmitter, ToolActionRefusal
+from tests._support import unwrap_decide
 from tests.a2a.test_engine_deciders import HELD, main_shape  # noqa: F401
 
 SCHEMA = {"schema_version": 1, "body": "pin"}
@@ -37,6 +38,7 @@ class LoopbackEngine:
 
     async def __call__(self, method: str, params: dict[str, Any], tenant: str) -> Any:
         assert method == "Decide"
+        params = unwrap_decide(params)
         self.requests.append(params)
         kind = params["question"]["kind"]
         return {

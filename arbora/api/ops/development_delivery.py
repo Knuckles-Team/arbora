@@ -132,8 +132,9 @@ async def handle_run_start(
 
     A reference-mode repository refuses before any dispatch. The engine starts no run
     itself (MEDULLA w16 decision): the slice is the engine's own ``next_unblocked_task``
-    answer, its digest is the dispatch decision reference, and ``DeliveryOpen`` records the
-    delivery the run executes under. The run id is the delivery id.
+    answer, the engine ``Decide`` ``TaskPlan`` question over that slice is the dispatch
+    decision, and ``DeliveryOpen`` records the delivery under that decision's record id.
+    Arbora computes no decision id. The run id is the delivery id.
     """
     mode = await engine_send(
         context, "ProjectModeGet", {"request": {"project": params["repository"]}}
@@ -142,23 +143,8 @@ async def handle_run_start(
         raise OperationRefused(
             "PROJECT_MODE_REFERENCE", {"repository": params["repository"]}
         )
-    slice_ = await engine_send(
-        context,
-        "SpecQuestion",
-        {
-            "question": "next_unblocked_task",
-            "subject": params["phase"],
-            "graph": await caller_dispatch_graph(context),
-        },
-    )
-    try:
-        picked = [str(row["task"]) for row in slice_["rows"]]
-        digests = [str(d) for d in slice_["digests"]]
-        decision = digests[0]
-    except (KeyError, TypeError, IndexError):
-        raise _malformed() from None
-    if params.get("task_id") is not None:
-        picked = [t for t in picked if t == params["task_id"]]
+    picked, digests = await _unblocked_slice(context, params)
+    decision = await _dispatch_decision(context, params["phase"], picked)
     answer = await engine_send(
         context,
         "DeliveryOpen",
@@ -180,6 +166,65 @@ async def handle_run_start(
         return {"run_id": str(answer["delivery"]["id"])}
     except (KeyError, TypeError):
         raise _malformed() from None
+
+
+async def _unblocked_slice(
+    context: Any, params: Mapping[str, Any]
+) -> tuple[list[str], list[str]]:
+    """The engine's own ``next_unblocked_task`` rows (and digests), narrowed to ``task_id``."""
+    slice_ = await engine_send(
+        context,
+        "SpecQuestion",
+        {
+            "question": "next_unblocked_task",
+            "subject": params["phase"],
+            "graph": await caller_dispatch_graph(context),
+        },
+    )
+    try:
+        picked = [str(row["task"]) for row in slice_["rows"]]
+        digests = [str(d) for d in slice_["digests"]]
+    except (KeyError, TypeError):
+        raise _malformed() from None
+    if params.get("task_id") is not None:
+        picked = [t for t in picked if t == params["task_id"]]
+    if not picked:
+        raise OperationRefused("NOT_FOUND", {})
+    return picked, digests
+
+
+async def _dispatch_decision(context: Any, phase: str, picked: list[str]) -> str:
+    """The record id of the engine ``TaskPlan`` decision over the picked slice."""
+    from arbora.api.ops.plans import (
+        _feature_schema,
+        decide_task_plan,
+        engine_task_plan,
+    )
+
+    proposal = {
+        "tasks": [
+            {"task_id": task, "prompt": f"{phase}: {task}", "depends_on": []}
+            for task in picked
+        ],
+        "output_task_id": picked[-1],
+        "max_concurrency": len(picked),
+        "max_steps": len(picked),
+    }
+    engine = context.services.get("task_plan_engine") or engine_task_plan(
+        context.client
+    )
+    _plan, record = await decide_task_plan(
+        engine,
+        proposal,
+        tenant=_tenant(context),
+        principal=str(context.caller.principal),
+        feature_schema=await _feature_schema(context, _tenant(context)),
+        question_id=f"arbora.development.run.start:{phase}",
+    )
+    record_id = record.get("record_id")
+    if not isinstance(record_id, str) or not record_id:
+        raise _malformed()
+    return record_id
 
 
 async def handle_run_status(

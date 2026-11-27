@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
 from arbora.mcp_server.host_context import bind_a2a_decision, build_host_context
+from tests._support import unwrap_decide
 from tests.a2a._admission_support import DIGEST, TOOLS, answer_json
 from tests.a2a._service_support import HEADERS, RecordingAuthority
 
@@ -63,6 +64,7 @@ class Engine:
         self.calls: list[tuple[str, dict[str, Any], str]] = []
 
     async def __call__(self, method: str, body: dict[str, Any], tenant: str) -> Any:
+        body = unwrap_decide(body)
         self.calls.append((method, body, tenant))
         kind = body["question"]["kind"]
         record: dict[str, Any] = {

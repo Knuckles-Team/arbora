@@ -390,9 +390,13 @@ def engine_ask(
             schema,
             params=[param("query", "text", query)],
         )
-        from arbora.deployment.placement import check_receipt, single_record
+        from arbora.deployment.placement import (
+            check_receipt,
+            send_decide,
+            single_record,
+        )
 
-        record = single_record(await send("Decide", request, who))
+        record = single_record(await send_decide(send, request, who))
         check_receipt(record, request, principal())
         outcome = record.get("outcome") or {}
         if outcome.get("outcome") != "advisory":

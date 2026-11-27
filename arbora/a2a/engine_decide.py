@@ -105,7 +105,7 @@ def build_ask_decide(
     is the tenant's published pin and raises while none is published; ``principal`` is
     the identity the engine saw, which the record's receipt must name.
     """
-    from arbora.deployment.placement import check_receipt, single_record
+    from arbora.deployment.placement import check_receipt, send_decide, single_record
 
     async def ask(
         kind: str, params: Mapping[str, str], tenant: str
@@ -113,7 +113,7 @@ def build_ask_decide(
         request = decide_request_for(
             kind, params, tenant, graph=graph, feature_schema=feature_schema(tenant)
         )
-        record = single_record(await send("Decide", request, tenant))
+        record = single_record(await send_decide(send, request, tenant))
         check_receipt(record, request, principal())
         return record
 
@@ -157,7 +157,9 @@ class HostDecide:
     async def __call__(self, request: dict[str, Any]) -> Any:
         if self._send is None:
             raise RuntimeError("the A2A decision port is not bound")
-        return await self._send("Decide", request, str(request["tenant_id"]))
+        from arbora.deployment.placement import send_decide
+
+        return await send_decide(self._send, request, str(request["tenant_id"]))
 
     def feature_schema(self, tenant: str) -> Mapping[str, Any]:
         if self._feature_schema is None:

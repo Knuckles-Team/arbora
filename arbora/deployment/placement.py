@@ -20,6 +20,22 @@ PLACEMENT_QUESTION_ID = "deployment.placement"
 Decide = Callable[[dict[str, Any]], Awaitable[Any]]
 
 
+def decide_params(request: Mapping[str, Any]) -> dict[str, Any]:
+    """The wire params of one ``Decide``: the engine's ``MethodDecideParams {request}``.
+
+    Every ``Decide`` arbora sends builds its params here, so a bare request that the engine
+    would refuse as an unknown field can never reach the wire.
+    """
+    return {"request": dict(request)}
+
+
+async def send_decide(
+    send: Callable[..., Awaitable[Any]], request: Mapping[str, Any], *tail: Any
+) -> Any:
+    """Send one ``Decide`` request over ``send(method, params, *tail)``, wrapped once."""
+    return await send("Decide", decide_params(request), *tail)
+
+
 def placement_body(
     subject: Mapping[str, Any],
     constraints: Mapping[str, Any],

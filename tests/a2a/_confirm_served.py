@@ -27,6 +27,7 @@ from arbora.a2a.service import A2AService
 from arbora.a2a.tool_action_admission import ToolActionAdmitter
 from arbora.api.invoke.plan import PlanBinding, params_digest
 from arbora.identity.approval import RegisteredApprovalKey
+from tests._support import unwrap_decide
 from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_grant_store import Client
 
@@ -78,6 +79,7 @@ class Loopback:
 
     async def __call__(self, method: str, params: dict[str, Any], tenant: str) -> Any:
         assert method == "Decide" and tenant == TENANT
+        params = unwrap_decide(params)
         self.requests.append(params)
         by_name = {p["name"]: p["value"]["value"] for p in params["params"]}
         anchor = by_name.get("pending_call_id") or by_name["item_ref"]
