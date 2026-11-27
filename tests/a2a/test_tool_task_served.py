@@ -21,7 +21,6 @@ from arbora.a2a.tool_task import ToolTaskRequest, tool_task_work_item_id
 from arbora.a2a.tool_task_requests import EgToolTaskRequestStore
 from arbora.api.invoke.steps import OpError, OpResult
 from arbora.mcp_server.served_invocation import _tool_task_service
-from arbora.observability import runtime_health
 from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
 from arbora.security.session import GraphSession, use_session
 
@@ -225,10 +224,12 @@ class Host:
         async def no_wait(_seconds: float) -> None:
             await asyncio.sleep(0)
 
+        self.probes: dict[str, Any] = {}
         self.service = _tool_task_service(
             runtime,
             lambda: HOST,
             SimpleNamespace(invoke=invoke),
+            self.probes,
             sleep=no_wait,
         )[0]
 
@@ -249,9 +250,7 @@ def world(monkeypatch: pytest.MonkeyPatch) -> Iterator[Engine]:
         tool_task_dispatch, "resolve_session", lambda **_: use_session_value()
     )
     monkeypatch.delenv("ARBORA_A2A_TOOL_TASK_POLL_S", raising=False)
-    runtime_health.reset_health_probes()
     yield engine
-    runtime_health.reset_health_probes()
 
 
 def use_session_value() -> GraphSession:
@@ -274,10 +273,9 @@ def test_bootstrap_starts_consumer_and_reports_ready(world: Engine) -> None:
         host = Host(world, [])
         assert host.service is not None
         # Before the consumer polls, /ready reports it UNAVAILABLE; once it runs, ok.
-        assert runtime_health._bound_probe("tool_task_consumer", mandatory=False) == {
+        assert host.probes["tool_task_consumer"](None) == {
             "status": "unhealthy",
             "reason": "UNAVAILABLE",
-            "name": "tool_task_consumer",
         }
         stop = False
         runner = asyncio.create_task(host.service.run(lambda: stop))
@@ -285,15 +283,12 @@ def test_bootstrap_starts_consumer_and_reports_ready(world: Engine) -> None:
             if host.service.running:
                 break
             await asyncio.sleep(0)
-        probe = runtime_health._bound_probe("tool_task_consumer", mandatory=False)
+        probe = host.probes["tool_task_consumer"](None)
         assert probe["status"] == "ok"
         stop = True
         await runner
         assert not host.service.running
-        assert (
-            runtime_health._bound_probe("tool_task_consumer", mandatory=False)["reason"]
-            == "UNAVAILABLE"
-        )
+        assert host.probes["tool_task_consumer"](None)["reason"] == "UNAVAILABLE"
 
     asyncio.run(scenario())
 
@@ -388,16 +383,15 @@ def test_a_host_without_the_engine_client_starts_none_and_reports_unavailable(
     runtime = SimpleNamespace(
         bindings={"a2a": SimpleNamespace(authority=SimpleNamespace())}
     )
-    assert _tool_task_service(runtime, lambda: HOST, SimpleNamespace()) == ()
-    assert runtime_health._bound_probe("tool_task_consumer", mandatory=False) == {
+    probes: dict[str, Any] = {}
+    assert _tool_task_service(runtime, lambda: HOST, SimpleNamespace(), probes) == ()
+    assert probes["tool_task_consumer"](None) == {
         "status": "unhealthy",
         "reason": "UNAVAILABLE",
-        "name": "tool_task_consumer",
     }
-    runtime_health.reset_health_probes()
     # A host that serves no A2A reports nothing about the consumer.
-    assert _tool_task_service(SimpleNamespace(bindings={}), lambda: HOST, None) == ()
+    none: dict[str, Any] = {}
     assert (
-        runtime_health._bound_probe("tool_task_consumer", mandatory=False)["status"]
-        == "not_configured"
+        _tool_task_service(SimpleNamespace(bindings={}), lambda: HOST, None, none) == ()
     )
+    assert none == {}

@@ -23,6 +23,7 @@ from typing import Any
 from arbora.api.mcp.discovery import FleetCatalog, FleetSearch
 from arbora.api.mcp.verbs import VERBS, MCPProjection, native_verb
 from arbora.api.registry import Invoke
+from arbora.observability.state import SubsystemWindows
 
 __all__ = [
     "PARITY_SCHEMA_DIVERGED",
@@ -46,6 +47,7 @@ def register_intent_surface(
     invoke: Invoke,
     fleet_search: FleetSearch | None = None,
     fleet_catalog: FleetCatalog | None = None,
+    windows: SubsystemWindows,
 ) -> MCPProjection:
     """Compose Arbora's served surface on ``mcp``; return the built projection.
 
@@ -66,6 +68,7 @@ def register_intent_surface(
         invoke,
         fleet_search,
         fleet_catalog,
+        windows=windows,
     )
     from arbora.mcp_server import runtime
 

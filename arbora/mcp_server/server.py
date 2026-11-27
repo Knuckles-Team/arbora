@@ -25,6 +25,7 @@ from arbora.mcp_server.host_caches import WarmupSlot
 from arbora.mcp_server.host_context import (
     HostContext,
     bind_a2a_decision,
+    bind_invocation_probes,
     bind_ranking,
 )
 from arbora.mcp_server.hosted_invocation import HostedInvocation
@@ -230,6 +231,7 @@ def _served_invocation(
             "engine": host.engine.served,
             "run_origins": host.runs.origins,
             "run_ports": host.runs.ports,
+            "health": host.observability.health,
             "fleet_gateway": fleet,
             "workflow_worker": WorkflowRunStarter(
                 host.engine.served, NativeIntentFleet(), worker_ref="arbora-workflow"
@@ -464,7 +466,8 @@ def mcp_server(
             ),
         ),
     }
-    bind_health_probes(host_context.engine.served)
+    bind_health_probes(host_context.observability.health, host_context.engine.served)
+    bind_invocation_probes(host_context, invocation)
     _preflight_mcp_sdk_floor()
     telemetry = host_context.observability.telemetry
     _configure_arbora_otel(telemetry)
@@ -523,12 +526,13 @@ def mcp_server(
     host_context.authority.bind_session(
         bootstrap_session if transport == "stdio" else None
     )
+    health = host_context.observability.health
     runtime._start_process_authority_supervisor(
-        host_context.authority, bootstrap_session
+        host_context.authority, bootstrap_session, health
     )
     if identity_lifecycle is not None:
         # ARBORA-IDENTITY-R030.4: arbora reconciles its own OAuth clients.
-        identity_lifecycle.start()
+        identity_lifecycle.start(health.identity)
     # Readiness probes the live fleet/goal authority, which is a real graph read
     # and therefore needs a bound session. the authority's session slot is deliberately
     # None on network transports (it is a stdio fallback, and must not become a
@@ -537,7 +541,9 @@ def mcp_server(
     # Without this the probe measured its own missing identity instead of the
     # authority, reported the goal store `unavailable`, and held /health/ready
     # at 503 forever on every served deployment.
-    readiness_authority_owner = runtime._set_readiness_authority(bootstrap_session)
+    readiness_authority_owner = runtime._set_readiness_authority(
+        health, bootstrap_session
+    )
 
     co_service_supervisor = None
     catalog_warmup = None
@@ -702,11 +708,11 @@ def mcp_server(
             co_service_supervisor.stop_all()
         host_context.authority.bind_session(None)
         runtime._stop_process_authority_supervisor(
-            host_context.authority, close_lease=True
+            host_context.authority, health, close_lease=True
         )
         if identity_lifecycle is not None:
-            identity_lifecycle.stop()
-        runtime._release_readiness_authority(readiness_authority_owner)
+            identity_lifecycle.stop(health.identity)
+        runtime._release_readiness_authority(health, readiness_authority_owner)
         # Best-effort teardown of any lazily-mounted fleet children.
         if fleet_mux is not None:
             try:

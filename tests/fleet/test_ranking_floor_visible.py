@@ -36,22 +36,15 @@ def _published(_tenant: str) -> dict[str, Any]:
     return {"component_id": "decide.schema.catalog.operation_rank"}
 
 
-@pytest.fixture(autouse=True)
-def _probes() -> Any:
-    runtime_health.reset_health_probes()
-    yield
-    runtime_health.reset_health_probes()
-
-
-def _check() -> dict[str, Any]:
-    report = runtime_health.collect_health()
+def _check(host: Any) -> dict[str, Any]:
+    report = runtime_health.collect_health(host.observability.health)
     return next(c for c in report["checks"] if c["name"] == "ranking")
 
 
-async def _doctor_checks() -> dict[str, Any]:
-    result = await ops_admin.handle_ops_doctor(
-        _context(store=_FakeOpsAdminStore()), {}, _OPS["ops.doctor"]
-    )
+async def _doctor_checks(host: Any) -> dict[str, Any]:
+    context = _context(store=_FakeOpsAdminStore())
+    context.services["health"] = host.observability.health
+    result = await ops_admin.handle_ops_doctor(context, {}, _OPS["ops.doctor"])
     return dict(result["value"]["checks"])
 
 
@@ -59,22 +52,24 @@ async def _doctor_checks() -> dict[str, Any]:
 async def test_unpublished_schema_is_named_in_ready_and_doctor() -> None:
     host = build_host_context()
     bind_ranking(host, _invocation(lambda _t: {"component_id": "decide.schema.other"}))
-    check = _check()
+    check = _check(host)
     assert check["status"] == "degraded"
     assert check["reason"] == "engine schema unpublished"
     assert check["detail"]["summary"] == UNPUBLISHED
     assert "ranking" not in runtime_health.failing_checks(
-        runtime_health.collect_health()
+        runtime_health.collect_health(host.observability.health)
     )  # the floor is informational, never unready
-    assert (await _doctor_checks())["ranking"] == UNPUBLISHED
+    assert (await _doctor_checks(host))["ranking"] == UNPUBLISHED
 
 
 @pytest.mark.spec("ARBORA-FLEET-R083.5")
 async def test_an_unbound_engine_names_the_floor_reason() -> None:
     host = build_host_context()
     bind_ranking(host, SimpleNamespace(engine_send=None))
-    assert _check()["detail"]["summary"] == "ranking: floor (engine unavailable)"
-    assert (await _doctor_checks())["ranking"] == "ranking: floor (engine unavailable)"
+    assert _check(host)["detail"]["summary"] == "ranking: floor (engine unavailable)"
+    assert (await _doctor_checks(host))[
+        "ranking"
+    ] == "ranking: floor (engine unavailable)"
 
 
 @pytest.mark.spec("ARBORA-FLEET-R083.5")
@@ -82,6 +77,6 @@ async def test_published_schemas_report_the_engine_order() -> None:
     assert "catalog.operation_rank" in QUESTION_IDS
     host = build_host_context()
     bind_ranking(host, _invocation(_published))
-    assert _check()["status"] == "ok"
-    assert _check()["detail"]["summary"] == "ranking: medulla"
-    assert (await _doctor_checks())["ranking"] == "ranking: medulla"
+    assert _check(host)["status"] == "ok"
+    assert _check(host)["detail"]["summary"] == "ranking: medulla"
+    assert (await _doctor_checks(host))["ranking"] == "ranking: medulla"

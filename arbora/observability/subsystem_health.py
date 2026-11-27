@@ -16,28 +16,22 @@ unauthenticated ``GET /health/subsystems`` body (names and states only).
 from __future__ import annotations
 
 import contextlib
-import threading
 import time
-from collections import deque
 from collections.abc import Iterator
 from typing import Any
 
 from arbora.observability.gateway_metrics import _gauge, _histogram
+from arbora.observability.state import SUBSYSTEMS, SubsystemWindows
 
 __all__ = [
-    "SUBSYSTEMS",
     "WEDGE_AFTER_S",
     "classify",
     "snapshot",
     "track",
 ]
 
-SUBSYSTEMS = ("engine", "discovery", "fleet")
-
 #: A call in flight longer than this marks its subsystem wedged.
 WEDGE_AFTER_S = 30.0
-#: Recent outcomes kept per subsystem.
-_WINDOW = 50
 
 SUBSYSTEM_UP = _gauge(
     "arbora_subsystem_up",
@@ -55,13 +49,6 @@ SUBSYSTEM_DURATION = _histogram(
     ("subsystem", "outcome"),
 )
 
-_lock = threading.Lock()
-_in_flight: dict[str, dict[int, float]] = {name: {} for name in SUBSYSTEMS}
-_recent: dict[str, deque[tuple[bool, float]]] = {
-    name: deque(maxlen=_WINDOW) for name in SUBSYSTEMS
-}
-_next_id = 0
-
 
 def classify(verb: str, op: str | None) -> str:
     """The subsystem one served call exercises."""
@@ -73,10 +60,10 @@ def classify(verb: str, op: str | None) -> str:
     return "engine"
 
 
-def _state(name: str, now: float) -> dict[str, Any]:
-    started = list(_in_flight[name].values())
+def _state(
+    started: list[float], recent: list[tuple[bool, float]], now: float
+) -> dict[str, Any]:
     oldest = max((now - t for t in started), default=0.0)
-    recent = list(_recent[name])
     failures = sum(1 for ok, _ in recent if not ok)
     if oldest > WEDGE_AFTER_S:
         status = "wedged"
@@ -100,12 +87,14 @@ def _state(name: str, now: float) -> dict[str, Any]:
     }
 
 
-def snapshot() -> dict[str, Any]:
+def snapshot(windows: SubsystemWindows) -> dict[str, Any]:
     """Each subsystem's state; also refreshes the ``arbora_subsystem_up`` gauge."""
 
     now = time.monotonic()
-    with _lock:
-        states = {name: _state(name, now) for name in SUBSYSTEMS}
+    states = {
+        name: _state(started, recent, now)
+        for name, (started, recent) in windows.view(SUBSYSTEMS).items()
+    }
     for name, state in states.items():
         SUBSYSTEM_UP.labels(subsystem=name).set(1 if state["status"] == "ok" else 0)
     overall = "ok" if all(s["status"] == "ok" for s in states.values()) else "degraded"
@@ -113,16 +102,12 @@ def snapshot() -> dict[str, Any]:
 
 
 @contextlib.contextmanager
-def track(subsystem: str) -> Iterator[dict[str, bool]]:
+def track(windows: SubsystemWindows, subsystem: str) -> Iterator[dict[str, bool]]:
     """Record one served call; set ``outcome["ok"] = False`` for a refusal."""
 
-    global _next_id
     outcome = {"ok": True}
     start = time.monotonic()
-    with _lock:
-        _next_id += 1
-        call_id = _next_id
-        _in_flight[subsystem][call_id] = start
+    call_id = windows.begin(subsystem, start)
     SUBSYSTEM_IN_FLIGHT.labels(subsystem=subsystem).inc()
     try:
         yield outcome
@@ -131,9 +116,7 @@ def track(subsystem: str) -> Iterator[dict[str, bool]]:
         raise
     finally:
         elapsed = time.monotonic() - start
-        with _lock:
-            _in_flight[subsystem].pop(call_id, None)
-            _recent[subsystem].append((outcome["ok"], elapsed))
+        windows.end(subsystem, call_id, ok=outcome["ok"], elapsed=elapsed)
         SUBSYSTEM_IN_FLIGHT.labels(subsystem=subsystem).dec()
         SUBSYSTEM_DURATION.labels(
             subsystem=subsystem, outcome="ok" if outcome["ok"] else "error"

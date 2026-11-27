@@ -15,7 +15,9 @@ from typing import Any
 import pytest
 
 from arbora.mcp_server import bootstrap
+from arbora.mcp_server.host_context import build_host_context
 from arbora.observability import runtime_health
+from arbora.observability.state import HealthState, build_health_state
 from arbora.security.actor_context import (
     ActorContext,
     ActorType,
@@ -46,7 +48,11 @@ def clock(monkeypatch: pytest.MonkeyPatch) -> Iterator[Clock]:
     fake = Clock()
     monkeypatch.setattr(time, "time", fake.time)
     yield fake
-    runtime_health.register_process_lease(None)
+
+
+@pytest.fixture
+def health() -> HealthState:
+    return build_health_state()
 
 
 def _actor(clock: Clock, roles: tuple[str, ...] = ROLES) -> ActorContext:
@@ -114,12 +120,13 @@ def test_authority_renews_across_many_token_lifetimes(
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_revoked_role_fails_closed_with_a_reason(
     authority: ProcessAuthority,
+    health: HealthState,
     monkeypatch: pytest.MonkeyPatch,
     clock: Clock,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     session = _session(clock)
-    runtime_health.register_process_lease(_lease(session))
+    health.lease.set(_lease(session))
     _issue(monkeypatch, clock, ROLES[:-1])
     clock.now = _lease(session).expires_at - 10
     caplog.set_level(logging.ERROR, logger=bootstrap.logger.name)
@@ -128,7 +135,7 @@ def test_revoked_role_fails_closed_with_a_reason(
     # Revoked is terminal: the loop ends on its own, without waiting.
     bootstrap._process_authority_refresh_loop(authority, session)
     assert _lease(session).state is LeaseState.REVOKED
-    assert runtime_health.readiness_reason() == "process_authority_roles_revoked"
+    assert runtime_health.readiness_reason(health) == "process_authority_roles_revoked"
     message = caplog.records[-1].getMessage()
     assert "code=roles_revoked" in message
     assert "changed during renewal" in message
@@ -140,6 +147,7 @@ def test_revoked_role_fails_closed_with_a_reason(
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_acquisition_failure_logs_its_cause_without_secrets(
     authority: ProcessAuthority,
+    health: HealthState,
     monkeypatch: pytest.MonkeyPatch,
     clock: Clock,
     caplog: pytest.LogCaptureFixture,
@@ -157,7 +165,7 @@ def test_acquisition_failure_logs_its_cause_without_secrets(
             raise RuntimeError("Graph process identity acquisition failed") from exc
 
     monkeypatch.setattr(bootstrap, "_renewed_process_actor", failing)
-    runtime_health.register_process_lease(_lease(session))
+    health.lease.set(_lease(session))
     clock.now = _lease(session).expires_at - 10
     caplog.set_level(logging.ERROR, logger=bootstrap.logger.name)
     stop = threading.Event()
@@ -171,13 +179,16 @@ def test_acquisition_failure_logs_its_cause_without_secrets(
         "ConnectionError: token endpoint refused" in message
     )
     assert token not in message and "c2lnbmF0dXJl" not in message
-    assert runtime_health.readiness_reason() == "process_authority_acquisition_failed"
+    assert (
+        runtime_health.readiness_reason(health)
+        == "process_authority_acquisition_failed"
+    )
 
     _issue(monkeypatch, clock, ROLES)
     stop.clear()
     bootstrap._process_authority_refresh_loop(authority, session)
     assert _lease(session).state is LeaseState.LIVE
-    assert runtime_health.readiness_reason() is None
+    assert runtime_health.readiness_reason(health) is None
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
@@ -495,7 +506,7 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
     provider = FakeIdentityProvider(clock, recovers_at=clock.now + 3 * 300)
     monkeypatch.setattr(bootstrap, "_renewed_process_actor", provider)
 
-    async def health() -> dict[str, Any]:
+    async def collect(_health) -> dict[str, Any]:
         # The engine probe runs under the process authority, so it fails
         # once the lease is no longer usable.
         try:
@@ -505,14 +516,16 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
             status = "unhealthy"
         return {"checks": [{"name": "engine", "status": status}]}
 
-    monkeypatch.setattr(runtime_health, "collect_health_async", health)
-    _args, mcp, _middlewares = runtime._build_server(bootstrap=False)
+    monkeypatch.setattr(runtime_health, "collect_health_async", collect)
+    host = build_host_context()
+    health = host.observability.health
+    _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
     client = TestClient(mcp.http_app())
 
     stop = Lockstep(clock)
     authority.stop = stop
-    bootstrap._start_process_authority_supervisor(authority, session)
-    assert runtime_health.process_lease() is lease
+    bootstrap._start_process_authority_supervisor(authority, session, health)
+    assert health.lease.get() is lease
     observed: dict[LeaseState, dict[str, Any]] = {}
     try:
         for _ in range(10_000):
@@ -536,7 +549,7 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
     finally:
         stop.set()
         stop.resume.put(None)
-        bootstrap._stop_process_authority_supervisor(authority)
+        bootstrap._stop_process_authority_supervisor(authority, health)
 
     assert observed[LeaseState.DEGRADED] == {
         "status": "ready",
@@ -549,4 +562,4 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
     }
     assert observed[LeaseState.LIVE] == {"status": "ready"}
     assert lease.state is LeaseState.LIVE
-    assert runtime_health.process_lease() is None
+    assert health.lease.get() is None

@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock
 from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.multiplexer import MCPMultiplexer, attach_fleet_loader
 from arbora.fleet.state import FleetState
+from arbora.observability.state import SubsystemWindows
 
 
 class _NeverRead:
@@ -206,6 +207,7 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
         caller_for_request=lambda: state.caller,
         policy_gate=policy,
         invoke=invoke,
+        windows=SubsystemWindows(),
     )
     state.binding = FleetMCPBinding(projection, ops, lambda current: current.session)
     await register_mcp_tools(mcp, mux, state.binding)

@@ -1425,6 +1425,7 @@ def compose_served_invocation(
             return caller
 
         services.hooks.bind(host_hook_invoker(services, hook_caller))
+    health_probes: dict[str, Callable[..., Any]] = {}
     invocation = HostedInvocation(
         services=services,
         approval_chain=approval_chain,
@@ -1436,11 +1437,13 @@ def compose_served_invocation(
         decision_graph=graph,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
+        health_probes=health_probes,
         background_services=_background_services(
             services,
             runtime,
             graph,
             session,
+            health_probes,
             identity_port=identity_port,
             directory_factory=directory_factory,
             clock=scheduler_clock,
@@ -1580,6 +1583,7 @@ def _background_services(
     runtime: Any,
     graph: str,
     session: Callable[[], Any],
+    health_probes: dict[str, Callable[..., Any]],
     *,
     identity_port: Any = None,
     directory_factory: Callable[[], Any] | None = None,
@@ -1625,7 +1629,7 @@ def _background_services(
 
     LEDGER.configure(callers)
     started.extend(_scm_poll_service(callers, SystemClock()))
-    started.extend(_tool_task_service(runtime, session, callers))
+    started.extend(_tool_task_service(runtime, session, callers, health_probes))
     if tick_s <= 0:
         return tuple(started)
     return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s), *started)
@@ -1675,6 +1679,7 @@ def _tool_task_service(
     runtime: Any,
     session: Callable[[], Any],
     callers: Any,
+    health_probes: dict[str, Callable[..., Any]],
     *,
     sleep: Callable[[float], Any] | None = None,
 ) -> tuple[Any, ...]:
@@ -1691,7 +1696,6 @@ def _tool_task_service(
         build_tool_task_service,
         unavailable_probe,
     )
-    from arbora.observability.runtime_health import register_health_probe
 
     a2a = getattr(runtime, "bindings", {}).get("a2a")
     if a2a is None:
@@ -1700,7 +1704,7 @@ def _tool_task_service(
     poll = float(str(read_env("ARBORA_A2A_TOOL_TASK_POLL_S") or "") or 2)
     reader = getattr(authority, "delegation_reader", None)
     if authority is None or not hasattr(authority, "engine") or reader is None:
-        register_health_probe(HEALTH_PROBE, unavailable_probe)
+        health_probes[HEALTH_PROBE] = unavailable_probe
         return ()
     if poll <= 0:
         return ()
@@ -1713,7 +1717,7 @@ def _tool_task_service(
         poll_interval_s=poll,
         **({"sleep": sleep} if sleep is not None else {}),
     )
-    register_health_probe(HEALTH_PROBE, service.probe)
+    health_probes[HEALTH_PROBE] = service.probe
     return (service,)
 
 

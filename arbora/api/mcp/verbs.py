@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from arbora.api.invoke.steps import surface_caller_admitted
@@ -16,6 +16,7 @@ from arbora.api.mcp.discovery import (
     visible_ops,
 )
 from arbora.api.registry import Invoke
+from arbora.observability.state import SubsystemWindows
 
 VERBS = ("find", "ask", "why", "write", "act", "manage")
 PARAMETERS: dict[str, Any] = {
@@ -44,6 +45,7 @@ class MCPProjection:
     invoke: Invoke
     fleet_search: FleetSearch | None = None
     fleet_catalog: FleetCatalog | None = None
+    windows: SubsystemWindows = field(kw_only=True)
 
 
 def _envelope(
@@ -337,7 +339,7 @@ async def dispatch_verb(
 
     from arbora.observability.subsystem_health import classify, track
 
-    with track(classify(verb, op)) as outcome:
+    with track(projection.windows, classify(verb, op)) as outcome:
         result = await _dispatch_verb(
             verb,
             projection,

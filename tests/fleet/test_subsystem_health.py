@@ -9,16 +9,12 @@ from pathlib import Path
 import pytest
 
 from arbora.observability import subsystem_health as health
+from arbora.observability.state import SubsystemWindows
 
 
-@pytest.fixture(autouse=True)
-def _fresh(monkeypatch) -> None:
-    from collections import deque
-
-    monkeypatch.setattr(health, "_in_flight", {n: {} for n in health.SUBSYSTEMS})
-    monkeypatch.setattr(
-        health, "_recent", {n: deque(maxlen=50) for n in health.SUBSYSTEMS}
-    )
+@pytest.fixture
+def windows() -> SubsystemWindows:
+    return SubsystemWindows()
 
 
 @pytest.mark.spec("ARBORA-FLEET-R065")
@@ -30,11 +26,11 @@ def test_classify_maps_verbs_to_subsystems() -> None:
 
 
 @pytest.mark.spec("ARBORA-FLEET-R065")
-def test_wedged_subsystem_is_reported_alone() -> None:
-    health._in_flight["fleet"][1] = time.monotonic() - health.WEDGE_AFTER_S - 1
-    with health.track("engine"):
+def test_wedged_subsystem_is_reported_alone(windows: SubsystemWindows) -> None:
+    windows.begin("fleet", time.monotonic() - health.WEDGE_AFTER_S - 1)
+    with health.track(windows, "engine"):
         pass
-    snap = health.snapshot()
+    snap = health.snapshot(windows)
     assert snap["subsystems"]["fleet"]["status"] == "wedged"
     assert snap["subsystems"]["engine"]["status"] == "ok"
     assert snap["subsystems"]["discovery"]["status"] == "ok"
@@ -42,13 +38,13 @@ def test_wedged_subsystem_is_reported_alone() -> None:
 
 
 @pytest.mark.spec("ARBORA-FLEET-R065")
-def test_degraded_after_refusals() -> None:
+def test_degraded_after_refusals(windows: SubsystemWindows) -> None:
     for _ in range(3):
-        with health.track("discovery") as outcome:
+        with health.track(windows, "discovery") as outcome:
             outcome["ok"] = False
-    with pytest.raises(RuntimeError), health.track("discovery"):
+    with pytest.raises(RuntimeError), health.track(windows, "discovery"):
         raise RuntimeError("boom")
-    state = health.snapshot()["subsystems"]["discovery"]
+    state = health.snapshot(windows)["subsystems"]["discovery"]
     assert state["status"] == "degraded"
     assert state["recent_failures"] == 4
     assert state["in_flight"] == 0

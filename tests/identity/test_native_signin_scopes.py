@@ -19,6 +19,7 @@ from starlette.testclient import TestClient
 from arbora.identity import client_contract as cc
 from arbora.identity.client_contract import ContractEvent, ReconcileResult
 from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
+from arbora.mcp_server.host_context import build_host_context
 from arbora.observability import runtime_health
 from tests.identity.test_client_contract import CONFIG, FakeRealm, factory
 
@@ -139,12 +140,13 @@ def test_readiness_reports_each_identity_state(
 ) -> None:
     from arbora.mcp_server import runtime
 
-    async def health() -> dict[str, Any]:
+    async def health(_health) -> dict[str, Any]:
         return {"checks": [{"name": "engine", "status": "healthy"}]}
 
     monkeypatch.setattr(runtime_health, "collect_health_async", health)
     monkeypatch.delenv(cc.CONFIG_KEY, raising=False)
-    _args, mcp, _middlewares = runtime._build_server(bootstrap=False)
+    host = build_host_context()
+    _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
     client = TestClient(mcp.http_app())
 
     def identity() -> dict[str, Any]:
@@ -155,21 +157,23 @@ def test_readiness_reports_each_identity_state(
     assert identity() == {"status": "unconfigured"}
 
     monkeypatch.setenv(cc.CONFIG_KEY, "{not json")
-    assert cc.start_client_contract_supervisor() is None
+    assert (
+        cc.start_client_contract_supervisor(host.observability.health.identity) is None
+    )
     try:
         assert identity() == {
             "status": "degraded",
             "reason": "identity_config_invalid",
         }
     finally:
-        runtime_health.register_identity_config_invalid(False)
+        host.observability.health.identity.set_config_invalid(False)
     # Set but not yet started: checking.
     monkeypatch.setenv(cc.CONFIG_KEY, "{}")
     assert identity() == {"status": "checking"}
     monkeypatch.delenv(cc.CONFIG_KEY)
 
     machine = cc.ClientContractReconciler()
-    runtime_health.register_identity_contract(machine)
+    host.observability.health.identity.reconciler.set(machine)
     try:
         assert identity() == {"status": "checking"}
         machine.apply(ContractEvent.RECONCILE_START)
@@ -184,4 +188,4 @@ def test_readiness_reports_each_identity_state(
         # Codes only: no client or scope name reaches the route.
         assert "scope:x" not in client.get("/health/ready").text
     finally:
-        runtime_health.register_identity_contract(None)
+        host.observability.health.identity.reconciler.set(None)

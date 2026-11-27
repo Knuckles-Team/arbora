@@ -31,6 +31,7 @@ from enum import StrEnum
 from typing import Any
 
 from arbora.harness_plugins.profiles import native_redirect_uris
+from arbora.observability.state import IdentityContract
 
 logger = logging.getLogger(__name__)
 
@@ -743,10 +744,8 @@ class ClientContractSupervisor:
                 break
             self.reconciler.apply(event)
 
-    def start(self) -> None:
-        from arbora.observability.runtime_health import register_identity_contract
-
-        register_identity_contract(self.reconciler)
+    def start(self, identity: IdentityContract) -> None:
+        identity.reconciler.set(self.reconciler)
         self._thread = threading.Thread(
             target=self._run, daemon=True, name="IdentityClientContract"
         )
@@ -758,43 +757,38 @@ class ClientContractSupervisor:
         except Exception as exc:  # pragma: no cover - last-resort guard
             logger.error("identity client contract supervisor crashed: %s", exc)
 
-    def stop(self) -> None:
-        from arbora.observability.runtime_health import register_identity_contract
-
+    def stop(self, identity: IdentityContract) -> None:
         self.stop_event.set()
         if self._thread is not None and self._thread is not threading.current_thread():
             self._thread.join(timeout=2.0)
         if self.reconciler.state not in TERMINAL_CONTRACT_STATES:
             self.reconciler.apply(ContractEvent.STOP)
-        register_identity_contract(None)
+        identity.reconciler.set(None)
 
 
-_SUPERVISOR: list[ClientContractSupervisor | None] = [None]
-
-
-def start_client_contract_supervisor() -> ClientContractSupervisor | None:
+def start_client_contract_supervisor(
+    identity: IdentityContract,
+) -> ClientContractSupervisor | None:
     """Start the supervisor when the contract is configured; never raise into boot."""
-    from arbora.observability.runtime_health import register_identity_config_invalid
-
     try:
         config = configured_contract_config()
     except ValueError as exc:
         logger.error("identity client contract not started: %s", exc)
-        register_identity_config_invalid(True)
+        identity.set_config_invalid(True)
         return None
-    register_identity_config_invalid(False)
+    identity.set_config_invalid(False)
     if config is None:
         return None
     supervisor = ClientContractSupervisor(config)
-    supervisor.start()
-    _SUPERVISOR[0] = supervisor
+    supervisor.start(identity)
+    identity.supervisor.set(supervisor)
     return supervisor
 
 
-def stop_client_contract_supervisor() -> None:
-    supervisor, _SUPERVISOR[0] = _SUPERVISOR[0], None
+def stop_client_contract_supervisor(identity: IdentityContract) -> None:
+    supervisor = identity.supervisor.take()
     if supervisor is not None:
-        supervisor.stop()
+        supervisor.stop(identity)
 
 
 def reconcile_command(argv: Sequence[str]) -> int:

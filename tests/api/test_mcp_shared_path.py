@@ -26,6 +26,7 @@ from arbora.mcp_server.registration import (
     GovernedSessionVisibility,
     register_mcp_tools,
 )
+from arbora.observability.state import SubsystemWindows
 
 
 @pytest.fixture
@@ -127,6 +128,7 @@ def surface() -> Any:
         caller_for_request=lambda: state.caller,
         policy_gate=PolicyGate(mode="none"),
         invoke=invoke,
+        windows=SubsystemWindows(),
     )
     state.binding = FleetMCPBinding(
         state.projection, state.ops, lambda current: current.session

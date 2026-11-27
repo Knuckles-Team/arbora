@@ -88,6 +88,7 @@ def test_states_alert_eligibility_and_safe_output() -> None:
 @pytest.mark.spec("ARBORA-MESSAGING-R005.1")
 def test_health_report_carries_the_component_only_in_the_full_report() -> None:
     from arbora.observability import runtime_health as rh
+    from arbora.observability.state import build_health_state
 
-    report = rh.collect_health()
+    report = rh.collect_health(build_health_state())
     assert "messaging_intake" in report["components"]

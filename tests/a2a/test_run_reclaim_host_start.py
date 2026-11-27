@@ -17,7 +17,6 @@ import pytest
 from arbora.a2a.authority import _RUN_LEASE_SECONDS
 from arbora.a2a.run_reclaim import A2ARunReclaimService
 from arbora.mcp_server.served_invocation import _background_services, _reclaim_service
-from arbora.observability.runtime_health import reset_health_probes
 from arbora.security.session import use_session
 from tests.a2a.test_checkpoint_resume_served import (  # noqa: F401
     START,
@@ -47,17 +46,19 @@ def test_host_background_services_include_the_reclaim_consumer(
         return SimpleNamespace(tenant="tenant-a")
 
     try:
-        served = _background_services(object(), _runtime(host), "g", who)
+        served = _background_services(object(), _runtime(host), "g", who, {})
         assert [type(service) for service in served] == [A2ARunReclaimService]
         # A host that composes no A2A service, or turns the poll off, starts none.
         assert (
-            _background_services(object(), SimpleNamespace(bindings={}), "g", object)
+            _background_services(
+                object(), SimpleNamespace(bindings={}), "g", object, {}
+            )
             == ()
         )
         monkeypatch.setenv("ARBORA_A2A_RECLAIM_POLL_S", "0")
-        assert _background_services(object(), _runtime(host), "g", object) == ()
+        assert _background_services(object(), _runtime(host), "g", object, {}) == ()
     finally:
-        reset_health_probes()
+        pass
 
 
 @pytest.mark.spec("ARBORA-A2A-R001.2.2")

@@ -11,6 +11,8 @@ from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from arbora.observability.state import IdentityContract
+
 from .engine import IdentityUnavailable, Resolution
 
 
@@ -144,8 +146,8 @@ class IdentityLifecycle:
     identity runtime.
     """
 
-    start: Callable[[], object]
-    stop: Callable[[], None]
+    start: Callable[[IdentityContract], object]
+    stop: Callable[[IdentityContract], None]
 
 
 class IdentityAdminPort(Protocol):

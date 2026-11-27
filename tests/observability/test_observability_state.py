@@ -18,3 +18,17 @@ def test_two_telemetry_objects_keep_separate_exporters_and_sequences():
     second.mark_otel_initialized(agent_instrumented=True)
     assert second.otel_initialized and second.agent_instrumented
     assert not first.otel_initialized
+
+
+def test_two_health_states_keep_separate_windows_probes_and_authority():
+    from arbora.observability.state import build_health_state
+
+    first, second = build_health_state(), build_health_state()
+    call = first.windows.begin("engine", 1.0)
+    first.windows.end("engine", call, ok=False, elapsed=0.5)
+    first.probes.bind("engine", lambda _session: {"status": "ok"})
+    owner = first.authority.claim("session")
+    assert second.windows.view(("engine",))["engine"] == ([], [])
+    assert second.probes.get("engine") is None
+    assert second.authority.session is None
+    assert first.authority.release(owner)

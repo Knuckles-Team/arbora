@@ -26,6 +26,7 @@ from arbora.api.ops._common import (
     build_write_op,
 )
 from arbora.api.registry import Confirm, Effect, OpSpec
+from arbora.observability.state import HealthState
 
 
 class OpsDoctorParams(Params):
@@ -173,11 +174,20 @@ def _bound_store(context: Any) -> OpsAdminStore:
     )
 
 
-def _with_ranking_check(checks: Mapping[str, Any]) -> dict[str, Any]:
-    """The report's checks, plus which order ``find`` serves and why (never silent)."""
+def _ranking_probe(health: HealthState | None) -> dict[str, Any] | None:
+    """The host's ranking probe result, or ``None`` when no health state is bound."""
     from arbora.observability.runtime_health import run_bound_probe
 
-    ranking = run_bound_probe("ranking")
+    if health is None:
+        return None
+    return run_bound_probe(health, "ranking")
+
+
+def _with_ranking_check(
+    health: HealthState | None, checks: Mapping[str, Any]
+) -> dict[str, Any]:
+    """The report's checks, plus which order ``find`` serves and why (never silent)."""
+    ranking = _ranking_probe(health)
     if ranking is None:
         return dict(checks)
     summary = ranking.get("detail", {}).get("summary") or "ranking: unknown"
@@ -201,7 +211,7 @@ async def handle_ops_doctor(
 
     # A gate the pinned engine cannot serve is named in every report (PIN-LAG), and so
     # is the ranking floor.
-    checks = _with_ranking_check(value["checks"])
+    checks = _with_ranking_check(context.services.get("health"), value["checks"])
     from arbora.api.ops.operator_audit import operator_audit_check
 
     value["checks"] = {

@@ -1,7 +1,7 @@
 """Explicit shared invocation dependencies for the native serving lifecycle."""
 
 from collections.abc import Callable, Coroutine, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
@@ -52,6 +52,9 @@ class HostedInvocation:
     decide_ask: Any = None
     #: The graph the engine ``Decide`` questions that read the graph name.
     decision_graph: str = ""
+    #: Readiness probes the composition built (name to probe); the host binds them
+    #: into its health state.
+    health_probes: Mapping[str, Callable[..., Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(

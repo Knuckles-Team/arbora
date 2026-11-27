@@ -54,6 +54,7 @@ from typing import Any
 from arbora.core.environment import read_env
 from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
+from arbora.observability.state import SubsystemWindows
 from arbora.security.anonymous import session_context
 from arbora.security.process_authority import ProcessAuthority
 from arbora.version import __version__
@@ -806,7 +807,7 @@ def _build_server(
         # Engine, discovery and fleet each reported on its own (ARBORA-FLEET-R065).
         from arbora.observability.subsystem_health import snapshot
 
-        body = snapshot()
+        body = snapshot(host.observability.health.windows)
         return JSONResponse(
             body,
             status_code=200 if body["status"] == "ok" else 503,
@@ -815,15 +816,17 @@ def _build_server(
 
     @mcp.custom_route("/health/ready", methods=["GET"])
     async def readiness_check(request: Request) -> JSONResponse:  # noqa: ARG001
+        health = host.observability.health
         from arbora.observability.runtime_health import (
             collect_health_async,
             failing_checks,
+            identity_readiness,
             is_overall_healthy,
             not_served_authorities,
             readiness_reason,
         )
 
-        report = await collect_health_async()
+        report = await collect_health_async(health)
         ready = is_overall_healthy(report)
         body: dict[str, Any] = {"status": "ready" if ready else "not_ready"}
         failing = failing_checks(report)
@@ -834,17 +837,15 @@ def _build_server(
         # Derived from the process lease state (ARBORA-IDENTITY-R027.5); it is
         # reported while the lease is Degraded, Expired or Revoked, even
         # before a Degraded lease expires and the engine check fails.
-        reason = readiness_reason()
+        reason = readiness_reason(health)
         if reason is not None:
             body["reason"] = reason
         not_served = not_served_authorities(report)
         if not_served:
             # Names only: authorities this release does not serve (not applicable).
             body["not_served"] = not_served
-        from arbora.observability.runtime_health import identity_readiness
-
         # Always reported, never gating (ARBORA-IDENTITY-R030.4.3, .8).
-        body["identity"] = identity_readiness()
+        body["identity"] = identity_readiness(health)
         from arbora.pin_lag.gates import ready_report
 
         # A gate the pinned engine cannot serve is named, never silent; it never gates
@@ -990,11 +991,16 @@ def _register_graph_tool_surface(
             approvals=host.policy.approvals,
             engine_provider=host.engine.served,
             caches=host.caches,
+            health=host.observability.health,
             canonical=canonical,
             intent_tools=False,
         )
         _register_served_intent_surface(
-            mcp, invocation, host.authority, ranking=host.fleet.ranking
+            mcp,
+            invocation,
+            host.authority,
+            host.observability.health.windows,
+            ranking=host.fleet.ranking,
         )
         invocation.mount_on_mcp(mcp)
     else:
@@ -1004,6 +1010,7 @@ def _register_graph_tool_surface(
             approvals=host.policy.approvals,
             engine_provider=host.engine.served,
             caches=host.caches,
+            health=host.observability.health,
             canonical=canonical,
         )
     register_browser_control_tools(backing, host.caches.tools, host.browser)
@@ -1077,6 +1084,7 @@ def _register_served_intent_surface(
     mcp: Any,
     invocation: Any,
     authority: ProcessAuthority,
+    windows: SubsystemWindows,
     *,
     ranking: Any = FLOOR_ONLY,
 ) -> Any:
@@ -1106,6 +1114,7 @@ def _register_served_intent_surface(
         fleet_catalog=getattr(
             services.runtime.bindings.get("fleet_gateway"), "fleet_catalog", None
         ),
+        windows=windows,
     )
     return SERVED_PROJECTION
 

@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.api.ops.memory_files import MemoryFilesSave, digest_matches, sync_outcome
+from arbora.observability.state import SubsystemWindows
 from tests import test_served_operation_api as served_api
 from tests.test_served_operation_api import (  # noqa: F401
     FakeClient,
@@ -294,6 +295,7 @@ async def test_the_journey_over_mcp(files: Any, tmp_path: Path) -> None:
         caller_for_request=lambda: caller,
         policy_gate=PolicyGate(mode="none"),
         invoke=invoke,
+        windows=SubsystemWindows(),
     )
     body = {"doc_id": "notes/m", "content": "one", "content_digest": _digest("one")}
     saved = await dispatch_verb(

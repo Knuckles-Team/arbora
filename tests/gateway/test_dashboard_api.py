@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 
 from arbora.gateway import dashboard_api
 from arbora.gateway.models import DashboardLayout, WidgetData
+from arbora.observability.state import build_health_state
 
 
 class _Gateway:
@@ -41,7 +42,10 @@ def _reset_gateway() -> None:
 
 def _app() -> FastAPI:
     app = FastAPI()
-    app.state.host = SimpleNamespace(gateway=_GATEWAY)
+    app.state.host = SimpleNamespace(
+        gateway=_GATEWAY,
+        observability=SimpleNamespace(health=build_health_state()),
+    )
     return app
 
 
@@ -162,7 +166,7 @@ def test_health_is_served_without_capabilities(
 ) -> None:
     from arbora.observability import runtime_health
 
-    async def _report() -> dict[str, Any]:
+    async def _report(_health) -> dict[str, Any]:
         return {"status": "ok"}
 
     monkeypatch.setattr(runtime_health, "collect_health_async", _report)

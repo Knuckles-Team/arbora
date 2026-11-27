@@ -22,6 +22,7 @@ from arbora.api.mcp.verbs import MCPProjection, make_verb
 from arbora.api.policy import PolicyGate
 from arbora.api.registry import Effect, Idempotency, PrincipalRule, Surface, Verb
 from arbora.api.registry.registry import authorized
+from arbora.observability.state import SubsystemWindows
 from arbora.security import anonymous
 from arbora.security.key_cache import JwksCache
 from arbora.security.request_identity import ActorIdentityMiddleware
@@ -139,6 +140,7 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
         caller_for_request=lambda: caller,
         policy_gate=gate,
         invoke=invoke,
+        windows=SubsystemWindows(),
     )
     tool = make_verb("find", projection)
     found = (await tool.run({})).structured_content

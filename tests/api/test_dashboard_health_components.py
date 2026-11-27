@@ -9,6 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from arbora.observability import runtime_health as rh
+from arbora.observability.state import build_health_state
 
 
 def _entry(component_id: str, state: str, status: str, enabled: bool) -> dict[str, Any]:
@@ -24,30 +25,30 @@ def _entry(component_id: str, state: str, status: str, enabled: bool) -> dict[st
     return entry
 
 
-@pytest.fixture(autouse=True)
-def _unbound() -> Any:
-    rh.reset_health_probes()
-    yield
-    rh.reset_health_probes()
+@pytest.fixture
+def cfg() -> Any:
+    from types import SimpleNamespace
+
+    return SimpleNamespace(health=build_health_state())
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R005.1.1")
-def test_unconfigured_connector_raises_no_alert() -> None:
+def test_unconfigured_connector_raises_no_alert(cfg: Any) -> None:
     bodies = {
         "mail": {"components": [_entry("smtp", "not_configured", "disabled", False)]},
         "chat": {"components": [_entry("relay", "healthy", "initialized", True)]},
     }
-    rh.register_health_probe(
+    cfg.health.probes.bind(
         "connector_components", rh.connector_components_probe(lambda s: bodies)
     )
-    check = rh._check_connector_components(None)
+    check = rh._check_connector_components(cfg)
     assert check["status"] == "ok"
     assert check["detail"]["alerts"] == []
 
     bodies["chat"] = {
         "components": [_entry("relay", "unavailable", "initialized", True)]
     }
-    check = rh._check_connector_components(None)
+    check = rh._check_connector_components(cfg)
     assert check["status"] == "degraded"
     assert [a["component"] for a in check["detail"]["alerts"]] == ["relay"]
     # A degraded connector never flips the readiness rollup.
@@ -55,13 +56,13 @@ def test_unconfigured_connector_raises_no_alert() -> None:
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R005.1.1")
-def test_malformed_component_entry_is_never_read_as_healthy() -> None:
+def test_malformed_component_entry_is_never_read_as_healthy(cfg: Any) -> None:
     bodies = {"chat": {"components": [{"component_id": "x", "state": "healthy"}]}}
     probe = rh.connector_components_probe(lambda s: bodies)
     with pytest.raises(ValidationError):
         probe(None)
-    rh.register_health_probe("connector_components", probe)
+    cfg.health.probes.bind("connector_components", probe)
     result = rh._run_bounded(
-        "connector_components", lambda: rh._check_connector_components(None)
+        "connector_components", lambda: rh._check_connector_components(cfg)
     )
     assert result["status"] == "unhealthy"
