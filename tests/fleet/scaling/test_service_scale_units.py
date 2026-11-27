@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from arbora.fleet.scaling.service_scale_evaluation import evaluate_scale
 from arbora.fleet.scaling.service_scale_units import (
     CapacityAxis,
     CapacityDemand,
@@ -25,7 +26,6 @@ from arbora.fleet.scaling.service_scale_units import (
     SignalObservation,
     SurfaceKind,
     content_digest,
-    evaluate_scale,
 )
 
 pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.753")
