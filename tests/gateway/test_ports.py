@@ -8,10 +8,7 @@ from typing import Any
 import pytest
 
 from arbora.gateway import ontology_api
-from arbora.gateway.ports import (
-    configure_gateway_application,
-    gateway_application,
-)
+from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches
 
 
@@ -58,11 +55,16 @@ class _Application:
 
 @pytest.mark.asyncio
 async def test_ontology_route_dispatches_through_configured_application_port() -> None:
+    from types import SimpleNamespace
+
     application = _Application()
-    configure_gateway_application(application)
+    gateway = GatewayState()
+    gateway.bind_application(application)
+    host = SimpleNamespace(gateway=gateway)
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(host=host)))
 
     result = await ontology_api._call(
-        "ontology_value_types", action="describe", name="email"
+        request, "ontology_value_types", action="describe", name="email"
     )
 
     assert result == {
@@ -73,7 +75,7 @@ async def test_ontology_route_dispatches_through_configured_application_port() -
     assert application.calls == [
         ("ontology_value_types", {"action": "describe", "name": "email"})
     ]
-    assert gateway_application() is application
+    assert gateway.application() is application
 
 
 @pytest.mark.spec("ARBORA-OPS-R039.7")

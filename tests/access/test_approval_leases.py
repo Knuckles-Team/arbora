@@ -191,6 +191,7 @@ async def test_fleet_list_and_grant_use_the_approval_leases(
     }
     host = compose_host_context(FixedEngineHandles(engine))
     install_gateway_application(
+        gateway=host.gateway,
         fleet=host.fleet,
         approvals=host.policy.approvals,
         engine_provider=host.engine.served,
@@ -202,6 +203,7 @@ async def test_fleet_list_and_grant_use_the_approval_leases(
             Route("/fleet/approvals/grant", fleet_grant_approval, methods=["POST"]),
         ]
     )
+    app.state.host = host
 
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://host"

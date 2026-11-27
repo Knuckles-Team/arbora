@@ -19,6 +19,7 @@ from arbora.access.policy_state import PolicyState
 from arbora.agent_host.host_port_adapters import HostPortsSlot
 from arbora.browser_control.browser_state import BrowserState
 from arbora.fleet.state import FleetState
+from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.observability.state import Observability, Telemetry
@@ -60,6 +61,7 @@ class HostContext:
     browser: BrowserState
     authority: ProcessAuthority
     observability: Observability
+    gateway: GatewayState
 
 
 def build_host_context() -> HostContext:
@@ -104,6 +106,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         browser=BrowserState(),
         authority=caches.tools.authority,
         observability=Observability(telemetry=Telemetry()),
+        gateway=GatewayState(),
     )
 
 

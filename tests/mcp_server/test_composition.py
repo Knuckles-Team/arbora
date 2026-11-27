@@ -14,7 +14,7 @@ from arbora.access.approval import ApprovalDecisions
 from arbora.browser_control.browser_state import BrowserState
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.state import FleetState
-from arbora.gateway.ports import gateway_application
+from arbora.gateway.state import GatewayState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
     NativeGatewayApplication,
@@ -23,6 +23,7 @@ from arbora.mcp_server.composition import (
 )
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.server import _register_semantic_content
+from arbora.observability.state import Telemetry
 
 
 def test_native_action_route_contract_serves_only_registered_tools() -> None:
@@ -68,15 +69,17 @@ async def test_installed_gateway_port_dispatches_native_runtime(
         return {"ok": True}
 
     monkeypatch.setattr(runtime, "_execute_tool", execute)
+    gateway = GatewayState()
     application = install_gateway_application(
+        gateway=gateway,
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
         caches=HostCaches(),
     )
 
-    assert gateway_application() is application
-    assert await gateway_application().execute_tool("graph_query", query="MATCH") == {
+    assert gateway.application() is application
+    assert await gateway.application().execute_tool("graph_query", query="MATCH") == {
         "ok": True
     }
     assert calls == [("graph_query", {"query": "MATCH"})]
@@ -104,12 +107,16 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
     engine = object()
     tools = ToolTable()
     browser = BrowserState()
+    telemetry = Telemetry()
+    host = object()
     start_composed_services(
         object(),
         engine,
         action_policies=policies,
         tools=tools,
         browser=browser,
+        telemetry=telemetry,
+        host=host,
     )
 
     assert started[0][0] == "overstory"
@@ -119,6 +126,8 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
         "engine": engine,
         "tools": tools,
         "browser": browser,
+        "telemetry": telemetry,
+        "host_context": host,
     }
 
 
@@ -159,6 +168,8 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
         action_policies=ActionPolicies(),
         tools=ToolTable(),
         browser=BrowserState(),
+        telemetry=Telemetry(),
+        host=object(),
     )
 
     assert calls == [(engine, session, ("telegram",))]

@@ -26,7 +26,7 @@ from arbora.access.approval import ApprovalDecisions
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.environment import inherited_environment, read_env
 from arbora.fleet.state import FleetState
-from arbora.gateway.ports import configure_gateway_application
+from arbora.gateway.state import GatewayState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.hosted_invocation import HostedInvocation
@@ -999,6 +999,7 @@ class NativeGatewayApplication:
 def install_gateway_application(
     invocation: HostedInvocation | None = None,
     *,
+    gateway: GatewayState,
     fleet: FleetState,
     approvals: ApprovalDecisions,
     engine_provider: Callable[[], Any],
@@ -1013,7 +1014,7 @@ def install_gateway_application(
         engine_provider=engine_provider,
         caches=caches,
     )
-    configure_gateway_application(application)
+    gateway.bind_application(application)
     return application
 
 
@@ -1025,6 +1026,7 @@ def start_composed_services(
     tools: ToolTable,
     browser: BrowserState,
     telemetry: Telemetry,
+    host: Any,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
     session_boundary: Any = None,
@@ -1055,6 +1057,7 @@ def start_composed_services(
                 tools=tools,
                 browser=browser,
                 telemetry=telemetry,
+                host_context=host,
                 session_boundary=session_boundary,
             )
             if session_boundary is not None
@@ -1065,6 +1068,7 @@ def start_composed_services(
                 tools=tools,
                 browser=browser,
                 telemetry=telemetry,
+                host_context=host,
             )
         )
         supervisor.start_service("overstory", runner, session)

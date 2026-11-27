@@ -15,8 +15,35 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from arbora.gateway import dashboard_api, ports
+from arbora.gateway import dashboard_api
 from arbora.gateway.models import DashboardLayout, WidgetData
+
+
+class _Gateway:
+    """The host's gateway field: the application bound for the test, or none."""
+
+    def __init__(self) -> None:
+        self.current: Any = None
+
+    def application(self) -> Any:
+        if self.current is None:
+            raise RuntimeError("gateway application is not configured")
+        return self.current
+
+
+_GATEWAY = _Gateway()
+
+
+@pytest.fixture(autouse=True)
+def _reset_gateway() -> None:
+    _GATEWAY.current = None
+
+
+def _app() -> FastAPI:
+    app = FastAPI()
+    app.state.host = SimpleNamespace(gateway=_GATEWAY)
+    return app
+
 
 FRONTEND_PATHS = (
     "/api/dashboard/full",
@@ -86,14 +113,14 @@ def aggregator(monkeypatch: pytest.MonkeyPatch) -> _FakeAggregator:
 
 @pytest.fixture
 def client(aggregator: _FakeAggregator) -> TestClient:
-    app = FastAPI()
+    app = _app()
     dashboard_api.register_dashboard_routes(app)
     return TestClient(app)
 
 
 @pytest.mark.spec("ARBORA-HOST-R019")
 def test_frontend_dashboard_paths_are_mounted() -> None:
-    app = FastAPI()
+    app = _app()
     dashboard_api.register_dashboard_routes(app)
     paths = set(app.openapi()["paths"])
 
@@ -102,7 +129,7 @@ def test_frontend_dashboard_paths_are_mounted() -> None:
 
 
 def test_registration_is_idempotent_for_the_websocket_route() -> None:
-    app = FastAPI()
+    app = _app()
     dashboard_api.register_dashboard_routes(app)
     dashboard_api.register_dashboard_routes(app)
 
@@ -197,7 +224,7 @@ def _claims_client(
     monkeypatch.setattr(
         identity, "base_capabilities", lambda _identity, _map: set(capabilities)
     )
-    app = FastAPI()
+    app = _app()
 
     class Claims(BaseHTTPMiddleware):
         async def dispatch(self, request: Any, call_next: Any) -> Any:
@@ -250,7 +277,7 @@ def test_malformed_source_is_422_and_unknown_service_is_404(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     application = _ServedApplication()
-    monkeypatch.setattr(ports, "_application", application)
+    _GATEWAY.current = application
     engine_calls = application.calls
     refused = client.post("/api/dashboard/hydrate/bad%20source")
     assert refused.status_code == 422
@@ -265,7 +292,7 @@ def test_malformed_source_is_422_and_unknown_service_is_404(
 def test_daemon_status_key_sets_are_pinned(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(dashboard_api, "gateway_application", lambda: _App(None))
+    _GATEWAY.current = _App(None)
     idle = client.get("/api/dashboard/daemon/status").json()
     assert set(idle) == {"running", "role"}
     assert idle["running"] is False
@@ -280,7 +307,7 @@ def test_daemon_status_key_sets_are_pinned(
                 "queue_depth": 0,
             }
 
-    monkeypatch.setattr(dashboard_api, "gateway_application", lambda: _App(Engine()))
+    _GATEWAY.current = _App(Engine())
     busy = client.get("/api/dashboard/daemon/status").json()
     assert {"running", "role", "threads", "jobs", "queue_depth"} <= set(busy)
 
@@ -342,7 +369,7 @@ def test_daemon_shards_reads_engine_snapshot_and_refuses_when_absent(
     from medulla.placement import PlacementStaleError
 
     def install(engine: Any) -> None:
-        monkeypatch.setattr(dashboard_api, "gateway_application", lambda: _App(engine))
+        _GATEWAY.current = _App(engine)
 
     url = "/api/dashboard/daemon/shards"
     install(
@@ -402,7 +429,7 @@ def test_hydration_routes_call_served_ingest_and_keep_refusal_codes(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     application = _ServedApplication()
-    monkeypatch.setattr(ports, "_application", application)
+    _GATEWAY.current = application
     one = client.post("/api/dashboard/hydrate/github")
     assert one.status_code == 200
     assert one.json() == {"job_id": "job-1", "source_id": "github"}
@@ -417,11 +444,11 @@ def test_hydration_routes_call_served_ingest_and_keep_refusal_codes(
         "a/x": {"configured": True, "last_job_id": "job-9"},
         "b/y": {"configured": True, "last_job_id": "job-9"},
     }
-    monkeypatch.setattr(ports, "_application", _ServedApplication(refuse="NOT_FOUND"))
+    _GATEWAY.current = _ServedApplication(refuse="NOT_FOUND")
     assert client.post("/api/dashboard/hydrate/github").status_code == 400
-    monkeypatch.setattr(ports, "_application", _ServedApplication(refuse="INTERNAL"))
+    _GATEWAY.current = _ServedApplication(refuse="INTERNAL")
     assert client.post("/api/dashboard/hydrate/github").status_code == 500
-    monkeypatch.setattr(ports, "_application", None)
+    _GATEWAY.current = None
     assert client.post("/api/dashboard/hydrate/github").status_code == 500
     assert client.post("/api/dashboard/hydrate/bad%20source").status_code == 422
 
@@ -456,7 +483,7 @@ def test_widget_list_and_data_come_from_served_operations(
     from arbora.gateway.models import ServiceConfig, ServiceGroup
 
     application = _CensusApplication()
-    monkeypatch.setattr(ports, "_application", application)
+    _GATEWAY.current = application
     manager = ConfigManager(config_path=tmp_path / "services.yaml")
     manager.save(
         DashboardLayout(
@@ -473,7 +500,7 @@ def test_widget_list_and_data_come_from_served_operations(
     monkeypatch.setattr(
         dashboard_api, "_aggregator", Aggregator(config_manager=manager)
     )
-    app = FastAPI()
+    app = _app()
     dashboard_api.register_dashboard_routes(app)
     client = TestClient(app)
 

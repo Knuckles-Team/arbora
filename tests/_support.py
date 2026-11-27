@@ -12,6 +12,7 @@ import threading
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
+from typing import Any
 
 from arbora.agent_runs import record_run_event
 from arbora.mcp_server.served_engine import EngineHandles
@@ -91,3 +92,11 @@ def bound_authority(session: object) -> ProcessAuthority:
     authority = ProcessAuthority()
     authority.bind_session(session)
     return authority
+
+
+def served_host(invoke_operation: Any) -> Any:
+    """A host whose gateway application answers served operations with the given call."""
+    from types import SimpleNamespace
+
+    application = SimpleNamespace(invoke_operation=invoke_operation)
+    return SimpleNamespace(gateway=SimpleNamespace(application=lambda: application))

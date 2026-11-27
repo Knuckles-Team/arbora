@@ -56,6 +56,9 @@ class ServersPage:
 class FleetCatalogServersReader:
     """Reads the ``mcp_servers`` table for one verified caller."""
 
+    def __init__(self, engine: Any) -> None:
+        self._engine = engine
+
     def check(self, caller: ServersCaller) -> None:
         """Refuse before any read; the order is principal, tenant, scope."""
         if not caller.principal or not caller.tenant:
@@ -84,7 +87,7 @@ class FleetCatalogServersReader:
                 grant_digests=(),
             )
         spec = api.KIND_SPECS["servers"]
-        engine = api.get_catalog_engine()
+        engine = self._engine
         rows = await api._offload_catalog_call(
             api.authorized_page,
             "servers",

@@ -247,6 +247,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     # route tests separately exercise admission and operation ownership.
     boundary = object.__new__(WebUISessionBoundary) if auth_mode == "eg" else None
     policies = ActionPolicies()
+    host_context = object()
     # No-auth serves only on loopback; every other mode keeps the public bind.
     listener = "127.0.0.1" if auth_mode == "none" else "0.0.0.0"
     module.run_web_ui(
@@ -256,6 +257,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         tools={},
         browser=browser,
         telemetry=Telemetry(),
+        host_context=host_context,
         host=listener,
         port=8181,
         session_boundary=boundary,
@@ -264,6 +266,11 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     assert os.environ[module.ACCESS_LOG_POLICY_ENV] == "disabled"
     assert calls["engine_getter"] == "bounded-engine"
     assert calls["agent_model"] == "orchestrator-model"
+    composer = calls["app"].pop("application_composer")
+    assert (composer is None) == (auth_mode == "eg")
+    if composer is not None:
+        assert composer.func is module.compose_web_application
+        assert composer.keywords == {"host": host_context}
     assert calls["app"] == {
         "agent": "context-agent",
         "workspace_helpers": {
@@ -271,9 +278,6 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             "transcribe_voice": "voice-helper",
         },
         "listener_host": listener,
-        "application_composer": None
-        if auth_mode == "eg"
-        else module.compose_web_application,
         "contact_delivery": "governed-contact-delivery",
         "browser_control": service,
         "auth_mode": auth_mode,
@@ -309,9 +313,10 @@ def test_arbora_application_composer_mounts_native_routes(monkeypatch: Any) -> N
     monkeypatch.setattr(
         graph_api,
         "register_graph_routes",
-        lambda value, prefix="/api": calls.append((value, prefix)),
+        lambda value, host, prefix="/api": calls.append((value, host, prefix)),
     )
+    host = object()
 
-    module.compose_web_application(app)
+    module.compose_web_application(app, host)
 
-    assert calls == [(app, "/api")]
+    assert calls == [(app, host, "/api")]

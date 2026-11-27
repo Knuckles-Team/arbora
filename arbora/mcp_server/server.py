@@ -435,6 +435,7 @@ def mcp_server(
     bind_ranking(host_context, invocation)
     install_gateway_application(
         invocation,
+        gateway=host_context.gateway,
         fleet=host_context.fleet,
         approvals=host_context.policy.approvals,
         engine_provider=host_context.engine.served,
@@ -669,6 +670,7 @@ def mcp_server(
                 tools=host_context.caches.tools,
                 browser=host_context.browser,
                 telemetry=host_context.observability.telemetry,
+                host=host_context,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",
                 session_boundary=invocation.browser_boundary if invocation else None,

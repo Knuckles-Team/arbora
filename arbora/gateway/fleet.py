@@ -423,9 +423,9 @@ async def fleet_approvals(request: Request) -> JSONResponse:
     note = None
     try:
         from arbora.access.approval_leases import pending_approvals
-        from arbora.gateway.ports import gateway_application
+        from arbora.gateway.state import gateway_of
 
-        pending = pending_approvals(gateway_application().engine())
+        pending = pending_approvals(gateway_of(request).application().engine())
     except Exception as exc:
         logger.warning("Fleet approval source unavailable: %s", exc)
         note = "approval_source_unavailable"
@@ -452,9 +452,13 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
 
     if str(job_id).startswith(APPROVAL_ID_PREFIX):
         try:
-            from arbora.gateway.ports import gateway_application
+            from arbora.gateway.state import gateway_of
 
-            result = gateway_application().decide_approval(str(job_id), str(decision))
+            result = (
+                gateway_of(request)
+                .application()
+                .decide_approval(str(job_id), str(decision))
+            )
             return JSONResponse(
                 {
                     "status": "success",
@@ -495,7 +499,7 @@ async def fleet_verify_action(request: Request) -> JSONResponse:
     """
     import json
 
-    from arbora.gateway.ports import gateway_application
+    from arbora.gateway.state import gateway_of
 
     try:
         body = await request.json()
@@ -507,15 +511,19 @@ async def fleet_verify_action(request: Request) -> JSONResponse:
             {"status": "error", "message": "kind is required"}, status_code=400
         )
     try:
-        res = await gateway_application().execute_tool(
-            "graph_governance",
-            action="verify_action",
-            kind=kind,
-            target_id=str(body.get("target") or ""),
-            params_json=json.dumps(body.get("params") or {}, default=str),
-            source=str(body.get("source") or "manual"),
-            reason=str(body.get("reason") or ""),
-            actor_id=str(body.get("actor_id") or ""),
+        res = (
+            await gateway_of(request)
+            .application()
+            .execute_tool(
+                "graph_governance",
+                action="verify_action",
+                kind=kind,
+                target_id=str(body.get("target") or ""),
+                params_json=json.dumps(body.get("params") or {}, default=str),
+                source=str(body.get("source") or "manual"),
+                reason=str(body.get("reason") or ""),
+                actor_id=str(body.get("actor_id") or ""),
+            )
         )
         return JSONResponse({"status": "success", "result": res})
     except Exception as exc:  # noqa: BLE001 — canonical safe error surface
@@ -542,10 +550,11 @@ async def fleet_trace(request: Request) -> JSONResponse:
     except (TypeError, ValueError):
         limit = 500
     try:
-        from arbora.gateway.ports import gateway_application
+        from arbora.gateway.state import gateway_of
 
         rows = (
-            gateway_application()
+            gateway_of(request)
+            .application()
             .engine()
             .query_cypher(
                 "MATCH (n) WHERE n.correlation_id = $cid RETURN n LIMIT $limit",
@@ -575,10 +584,11 @@ async def fleet_touched(request: Request) -> JSONResponse:
             {"status": "error", "message": "resource is required"}, status_code=400
         )
     try:
-        from arbora.gateway.ports import gateway_application
+        from arbora.gateway.state import gateway_of
 
         rows = (
-            gateway_application()
+            gateway_of(request)
+            .application()
             .engine()
             .query_cypher(
                 "MATCH (e:FleetEvent) WHERE e.subject = $res "

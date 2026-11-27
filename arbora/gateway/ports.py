@@ -11,11 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = [
-    "GatewayApplicationPort",
-    "configure_gateway_application",
-    "gateway_application",
-]
+__all__ = ["GatewayApplicationPort"]
 
 
 @runtime_checkable
@@ -55,26 +51,3 @@ class GatewayApplicationPort(Protocol):
 
     def remote_oauth_grant_bindings(self, actor: Any) -> Sequence[Any]:
         """Return current fleet OAuth bindings from the fleet authority."""
-
-
-_application: GatewayApplicationPort | None = None
-
-
-def configure_gateway_application(application: GatewayApplicationPort) -> None:
-    """Install the application adapter once at the arbora composition root."""
-
-    global _application
-    if not isinstance(application, GatewayApplicationPort):
-        raise TypeError("application does not implement GatewayApplicationPort")
-    _application = application
-
-
-def gateway_application() -> GatewayApplicationPort:
-    """Return the configured adapter, failing closed before composition."""
-
-    if _application is None:
-        raise RuntimeError(
-            "arbora gateway application port is not configured; "
-            "the G2 composition root must install it before serving requests"
-        )
-    return _application

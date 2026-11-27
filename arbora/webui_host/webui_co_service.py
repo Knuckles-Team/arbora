@@ -40,6 +40,7 @@ from __future__ import annotations
 import logging
 import threading
 from collections.abc import Mapping
+from functools import partial
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
@@ -69,7 +70,7 @@ DEFAULT_WEB_UI_HOST = "127.0.0.1"
 ACCESS_LOG_POLICY_ENV = "OVERSTORY_ACCESS_LOG_POLICY"
 
 
-def compose_web_application(app: Any) -> None:
+def compose_web_application(app: Any, host: Any) -> None:
     """Mount Arbora-owned REST routes into an Overstory application.
 
     Overstory owns browser/session presentation while Arbora owns the
@@ -81,7 +82,7 @@ def compose_web_application(app: Any) -> None:
 
     from arbora.gateway.graph_api import register_graph_routes
 
-    register_graph_routes(app)
+    register_graph_routes(app, host)
 
 
 async def _serve_until_stopped(
@@ -116,6 +117,7 @@ def run_web_ui(
     tools: Mapping[str, Any],
     browser: BrowserState,
     telemetry: Telemetry,
+    host_context: Any,
     host: str | None = None,
     port: int | None = None,
     session_boundary: Any = None,
@@ -240,7 +242,7 @@ def run_web_ui(
         # the public sign-in shell. Other identity modes keep their composer.
         application_composer=None
         if identity_kwargs.get("auth_mode") == "eg"
-        else compose_web_application,
+        else partial(compose_web_application, host=host_context),
         **identity_kwargs,
         **contact_kwargs,
         **browser_control_kwargs,

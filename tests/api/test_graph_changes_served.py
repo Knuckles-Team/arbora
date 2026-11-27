@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.ops import graph_changes
+from tests._support import served_host
 from tests.api._lane_double import EngineDouble, context
 
 OP = graph_changes.operations()[0]
@@ -109,7 +110,6 @@ async def test_expired_cursor_returns_typed_recovery(
 
 # ---- subscribe and stream (ARBORA-OPS-R062.2, R062.4, R062.5) ----
 
-import types  # noqa: E402
 
 from starlette.websockets import WebSocketDisconnect  # noqa: E402
 
@@ -243,13 +243,9 @@ def stream_client(monkeypatch, feed: ChangeFeed, script, *, revoke_after=None):
             raise stream_poll.StopStream
         script.pop(0)()
 
-    monkeypatch.setattr(
-        stream_poll,
-        "gateway_application",
-        lambda: types.SimpleNamespace(invoke_operation=invoke_operation),
-    )
     monkeypatch.setattr(stream_poll, "wait_for_next_poll", pause)
     app = FastAPI()
+    app.state.host = served_host(invoke_operation)
     register_graph_change_routes(app)
     return TestClient(app), polls
 

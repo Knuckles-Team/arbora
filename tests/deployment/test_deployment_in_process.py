@@ -57,6 +57,7 @@ def test_live_start_calls_start_composed_services_with_detected_composition(
         tools=ToolTable(),
         browser=BrowserState(),
         telemetry=Telemetry(),
+        host=object(),
         messaging_intake_enabled=True,
         served_network=True,
     )

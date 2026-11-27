@@ -36,7 +36,6 @@ from arbora.core.settings import runtime_config
 from arbora.fleet import shared_multiplexer
 from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.fleet.state import FleetState
-from arbora.gateway import ports
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import install_gateway_application
 from arbora.mcp_server.harness_ports import build_host_ports
@@ -71,7 +70,6 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {})
     monkeypatch.setattr(shared_multiplexer, "_served", None)
-    monkeypatch.setattr(ports, "_application", ports._application)
     monkeypatch.setenv("MCP_FLEET_REGISTRATION", "false")
 
 
@@ -111,6 +109,7 @@ async def _served(
     fleet = FleetState()
     install_gateway_application(
         invocation,
+        gateway=host.gateway,
         fleet=fleet,
         approvals=ApprovalDecisions(),
         engine_provider=host.engine.served,

@@ -79,7 +79,6 @@ def test_closed_values_and_extra_fields_are_refused() -> None:
 
 # ---- transcript stream, providers and summary (ARBORA-OPS-R065.2 to R065.5) ----
 
-import types  # noqa: E402
 from typing import Any  # noqa: E402
 
 from starlette.websockets import WebSocketDisconnect  # noqa: E402
@@ -87,6 +86,7 @@ from starlette.websockets import WebSocketDisconnect  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import meetings  # noqa: E402
 from arbora.api.registry import Confirm  # noqa: E402
+from tests._support import served_host  # noqa: E402
 from tests.api._engine_double import EngineDouble, context  # noqa: E402
 from tests.api._meeting_fakes import (  # noqa: E402
     REQUEST,
@@ -368,13 +368,9 @@ def stream_app(monkeypatch, ops, steps):
             raise stream_poll.StopStream
         steps.pop(0)()
 
-    monkeypatch.setattr(
-        stream_poll,
-        "gateway_application",
-        lambda: types.SimpleNamespace(invoke_operation=invoke_operation),
-    )
     monkeypatch.setattr(stream_poll, "wait_for_next_poll", pause)
     app = FastAPI()
+    app.state.host = served_host(invoke_operation)
     register_meeting_routes(app)
     return app, polls
 
@@ -423,16 +419,11 @@ def test_stream_reports_a_gap_and_closes_on_refusals(monkeypatch) -> None:
         with pytest.raises(WebSocketDisconnect) as closed:
             socket.receive_json()
         assert closed.value.code == 4409
-    from arbora.gateway import stream_poll
 
     async def revoked(op_id, params, *, request, idempotency_key=None):
         raise HTTPAuthenticationError("revoked")
 
-    monkeypatch.setattr(
-        stream_poll,
-        "gateway_application",
-        lambda: types.SimpleNamespace(invoke_operation=revoked),
-    )
+    app.state.host = served_host(revoked)
     with TestClient(app).websocket_connect("/ws/meetings/m1/transcript") as socket:
         with pytest.raises(WebSocketDisconnect) as closed:
             socket.receive_json()

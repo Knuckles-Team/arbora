@@ -417,12 +417,12 @@ class CatalogUnavailable(RuntimeError):
     """Raised when the authoritative engine catalog cannot be read."""
 
 
-def get_catalog_engine() -> Any:
-    """Resolve the existing engine singleton; no reader-owned store exists."""
+def get_catalog_engine(request: Any) -> Any:
+    """Resolve the host's engine for ``request``; no reader-owned store exists."""
 
-    from arbora.gateway.ports import gateway_application
+    from arbora.gateway.state import gateway_of
 
-    return gateway_application().engine()
+    return gateway_of(request).application().engine()
 
 
 async def _offload_catalog_call(
@@ -1327,7 +1327,7 @@ async def _list_kind(
             grant_digests=grant_digests,
         )
     spec = KIND_SPECS[kind]
-    engine = get_catalog_engine()
+    engine = get_catalog_engine(request)
     try:
         # The page is read FIRST so its scope-validated length can supply the
         # total whenever it is the complete result set — the engine's
@@ -1429,7 +1429,7 @@ async def _list_servers(
 
     try:
         caller = _servers_caller(request)
-        page = await FleetCatalogServersReader().list(
+        page = await FleetCatalogServersReader(get_catalog_engine(request)).list(
             caller, ServersPageRequest(limit=limit, query=query, cursor=cursor)
         )
     except ServersRefused as refused:
@@ -1464,7 +1464,7 @@ async def _get_kind(
             principal=principal,
             grant_digests=grant_digests,
             item_id=item_id,
-            engine=get_catalog_engine(),
+            engine=get_catalog_engine(request),
         )
     except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
         return _catalog_unavailable(kind, exc)
@@ -1607,7 +1607,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
             else None
         )
 
-    engine = get_catalog_engine()
+    engine = get_catalog_engine(request)
 
     async def _read_one(kind: str) -> tuple[str, RegistryKindResult]:
         spec = KIND_SPECS[kind]
