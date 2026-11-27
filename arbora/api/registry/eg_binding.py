@@ -15,6 +15,7 @@ import json
 import re
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 import yaml
@@ -37,11 +38,13 @@ from .spec import (
 #: carries the engine's sources-used-and-why block (ARBORA-FLEET-R052.3).
 _SOURCE_AUTHORITY_METHODS = frozenset({"SourceCoverage"})
 _EXCLUSIONS = Path(__file__).with_name("eg_exclusions.yaml")
-_VALID_CLASSES = {"user", "domain", "service-only", "approver", "admin"}
+_VALID_CLASSES = frozenset({"user", "domain", "service-only", "approver", "admin"})
 #: Descriptor stability -> arbora operation stability. A deprecated engine
 #: method carries no removal release, so it maps to the closest non-stable
 #: value; ``internal`` methods are never wire-callable and never generated.
-_STABILITY = {"stable": Stability.STABLE, "deprecated": Stability.EXPERIMENTAL}
+_STABILITY = MappingProxyType(
+    {"stable": Stability.STABLE, "deprecated": Stability.EXPERIMENTAL}
+)
 
 
 class EgContractError(ValueError):

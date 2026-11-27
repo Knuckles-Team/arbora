@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
@@ -62,11 +64,13 @@ __all__ = [
 
 
 #: Share and ownership writes replay under the engine ``RbacAdmin`` key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "access.share.grant": "medulla:RbacAdmin",
-    "access.share.revoke": "medulla:RbacAdmin",
-    "access.ownership.apply": "medulla:RbacAdmin",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "access.share.grant": "medulla:RbacAdmin",
+        "access.share.revoke": "medulla:RbacAdmin",
+        "access.ownership.apply": "medulla:RbacAdmin",
+    }
+)
 
 
 class _Params(BaseModel):

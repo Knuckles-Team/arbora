@@ -8,6 +8,7 @@ refuses ``UNAVAILABLE``; an unknown identifier refuses ``NOT_FOUND`` like a fore
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import Field
@@ -88,10 +89,12 @@ async def handle_artifact_refresh(
 
 
 #: The artifact store owns each record's replay under the caller's key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "artifact.create": "arbora.api.ops.artifacts:ArtifactStore",
-    "artifact.refresh": "arbora.api.ops.artifacts:ArtifactStore",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "artifact.create": "arbora.api.ops.artifacts:ArtifactStore",
+        "artifact.refresh": "arbora.api.ops.artifacts:ArtifactStore",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

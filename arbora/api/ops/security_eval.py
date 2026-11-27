@@ -12,6 +12,7 @@ findings. It composes and scores nothing locally and keeps no probe payload.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import Field, ValidationError
@@ -36,11 +37,13 @@ DEFAULT_MAX_PROBES = 50
 _NO_ENTRY = "NO_CATALOG_ENTRY_SELECTED"
 _LIBRARY_KINDS = ("red_team_attack", "red_team_transform")
 Verdict = Literal["resisted", "compromised", "inconclusive"]
-_VERDICTS: dict[str, Verdict] = {
-    "resisted": "resisted",
-    "compromised": "compromised",
-    "inconclusive": "inconclusive",
-}
+_VERDICTS: Mapping[str, Verdict] = MappingProxyType(
+    {
+        "resisted": "resisted",
+        "compromised": "compromised",
+        "inconclusive": "inconclusive",
+    }
+)
 
 
 class EvaluationGoal(_common.FrozenState):

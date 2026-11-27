@@ -15,6 +15,7 @@ import base64
 import binascii
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -37,10 +38,12 @@ __all__ = [
 ]
 
 #: The engine replays each write by the idempotency key the pipeline forwards.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "evolution.loops.run": "medulla:TaskQueueEnqueue",
-    "evolution.loops.pause": "medulla:AnalyticsJob.SchedulePause",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "evolution.loops.run": "medulla:TaskQueueEnqueue",
+        "evolution.loops.pause": "medulla:AnalyticsJob.SchedulePause",
+    }
+)
 READ_SCOPE = "loops:read"
 CONTROL_SCOPE = "loops:control"
 _LOOP_ID = Field(min_length=1, max_length=256)

@@ -45,6 +45,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import yaml
@@ -1009,32 +1010,38 @@ def _validate_runtime_paths(profile: EnvironmentProfile, source: Path) -> None:
 
 
 #: The placement target each genesis orchestrator deploys to.
-ORCHESTRATOR_TARGET: Mapping[str, str] = {
-    "bare-metal": "standalone",
-    "podman": "standalone",
-    "docker-compose": "compose",
-    "podman-compose": "compose",
-    "docker-swarm": "swarm",
-    "kubernetes": "helm",
-}
+ORCHESTRATOR_TARGET: Mapping[str, str] = MappingProxyType(
+    {
+        "bare-metal": "standalone",
+        "podman": "standalone",
+        "docker-compose": "compose",
+        "podman-compose": "compose",
+        "docker-swarm": "swarm",
+        "kubernetes": "helm",
+    }
+)
 #: The container runtimes and privileges a profile may declare.
 RUNTIMES: tuple[str, ...] = ("docker", "podman")
 PRIVILEGES: tuple[str, ...] = ("rootful", "rootless")
 #: Privileges each target has an adapter for: standalone and compose cover all
 #: four runtime-and-privilege cells each; helm and swarm are rootful only.
-TARGET_PRIVILEGES: Mapping[str, tuple[str, ...]] = {
-    "standalone": PRIVILEGES,
-    "compose": PRIVILEGES,
-    "helm": ("rootful",),
-    "swarm": ("rootful",),
-}
+TARGET_PRIVILEGES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "standalone": PRIVILEGES,
+        "compose": PRIVILEGES,
+        "helm": ("rootful",),
+        "swarm": ("rootful",),
+    }
+)
 #: A runtime an orchestrator names is the only one it runs on; never substituted.
-ORCHESTRATOR_RUNTIME: Mapping[str, str] = {
-    "docker-compose": "docker",
-    "docker-swarm": "docker",
-    "podman": "podman",
-    "podman-compose": "podman",
-}
+ORCHESTRATOR_RUNTIME: Mapping[str, str] = MappingProxyType(
+    {
+        "docker-compose": "docker",
+        "docker-swarm": "docker",
+        "podman": "podman",
+        "podman-compose": "podman",
+    }
+)
 
 
 def target_cell_refusal(orchestrator: str, runtime: str, privilege: str) -> str | None:

@@ -13,6 +13,7 @@ scope here; it is owned by ``ARBORA-HOST-R026.x``.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import Field
@@ -338,11 +339,13 @@ PROCESS_QUESTION = "process_remediation"
 #: The engine family's own refusals (MEDULLA-DECISION-ENGINE-R820).
 PROCESS_REFUSALS = frozenset({"LIVENESS_EVIDENCE_STALE", "LIVENESS_EVIDENCE_MISMATCH"})
 ProcessVerdict = Literal["zombie", "hung", "progressing"]
-_PROCESS_VERDICTS: dict[str, ProcessVerdict] = {
-    "zombie": "zombie",
-    "hung": "hung",
-    "progressing": "progressing",
-}
+_PROCESS_VERDICTS: Mapping[str, ProcessVerdict] = MappingProxyType(
+    {
+        "zombie": "zombie",
+        "hung": "hung",
+        "progressing": "progressing",
+    }
+)
 
 
 class LivenessEvidence(Params):

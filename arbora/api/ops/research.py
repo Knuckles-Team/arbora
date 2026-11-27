@@ -33,6 +33,7 @@ import re
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Literal, Protocol, runtime_checkable
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -68,7 +69,9 @@ PAGE_STREAM = "web_page"
 WORK_ITEM_KIND = "research_web"
 #: The caller scope the operation's writes need; checked again before any engine effect.
 INGEST_SCOPE = "ingest:write"
-BACKEND_SERVERS = {"webarchiver": WEBARCHIVER_SERVER, "archivebox": ARCHIVEBOX_SERVER}
+BACKEND_SERVERS = MappingProxyType(
+    {"webarchiver": WEBARCHIVER_SERVER, "archivebox": ARCHIVEBOX_SERVER}
+)
 
 _TRACKING_PARAMS = re.compile(r"^(utm_.*|fbclid|gclid|mc_cid|mc_eid|ref|ref_src)$")
 
@@ -80,7 +83,9 @@ FALLBACK_REASONS = frozenset({"upstream_failed", "unreachable", "timeout"})
 #: backend that does not answer in time is a ``timeout`` failure, never a hang.
 PAGE_TIMEOUT_S = 30.0
 #: The other backend tried once after a fallback-eligible failure.
-_FALLBACK_BACKEND = {"webarchiver": "archivebox", "archivebox": "webarchiver"}
+_FALLBACK_BACKEND = MappingProxyType(
+    {"webarchiver": "archivebox", "archivebox": "webarchiver"}
+)
 
 
 class ResearchWebParams(Params):
@@ -916,9 +921,11 @@ async def handle_research_web(
 #: Operations whose replay safety the engine's SourceIngest authority owns:
 #: every page and chunk record has a deterministic id (from its canonical URL)
 #: under its connector and stream, so a replayed call upserts the same records.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "research.web": "medulla:SourceIngest",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "research.web": "medulla:SourceIngest",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

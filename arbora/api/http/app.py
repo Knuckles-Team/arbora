@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from secrets import token_hex
+from types import MappingProxyType
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -30,9 +31,11 @@ Visibility = Callable[[Any, Any], Awaitable[bool]]
 
 # Operations whose protocol clients cannot send an Idempotency-Key are keyed
 # by their body (ARBORA-OPS-R953).
-_BODY_KEYED: dict[str, Callable[[dict[str, Any]], str]] = {
-    "skills.telemetry.ingest": body_key,
-}
+_BODY_KEYED: Mapping[str, Callable[[dict[str, Any]], str]] = MappingProxyType(
+    {
+        "skills.telemetry.ingest": body_key,
+    }
+)
 
 
 def _subapp_path(path: str) -> str:
@@ -46,7 +49,7 @@ def _subapp_path(path: str) -> str:
 
 #: Refusals whose reply tells the caller when to come back (R001.5 of the
 #: adaptive-capacity spec: a throttled call retries after one second).
-_RETRY_AFTER_S = {"CAPACITY_THROTTLED": "1"}
+_RETRY_AFTER_S = MappingProxyType({"CAPACITY_THROTTLED": "1"})
 
 
 def _refusal_headers(code: str) -> dict[str, str]:

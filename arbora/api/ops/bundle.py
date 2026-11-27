@@ -17,6 +17,7 @@ import base64
 import hashlib
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, model_validator
@@ -237,10 +238,12 @@ async def handle_bundle_upload(
 
 
 #: Writes replay under the engine method that holds the record, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "bundle.import": "medulla:BundleImport",
-    "bundle.upload": "medulla:BlobCommit",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "bundle.import": "medulla:BundleImport",
+        "bundle.upload": "medulla:BlobCommit",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

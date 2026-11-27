@@ -18,6 +18,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field, field_validator
@@ -140,7 +141,9 @@ async def handle_policy_review_approve(
     }
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {"policy.review.approve": "medulla:DecisionLog"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"policy.review.approve": "medulla:DecisionLog"}
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

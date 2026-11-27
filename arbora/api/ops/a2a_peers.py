@@ -18,6 +18,7 @@ import threading
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -29,10 +30,12 @@ from arbora.api.registry import OpSpec
 
 #: The replay owner of each write: the registry file replaces or removes by name, so
 #: a repeated request leaves the same state and appends no second revision.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "a2a.peer.register": "a2a_peers:replace-by-name",
-    "a2a.peer.delete": "a2a_peers:delete-by-name",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "a2a.peer.register": "a2a_peers:replace-by-name",
+        "a2a.peer.delete": "a2a_peers:delete-by-name",
+    }
+)
 PEERS_FILE = "a2a_peers.yml"
 MAX_REVISIONS = 50
 _REFERENCE = re.compile(r"^(openbao|vault|env|secret):[A-Za-z0-9_./-]{1,200}$")

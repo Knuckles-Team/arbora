@@ -8,8 +8,9 @@ session-scoped medulla client before any operation can run.
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
@@ -103,9 +104,13 @@ class GraphRlmRunResult(_StrictModel):
 
 type GraphRlmResult = GraphRlmRunResult
 
-_GRAPH_RLM_SCOPES: dict[type[BaseModel], Literal["kg:read", "kg:write"]] = {
-    GraphRlmRunRequest: "kg:read",
-}
+_GRAPH_RLM_SCOPES: Mapping[type[BaseModel], Literal["kg:read", "kg:write"]] = (
+    MappingProxyType(
+        {
+            GraphRlmRunRequest: "kg:read",
+        }
+    )
+)
 
 
 def _current_ports(slot: Any) -> Any:

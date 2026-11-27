@@ -32,6 +32,7 @@ import re
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 import yaml
@@ -48,15 +49,17 @@ _IMAGE = re.compile(
 _VARIABLE = re.compile(
     r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<form>:\?|:-)?(?P<arg>[^}]*)\}"
 )
-_POD_PATHS = {
-    "Pod": ("spec",),
-    "Deployment": ("spec", "template", "spec"),
-    "StatefulSet": ("spec", "template", "spec"),
-    "DaemonSet": ("spec", "template", "spec"),
-    "ReplicaSet": ("spec", "template", "spec"),
-    "Job": ("spec", "template", "spec"),
-    "CronJob": ("spec", "jobTemplate", "spec", "template", "spec"),
-}
+_POD_PATHS = MappingProxyType(
+    {
+        "Pod": ("spec",),
+        "Deployment": ("spec", "template", "spec"),
+        "StatefulSet": ("spec", "template", "spec"),
+        "DaemonSet": ("spec", "template", "spec"),
+        "ReplicaSet": ("spec", "template", "spec"),
+        "Job": ("spec", "template", "spec"),
+        "CronJob": ("spec", "jobTemplate", "spec", "template", "spec"),
+    }
+)
 
 
 class StrictLoader(yaml.SafeLoader):

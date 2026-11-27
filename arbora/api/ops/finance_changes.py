@@ -14,6 +14,7 @@ and holds the human confirmation, the engine decides.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field, ValidationError
@@ -34,10 +35,12 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 SCOPE = "finance:propose-order"
 #: The engine replays a stage and a promotion by the proposal revision it holds; a change
 #: effect is settled once by the effect journal.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "market.order.stage": "medulla:FinanceOrderStage",
-    "market.order.confirm": "medulla:FinanceOrderPromote",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "market.order.stage": "medulla:FinanceOrderStage",
+        "market.order.confirm": "medulla:FinanceOrderPromote",
+    }
+)
 EXTERNAL_EFFECT = ("orders.change", "positions.change", "wallet.operate")
 _DECIMAL = r"^-?\d+(\.\d+)?$"
 

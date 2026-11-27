@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 
 from arbora.api.domain.deployment.genesis_environments import (
     EnvironmentProfile,
@@ -21,11 +22,13 @@ from arbora.api.domain.deployment.genesis_environments import (
 from arbora.api.domain.deployment.image_digests import check_paths
 
 #: The shipped artifact of each supported target, relative to ``deploy/``.
-ARTIFACTS: Mapping[str, str] = {
-    "compose": "compose/compose.yaml",
-    "helm": "helm/arbora",
-    "swarm": "swarm/stack.yml",
-}
+ARTIFACTS: Mapping[str, str] = MappingProxyType(
+    {
+        "compose": "compose/compose.yaml",
+        "helm": "helm/arbora",
+        "swarm": "swarm/stack.yml",
+    }
+)
 
 #: The bare-metal reference a ``systemd`` request is pointed to.
 BARE_METAL_REFERENCE = "docs/deployment.md"

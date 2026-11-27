@@ -16,6 +16,7 @@ import binascii
 import hashlib
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -145,21 +146,27 @@ class OrderGet(_Get):
     item: OrderItem
 
 
-_ITEMS: dict[str, type[_Item]] = {
-    "market": MarketItem,
-    "event": EventItem,
-    "order": OrderItem,
-}
-_PAGES: dict[str, type[_Page]] = {
-    "market": MarketPage,
-    "event": EventPage,
-    "order": OrderPage,
-}
-_GETS: dict[str, type[_Get]] = {
-    "market": MarketGet,
-    "event": EventGet,
-    "order": OrderGet,
-}
+_ITEMS: Mapping[str, type[_Item]] = MappingProxyType(
+    {
+        "market": MarketItem,
+        "event": EventItem,
+        "order": OrderItem,
+    }
+)
+_PAGES: Mapping[str, type[_Page]] = MappingProxyType(
+    {
+        "market": MarketPage,
+        "event": EventPage,
+        "order": OrderPage,
+    }
+)
+_GETS: Mapping[str, type[_Get]] = MappingProxyType(
+    {
+        "market": MarketGet,
+        "event": EventGet,
+        "order": OrderGet,
+    }
+)
 
 
 def _malformed() -> OperationRefused:

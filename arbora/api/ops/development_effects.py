@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -181,11 +182,13 @@ async def handle_delivery_effect_reconcile(
     return {"idempotency_key": key, "state": "done", "receipt": receipt}
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    # The engine key-value reservation of the effect key (compare-and-set) is the replay owner.
-    "development.delivery.effect": "medulla:KvCas",
-    "development.delivery.effect.reconcile": "medulla:KvCas",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        # The engine key-value reservation of the effect key (compare-and-set) is the replay owner.
+        "development.delivery.effect": "medulla:KvCas",
+        "development.delivery.effect.reconcile": "medulla:KvCas",
+    }
+)
 
 
 def operations() -> tuple[Any, ...]:

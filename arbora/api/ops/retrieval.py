@@ -9,6 +9,7 @@ refusal, matching :mod:`arbora.api.ops.ingest`.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal, Protocol, runtime_checkable
 
 import msgpack
@@ -257,10 +258,12 @@ async def handle_agent_knowledge_scope_set(
 
 
 #: Writes replay under the engine method that holds the record, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "retrieval.feedback": "medulla:RetrievalFeedbackRecord",
-    "agent.knowledge_scope.set": "medulla:CompareAndSetNodeFields",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "retrieval.feedback": "medulla:RetrievalFeedbackRecord",
+        "agent.knowledge_scope.set": "medulla:CompareAndSetNodeFields",
+    }
+)
 
 
 # --- retrieval evaluation and authorized context search (ARBORA-OPS-R063) ----

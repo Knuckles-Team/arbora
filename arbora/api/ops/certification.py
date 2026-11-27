@@ -14,6 +14,7 @@ forwards one ``DecisionEval`` ``certify_local_skill`` job. The request shape is 
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -53,7 +54,9 @@ async def handle_agents_certify(
 
 
 #: A certification replays under the engine job that holds the attestation, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {"agents.certify": "medulla:DecisionEval"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"agents.certify": "medulla:DecisionEval"}
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

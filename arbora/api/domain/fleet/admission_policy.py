@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.fleet.admission_models import (
@@ -91,12 +92,12 @@ def default_workflow_admission_policy(
     return parse_workflow_record(declaration)
 
 
-SKILL_POLICIES: dict[str, SkillPolicy] = {
-    DEFAULT_SKILL_POLICY: default_skill_audit_policy
-}
-WORKFLOW_POLICIES: dict[str, WorkflowPolicy] = {
-    DEFAULT_WORKFLOW_POLICY: default_workflow_admission_policy
-}
+SKILL_POLICIES: Mapping[str, SkillPolicy] = MappingProxyType(
+    {DEFAULT_SKILL_POLICY: default_skill_audit_policy}
+)
+WORKFLOW_POLICIES: Mapping[str, WorkflowPolicy] = MappingProxyType(
+    {DEFAULT_WORKFLOW_POLICY: default_workflow_admission_policy}
+)
 
 
 @dataclass(frozen=True)

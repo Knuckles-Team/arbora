@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, model_validator
@@ -298,10 +299,12 @@ async def handle_spec_query(
         raise unavailable("engine result malformed") from None
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "project.mode.set": "medulla:ProjectModeSet",
-    "development.proposal.review": "medulla:ProposalDecide",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "project.mode.set": "medulla:ProjectModeSet",
+        "development.proposal.review": "medulla:ProposalDecide",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

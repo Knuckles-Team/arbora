@@ -22,8 +22,10 @@ import csv
 import io
 import json
 import re
+from collections.abc import Mapping
 from html import escape
 from secrets import token_hex
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import parse_qs
 
@@ -55,24 +57,28 @@ JSON_LD = "application/ld+json"
 RDF_XML = "application/rdf+xml"
 
 #: Accept media type -> served result type, in server preference order.
-RESULT_TYPES: dict[str, str] = {
-    JSON_RESULTS: JSON_RESULTS,
-    "application/json": JSON_RESULTS,
-    XML_RESULTS: XML_RESULTS,
-    "application/xml": XML_RESULTS,
-    CSV_RESULTS: CSV_RESULTS,
-    TSV_RESULTS: TSV_RESULTS,
-}
+RESULT_TYPES: Mapping[str, str] = MappingProxyType(
+    {
+        JSON_RESULTS: JSON_RESULTS,
+        "application/json": JSON_RESULTS,
+        XML_RESULTS: XML_RESULTS,
+        "application/xml": XML_RESULTS,
+        CSV_RESULTS: CSV_RESULTS,
+        TSV_RESULTS: TSV_RESULTS,
+    }
+)
 #: The six RDF media types the graph store reads and writes; ``text/plain`` is N-Triples.
-GRAPH_TYPES: dict[str, str] = {
-    N_TRIPLES: N_TRIPLES,
-    TURTLE: TURTLE,
-    N_QUADS: N_QUADS,
-    TRIG: TRIG,
-    JSON_LD: JSON_LD,
-    RDF_XML: RDF_XML,
-    "text/plain": N_TRIPLES,
-}
+GRAPH_TYPES: Mapping[str, str] = MappingProxyType(
+    {
+        N_TRIPLES: N_TRIPLES,
+        TURTLE: TURTLE,
+        N_QUADS: N_QUADS,
+        TRIG: TRIG,
+        JSON_LD: JSON_LD,
+        RDF_XML: RDF_XML,
+        "text/plain": N_TRIPLES,
+    }
+)
 
 _GRAPH_READ = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
 _GRAPH_QUERY = re.compile(

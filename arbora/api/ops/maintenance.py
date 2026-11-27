@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -245,9 +246,11 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 #: The engine replays the change envelope by the request key (one purge per key).
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "maintenance.paper_shortfall.run": "medulla:ApplyChangeEnvelopeDraft",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "maintenance.paper_shortfall.run": "medulla:ApplyChangeEnvelopeDraft",
+    }
+)
 
 __all__ = [
     "NATIVE_IDEMPOTENCY",

@@ -12,6 +12,7 @@ naming the missing method until the re-pin.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -202,13 +203,15 @@ async def handle_lifecycle_trace(
 
 
 #: Writes replay under the engine method that holds the record, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "defect.file": "medulla:FileDefect",
-    "defect.triage": "medulla:TriageDefect",
-    "defect.transition": "medulla:TransitionDefect",
-    "release.record": "medulla:RecordRelease",
-    "deployment.record": "medulla:RecordDeployment",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "defect.file": "medulla:FileDefect",
+        "defect.triage": "medulla:TriageDefect",
+        "defect.transition": "medulla:TransitionDefect",
+        "release.record": "medulla:RecordRelease",
+        "deployment.record": "medulla:RecordDeployment",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

@@ -9,6 +9,7 @@ across a restart answer alike.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -62,10 +63,12 @@ async def handle_loops_pause(
 
 
 #: The engine holds each loop record; a repeat reads the same record.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "loops.run": "medulla:DecisionLog",
-    "loops.pause": "medulla:DecisionLog",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "loops.run": "medulla:DecisionLog",
+        "loops.pause": "medulla:DecisionLog",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

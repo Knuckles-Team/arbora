@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.invoke.steps import surface_caller_admitted
@@ -19,18 +20,20 @@ from arbora.api.registry import Invoke
 from arbora.observability.state import SubsystemWindows
 
 VERBS = ("find", "ask", "why", "write", "act", "manage")
-PARAMETERS: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "op": {"type": "string"},
-        "intent": {"type": "string"},
-        "params": {"type": "object", "additionalProperties": True},
-        "plan_ref": {"type": "string"},
-        "execute": {"type": "boolean"},
-        "idempotency_key": {"type": "string"},
-    },
-    "additionalProperties": False,
-}
+PARAMETERS: Mapping[str, Any] = MappingProxyType(
+    {
+        "type": "object",
+        "properties": {
+            "op": {"type": "string"},
+            "intent": {"type": "string"},
+            "params": {"type": "object", "additionalProperties": True},
+            "plan_ref": {"type": "string"},
+            "execute": {"type": "boolean"},
+            "idempotency_key": {"type": "string"},
+        },
+        "additionalProperties": False,
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)

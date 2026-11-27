@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
@@ -30,11 +31,13 @@ from arbora.api.registry import (
 )
 
 #: The engine replays each dashboard write by its idempotency key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "dashboard.save": "medulla:DashboardAsset",
-    "dashboard.share": "medulla:DashboardAsset",
-    "dashboard.delete": "medulla:DashboardAsset",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "dashboard.save": "medulla:DashboardAsset",
+        "dashboard.share": "medulla:DashboardAsset",
+        "dashboard.delete": "medulla:DashboardAsset",
+    }
+)
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "kg:write"
 #: The catalog kind the engine gives a dashboard asset.

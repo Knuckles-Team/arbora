@@ -19,6 +19,7 @@ runner facade, not this module, holds the durable record.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -88,9 +89,11 @@ async def handle_work(
 
 
 #: Writes the engine replays by the idempotency key the pipeline forwards.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "work.offers.create": "medulla:WorkItem",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "work.offers.create": "medulla:WorkItem",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

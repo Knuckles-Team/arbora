@@ -14,6 +14,8 @@ ARBORA-OPS-R020.3 through R020.5 in ``specs/hosted-api-operations/``.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -77,17 +79,19 @@ __all__ = [
 #: Operations whose idempotency the engine WorkItem authority owns
 #: (ARBORA-OPS-R020.6.2): the sync's WorkItem is keyed by the caller's
 #: idempotency key, so a replay returns the same durable job.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "ingest.sources.sync": "arbora.ingest.connector_sources:ConnectorIngestRunner",
-    # The runner keys each drift repair, admission and re-embed by the caller's key
-    # (ARBORA-OPS-R020.4, R020.5), so a replay returns the same durable record.
-    "ingest.drift.repair_propose": "arbora.ingest.connector_sources:ConnectorIngestRunner",
-    "ingest.drift.repair_approve": "arbora.ingest.connector_sources:ConnectorIngestRunner",
-    "ingest.embedding.admit": "arbora.ingest.connector_sources:ConnectorIngestRunner",
-    "ingest.embedding.reembed": "arbora.ingest.connector_sources:ConnectorIngestRunner",
-    # Each admitted action is its own engine write under the caller's key (R886).
-    "ingest.maintenance.run": "medulla:ingest-maintenance-actions",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "ingest.sources.sync": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+        # The runner keys each drift repair, admission and re-embed by the caller's key
+        # (ARBORA-OPS-R020.4, R020.5), so a replay returns the same durable record.
+        "ingest.drift.repair_propose": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+        "ingest.drift.repair_approve": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+        "ingest.embedding.admit": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+        "ingest.embedding.reembed": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+        # Each admitted action is its own engine write under the caller's key (R886).
+        "ingest.maintenance.run": "medulla:ingest-maintenance-actions",
+    }
+)
 
 
 class _Params(BaseModel):

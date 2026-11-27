@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import unicodedata
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, field_validator
@@ -211,33 +212,35 @@ async def handle_orders_paper_submit(
 
 
 #: Per resource kind: the filters it accepts and the projection of its page and record.
-_READS: Mapping[str, Any] = {
-    "market": (
-        (
-            "event_id",
-            "status",
-            "starts_at_from",
-            "starts_at_to",
-            "ends_at_from",
-            "ends_at_to",
+_READS: Mapping[str, Any] = MappingProxyType(
+    {
+        "market": (
+            (
+                "event_id",
+                "status",
+                "starts_at_from",
+                "starts_at_to",
+                "ends_at_from",
+                "ends_at_to",
+            ),
+            read_models.project_market_page,
+            read_models.project_market,
+            "market_id",
         ),
-        read_models.project_market_page,
-        read_models.project_market,
-        "market_id",
-    ),
-    "event": (
-        ("status", "starts_at_from", "starts_at_to", "ends_at_from", "ends_at_to"),
-        read_models.project_event_page,
-        read_models.project_event,
-        "event_id",
-    ),
-    "order": (
-        ("market_id", "status", "side", "created_at_from", "created_at_to"),
-        read_models.project_order_page,
-        read_models.project_order,
-        "order_id",
-    ),
-}
+        "event": (
+            ("status", "starts_at_from", "starts_at_to", "ends_at_from", "ends_at_to"),
+            read_models.project_event_page,
+            read_models.project_event,
+            "event_id",
+        ),
+        "order": (
+            ("market_id", "status", "side", "created_at_from", "created_at_to"),
+            read_models.project_order_page,
+            read_models.project_order,
+            "order_id",
+        ),
+    }
+)
 
 
 async def _authority(context: Any) -> tuple[Any, str, str]:

@@ -11,17 +11,20 @@ without standing up the Medulla-backed production registry.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from .spec import OpSpec
 
 #: Principal rules ordered from widest (most callers qualify) to narrowest.
-_PRINCIPAL_WIDTH = {
-    "any": 3,
-    "human": 2,
-    "service_only": 2,
-    "human_undelegated": 1,
-}
+_PRINCIPAL_WIDTH = MappingProxyType(
+    {
+        "any": 3,
+        "human": 2,
+        "service_only": 2,
+        "human_undelegated": 1,
+    }
+)
 
 
 def public_surface(ops: list[OpSpec]) -> dict[str, dict[str, Any]]:

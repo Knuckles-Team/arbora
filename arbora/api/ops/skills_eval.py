@@ -10,6 +10,7 @@ keeps no eval or rollout state. Engine refusals pass through by code
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -25,11 +26,13 @@ _Ref = Field(min_length=1, max_length=512)
 _Body = Field(description="the engine request body, validated by the engine")
 #: Fields only the verified caller may supply.
 _CALLER_ONLY = frozenset({"tier_reviewer", "approver_principal", "tenant_id"})
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "skills.eval.case.add": "medulla:DecisionEval",
-    "skills.eval.calibrate": "medulla:DecisionEval",
-    "skills.ablation.record": "medulla:DecisionLog",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "skills.eval.case.add": "medulla:DecisionEval",
+        "skills.eval.calibrate": "medulla:DecisionEval",
+        "skills.ablation.record": "medulla:DecisionLog",
+    }
+)
 
 
 class EvalCaseAddParams(Params):

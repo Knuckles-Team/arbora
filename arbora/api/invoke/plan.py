@@ -10,6 +10,7 @@ from binascii import Error as Base64Error
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from cryptography.exceptions import InvalidTag
@@ -44,14 +45,16 @@ class PlanEvent(StrEnum):
 _P, _V = PlanState, PlanEvent
 #: The six legal edges of the plan lease machine (ARBORA-OPS-R901). ``consume``
 #: also needs the guard ``before_hard_expiry``, decided by :func:`plan_state`.
-PLAN_EDGES: dict[tuple[PlanState, PlanEvent], PlanState] = {
-    (_P.ISSUED, _V.CONSUME): _P.CONSUMED,
-    (_P.CONSUMED, _V.BEGIN): _P.EXECUTING,
-    (_P.EXECUTING, _V.FINISH_OK): _P.DONE,
-    (_P.EXECUTING, _V.FINISH_ERR): _P.FAILED,
-    (_P.CONSUMED, _V.FINISH_ERR): _P.FAILED,
-    (_P.ISSUED, _V.EXPIRE): _P.EXPIRED,
-}
+PLAN_EDGES: Mapping[tuple[PlanState, PlanEvent], PlanState] = MappingProxyType(
+    {
+        (_P.ISSUED, _V.CONSUME): _P.CONSUMED,
+        (_P.CONSUMED, _V.BEGIN): _P.EXECUTING,
+        (_P.EXECUTING, _V.FINISH_OK): _P.DONE,
+        (_P.EXECUTING, _V.FINISH_ERR): _P.FAILED,
+        (_P.CONSUMED, _V.FINISH_ERR): _P.FAILED,
+        (_P.ISSUED, _V.EXPIRE): _P.EXPIRED,
+    }
+)
 TERMINAL_PLAN_STATES = frozenset({_P.DONE, _P.FAILED, _P.EXPIRED})
 
 
@@ -73,13 +76,15 @@ def transition(state: PlanState, event: PlanEvent) -> PlanState:
     return target
 
 
-_ENGINE_STATUS = {
-    "active": PlanState.ISSUED,
-    "consumed": PlanState.CONSUMED,
-    "executing": PlanState.EXECUTING,
-    "done": PlanState.DONE,
-    "failed": PlanState.FAILED,
-}
+_ENGINE_STATUS = MappingProxyType(
+    {
+        "active": PlanState.ISSUED,
+        "consumed": PlanState.CONSUMED,
+        "executing": PlanState.EXECUTING,
+        "done": PlanState.DONE,
+        "failed": PlanState.FAILED,
+    }
+)
 
 
 def plan_state(lease: Mapping[str, Any], now_ms: int) -> PlanState:

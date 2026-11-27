@@ -16,6 +16,7 @@ import asyncio
 import hashlib
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -44,7 +45,9 @@ READ_SCOPE = "process:read"
 RUN_SCOPE = "process:run"
 #: The replay owner of ``process.run``: the run id derives from the verified tenant and the
 #: idempotency key, and the engine journal admits one run entry per run id.
-NATIVE_IDEMPOTENCY: dict[str, str] = {"process.run": "process.journal:run-by-key"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"process.run": "process.journal:run-by-key"}
+)
 APPROVE_SCOPE = "process:approve"
 QUESTION_ID = "arbora.process.plan"
 _ID = Field(min_length=1, max_length=256)

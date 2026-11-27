@@ -14,6 +14,7 @@ import base64
 import binascii
 import mimetypes
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field, model_validator
@@ -24,7 +25,9 @@ from arbora.api.registry import OpSpec
 
 SCOPE = "ingest:write"
 MAX_AUDIO_BYTES = 25 * 1024 * 1024
-NATIVE_IDEMPOTENCY: dict[str, str] = {"media.transcribe": "fleet:call"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"media.transcribe": "fleet:call"}
+)
 _MAGIC = (
     (b"OggS", "audio/ogg"),
     (b"fLaC", "audio/flac"),

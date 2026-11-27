@@ -18,6 +18,7 @@ import tempfile
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -30,10 +31,12 @@ from arbora.core.environment import read_env
 
 READ_SCOPE = "workspace:read"
 WRITE_SCOPE = "workspace:write"
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "workspace.files.write": "path-and-digest",
-    "workspace.files.delete": "path",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "workspace.files.write": "path-and-digest",
+        "workspace.files.delete": "path",
+    }
+)
 MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_LIST_ENTRIES = 1000
 _Path = Field(min_length=1, max_length=4096)

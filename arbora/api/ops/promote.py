@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -256,9 +257,11 @@ async def handle_promotion_record(
     return {"record": dict(body) if isinstance(body, Mapping) else {}}
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "deploy.promotions.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "deploy.promotions.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

@@ -11,6 +11,7 @@ naming it. An absent, foreign or malformed goal answers the engine's own
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -25,10 +26,12 @@ from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 READ_SCOPE = "agent:library-read"
 CONTROL_SCOPE = "runs:control"
 #: Control writes replay under the engine goal machine, which keys on the goal.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "agents.goals.run": "medulla:GoalControl",
-    "agents.goals.cancel": "medulla:GoalControl",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "agents.goals.run": "medulla:GoalControl",
+        "agents.goals.cancel": "medulla:GoalControl",
+    }
+)
 
 
 class GoalParams(Params):

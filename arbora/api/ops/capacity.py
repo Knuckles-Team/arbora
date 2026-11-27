@@ -21,6 +21,7 @@ operation never fabricates an engine ceiling.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -213,9 +214,11 @@ async def handle_capacity_adjust_apply(
 
 #: The engine replays the verdict question by its record identity, and the
 #: scale step is one ``fleet.call`` reserved under ``capacity:<proposal_digest>``.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "capacity.adjust.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "capacity.adjust.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

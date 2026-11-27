@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -38,13 +39,13 @@ from arbora.security.session_revocation import (
 )
 
 #: The engine replays a session end by its node write key (ARBORA-IDENTITY-R029.5).
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "identity.sessions.revoke": "medulla:CompareAndSetNodeFields"
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"identity.sessions.revoke": "medulla:CompareAndSetNodeFields"}
+)
 ADMIN_SCOPE = "identity:admin"
 SELF_SCOPE = "identity:self"
 _PAGE = 100
-_NOT_FOUND = {"IDENTITY_NOT_FOUND": "USER_NOT_FOUND"}
+_NOT_FOUND = MappingProxyType({"IDENTITY_NOT_FOUND": "USER_NOT_FOUND"})
 
 
 class _P(BaseModel):

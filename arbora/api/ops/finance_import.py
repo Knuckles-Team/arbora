@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import msgpack
@@ -30,9 +31,11 @@ from arbora.pin_lag.scion_sdk import PinLagUnavailable, require_csv_preview
 
 SCOPE = "finance:track"
 _DIGEST = r"^sha256:[0-9a-f]{64}$"
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "finance.import.commit": "medulla:CreateNodeIfAbsent",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "finance.import.commit": "medulla:CreateNodeIfAbsent",
+    }
+)
 
 
 class ImportPreviewParams(Params):

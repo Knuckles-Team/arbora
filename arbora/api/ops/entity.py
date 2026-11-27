@@ -13,6 +13,7 @@ until the re-pin.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -53,9 +54,9 @@ async def handle_entity_approve_link(
 
 
 #: Replays under the engine method that holds the approval, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "entity.approve_link": "medulla:ApproveEntityLink"
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"entity.approve_link": "medulla:ApproveEntityLink"}
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

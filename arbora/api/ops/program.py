@@ -17,6 +17,7 @@ re-pin.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 import msgpack
@@ -202,11 +203,13 @@ async def handle_revision_rollback(
 
 
 #: Writes replay under the engine method that holds the record, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "program.optimize": "medulla:AnalyticsJob",
-    "revision.promote": "medulla:DecisionLog",
-    "revision.rollback": "medulla:DecisionLog",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "program.optimize": "medulla:AnalyticsJob",
+        "revision.promote": "medulla:DecisionLog",
+        "revision.rollback": "medulla:DecisionLog",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

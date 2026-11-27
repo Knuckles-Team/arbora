@@ -23,6 +23,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import Field, ValidationError, model_validator
@@ -48,9 +49,11 @@ HEARTBEAT_WINDOW_S = 5.0
 #: Replay owner of the heartbeat write: the Medulla city-state store's own
 #: compare-and-set on (subject, revision), so a replayed identical request
 #: applies at most once.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "fleet.city.presence.heartbeat": "medulla:city_state",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "fleet.city.presence.heartbeat": "medulla:city_state",
+    }
+)
 
 
 class CityPresenceEntity(FrozenState):

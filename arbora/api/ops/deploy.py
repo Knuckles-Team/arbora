@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -615,12 +616,14 @@ def apply_receipt(manifest: DeploymentManifest, diff: DeploymentDiff) -> dict[st
 #: A replay of a confirmed apply returns the recorded node outcomes: every node
 #: is one ``fleet.call`` reserved in the engine effect journal under
 #: ``deploy:<plan_digest>:<node_id>`` (ARBORA-DEPLOY-R017.21).
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "deploy.placement.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
-    "deploy.manifest.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
-    # The engine replays ``GraphSchema`` by operation identity (the idempotency key).
-    "deploy.ontology.import": "medulla:GraphSchema",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "deploy.placement.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+        "deploy.manifest.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+        # The engine replays ``GraphSchema`` by operation identity (the idempotency key).
+        "deploy.ontology.import": "medulla:GraphSchema",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

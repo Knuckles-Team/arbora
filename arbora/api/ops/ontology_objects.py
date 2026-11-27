@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -37,15 +38,17 @@ from arbora.api.registry import Effect, OpSpec, Verb
 
 handle_unserved = refuse_unavailable
 #: Writes replay under the engine method or record that holds the effect.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "ontology.object_sets.save": "medulla:KvCas",
-    "ontology.object_sets.delete": "medulla:KvDelete",
-    "ontology.object_views.put": "medulla:KvCas",
-    "ontology.objects.edit": "medulla:GovernedChange",
-    "ontology.objects.revert": "medulla:GovernedChange",
-    "ontology.actions.apply": "medulla:ActionSubmit",
-    "ontology.document.process": "medulla:EnrichDocument",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "ontology.object_sets.save": "medulla:KvCas",
+        "ontology.object_sets.delete": "medulla:KvDelete",
+        "ontology.object_views.put": "medulla:KvCas",
+        "ontology.objects.edit": "medulla:GovernedChange",
+        "ontology.objects.revert": "medulla:GovernedChange",
+        "ontology.actions.apply": "medulla:ActionSubmit",
+        "ontology.document.process": "medulla:EnrichDocument",
+    }
+)
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "kg:write"
 KV_READ = "kv:read"

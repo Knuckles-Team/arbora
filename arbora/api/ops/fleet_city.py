@@ -10,6 +10,7 @@ uncomposed port fails closed with a typed ``UNAVAILABLE``.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import Field
@@ -26,9 +27,11 @@ from arbora.api.registry import Confirm, OpSpec, Verb
 
 #: The edit-layer write replays under the engine's world-view edit-layer version
 #: write (ARBORA-FLEET-R087); arbora keeps no store of its own.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "fleet.city.edit_layer.put": "medulla:AddNode/CompareAndSetNodeFields",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "fleet.city.edit_layer.put": "medulla:AddNode/CompareAndSetNodeFields",
+    }
+)
 
 #: Edit refusals the port reports, carried as the reason of the one closed code
 #: ``REVISION_CONFLICT``.

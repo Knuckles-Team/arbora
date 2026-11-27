@@ -24,6 +24,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cache
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, create_model
@@ -211,70 +212,72 @@ def _enabled_override(ctx: Any, p: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-_ENGINE: dict[str, Engine] = {
-    # Skill and tool toggles are the engine's operator override (hard cutover
-    # from the session pins), refused UNAVAILABLE until the pinned engine serves it.
-    "fleet.skills.toggle": Engine(
-        "FleetCatalog",
-        _enabled_override,
-        _value,
-        models=("FleetOverrideEnabled",),
-        idempotent=True,
-    ),
-    "fleet.tools.toggle": Engine(
-        "FleetCatalog",
-        _enabled_override,
-        _value,
-        models=("FleetOverrideEnabled",),
-        idempotent=True,
-    ),
-    "schedule.tasks.read": Engine(
-        "AnalyticsJob",
-        _calendar_request,
-        _calendar,
-        models=("JobOpScheduleCalendar",),
-    ),
-    "ops.maintenance.run": Engine(
-        "Maintain", lambda ctx, p: _maintain(ctx, p), _value, idempotent=True
-    ),
-    "code.context.read": Engine(
-        "CodeNavigation",
-        lambda ctx, p: {
-            "request": {
-                "action": p["action"],
-                **({"symbol": p["symbol"]} if p.get("symbol") else {}),
-                **({"limit": p["limit"]} if p.get("limit") else {}),
-            }
-        },
-        _code,
-    ),
-    "roles.templates.list": Engine(
-        "AgentTemplate",
-        lambda ctx, p: {
-            "op": {
-                "op": "list",
+_ENGINE: Mapping[str, Engine] = MappingProxyType(
+    {
+        # Skill and tool toggles are the engine's operator override (hard cutover
+        # from the session pins), refused UNAVAILABLE until the pinned engine serves it.
+        "fleet.skills.toggle": Engine(
+            "FleetCatalog",
+            _enabled_override,
+            _value,
+            models=("FleetOverrideEnabled",),
+            idempotent=True,
+        ),
+        "fleet.tools.toggle": Engine(
+            "FleetCatalog",
+            _enabled_override,
+            _value,
+            models=("FleetOverrideEnabled",),
+            idempotent=True,
+        ),
+        "schedule.tasks.read": Engine(
+            "AnalyticsJob",
+            _calendar_request,
+            _calendar,
+            models=("JobOpScheduleCalendar",),
+        ),
+        "ops.maintenance.run": Engine(
+            "Maintain", lambda ctx, p: _maintain(ctx, p), _value, idempotent=True
+        ),
+        "code.context.read": Engine(
+            "CodeNavigation",
+            lambda ctx, p: {
                 "request": {
+                    "action": p["action"],
+                    **({"symbol": p["symbol"]} if p.get("symbol") else {}),
+                    **({"limit": p["limit"]} if p.get("limit") else {}),
+                }
+            },
+            _code,
+        ),
+        "roles.templates.list": Engine(
+            "AgentTemplate",
+            lambda ctx, p: {
+                "op": {
+                    "op": "list",
+                    "request": {
+                        "tenant_id": _tenant(ctx),
+                        "limit": p["limit"],
+                        **({"cursor": p["cursor"]} if p.get("cursor") else {}),
+                    },
+                }
+            },
+            lambda answer, p: _page(answer, "templates"),
+            models=("AgentTemplateOpList",),
+        ),
+        "roles.templates.get": Engine(
+            "AgentTemplate",
+            lambda ctx, p: {
+                "op": {
+                    "op": "current",
+                    "template_id": p["template_id"],
                     "tenant_id": _tenant(ctx),
-                    "limit": p["limit"],
-                    **({"cursor": p["cursor"]} if p.get("cursor") else {}),
-                },
-            }
-        },
-        lambda answer, p: _page(answer, "templates"),
-        models=("AgentTemplateOpList",),
-    ),
-    "roles.templates.get": Engine(
-        "AgentTemplate",
-        lambda ctx, p: {
-            "op": {
-                "op": "current",
-                "template_id": p["template_id"],
-                "tenant_id": _tenant(ctx),
-            }
-        },
-        _template_get,
-    ),
-}
+                }
+            },
+            _template_get,
+        ),
+    }
+)
 
 #: Engine methods a role binding needs before it may bind a template (R917.2).
 PROFILE_METHOD = "KvGet"
@@ -557,18 +560,20 @@ def _submit(params: Mapping[str, Any]) -> dict[str, Any]:
     return {"kind": "ingest_url", "target": params["source"], "options": {}}
 
 
-_ALIAS: dict[str, Alias] = {
-    "ingest.pipeline.status": Alias(lambda p: "ingest.jobs.list", lambda p: {}),
-    "ingest.pipeline.run": Alias(lambda p: "ingest.submissions.create", _submit),
-    "roles.instances.retire": Alias(
-        lambda p: "agents.library.delete", lambda p: {"id": p["instance_id"]}
-    ),
-    "resources.list": Alias(lambda p: "capacity.throttle.status", lambda p: {}),
-    "resources.spawn": Alias(
-        lambda p: "agents.run",
-        lambda p: {"message": {"kind": p["kind"], **p["config"]}},
-    ),
-}
+_ALIAS: Mapping[str, Alias] = MappingProxyType(
+    {
+        "ingest.pipeline.status": Alias(lambda p: "ingest.jobs.list", lambda p: {}),
+        "ingest.pipeline.run": Alias(lambda p: "ingest.submissions.create", _submit),
+        "roles.instances.retire": Alias(
+            lambda p: "agents.library.delete", lambda p: {"id": p["instance_id"]}
+        ),
+        "resources.list": Alias(lambda p: "capacity.throttle.status", lambda p: {}),
+        "resources.spawn": Alias(
+            lambda p: "agents.run",
+            lambda p: {"message": {"kind": p["kind"], **p["config"]}},
+        ),
+    }
+)
 
 
 async def handle_alias(
@@ -622,7 +627,9 @@ async def handle_commands_execute(
 
 # --- workflows: the business-process connector through the fleet -------------
 
-_WORKFLOW_TOOL = {"workflows.list": "list", "workflows.create": "create"}
+_WORKFLOW_TOOL = MappingProxyType(
+    {"workflows.list": "list", "workflows.create": "create"}
+)
 
 
 async def _submit_run(context: Any, params: Mapping[str, Any]) -> str:
@@ -722,208 +729,212 @@ async def handle_workflow(
 # --- registration -------------------------------------------------------------
 
 #: op id -> (summary, verb, effect, scope, params fields, handler)
-_TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
-    "fleet.servers.register": (
-        "Register one fleet server",
-        Verb.WRITE,
-        Effect.ADMIN,
-        "fleet:control",
-        {"name": _Name, "config": _Obj},
-        "handle_server",
-    ),
-    "fleet.servers.update": (
-        "Update one fleet server",
-        Verb.WRITE,
-        Effect.ADMIN,
-        "fleet:control",
-        {"name": _Name, "config": _Obj},
-        "handle_server",
-    ),
-    "fleet.servers.remove": (
-        "Remove one fleet server",
-        Verb.WRITE,
-        Effect.ADMIN,
-        "fleet:control",
-        {"name": _Name},
-        "handle_server",
-    ),
-    "fleet.servers.config.get": (
-        "Read one fleet server configuration with secrets as references",
-        Verb.ASK,
-        Effect.READ,
-        "fleet:read",
-        {"name": _Name},
-        "handle_server",
-    ),
-    "fleet.skills.toggle": (
-        "Enable or disable one skill",
-        Verb.WRITE,
-        Effect.WRITE,
-        "fleet:control",
-        {"id": _Name, "enabled": (bool, ...)},
-        "handle_engine",
-    ),
-    "fleet.tools.toggle": (
-        "Enable or disable one tool",
-        Verb.WRITE,
-        Effect.WRITE,
-        "fleet:control",
-        {"id": _Name, "enabled": (bool, ...)},
-        "handle_engine",
-    ),
-    "schedule.tasks.read": (
-        "Read the schedule calendar and logs",
-        Verb.ASK,
-        Effect.READ,
-        "ops:read",
+_TABLE: Mapping[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = (
+    MappingProxyType(
         {
-            "from_": (str, Field(alias="from", min_length=1, max_length=64)),
-            "to": (str, Field(min_length=1, max_length=64)),
-        },
-        "handle_engine",
-    ),
-    "ops.maintenance.status": (
-        "Read the maintenance status",
-        Verb.ASK,
-        Effect.READ,
-        "ops:read",
-        {},
-        "handle_maintenance_status",
-    ),
-    "ops.maintenance.run": (
-        "Run one maintenance cycle",
-        Verb.WRITE,
-        Effect.ADMIN,
-        "ops:admin",
-        {
-            "ids": (list[str], Field(default_factory=list, max_length=1000)),
-            "delete": (bool, False),
-            "evict_threshold": (float, Field(default=0.0, ge=0.0, le=1.0)),
-            "half_life_ms": (int, Field(default=HALF_LIFE_MS, ge=1)),
-        },
-        "handle_engine",
-    ),
-    "ingest.pipeline.status": (
-        "Read the ingest pipeline status",
-        Verb.ASK,
-        Effect.READ,
-        "ingest:read",
-        {},
-        "handle_alias",
-    ),
-    "ingest.pipeline.run": (
-        "Run the ingest pipeline",
-        Verb.WRITE,
-        Effect.WRITE,
-        "ingest:write",
-        {"source": _OptName},
-        "handle_alias",
-    ),
-    "workflows.list": (
-        "List workflows",
-        Verb.FIND,
-        Effect.READ,
-        "work:read",
-        {"limit": _Limit, "cursor": _Cursor},
-        "handle_workflow",
-    ),
-    "workflows.create": (
-        "Create a workflow",
-        Verb.WRITE,
-        Effect.WRITE,
-        "work:write",
-        {"definition": _Obj},
-        "handle_workflow",
-    ),
-    "workflows.run": (
-        "Run a workflow",
-        Verb.WRITE,
-        Effect.WRITE,
-        "work:write",
-        {"workflow_id": _Name, "inputs": _Obj},
-        "handle_workflow",
-    ),
-    "code.context.read": (
-        "Read code navigation context",
-        Verb.ASK,
-        Effect.READ,
-        "node:read",
-        {"action": (Literal["nav", "instances"], ...), "symbol": _OptName},
-        "handle_engine",
-    ),
-    "commands.execute": (
-        "Execute a command that is a served operation",
-        Verb.WRITE,
-        Effect.WRITE,
-        "registry:read",
-        {"command": _Name, "args": _Obj},
-        "handle_commands_execute",
-    ),
-    "commands.autocomplete": (
-        "Complete a command from the served operations",
-        Verb.FIND,
-        Effect.READ,
-        "registry:read",
-        {"prefix": (str, Field(default="", max_length=256))},
-        "handle_commands_autocomplete",
-    ),
-    "resources.list": (
-        "List resources",
-        Verb.FIND,
-        Effect.READ,
-        "capacity:read",
-        {},
-        "handle_alias",
-    ),
-    "resources.spawn": (
-        "Spawn a resource",
-        Verb.WRITE,
-        Effect.WRITE,
-        "agent:component-write",
-        {"kind": _Name, "config": _Obj},
-        "handle_alias",
-    ),
-    "roles.templates.list": (
-        "List role templates",
-        Verb.FIND,
-        Effect.READ,
-        "registry:read",
-        {"limit": _Limit, "cursor": _Cursor},
-        "handle_engine",
-    ),
-    "roles.templates.get": (
-        "Read one role template",
-        Verb.ASK,
-        Effect.READ,
-        "registry:read",
-        {"template_id": _Name},
-        "handle_engine",
-    ),
-    "roles.instances.create": (
-        "Bind a role template to the tenant profile",
-        Verb.WRITE,
-        Effect.WRITE,
-        "agent:component-write",
-        {"template_id": _Name, "binding": _Obj},
-        "handle_instance_bind",
-    ),
-    "roles.instances.update": (
-        "Narrow a role instance binding",
-        Verb.WRITE,
-        Effect.WRITE,
-        "agent:component-write",
-        {"instance_id": _Name, "template_id": _Name, "binding": _Obj},
-        "handle_instance_bind",
-    ),
-    "roles.instances.retire": (
-        "Retire a role instance",
-        Verb.WRITE,
-        Effect.WRITE,
-        "agent:component-write",
-        {"instance_id": _Name},
-        "handle_alias",
-    ),
-}
+            "fleet.servers.register": (
+                "Register one fleet server",
+                Verb.WRITE,
+                Effect.ADMIN,
+                "fleet:control",
+                {"name": _Name, "config": _Obj},
+                "handle_server",
+            ),
+            "fleet.servers.update": (
+                "Update one fleet server",
+                Verb.WRITE,
+                Effect.ADMIN,
+                "fleet:control",
+                {"name": _Name, "config": _Obj},
+                "handle_server",
+            ),
+            "fleet.servers.remove": (
+                "Remove one fleet server",
+                Verb.WRITE,
+                Effect.ADMIN,
+                "fleet:control",
+                {"name": _Name},
+                "handle_server",
+            ),
+            "fleet.servers.config.get": (
+                "Read one fleet server configuration with secrets as references",
+                Verb.ASK,
+                Effect.READ,
+                "fleet:read",
+                {"name": _Name},
+                "handle_server",
+            ),
+            "fleet.skills.toggle": (
+                "Enable or disable one skill",
+                Verb.WRITE,
+                Effect.WRITE,
+                "fleet:control",
+                {"id": _Name, "enabled": (bool, ...)},
+                "handle_engine",
+            ),
+            "fleet.tools.toggle": (
+                "Enable or disable one tool",
+                Verb.WRITE,
+                Effect.WRITE,
+                "fleet:control",
+                {"id": _Name, "enabled": (bool, ...)},
+                "handle_engine",
+            ),
+            "schedule.tasks.read": (
+                "Read the schedule calendar and logs",
+                Verb.ASK,
+                Effect.READ,
+                "ops:read",
+                {
+                    "from_": (str, Field(alias="from", min_length=1, max_length=64)),
+                    "to": (str, Field(min_length=1, max_length=64)),
+                },
+                "handle_engine",
+            ),
+            "ops.maintenance.status": (
+                "Read the maintenance status",
+                Verb.ASK,
+                Effect.READ,
+                "ops:read",
+                {},
+                "handle_maintenance_status",
+            ),
+            "ops.maintenance.run": (
+                "Run one maintenance cycle",
+                Verb.WRITE,
+                Effect.ADMIN,
+                "ops:admin",
+                {
+                    "ids": (list[str], Field(default_factory=list, max_length=1000)),
+                    "delete": (bool, False),
+                    "evict_threshold": (float, Field(default=0.0, ge=0.0, le=1.0)),
+                    "half_life_ms": (int, Field(default=HALF_LIFE_MS, ge=1)),
+                },
+                "handle_engine",
+            ),
+            "ingest.pipeline.status": (
+                "Read the ingest pipeline status",
+                Verb.ASK,
+                Effect.READ,
+                "ingest:read",
+                {},
+                "handle_alias",
+            ),
+            "ingest.pipeline.run": (
+                "Run the ingest pipeline",
+                Verb.WRITE,
+                Effect.WRITE,
+                "ingest:write",
+                {"source": _OptName},
+                "handle_alias",
+            ),
+            "workflows.list": (
+                "List workflows",
+                Verb.FIND,
+                Effect.READ,
+                "work:read",
+                {"limit": _Limit, "cursor": _Cursor},
+                "handle_workflow",
+            ),
+            "workflows.create": (
+                "Create a workflow",
+                Verb.WRITE,
+                Effect.WRITE,
+                "work:write",
+                {"definition": _Obj},
+                "handle_workflow",
+            ),
+            "workflows.run": (
+                "Run a workflow",
+                Verb.WRITE,
+                Effect.WRITE,
+                "work:write",
+                {"workflow_id": _Name, "inputs": _Obj},
+                "handle_workflow",
+            ),
+            "code.context.read": (
+                "Read code navigation context",
+                Verb.ASK,
+                Effect.READ,
+                "node:read",
+                {"action": (Literal["nav", "instances"], ...), "symbol": _OptName},
+                "handle_engine",
+            ),
+            "commands.execute": (
+                "Execute a command that is a served operation",
+                Verb.WRITE,
+                Effect.WRITE,
+                "registry:read",
+                {"command": _Name, "args": _Obj},
+                "handle_commands_execute",
+            ),
+            "commands.autocomplete": (
+                "Complete a command from the served operations",
+                Verb.FIND,
+                Effect.READ,
+                "registry:read",
+                {"prefix": (str, Field(default="", max_length=256))},
+                "handle_commands_autocomplete",
+            ),
+            "resources.list": (
+                "List resources",
+                Verb.FIND,
+                Effect.READ,
+                "capacity:read",
+                {},
+                "handle_alias",
+            ),
+            "resources.spawn": (
+                "Spawn a resource",
+                Verb.WRITE,
+                Effect.WRITE,
+                "agent:component-write",
+                {"kind": _Name, "config": _Obj},
+                "handle_alias",
+            ),
+            "roles.templates.list": (
+                "List role templates",
+                Verb.FIND,
+                Effect.READ,
+                "registry:read",
+                {"limit": _Limit, "cursor": _Cursor},
+                "handle_engine",
+            ),
+            "roles.templates.get": (
+                "Read one role template",
+                Verb.ASK,
+                Effect.READ,
+                "registry:read",
+                {"template_id": _Name},
+                "handle_engine",
+            ),
+            "roles.instances.create": (
+                "Bind a role template to the tenant profile",
+                Verb.WRITE,
+                Effect.WRITE,
+                "agent:component-write",
+                {"template_id": _Name, "binding": _Obj},
+                "handle_instance_bind",
+            ),
+            "roles.instances.update": (
+                "Narrow a role instance binding",
+                Verb.WRITE,
+                Effect.WRITE,
+                "agent:component-write",
+                {"instance_id": _Name, "template_id": _Name, "binding": _Obj},
+                "handle_instance_bind",
+            ),
+            "roles.instances.retire": (
+                "Retire a role instance",
+                Verb.WRITE,
+                Effect.WRITE,
+                "agent:component-write",
+                {"instance_id": _Name},
+                "handle_alias",
+            ),
+        }
+    )
+)
 
 
 def _replay_owner(op_id: str) -> str:
@@ -943,11 +954,13 @@ def _replay_owner(op_id: str) -> str:
 
 
 #: Each write replays under the owner that holds its effect, never in this module.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    op_id: _replay_owner(op_id)
-    for op_id, row in _TABLE.items()
-    if row[2] is not Effect.READ and row[2] is not Effect.ADMIN
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        op_id: _replay_owner(op_id)
+        for op_id, row in _TABLE.items()
+        if row[2] is not Effect.READ and row[2] is not Effect.ADMIN
+    }
+)
 
 
 def table_ids() -> tuple[str, ...]:

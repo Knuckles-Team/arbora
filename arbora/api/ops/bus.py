@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 import msgpack
@@ -190,12 +191,14 @@ async def handle_bus_dispatch(
 
 
 #: Writes replay under the engine method that holds the record, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "bus.register": "medulla:BusRegister",
-    "bus.heartbeat": "medulla:BusHeartbeat",
-    "bus.send": "medulla:StreamPublish",
-    "bus.dispatch": "medulla:SubmitWorkItem",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "bus.register": "medulla:BusRegister",
+        "bus.heartbeat": "medulla:BusHeartbeat",
+        "bus.send": "medulla:StreamPublish",
+        "bus.dispatch": "medulla:SubmitWorkItem",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

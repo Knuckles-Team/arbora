@@ -19,6 +19,7 @@ import logging
 import time
 from collections.abc import Callable, Mapping
 from datetime import datetime
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from pydantic import Field
@@ -331,11 +332,13 @@ async def handle_scm_poll(
     return {"polled": polled, "delivered": delivered}
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    # The engine dedups a feedback event by its provider event id.
-    "development.scm.event": "medulla:DeliveryFeedback",
-    "development.scm.poll": "medulla:DeliveryFeedback",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        # The engine dedups a feedback event by its provider event id.
+        "development.scm.event": "medulla:DeliveryFeedback",
+        "development.scm.poll": "medulla:DeliveryFeedback",
+    }
+)
 
 
 def body_params(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import AsyncIterator, Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -426,11 +427,13 @@ async def handle_rlm(
 
 #: Operations whose idempotency the A2A WorkItem authority owns: the
 #: idempotency key derives the task id, so a replay returns the same task.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "agents.run": "arbora.a2a.authority:WorkItemA2AAuthority",
-    "agents.tasks.message": "arbora.a2a.authority:WorkItemA2AAuthority",
-    "agents.tasks.continue": "arbora.a2a.authority:WorkItemA2AAuthority",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "agents.run": "arbora.a2a.authority:WorkItemA2AAuthority",
+        "agents.tasks.message": "arbora.a2a.authority:WorkItemA2AAuthority",
+        "agents.tasks.continue": "arbora.a2a.authority:WorkItemA2AAuthority",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

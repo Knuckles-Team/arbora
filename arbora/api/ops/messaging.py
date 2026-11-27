@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -143,11 +144,13 @@ async def handle_messaging_alert(
 
 
 #: The engine replays each KV write by its idempotency key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "webhook.memory.subscribe": "medulla:KvCas",
-    "webhook.memory.unsubscribe": "medulla:KvDelete",
-    "messaging.inbox.send": "medulla:TopicAppend",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "webhook.memory.subscribe": "medulla:KvCas",
+        "webhook.memory.unsubscribe": "medulla:KvDelete",
+        "messaging.inbox.send": "medulla:TopicAppend",
+    }
+)
 
 
 class WebhookSubscribeParams(Params):
