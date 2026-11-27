@@ -86,7 +86,7 @@ async def test_discover_tools_ranks_catalog_tools_when_the_live_probe_times_out(
 async def test_catalog_tool_probe_info_is_empty_with_no_installed_snapshot(tmp_path):
     mux = _mux_with_children(tmp_path, {CNT: []})
     assert mux._fleet_catalog is None
-    assert mux._catalog_tool_probe_info() == {}
+    assert mux.probe._catalog_tool_probe_info() == {}
 
 
 async def test_live_probe_tools_are_not_shadowed_by_the_catalog_fallback(tmp_path):

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-import arbora.fleet.multiplexer as multiplexer_module
+import arbora.fleet.fleet_probe as _fleet_probe
 from tests.fleet.test_multiplexer_dynamic_gateway import (
     CNT,
     CNT_TOOL,
@@ -44,7 +44,7 @@ async def test_admitted_skill_resolves_via_local_catalog_without_harvest(
         bodies={"skill://admitted-skill/SKILL.md": "fleet-harvested body"},
     )
     monkeypatch.setattr(
-        multiplexer_module,
+        _fleet_probe,
         "build_local_skill_catalog",
         _fixture_local_catalog(
             [
@@ -58,7 +58,7 @@ async def test_admitted_skill_resolves_via_local_catalog_without_harvest(
         ),
     )
 
-    skills = await mux._probe_skills(CNT, session)
+    skills = await mux.probe._probe_skills(CNT, session)
 
     assert len(skills) == 1
     assert skills[0]["instructions"] == "resident local-catalog body"
@@ -77,10 +77,10 @@ async def test_non_admitted_skill_has_no_body_and_no_wire_read(tmp_path, monkeyp
         bodies={"skill://unlisted-skill/SKILL.md": "child body never read"},
     )
     monkeypatch.setattr(
-        multiplexer_module, "build_local_skill_catalog", _fixture_local_catalog([])
+        _fleet_probe, "build_local_skill_catalog", _fixture_local_catalog([])
     )
 
-    skills = await mux._probe_skills(CNT, session)
+    skills = await mux.probe._probe_skills(CNT, session)
 
     assert len(skills) == 1
     assert "instructions" not in skills[0]
@@ -100,7 +100,7 @@ async def test_admitted_prompt_resolves_via_local_catalog_without_harvest(
         bodies={"prompt://provider/admitted-prompt": "fleet-harvested prompt body"},
     )
     monkeypatch.setattr(
-        multiplexer_module,
+        _fleet_probe,
         "build_local_skill_catalog",
         _fixture_local_catalog(
             [
@@ -114,7 +114,7 @@ async def test_admitted_prompt_resolves_via_local_catalog_without_harvest(
         ),
     )
 
-    prompts = await mux._probe_prompts(CNT, session)
+    prompts = await mux.probe._probe_prompts(CNT, session)
 
     assert len(prompts) == 1
     assert prompts[0]["body"] == "resident local-catalog prompt body"
@@ -131,10 +131,10 @@ async def test_non_admitted_prompt_has_no_body_and_no_wire_read(tmp_path, monkey
         bodies={"prompt://provider/unlisted-prompt": "child body never read"},
     )
     monkeypatch.setattr(
-        multiplexer_module, "build_local_skill_catalog", _fixture_local_catalog([])
+        _fleet_probe, "build_local_skill_catalog", _fixture_local_catalog([])
     )
 
-    prompts = await mux._probe_prompts(CNT, session)
+    prompts = await mux.probe._probe_prompts(CNT, session)
 
     assert len(prompts) == 1
     assert "body" not in prompts[0]

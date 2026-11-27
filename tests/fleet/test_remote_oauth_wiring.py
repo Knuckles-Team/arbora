@@ -272,7 +272,7 @@ def test_cache_probe_never_stores_oauth_gated_result(tmp_path):
     mux._catalog = {
         "acme-remote": {"url": RESOURCE_URL, "oauth_provider": _provider_cfg()}
     }
-    mux._cache_probe("acme-remote", {"tools": [{"name": "t"}], "error": None})
+    mux.probe._cache_probe("acme-remote", {"tools": [{"name": "t"}], "error": None})
     assert "acme-remote" not in mux._probe_cache
 
 
@@ -289,15 +289,15 @@ def test_probe_cache_hit_always_misses_for_oauth_gated_server(tmp_path):
         "error": None,
         "probed_at": time.time(),
     }
-    assert mux._probe_cache_hit("acme-remote") is None
+    assert mux.probe._probe_cache_hit("acme-remote") is None
 
 
 def test_probe_cache_unaffected_for_ordinary_servers(tmp_path):
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     mux._catalog = {"plain-remote": {"url": RESOURCE_URL}}
-    mux._cache_probe("plain-remote", {"tools": [], "error": None})
+    mux.probe._cache_probe("plain-remote", {"tools": [], "error": None})
     assert "plain-remote" in mux._probe_cache
-    assert mux._probe_cache_hit("plain-remote") is not None
+    assert mux.probe._probe_cache_hit("plain-remote") is not None
 
 
 # ---------------------------------------------------------------------------
@@ -410,7 +410,7 @@ def test_private_binding_sidechannel_rejects_public_catalog_spoof(tmp_path):
         key_version=1,
         grant_revision="revision-a",
     )
-    mux._record_discovery_binding("acme-remote", info, binding)
+    mux.probe._record_discovery_binding("acme-remote", info, binding)
 
     # The public shape is ordinary JSON and a copied/caller-shaped dict cannot
     # inherit private authority merely by carrying the old field name.
@@ -418,12 +418,12 @@ def test_private_binding_sidechannel_rejects_public_catalog_spoof(tmp_path):
     json.dumps(info)
     spoof = dict(info)
     spoof["_discovery_binding"] = binding
-    assert mux._take_discovery_bindings({"acme-remote": spoof}) == {}
+    assert mux.probe._take_discovery_bindings({"acme-remote": spoof}) == {}
 
-    assert mux._take_discovery_bindings({"acme-remote": info}) == {
+    assert mux.probe._take_discovery_bindings({"acme-remote": info}) == {
         "acme-remote": binding
     }
-    assert mux._take_discovery_bindings({"acme-remote": info}) == {}
+    assert mux.probe._take_discovery_bindings({"acme-remote": info}) == {}
 
 
 @pytest.mark.asyncio
@@ -439,33 +439,33 @@ async def test_local_probe_mints_tenant_visibility_without_public_metadata(
         assert info["error"] is None
         assert "_discovery_binding" not in info
         json.dumps(info)
-        bindings = mux._take_discovery_bindings({"local": info})
+        bindings = mux.probe._take_discovery_bindings({"local": info})
 
     assert isinstance(bindings["local"], TenantLocalDiscoveryBinding)
     assert bindings["local"].tenant_id == "tenant-local"
     assert bindings["local"].authority == "tenant_local"
     spoof = dict(info)
     spoof["_discovery_binding"] = bindings["local"]
-    assert mux._take_discovery_bindings({"local": spoof}) == {}
+    assert mux.probe._take_discovery_bindings({"local": spoof}) == {}
     other = verified_actor(actor_id="other", tenant_id="other-tenant")
     with use_actor(other), use_session(verified_session(other)):
-        assert mux._take_discovery_bindings({"local": info}) == {}
+        assert mux.probe._take_discovery_bindings({"local": info}) == {}
 
 
 def test_local_cache_binding_requires_verified_session(tmp_path):
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     mux._catalog = {"local": {"url": RESOURCE_URL}}
-    info = mux._cache_probe(
+    info = mux.probe._cache_probe(
         "local", {"tools": [], "skills": [], "prompts": [], "error": None}
     )
     with suspend_session():
-        assert mux._take_discovery_bindings({"local": info}) == {}
-    failed = mux._cache_probe(
+        assert mux.probe._take_discovery_bindings({"local": info}) == {}
+    failed = mux.probe._cache_probe(
         "local", {"tools": [], "skills": [], "prompts": [], "error": "unreachable"}
     )
     actor = verified_actor(tenant_id="tenant-local")
     with use_actor(actor), use_session(verified_session(actor)):
-        assert mux._take_discovery_bindings({"local": failed}) == {}
+        assert mux.probe._take_discovery_bindings({"local": failed}) == {}
 
 
 def test_failed_probe_purges_prior_local_binding_and_cache_authority(tmp_path):
@@ -473,17 +473,17 @@ def test_failed_probe_purges_prior_local_binding_and_cache_authority(tmp_path):
     mux._catalog = {"local": {"url": RESOURCE_URL}}
     actor = verified_actor(tenant_id="tenant-local")
     with use_actor(actor), use_session(verified_session(actor)):
-        info = mux._cache_probe(
+        info = mux.probe._cache_probe(
             "local", {"tools": [], "skills": [], "prompts": [], "error": None}
         )
         binding = TenantLocalDiscoveryBinding(tenant_id="tenant-local")
-        mux._record_discovery_binding("local", info, binding)
-        assert mux._take_discovery_bindings({"local": info}) == {"local": binding}
+        mux.probe._record_discovery_binding("local", info, binding)
+        assert mux.probe._take_discovery_bindings({"local": info}) == {"local": binding}
 
-        failed = mux._cache_probe(
+        failed = mux.probe._cache_probe(
             "local", {"tools": [], "skills": [], "prompts": [], "error": "unreachable"}
         )
-        assert mux._take_discovery_bindings({"local": failed}) == {}
+        assert mux.probe._take_discovery_bindings({"local": failed}) == {}
         assert not any(
             record[0] == "local"
             for record in mux._local_discovery_cache_authority.values()
@@ -494,13 +494,13 @@ def test_local_cache_binding_can_be_minted_on_verified_sync_thread(tmp_path):
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     mux._catalog = {"local": {"url": RESOURCE_URL}}
     with suspend_session():
-        info = mux._cache_probe(
+        info = mux.probe._cache_probe(
             "local", {"tools": [], "skills": [], "prompts": [], "error": None}
         )
     actor = verified_actor(tenant_id="tenant-local")
     with use_actor(actor), use_session(verified_session(actor)):
-        mux._bind_local_discovery_bindings({"local": info})
-        bindings = mux._take_discovery_bindings({"local": info})
+        mux.probe._bind_local_discovery_bindings({"local": info})
+        bindings = mux.probe._take_discovery_bindings({"local": info})
     assert isinstance(bindings["local"], TenantLocalDiscoveryBinding)
 
 
@@ -553,5 +553,5 @@ async def test_probe_catalog_returns_plain_oauth_snapshot_and_private_binding(
     info = catalog["acme-remote"]
     assert "_discovery_binding" not in info
     json.dumps(info)
-    bindings = mux._take_discovery_bindings(catalog)
+    bindings = mux.probe._take_discovery_bindings(catalog)
     assert bindings["acme-remote"].principal_id == actor.actor_id

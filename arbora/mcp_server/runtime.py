@@ -1091,7 +1091,7 @@ def _attach_headless_fleet_loader(
     full exception is logged server-side.
     """
     from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
-    from arbora.fleet.multiplexer import attach_fleet_loader
+    from arbora.fleet.fleet_loader import attach_fleet_loader
 
     try:
         attach_fleet_loader(

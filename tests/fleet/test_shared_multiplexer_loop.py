@@ -173,7 +173,7 @@ async def test_native_delegation_uses_served_probe_child_pool_and_bounds(
     monkeypatch.setattr(
         "arbora.fleet.child_mounts.require_fleet_capability", lambda *_args: None
     )
-    mux.probe_server = AsyncMock(  # type: ignore[method-assign]
+    mux.probe.probe_server = AsyncMock(  # type: ignore[method-assign]
         return_value={"tools": [{"name": "search", "inputSchema": {}}], "error": None}
     )
     mux.mounts.mount_child = AsyncMock(return_value=[])  # type: ignore[method-assign]

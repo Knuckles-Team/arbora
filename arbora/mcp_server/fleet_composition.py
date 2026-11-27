@@ -255,8 +255,8 @@ def bind_fleet_gateway(
     from arbora.fleet.catalog_composition import compose_multiplexer_ops
     from arbora.fleet.child_mounts import clean_tool_name
     from arbora.fleet.feeds import FEED_INTAKE
+    from arbora.fleet.fleet_loader import make_governed_tool_mount
     from arbora.fleet.gateway_ops import compose_fleet_gateway
-    from arbora.fleet.multiplexer import make_governed_tool_mount
     from arbora.mcp_server.registration import RESIDENT_NAMES
 
     def native_name(item: Any) -> str:

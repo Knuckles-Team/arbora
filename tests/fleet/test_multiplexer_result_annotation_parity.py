@@ -18,7 +18,8 @@ import mcp.types
 import pytest
 
 from arbora.fleet.child_mounts import _make_forwarder
-from arbora.fleet.multiplexer import ToolResult, tool_result_from_child
+from arbora.fleet.fleet_loader import tool_result_from_child
+from arbora.fleet.multiplexer import ToolResult
 from tests.fleet.catalog_fixture import (
     bind_governed_forwarder_fixture,
     multiplexer_from_fixture,

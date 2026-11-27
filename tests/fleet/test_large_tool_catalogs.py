@@ -146,6 +146,7 @@ class _Mux:
         self.calls: list[tuple[str, bool]] = []
         self.tools = ["a"]
         self.fail = False
+        self.probe = SimpleNamespace(_probe_cache_hit=self._probe_cache_hit)
 
     def _probe_cache_hit(self, server: str) -> dict[str, Any] | None:
         return None if server in self.stale else self._probe_cache.get(server)

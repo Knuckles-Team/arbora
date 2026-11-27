@@ -158,7 +158,7 @@ def _attach_fleet_runtime(
     """Attach the mandatory fleet surface or fail before serving."""
 
     try:
-        from arbora.fleet.multiplexer import attach_fleet_loader
+        from arbora.fleet.fleet_loader import attach_fleet_loader
 
         return attach_fleet_loader(
             mcp,

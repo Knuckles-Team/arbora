@@ -162,17 +162,24 @@ def test_find_catalog_op_refuses_not_ready() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R063")
 async def test_catalog_detail_rows_carry_input_schema() -> None:
-    from arbora.fleet.multiplexer import MCPMultiplexer
+    from arbora.fleet.tool_discovery import ToolDiscovery
     from arbora.fleet.tool_rows import ProbeToolRows
 
-    mux: Any = SimpleNamespace(
-        _tool_rows=ProbeToolRows(),
-        mounts=SimpleNamespace(_tool_enabled=lambda server_name, tool_name: True),
+    mounts = SimpleNamespace(_tool_enabled=lambda server_name, tool_name: True)
+    discovery = ToolDiscovery(
+        fleet=SimpleNamespace(),
+        children={},
+        exposed=set(),
+        probe_cache={},
+        probe=SimpleNamespace(),  # type: ignore[arg-type]
+        mounts=lambda: mounts,
+        tool_to_server=lambda: {},
+        tool_rows=lambda: ProbeToolRows(),
+        load_catalog=lambda: {},
         tool_dispatchable=lambda prefixed_name: True,
     )
     schema = {"type": "object", "properties": {"url": {"type": "string"}}}
-    rows = await MCPMultiplexer._catalog_detail_tools(
-        mux,
+    rows = await discovery._catalog_detail_tools(
         "webarchiver-mcp",
         "webarchiver",
         {"tools": [{"name": "archive", "description": "d", "inputSchema": schema}]},

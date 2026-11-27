@@ -14,15 +14,12 @@ from typing import Any, TypedDict
 
 from fastmcp.exceptions import ToolError
 
+from arbora.fleet.child_mounts import provider_tools
 from arbora.fleet.child_payload_bounds import (
     assert_bounded_delegated_value,
     child_result_payload,
 )
-from arbora.fleet.multiplexer import (
-    MCPMultiplexer,
-    provider_tools,
-    require_fleet_capability,
-)
+from arbora.fleet.multiplexer import MCPMultiplexer, require_fleet_capability
 from arbora.fleet.shared_multiplexer import run_on_served_multiplexer
 from arbora.mcp_server.host_caches import ToolTable
 
