@@ -10,8 +10,10 @@ returned unchanged. A stopped unit is ``unhealthy`` with reason
 
 from __future__ import annotations
 
+import logging
+import subprocess
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -20,12 +22,17 @@ from arbora.fleet.health import FleetHealthSnapshot, _dependency, _with_dependen
 __all__ = [
     "INGEST_WORKER_DEPENDENCY",
     "IngestWorkerHealth",
+    "IngestWorkerSupervisor",
     "IngestWorkerUnit",
     "declare_ingest_worker_unit",
+    "ingest_worker_health_snapshot",
     "with_ingest_worker_health",
+    "with_ingest_worker_not_configured",
 ]
 
 INGEST_WORKER_DEPENDENCY = "ingest_worker"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -83,3 +90,79 @@ def with_ingest_worker_health(
             "unavailable", checked, None, (f"ingest_worker: {health.reason}",)
         )
     return _with_dependency(snapshot, INGEST_WORKER_DEPENDENCY, dependency), health
+
+
+class IngestWorkerSupervisor:
+    """The host's supervision of one declared worker unit: start, observe, stop.
+
+    The host owns the process it started and nothing else. ``spawn`` is the one
+    seam that starts a process (``subprocess.Popen`` in production); ``running``
+    reports the live state the health route reads.
+    """
+
+    def __init__(
+        self,
+        unit: IngestWorkerUnit,
+        *,
+        read_metrics: Callable[[], Awaitable[Mapping[str, Any]]] | None = None,
+        spawn: Callable[[tuple[str, ...]], Any] = lambda argv: subprocess.Popen(argv),
+    ) -> None:
+        self.unit = unit
+        self.read_metrics = read_metrics
+        self._spawn = spawn
+        self._process: Any = None
+
+    def start(self) -> bool:
+        """Start the worker once; a failed start is logged, never raised into boot."""
+        if self._process is not None:
+            return True
+        try:
+            self._process = self._spawn(self.unit.argv)
+        except OSError as exc:
+            logger.warning("ingest worker did not start: %s", type(exc).__name__)
+            return False
+        return True
+
+    def running(self) -> bool:
+        process = self._process
+        return process is not None and process.poll() is None
+
+    def stop(self) -> None:
+        process, self._process = self._process, None
+        if process is not None and process.poll() is None:
+            process.terminate()
+
+
+def with_ingest_worker_not_configured(
+    snapshot: FleetHealthSnapshot, *, now: float | None = None
+) -> FleetHealthSnapshot:
+    """A fleet that runs no ingest worker reports ``not_configured``, never unhealthy."""
+    checked = time.time() if now is None else float(now)
+    dependency = _dependency(
+        "not_configured", checked, None, ("ingest_worker: not configured",)
+    )
+    return _with_dependency(snapshot, INGEST_WORKER_DEPENDENCY, dependency)
+
+
+async def ingest_worker_health_snapshot(
+    snapshot: FleetHealthSnapshot, supervisor: IngestWorkerSupervisor | None
+) -> FleetHealthSnapshot:
+    """The snapshot with the supervised worker's health, or ``not_configured``."""
+    if supervisor is None:
+        return with_ingest_worker_not_configured(snapshot)
+    metrics: Mapping[str, Any] = {}
+    unreadable = False
+    if supervisor.running() and supervisor.read_metrics is not None:
+        try:
+            metrics = await supervisor.read_metrics()
+        except Exception:  # noqa: BLE001 - an unreachable read is a state, not a crash
+            unreadable = True
+
+    def read() -> Mapping[str, Any]:
+        if unreadable:
+            raise ConnectionError("metrics read failed")
+        return metrics
+
+    return with_ingest_worker_health(
+        snapshot, running=supervisor.running, read_metrics=read
+    )[0]

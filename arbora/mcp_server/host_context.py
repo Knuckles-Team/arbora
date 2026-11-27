@@ -88,8 +88,10 @@ def bind_ranking(host: HostContext, invocation: Any) -> None:
     A host with no engine endpoint has no invocation, so the port stays unbound and
     every ranking site answers the lexical floor (ARBORA-FLEET-R083.5).
     """
-    from arbora.fleet.ranking import engine_ask
+    from arbora.fleet.ranking import engine_ask, ranking_probe, schemas_published
+    from arbora.observability.runtime_health import register_health_probe
 
+    register_health_probe("ranking", ranking_probe(host.fleet.ranking))
     send = getattr(invocation, "engine_send", None)
     schema = getattr(invocation, "decision_feature_schema", None)
     principal = getattr(invocation, "decision_principal", None)
@@ -97,5 +99,6 @@ def bind_ranking(host: HostContext, invocation: Any) -> None:
     if send is None or schema is None or principal is None or tenant is None:
         return
     host.fleet.ranking.bind(
-        engine_ask(send, tenant=tenant, feature_schema=schema, principal=principal)
+        engine_ask(send, tenant=tenant, feature_schema=schema, principal=principal),
+        published=schemas_published(schema, tenant),
     )

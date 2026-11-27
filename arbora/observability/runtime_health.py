@@ -626,6 +626,18 @@ def _check_embedding_endpoint(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uni
     return _bound_probe("embedding_endpoint", mandatory=False)
 
 
+def _check_ranking(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+    """Which order ``find`` serves: the engine's, or the floor and why."""
+    return _bound_probe("ranking", mandatory=False)
+
+
+def run_bound_probe(name: str) -> dict[str, Any] | None:
+    """One host-bound probe's result, or ``None`` when the host bound none."""
+    with _HOST_PROBES_LOCK:
+        bound = name in _HOST_PROBES
+    return _bound_probe(name, mandatory=False) if bound else None
+
+
 def _check_source_provenance(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
     """Source-layout / immutable-image provenance (R-24/U-26/BUG-172).
 
@@ -681,6 +693,7 @@ _CHECKS: tuple[tuple[str, Callable[[Any], dict[str, Any]]], ...] = (
     ("stardog_mirror", _check_stardog_mirror),
     ("kg_mirrors", _check_kg_mirrors),
     ("embedding_endpoint", _check_embedding_endpoint),
+    ("ranking", _check_ranking),
 )
 
 
