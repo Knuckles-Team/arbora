@@ -3,10 +3,12 @@
 ``order.proposal.confirm`` reads the engine's order admission receipt, compares the
 admission digest the caller confirmed and the checked actor, and issues a
 confirmation receipt binding them. It routes no order and calls no provider; order
-routing stays in the emerald-exchange tools. PIN-LAG: the engine does not publish
-the receipt type or its by-proposal read yet, so the operation is not registered
-(``operations()`` is empty) until both exist, as ``decide.recommendation.approve``
-waits for its approval receipt.
+routing stays in the emerald-exchange tools. The receipt read is the engine's
+``FinanceOrderReceiptGet {request: {proposal_id}}``, answering
+``{receipt_id, receipt_digest, receipt}``; ``receipt_digest`` is the admission digest.
+An absent, unpromoted or foreign proposal all refuse ``ORDER_RECEIPT_NOT_FOUND``, so
+no caller can tell them apart. PIN-LAG: the pinned release lacks the method, so the
+operation is not registered (``operations()`` is empty) until the re-pin carries it.
 """
 
 from __future__ import annotations
@@ -34,16 +36,10 @@ from arbora.api.registry import (
     SubjectSource,
     Verb,
 )
-from arbora.pin_lag.medulla import (
-    PinLagUnavailable,
-    refusal,
-    require_methods,
-    require_models,
-)
+from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 
 SCOPE = "agent:decision-write"
-#: What the engine must publish (requested under MEDULLA FOR ARBORA w15).
-RECEIPT_MODELS = ("OrderAdmissionReceipt",)
+#: What the engine publishes on ``main`` (MEDULLA w16, MEDULLA-FINANCE-PRIMITIVES-R015.1.4).
 RECEIPT_METHODS = ("FinanceOrderReceiptGet",)
 _DIGEST = r"^[0-9a-f]{64}$"
 
@@ -59,9 +55,8 @@ class OrderProposalConfirmResult(_common.Params):
 
 
 def receipt_published() -> bool:
-    """Whether the pinned engine publishes the admission receipt and its read."""
+    """Whether the pinned engine publishes the admission receipt read."""
     try:
-        require_models(RECEIPT_MODELS)
         require_methods(*RECEIPT_METHODS)
     except PinLagUnavailable:
         return False
@@ -78,19 +73,19 @@ async def handle_order_proposal_confirm(
 ) -> dict[str, Any]:
     """Issue the confirmation receipt when the engine's admission digest still matches."""
     try:
-        require_models(RECEIPT_MODELS)
         require_methods(*RECEIPT_METHODS)
     except PinLagUnavailable as missing:
         raise refusal(missing) from missing
     admission = await engine_send(
-        context, RECEIPT_METHODS[0], {"proposal_id": params["proposal_id"]}
+        context, RECEIPT_METHODS[0], {"request": {"proposal_id": params["proposal_id"]}}
     )
-    if not isinstance(admission, Mapping) or admission.get("snapshot_digest") is None:
+    if not isinstance(admission, Mapping) or not admission.get("receipt_id"):
         raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
-    if admission.get("admission_digest") != params["admission_digest"]:
+    if admission.get("receipt_digest") != params["admission_digest"]:
         raise OperationRefused("PLAN_STALE", {"reason": "admission_digest_mismatch"})
     binding = {
         "proposal_id": params["proposal_id"],
+        "receipt_id": str(admission["receipt_id"]),
         "admission_digest": params["admission_digest"],
         "approver_set_digest": params["approver_set_digest"],
         "confirmed_by": str(context.caller.principal),
@@ -127,7 +122,14 @@ def operations() -> tuple[OpSpec, ...]:
 
 specs = operations
 
+#: The receipt is a pure function of the engine's immutable admission receipt, so a
+#: replay of the same key reads the same receipt and issues the same confirmation.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "order.proposal.confirm": "medulla:FinanceOrderReceiptGet",
+}
+
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "OrderProposalConfirmParams",
     "confirmation_digest",
     "handle_order_proposal_confirm",
