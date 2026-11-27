@@ -46,6 +46,7 @@ _CURATED_SCOPES = (
     "explain:read",
     "capacity:read",
     "capacity:admin",
+    "capacity:lease",
     "ingest:write",
     "federation:read",
     "finance:read",

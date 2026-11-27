@@ -12,6 +12,7 @@ from arbora.a2a.run_identity import A2ARunIdentity
 from arbora.api.ops.ports import OperationPorts
 from arbora.control_plane.admission.port import ControlPlaneAppAdmission
 from arbora.fleet.acceptance_source import OnboardingAcceptance
+from arbora.fleet.capacity_leases import EngineCapacityLeases
 
 __all__ = ["build_operation_ports"]
 
@@ -26,4 +27,5 @@ def build_operation_ports() -> OperationPorts:
         run_settings=agent_runs,
         plan_publication=current_plan_publication,
         run_executors=agent_runs.AgentRunPort,
+        capacity_leases=EngineCapacityLeases(),
     )

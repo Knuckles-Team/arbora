@@ -20,6 +20,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 __all__ = [
     "PORTS_BINDING",
     "AppAdmission",
+    "CapacityLeases",
     "FleetAcceptance",
     "NativeRunIdentity",
     "OperationPorts",
@@ -118,6 +119,36 @@ class PlanPublication(Protocol):
     ) -> AbstractContextManager[Any]: ...
 
 
+class CapacityLeases(Protocol):
+    """The engine's build-slot lease family (ARBORA-CAPACITY-R754.1).
+
+    The holder and tenant are arguments the handler derives from the verified caller; the
+    port builds the engine request from them and returns the engine's lease record.
+    """
+
+    async def request(
+        self, context: Any, *, owner: str, tenant: str, params: Mapping[str, Any]
+    ) -> dict[str, Any]: ...
+
+    async def mutate(
+        self,
+        context: Any,
+        method: str,
+        *,
+        owner: str,
+        tenant: str,
+        params: Mapping[str, Any],
+    ) -> dict[str, Any]: ...
+
+    async def revoke(
+        self, context: Any, *, tenant: str, params: Mapping[str, Any]
+    ) -> dict[str, Any]: ...
+
+    async def status(
+        self, context: Any, *, tenant: str, lease_id: str
+    ) -> dict[str, Any]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class OperationPorts:
     """One field per port; the host composes the fields it serves and leaves the rest unbound."""
@@ -129,6 +160,7 @@ class OperationPorts:
     run_settings: RunSettings | None = None
     plan_publication: PlanPublication | None = None
     run_executors: RunExecutors | None = None
+    capacity_leases: CapacityLeases | None = None
 
     @classmethod
     def unbound(cls) -> OperationPorts:
