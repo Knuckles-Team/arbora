@@ -22,7 +22,7 @@ from collections.abc import AsyncIterator, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Final, Literal, Protocol
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.fleet.mcp_resource_reconciliation import (
     ReconciliationReceipt,
     require_reconciled_for_swap,
@@ -252,7 +252,7 @@ RECEIPT_MAX_AGE_BOUNDS_MS: Final = (1_000, 3_600_000)
 
 def _bounded_setting(key: str, default: float, bounds: tuple[float, float]) -> float:
     """A configured number inside ``bounds``; out of range is refused, not clamped."""
-    value = float(setting(key, default))
+    value = float(read_env(key, default))
     low, high = bounds
     if not low <= value <= high:
         raise ValueError(f"{key} must be between {low:g} and {high:g}")

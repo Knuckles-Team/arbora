@@ -26,9 +26,9 @@ def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
     from arbora.core.settings import runtime_config as config
 
     monkeypatch.setattr(
-        "arbora.fleet.multiplexer.setting",
-        lambda alias: (
-            "direct-runtime-material" if alias == "CHILD_TOKEN_ALIAS" else None
+        "arbora.fleet.multiplexer.read_reference",
+        lambda alias, default="": (
+            "direct-runtime-material" if alias == "CHILD_TOKEN_ALIAS" else default
         ),
     )
     monkeypatch.setattr(
@@ -52,7 +52,9 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
 ) -> None:
     from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr("arbora.fleet.multiplexer.setting", lambda _alias: None)
+    monkeypatch.setattr(
+        "arbora.fleet.multiplexer.read_reference", lambda _alias, default="": default
+    )
     monkeypatch.setattr(
         config,
         "mcp_fleet_secret_refs",
@@ -82,7 +84,9 @@ def test_fleet_runtime_alias_fails_closed_without_direct_or_mapped_value(
 ) -> None:
     from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr("arbora.fleet.multiplexer.setting", lambda _alias: None)
+    monkeypatch.setattr(
+        "arbora.fleet.multiplexer.read_reference", lambda _alias, default="": default
+    )
     monkeypatch.setattr(config, "mcp_fleet_secret_refs", {}, raising=False)
 
     with pytest.raises(RuntimeError, match="unavailable"):
