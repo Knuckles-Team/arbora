@@ -39,7 +39,7 @@ def test_without_arbora_the_harness_fails_closed():
 @pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_the_record_binds_native_tools_fleet_and_keepalive(monkeypatch):
     built = []
-    host_context = build_host_context(lambda: None)
+    host_context = build_host_context()
     host_context.caches.tools["graph_query"] = lambda: None
     monkeypatch.setitem(runtime.NATIVE_INTENT_TOOLS, "find", lambda: None)
     monkeypatch.setattr(
@@ -113,7 +113,7 @@ def test_the_record_binds_remote_toolsets_and_tool_clients(monkeypatch, tmp_path
         return []
 
     monkeypatch.setattr("pydantic_ai.mcp.load_mcp_toolsets", fake_load)
-    ports = _ports(build_host_context(lambda: None))
+    ports = _ports(build_host_context())
 
     config = tmp_path / "mcp_config.json"
     assert ports.load_config_toolsets(config) == []
@@ -138,7 +138,7 @@ def test_tool_client_reports_tool_errors_as_host_errors():
     def broken() -> int:
         raise ToolError("nope")
 
-    ports = _ports(build_host_context(lambda: None))
+    ports = _ports(build_host_context())
 
     async def run():
         async with ports.open_tool_client(server) as client:

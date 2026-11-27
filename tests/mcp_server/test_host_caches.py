@@ -21,13 +21,14 @@ def _register(caches: HostCaches) -> None:
         action_policies=ActionPolicies(),
         approvals=ApprovalDecisions(),
         caches=caches,
+        engine_provider=lambda: None,
         intent_tools=False,
     )
 
 
 def test_two_host_caches_register_independent_tool_tables() -> None:
-    first = build_host_context(lambda: None).caches
-    second = build_host_context(lambda: None).caches
+    first = build_host_context().caches
+    second = build_host_context().caches
     assert first.tools is not second.tools
 
     _register(first)

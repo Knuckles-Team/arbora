@@ -64,7 +64,7 @@ MCP_APP_TOOLS = frozenset({"graph_task_progress_app", "graph_trace_waterfall_app
 def served():
     """``(mcp, {name: tools/list definition})`` for a freshly built arbora."""
     routes = dict(runtime.ACTION_TOOL_ROUTES)
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     try:
         _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
         listed = asyncio.run(mcp.list_tools())

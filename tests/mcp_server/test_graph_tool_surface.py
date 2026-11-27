@@ -48,7 +48,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
             ("sdk_a2a", mcp, None)
         ),
     )
-    host = build_host_context(lambda: None)
+    host = build_host_context()
 
     runtime._register_graph_tool_surface(served, host=host)
 
