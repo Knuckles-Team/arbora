@@ -443,7 +443,7 @@ class ArboraConfig(BaseModel):
     gateway_metrics: bool = Field(
         default=True,
         alias="GATEWAY_METRICS",
-        description="Expose Python-tier Prometheus metrics on the gateway: a pure-ASGI middleware recording ``meristem_gateway_*`` series (request totals, duration histogram, in-flight gauge, rate-limit/breaker counters) plus a ``GET /metrics`` endpoint (exempt from auth — scrapers cannot mint JWTs). Requires...",
+        description="Expose Python-tier Prometheus metrics on the gateway: a pure-ASGI middleware recording ``arbora_gateway_*`` series (request totals, duration histogram, in-flight gauge, rate-limit/breaker counters) plus a ``GET /metrics`` endpoint (exempt from auth — scrapers cannot mint JWTs). Requires...",
     )
     gateway_rate_burst: float = Field(
         default=0.0,
