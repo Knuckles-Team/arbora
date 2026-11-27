@@ -121,7 +121,7 @@ async def test_completed_run_drives_one_tick_and_probes_drive_none(
     session = _session()
     cycle = _Cycle()
     plans = {"run-1": _plan(3), "run-2": _plan(1), "run-3": _plan(4, 5)}
-    monkeypatch.setattr(agent_runs, "decide_run", lambda req: plans[req.run_id])
+    monkeypatch.setattr(agent_runs, "decide_run", lambda req, config: plans[req.run_id])
     port = agent_runs.AgentRunPort(
         _Executor(),
         origins=RunOriginRegistry(),
