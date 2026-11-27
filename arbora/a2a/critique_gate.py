@@ -12,7 +12,6 @@ rejected or abstained evidence leaves the output held and sends nothing.
 from __future__ import annotations
 
 import hashlib
-import json
 from typing import Any
 
 from pydantic import ConfigDict, Field, ValidationError
@@ -20,6 +19,7 @@ from pydantic.alias_generators import to_camel
 
 from .confirm import ApprovalChain
 from .held_item_admission import HeldItemRefusal, HeldItemSubject
+from .held_output import artifacts_bytes
 from .models import A2ATask, _WireModel
 from .tool_action_admission import SHA256_HEX
 
@@ -61,12 +61,7 @@ class HeldOutput(_WireModel):
 
 def output_digest(task: A2ATask) -> str:
     """The digest of the exact output: the task's artifacts, canonically encoded."""
-    body = [
-        artifact.model_dump(mode="json", by_alias=True)
-        for artifact in task.artifacts or ()
-    ]
-    raw = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    return hashlib.sha256(artifacts_bytes(task.artifacts)).hexdigest()
 
 
 def _preflight(task: A2ATask) -> HeldOutput:

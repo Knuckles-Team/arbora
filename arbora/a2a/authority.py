@@ -16,6 +16,7 @@ from scion_sdk.privacy import persistence_reference
 
 from arbora.run_origin import RunOriginRegistry
 
+from .held_output import held_metadata
 from .models import (
     A2AArtifact,
     A2AMessage,
@@ -206,8 +207,13 @@ class WorkItemA2AAuthority:
         delegations: Any = None,
         delegation_reader: Any = None,
         clock: Callable[[], float] = time.time,
+        held_output_refs: Callable[[str, Any], Any] | None = None,
     ) -> None:
         self._engine_provider = engine_provider
+        #: ``(task_id, session) -> HeldOutputRefs | None``: the refs of the held
+        #: output of one run (ARBORA-A2A-R022). ``None`` sets no held output, and the
+        #: run then carries no block, so the critique gate holds its output.
+        self._held_output_refs = held_output_refs
         #: Records the run's ``agent_run`` delegation at admission
         #: (``ARBORA-A2A-R001.2.2``); ``None`` admits a run without one.
         self.delegations = delegations
@@ -634,6 +640,11 @@ class WorkItemA2AAuthority:
             self._executor = AgentRunPort(origins=self._origins)
         return self._executor
 
+    def _held_refs(self, task_id: str, session: Any) -> Any:
+        """The received refs of this run's held output, or ``None`` (none composed)."""
+        provider = self._held_output_refs
+        return None if provider is None else provider(task_id, session)
+
     async def _execute_claimed_run(
         self,
         work_engine: Any,
@@ -676,6 +687,7 @@ class WorkItemA2AAuthority:
                     else None
                 ),
                 hosted_invocation=self.hosted_invocation,
+                held_output=self._held_refs(task_id, session),
             ),
             (
                 bind_admitted_claim(
@@ -1573,8 +1585,14 @@ class WorkItemA2AAuthority:
         self, task_id: str, *, item: dict[str, Any]
     ) -> list[A2AArtifact] | None:
         """Read an existing terminal payload, never reconstruct a receipt."""
+        return self._persisted_reply(task_id, item=item)[0]
+
+    def _persisted_reply(
+        self, task_id: str, *, item: dict[str, Any]
+    ) -> tuple[list[A2AArtifact] | None, dict[str, Any] | None]:
+        """The terminal reply and the held-output block its run emitted, if any."""
         if item.get("status") != "succeeded":
-            return None
+            return None, None
         run_id = str(item.get("metadata", {}).get("a2a_run_id") or task_id)
         engine, _work_engine = self._engine()
         rows = engine.query_cypher(
@@ -1585,7 +1603,7 @@ class WorkItemA2AAuthority:
             {"run_id": run_id, "event_type": "graph_complete"},
         )
         if rows == []:
-            return None
+            return None, None
         if not isinstance(rows, list) or len(rows) != 1:
             raise RuntimeError("durable A2A reply is unavailable")
         row = rows[0]
@@ -1595,14 +1613,11 @@ class WorkItemA2AAuthority:
         if len(text) > _MAX_OUTPUT_CHARS:
             raise _ReplyUnavailable("reply_too_large")
         if not text:
-            return None
-        return [
-            A2AArtifact(
-                artifact_id=f"{task_id}:reply",
-                name="reply",
-                parts=[A2ATextPart(text=text)],
-            )
-        ]
+            return None, None
+        from .held_output import lift_held_output, reply_artifact
+
+        held = lift_held_output(event.get("result"))
+        return [reply_artifact(task_id, text)], held
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
         return await self.get(task_id, include_committed_event=True)
@@ -1628,9 +1643,10 @@ class WorkItemA2AAuthority:
         task = self._project(item, task_id=task_id)
         await self._attach_run_usage(task, item, read_session)
         try:
-            task.artifacts = await asyncio.to_thread(
-                self._persisted_artifacts, task_id, item=item
+            task.artifacts, held = await asyncio.to_thread(
+                self._persisted_reply, task_id, item=item
             )
+            task.metadata.update(held_metadata(held))
         except _ReplyUnavailable as exc:
             task.artifacts = None
             task.metadata["arbora"]["reply"] = exc.availability.model_dump(mode="json")
