@@ -42,32 +42,44 @@ def load_declarations(path: Path | None = None) -> list[dict[str, Any]]:
     seen: set[str] = set()
     out: list[dict[str, Any]] = []
     for row in rows:
-        if not isinstance(row, Mapping) or set(row) - _ALLOWED:
-            raise DataPrepError(
-                "a declaration holds only capability, field_refs, policy_digest"
-            )
-        capability = row.get("capability")
-        refs = row.get("field_refs")
-        digest = row.get("policy_digest")
-        if not isinstance(capability, str) or not capability.strip():
-            raise DataPrepError("a declaration needs a capability")
-        if capability in seen:
-            raise DataPrepError(f"capability {capability} is declared twice")
-        if not isinstance(refs, list) or not all(
-            isinstance(r, str) and r for r in refs
-        ):
-            raise DataPrepError("field_refs must be a list of non-empty strings")
-        if not isinstance(digest, str) or not _DIGEST.fullmatch(digest):
-            raise DataPrepError("policy_digest must be 64 lowercase hex characters")
-        seen.add(capability)
-        out.append(
-            {
-                "capability": capability,
-                "field_refs": list(refs),
-                "policy_digest": digest,
-            }
-        )
+        declaration = _declaration(row, seen)
+        seen.add(declaration["capability"])
+        out.append(declaration)
     return out
+
+
+def _declaration(row: Any, seen: set[str]) -> dict[str, Any]:
+    """One validated declaration; ``seen`` holds the capabilities already declared."""
+    if not isinstance(row, Mapping) or set(row) - _ALLOWED:
+        raise DataPrepError(
+            "a declaration holds only capability, field_refs, policy_digest"
+        )
+    capability = _capability(row.get("capability"), seen)
+    return {
+        "capability": capability,
+        "field_refs": _field_refs(row.get("field_refs")),
+        "policy_digest": _policy_digest(row.get("policy_digest")),
+    }
+
+
+def _capability(value: Any, seen: set[str]) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise DataPrepError("a declaration needs a capability")
+    if value in seen:
+        raise DataPrepError(f"capability {value} is declared twice")
+    return value
+
+
+def _field_refs(value: Any) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(r, str) and r for r in value):
+        raise DataPrepError("field_refs must be a list of non-empty strings")
+    return list(value)
+
+
+def _policy_digest(value: Any) -> str:
+    if not isinstance(value, str) or not _DIGEST.fullmatch(value):
+        raise DataPrepError("policy_digest must be 64 lowercase hex characters")
+    return value
 
 
 async def declare_data_prep(
