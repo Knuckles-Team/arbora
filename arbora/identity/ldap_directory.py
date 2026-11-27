@@ -23,7 +23,7 @@ _ATTRIBUTES = ("sAMAccountName", "uid", "memberOf", "userAccountControl")
 
 
 def _default_connection(config: LdapBindConfig, password: str) -> Any:
-    import ldap3  # type: ignore[import-untyped,unused-ignore]
+    import ldap3
 
     server = ldap3.Server(config.host, port=config.port, use_ssl=True)
     return ldap3.Connection(

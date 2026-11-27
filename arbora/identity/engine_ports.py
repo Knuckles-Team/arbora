@@ -1,3 +1,5 @@
+import logging
+
 """Engine-backed session authority; absent qualified record facts refuse."""
 
 from .engine import IdentityUnavailable
@@ -81,6 +83,9 @@ class EngineSessionAuthority:
         except PermissionError:
             raise
         except Exception:
+            logging.getLogger(__name__).warning(
+                "identity authority unavailable", exc_info=True
+            )
             raise IdentityUnavailable("qualified engine session unavailable") from None
         record = resolution.session_record
         if record is None:

@@ -1,3 +1,5 @@
+import logging
+
 """Existing-secret, freshly verified service authority for native Identity RPCs."""
 
 import asyncio
@@ -27,6 +29,9 @@ class ConfiguredBrowserBroker:
         try:
             self._reference = validate_runtime_secret_reference(reference)
         except Exception:
+            logging.getLogger(__name__).warning(
+                "identity authority unavailable", exc_info=True
+            )
             raise IdentityUnavailable(
                 "existing browser broker reference required"
             ) from None
@@ -76,6 +81,9 @@ class ConfiguredBrowserBroker:
         except Exception:
             # Secret adapters may chain private reference/transport exceptions.
             # Neither exception text nor reference/token contents leave here.
+            logging.getLogger(__name__).warning(
+                "identity authority unavailable", exc_info=True
+            )
             raise IdentityUnavailable(
                 "configured browser broker authority unavailable"
             ) from None

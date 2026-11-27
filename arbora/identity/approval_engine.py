@@ -1,3 +1,5 @@
+import logging
+
 """Generated identity client adapters; unsupported published contracts refuse."""
 
 import asyncio
@@ -25,6 +27,9 @@ async def identity_value(
     except PermissionError:
         raise
     except Exception:
+        logging.getLogger(__name__).warning(
+            "identity authority unavailable", exc_info=True
+        )
         raise IdentityUnavailable("qualified identity operation unavailable") from None
 
 

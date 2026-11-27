@@ -186,6 +186,9 @@ async def token_op(
             raise FederatedRefused(refused.code) from None
         raise IdentityUnavailable("qualified identity operation unavailable") from None
     except Exception:  # an unanswered question refuses nothing and admits nothing
+        logging.getLogger(__name__).warning(
+            "identity authority unavailable", exc_info=True
+        )
         raise IdentityUnavailable("qualified identity operation unavailable") from None
     payload = response.payload
     if not isinstance(payload, dict) or payload.get("kind") != kind:
@@ -389,7 +392,9 @@ class Federation:
         try:
             endpoint = await self._transport.end_session_endpoint(provider.issuer)
         except Exception:
-            logging.getLogger(__name__).debug("logout never fails on a provider outage")
+            logging.getLogger(__name__).debug(
+                "logout never fails on a provider outage", exc_info=True
+            )
             return None
         if endpoint is None:
             return None

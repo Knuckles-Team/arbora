@@ -35,7 +35,7 @@ _SUBJECTS = {
     "verify": "Verify your email address",
     "invite": "You are invited",
 }
-_log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,7 +129,9 @@ async def send_identity_mail(
         )
     except Exception:  # the public reply stays uniform
         outcome = "MAIL_SEND_FAILED"
-        _log.warning("MAIL_SEND_FAILED kind=%s recipient=%s", kind, recipient)
+        logger.warning(
+            "MAIL_SEND_FAILED kind=%s recipient=%s", kind, recipient, exc_info=True
+        )
     emit(
         {
             "op": "identity.mail",
