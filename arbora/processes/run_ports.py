@@ -92,6 +92,7 @@ def process_host_ports(
     *,
     call: Callable[..., Awaitable[Mapping[str, Any]]],
     tenant: str,
+    graph: str,
     schema_of: Callable[[str, str], Mapping[str, Any] | None] | None,
     broker: ApprovalBroker,
     wait: Wait,
@@ -108,7 +109,12 @@ def process_host_ports(
     waiter = BrokerApprovalWaiter(broker, tenant, wait, now_ms)
     bound = bind_host_ports(
         decision=recording(
-            decision_port(call, tenant_of=lambda _ref: tenant, schema_of=schema_of),
+            decision_port(
+                call,
+                tenant_of=lambda _ref: tenant,
+                schema_of=schema_of,
+                graph_of=lambda _ref: graph,
+            ),
             evidence,
         ),
         approval=approval_waiter(waiter.decided, wait),

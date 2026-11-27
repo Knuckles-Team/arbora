@@ -192,12 +192,28 @@ class CredentialAuthority:
                 "resource": ask["resource"],
                 "operation": ask["operation"],
                 "outcome": "ok" if reason == "ok" else reason,
-                "binding_digest": None
-                if binding is None
-                else module.binding_digest(binding),
+                "binding_digest": _receipt_digest(ask, binding, module),
                 "at_ms": self._clock_ms(),
             }
         )
+
+
+def _receipt_digest(ask: Mapping[str, Any], binding: Any, module: Any) -> str:
+    """The receipt's ``sha256:<64 hex>`` digest the engine requires (MEDULLA-IDENTITY-R753).
+
+    An admitted call carries its binding's digest; a refused one has no binding, so the
+    digest is the ask's own: the same refusal of the same ask records the same digest.
+    """
+    import hashlib
+    import json
+
+    if binding is not None:
+        return "sha256:" + str(module.binding_digest(binding)).removeprefix("sha256:")
+    keys = ("tenant", "client", "connector", "resource", "operation")
+    canonical = json.dumps(
+        {key: ask[key] for key in keys}, sort_keys=True, separators=(",", ":")
+    )
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
 
 
 __all__ = ["REFUSALS", "CredentialAuthority", "CredentialDenied"]

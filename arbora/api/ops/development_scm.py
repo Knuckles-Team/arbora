@@ -153,12 +153,14 @@ async def _deliver(
     context: Any, connector: str, event: Mapping[str, Any]
 ) -> Mapping[str, Any]:
     """Stamp and send one normalized event; the engine dedups by ``event_id``."""
+    from arbora.api.ops.delivery_ports import delivery_port
+
     wire = engine_event(event, connector)
     stamp = await admit_actor(
         event,
         str(event["proposal"]["repository"]),
-        links=context.services.get("identity_links"),
-        access=context.services.get("source_access"),
+        links=delivery_port(context, "identity_links"),
+        access=delivery_port(context, "source_access"),
     )
     if stamp is not None:
         wire["admitted_principal"] = stamp

@@ -106,6 +106,7 @@ def test_publish_once_per_tenant_then_the_control_step_stops_refusing(
             call,
             tenant_of=lambda _: TENANT,
             schema_of=lambda t, q: rank_pin(pins, t, q),
+            graph_of=lambda _: "graph:one",
         )
 
     with pytest.raises(RuntimeError) as refused:

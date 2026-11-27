@@ -341,7 +341,7 @@ units = ["agent_runs", "api", "current_plan_publication", "knowledge", "native_r
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "subsystems"
-units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest", "pin_lag"]
+units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest", "pin_lag", "processes"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "host"

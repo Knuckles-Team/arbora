@@ -30,7 +30,8 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
     "fleet.city.edit_layer.put": "medulla:AddNode/CompareAndSetNodeFields",
 }
 
-#: Engine-reported edit refusals, carried as the reason of one closed code.
+#: Edit refusals the port reports, carried as the reason of the one closed code
+#: ``REVISION_CONFLICT``.
 _EDIT_REFUSALS = frozenset({"PIN_COLLISION", "STALE_EDIT"})
 
 CityLayoutParams, CityLayoutResult = read_op_models("CityLayout")
@@ -148,10 +149,6 @@ async def handle_edit_layer_put(
         )
     except OperationRefused as refused:
         reason = refused.details.get("reason") if refused.details else None
-        if refused.code in _EDIT_REFUSALS:
-            raise OperationRefused(
-                "REVISION_CONFLICT", {"reason": refused.code}
-            ) from refused
         if reason in _EDIT_REFUSALS:
             raise OperationRefused("REVISION_CONFLICT", {"reason": reason}) from refused
         raise

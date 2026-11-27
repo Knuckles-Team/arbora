@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -86,7 +87,9 @@ async def test_exact_grant_only_and_refusals_write_receipts(
                 raise AssertionError("not admitted")
         assert refused.value.reason == reason
         [row] = receipts.rows
-        assert row["outcome"] == reason and row["binding_digest"] is None
+        assert row["outcome"] == reason
+        # The engine requires a ``sha256:<64 hex>`` digest on every receipt (R753).
+        assert re.fullmatch(r"sha256:[0-9a-f]{64}", row["binding_digest"])
         assert "vault_ref" not in row and "token" not in str(row).lower()
     receipts.rows.clear()
     down = _authority(_Grants(fail=True), receipts)
@@ -108,7 +111,7 @@ async def test_an_admitted_call_writes_one_ok_receipt_with_the_digest(
         pass
     [row] = receipts.rows
     assert row["outcome"] == "ok"
-    assert row["binding_digest"] == module.binding_digest(binding)
+    assert row["binding_digest"] == "sha256:" + module.binding_digest(binding)
 
 
 @pytest.mark.spec("ARBORA-OPS-R893")

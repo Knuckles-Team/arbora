@@ -77,7 +77,7 @@ def test_edit_layer_round_trips_with_actor_and_refuses_collisions() -> None:
         with pytest.raises(OperationRefused) as caught:
             asyncio.run(
                 fleet_city.handle_edit_layer_put(
-                    _context(FakeEditPort((code, {}))),
+                    _context(FakeEditPort(("REVISION_CONFLICT", {"reason": code}))),
                     PARAMS,
                     _op("fleet.city.edit_layer.put"),
                 )

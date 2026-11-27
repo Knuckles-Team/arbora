@@ -80,13 +80,50 @@ def _question_params(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     return typed
 
 
+def _dmn_value(value: Any) -> dict[str, Any]:
+    """One input as the engine's ``DmnValue``; a float has no fixed-point form and is refused."""
+    from decimal import Decimal
+
+    if isinstance(value, bool):
+        return {"type": "boolean", "value": value}
+    if isinstance(value, int):
+        return {"type": "integer", "value": value}
+    if isinstance(value, str):
+        return {"type": "string", "value": value}
+    if isinstance(value, Decimal):
+        sign, digits, exponent = value.as_tuple()
+        if not isinstance(exponent, int) or exponent > 0:
+            raise port_types().EngineDecisionRefused("decide_param_untyped")
+        units = int("".join(map(str, digits))) * (-1 if sign else 1)
+        return {"type": "decimal", "value": {"units": units, "scale": -exponent}}
+    raise port_types().EngineDecisionRefused("decide_param_untyped")
+
+
+def _control_params(payload: Mapping[str, Any], graph: str) -> list[dict[str, Any]]:
+    """The two text params the control-step families read: ``graph`` and ``process_decision``."""
+    import json
+
+    from medulla.decision_client import param
+
+    decision = {
+        name: (
+            {k: _dmn_value(v) for k, v in value.items()}
+            if name == "inputs" and isinstance(value, Mapping)
+            else value
+        )
+        for name, value in payload.items()
+    }
+    text = json.dumps(decision, sort_keys=True, separators=(",", ":"))
+    return [param("graph", "text", graph), param("process_decision", "text", text)]
+
+
 def decide_request(
     kind: str,
     payload: Mapping[str, Any],
     *,
     tenant: str,
     schema_of: SchemaOf | None,
-    task_id: str = "",
+    graph: str = "",
 ) -> dict[str, Any]:
     """The full ``DecideRequest`` the host sends for one harness question (PIN-LAG).
 
@@ -105,14 +142,23 @@ def decide_request(
     schema = schema_of(tenant, question_id) if schema_of is not None else None
     if not tenant or schema is None:
         raise port_types().EngineDecisionRefused("decide_request_incomplete")
-    params = _question_params({"task_id": task_id, **payload} if task_id else payload)
+    candidates, params = _candidates_and_params(wire, payload, graph)
     return build(
-        tenant,
-        (question_id, wire, "ordinary"),
-        {"source": "declared", "options": []},
-        schema,
-        params=params,
+        tenant, (question_id, wire, "ordinary"), candidates, schema, params=params
     )
+
+
+def _candidates_and_params(
+    wire: str, payload: Mapping[str, Any], graph: str
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """A control step declares the one option ``decision``; any other question its typed payload."""
+    if wire not in CONTROL_QUESTION_KINDS.values():
+        return {"source": "declared", "options": []}, _question_params(payload)
+    if not graph:
+        raise port_types().EngineDecisionRefused("decide_request_incomplete")
+    from medulla.decision_client import DeclaredOption, declared
+
+    return declared([DeclaredOption("decision")]), _control_params(payload, graph)
 
 
 class EngineDecisionAdapter:
@@ -125,11 +171,13 @@ class EngineDecisionAdapter:
         *,
         tenant_of: TenantOf = lambda _: "",
         schema_of: SchemaOf | None = None,
+        graph_of: TenantOf = lambda _: "",
     ) -> None:
         self._call = call
         self._method_op = method_op
         self._tenant_of = tenant_of
         self._schema_of = schema_of
+        self._graph_of = graph_of
 
     async def decide(
         self, kind: str, params: Mapping[str, Any], *, run_ref: str
@@ -139,6 +187,7 @@ class EngineDecisionAdapter:
             params,
             tenant=self._tenant_of(run_ref),
             schema_of=self._schema_of,
+            graph=self._graph_of(run_ref),
         )
         return _answer(await self._call(DECIDE_OP, decide_params(request), run_ref))
 
@@ -177,6 +226,7 @@ def decision_port(
     *,
     tenant_of: TenantOf = lambda _: "",
     schema_of: SchemaOf | None = None,
+    graph_of: TenantOf = lambda _: "",
 ) -> Callable[[str, Mapping[str, Any], str], Awaitable[Any]]:
     """``DecisionPort``: a control-step question answered by the engine decision."""
 
@@ -186,7 +236,7 @@ def decision_port(
             payload,
             tenant=tenant_of(task_id),
             schema_of=schema_of,
-            task_id=task_id,
+            graph=graph_of(task_id),
         )
         raw = verdict_fields(await call(DECIDE_OP, decide_params(request), task_id))
         return port_types().DecisionVerdict(
@@ -199,28 +249,81 @@ def decision_port(
     return decide
 
 
-def verdict_fields(raw: Mapping[str, Any]) -> dict[str, Any]:
-    """The verdict an answered ``Decide`` carries, from the ``RunCall`` envelope.
+def _abstention(outcome: Mapping[str, Any]) -> str:
+    """The registered refusal code of an abstained outcome."""
+    reasons = outcome.get("reasons")
+    codes = [
+        str(reason["code"])
+        for reason in (reasons if isinstance(reasons, list) else [])
+        if isinstance(reason, Mapping) and reason.get("code")
+    ]
+    return codes[0] if codes else "DECISION_MALFORMED"
 
-    A refused call, or an answer that is not exactly one record with a value, abstains
-    with its code: the harness then fails the step and applies nothing.
-    """
-    if raw.get("outcome") != "answered":
-        return {"abstention": str(raw.get("refusal_code") or "UNAVAILABLE")}
-    records = (raw.get("payload") or {}).get("records")
-    if not isinstance(records, list) or len(records) != 1:
-        return {"abstention": "DECISION_MALFORMED"}
-    record = records[0] if isinstance(records[0], Mapping) else {}
-    answer = record.get("answer")
-    value = answer.get("value") if isinstance(answer, Mapping) else None
-    if not isinstance(value, Mapping):
+
+def _option_ids(outcome: Mapping[str, Any]) -> list[str] | None:
+    """The scored option ids of an advisory outcome, else ``None``."""
+    scores = outcome.get("scores")
+    if outcome.get("outcome") != "advisory" or not isinstance(scores, list):
+        return None
+    return [
+        str(item["option_id"])
+        for item in scores
+        if isinstance(item, Mapping) and "option_id" in item
+    ]
+
+
+def _table_outputs(ids: Sequence[str]) -> Any:
+    """The parsed ``outputs:<json>`` option, ``None`` when absent."""
+    import json
+
+    for option in ids:
+        if option.startswith("outputs:"):
+            return json.loads(option.removeprefix("outputs:"))
+    return None
+
+
+def _advisory_fields(record: Mapping[str, Any], ids: Sequence[str]) -> dict[str, Any]:
+    try:
+        outputs = _table_outputs(ids)
+    except ValueError:
         return {"abstention": "DECISION_MALFORMED"}
     return {
         "record_id": record.get("record_id"),
-        "taken_task_ids": value.get("taken_task_ids"),
-        "outputs": value.get("outputs"),
-        "abstention": value.get("abstention"),
+        "taken_task_ids": [
+            i.removeprefix("taken:") for i in ids if i.startswith("taken:")
+        ],
+        "outputs": outputs,
     }
+
+
+def _only_record(raw: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    records = (raw.get("payload") or {}).get("records")
+    if not isinstance(records, list) or len(records) != 1:
+        return None
+    return records[0] if isinstance(records[0], Mapping) else {}
+
+
+def verdict_fields(raw: Mapping[str, Any]) -> dict[str, Any]:
+    """The verdict an answered ``Decide`` carries, from the ``RunCall`` envelope.
+
+    A control-step answer is an advisory whose scored option ids are ``taken:<task id>``
+    and ``default:<bool>`` (a branch) or ``rule:<id>`` and ``outputs:<json>`` (a table). An
+    abstention is the engine's registered refusal code. A refused call, or an answer that
+    is not exactly one record, abstains with its code: the harness then fails the step and
+    applies nothing.
+    """
+    if raw.get("outcome") != "answered":
+        return {"abstention": str(raw.get("refusal_code") or "UNAVAILABLE")}
+    record = _only_record(raw)
+    outcome = None if record is None else record.get("outcome")
+    if record is None or not isinstance(outcome, Mapping):
+        return {"abstention": "DECISION_MALFORMED"}
+    if outcome.get("outcome") == "abstained":
+        return {"abstention": _abstention(outcome)}
+    ids = _option_ids(outcome)
+    if ids is None:
+        return {"abstention": "DECISION_MALFORMED"}
+    return _advisory_fields(record, ids)
 
 
 def approval_waiter(

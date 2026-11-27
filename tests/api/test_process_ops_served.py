@@ -22,6 +22,7 @@ from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401
 from tests.processes._support import (
     PLAN,
     PROMPTS,
+    advisory,
     decide_record,
     main_run_task,  # noqa: F401
     run_loop,
@@ -43,6 +44,11 @@ class LoopbackEngine:
         self.rows: dict[str, tuple[int, str]] = {}
         self.decides: list[str] = []
 
+    def _control_outcome(self, kind: str) -> dict[str, Any]:
+        if kind == "process_plan":
+            return {}
+        return {"outcome": advisory(f"taken:{self.arm}", "default:false")}
+
     def decide(self, params: dict[str, Any], who: str) -> Any:
         request = params["request"]
         kind = request["question"]["kind"]
@@ -51,8 +57,8 @@ class LoopbackEngine:
             from medulla import EngineResponseError
 
             raise EngineResponseError("WORKFLOW_UNKNOWN", "no such workflow")
-        value = PLAN if kind == "process_plan" else {"taken_task_ids": [self.arm]}
-        record = decide_record(request, value)
+        record = decide_record(request, PLAN if kind == "process_plan" else {})
+        record.update(self._control_outcome(kind))
         import hashlib
 
         record["caller_principal"] = (
