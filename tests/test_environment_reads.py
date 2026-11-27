@@ -108,3 +108,22 @@ def test_a_platform_family_declares_exactly_the_platforms_that_exist(
         with pytest.raises(EnvironmentRefusal) as raised:
             env.read_env(refused)
         assert raised.value.code == "ENV_UNDECLARED_READ"
+
+
+@pytest.mark.spec("ARBORA-HOST-R010.2")
+def test_the_process_view_reads_declared_names_and_projects_writes(monkeypatch) -> None:
+    view = env.PROCESS_ENVIRONMENT
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    assert view.get("SSL_CERT_FILE") is None
+    view["SSL_CERT_FILE"] = "/trust/ca.pem"
+    assert view["SSL_CERT_FILE"] == "/trust/ca.pem"
+    assert env.read_text("SSL_CERT_FILE") == "/trust/ca.pem"
+    del view["SSL_CERT_FILE"]
+    assert "SSL_CERT_FILE" not in env.environment_names()
+    monkeypatch.setenv("UNDECLARED_VIEW_NAME", "never-returned")
+    with pytest.raises(EnvironmentRefusal) as refused:
+        view.get("UNDECLARED_VIEW_NAME")
+    assert refused.value.code == "ENV_UNDECLARED_READ"
+    copy = env.copy_environment(view)
+    assert copy["UNDECLARED_VIEW_NAME"] == "never-returned"
+    assert env.copy_environment({"A": "1"}) == {"A": "1"}

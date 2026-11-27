@@ -126,6 +126,7 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
     {
         ("arbora/a2a/push.py", "name"),
         ("arbora/agent_runs.py", "api_key_env"),
+        ("arbora/core/environment.py", "key"),
         ("arbora/core/environment.py", "name"),
         ("arbora/deployment/production_ops.py", "name"),
         ("arbora/fleet/catalog_reader.py", "key"),
@@ -133,6 +134,13 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
         ("arbora/messaging/backends/email.py", "name"),
         ("arbora/messaging/registry.py", "var"),
         ("arbora/messaging/registry.py", "name"),
+        ("arbora/observability/telemetry.py", "name"),
+        ("arbora/observability/langfuse_trust.py", "direct_key"),
+        ("arbora/observability/langfuse_trust.py", "key"),
+        ("arbora/observability/langfuse_trust.py", "name"),
+        ("arbora/observability/langfuse_trust.py", "policy_name"),
+        ("arbora/observability/langfuse_trust.py", "ref_key"),
+        ("arbora/observability/langfuse_trust.py", "target"),
         (
             "arbora/messaging/registry.py",
             "f'{_ENV_PREFIX}{backend_id.upper()}_{suffix}'",
@@ -360,6 +368,7 @@ _READ_HELPERS: dict[str, frozenset[str]] = {
     "arbora/identity/deployment_settings.py": frozenset({"_text"}),
     "arbora/identity/host_services.py": frozenset({"read"}),
     "arbora/messaging/backends/email.py": frozenset({"self._setting"}),
+    "arbora/observability/langfuse_trust.py": frozenset({"_value"}),
     "arbora/mcp_server/backing/server_factory.py": frozenset({"_csv_setting"}),
     "arbora/mcp_server/composition.py": frozenset({"_ranged"}),
     "arbora/security/client_credentials.py": frozenset(
@@ -387,6 +396,16 @@ def _string_constant(node: ast.AST) -> tuple[str, str] | None:
 #: helper, by module: the platform-native variable tables of the messaging registry.
 _NAME_TABLES: dict[str, frozenset[str]] = {
     "arbora/messaging/registry.py": frozenset({"native_token_vars", "app_id_vars"}),
+    "arbora/observability/telemetry.py": frozenset({"_ENDPOINT_NAMES"}),
+    "arbora/observability/langfuse_trust.py": frozenset(
+        {
+            "_AGENT_CONFIG_FIELDS",
+            "_CHILD_POLICY_KEYS",
+            "_MATERIALIZED_TRUST_FLAG",
+            "_PARENT_TRUST_SELECTORS",
+            "_TRUST_RELEVANT_ENV_KEYS",
+        }
+    ),
 }
 _NAME_SHAPE = re.compile(r"^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$")
 

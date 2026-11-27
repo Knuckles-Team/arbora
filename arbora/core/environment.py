@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping, MutableMapping
 from functools import cache
 from typing import TYPE_CHECKING, Any
 
@@ -24,9 +24,13 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ENV_REFERENCE_FAMILY",
+    "PROCESS_ENVIRONMENT",
+    "ProcessEnvironment",
+    "copy_environment",
     "environment_names",
     "environment_view",
     "inherited_environment",
+    "project_environment",
     "read_env",
     "read_reference",
     "read_text",
@@ -192,10 +196,56 @@ def write_env(name: str, value: str) -> None:
     os.environ[name] = value
 
 
+def project_environment(values: Mapping[str, str]) -> None:
+    """Project every key of ``values`` into the process environment."""
+    for name, value in values.items():
+        write_env(name, value)
+
+
 def unset_env(name: str) -> None:
     """Remove one configuration key from the process environment."""
     _writable(name)
     os.environ.pop(name, None)
+
+
+class ProcessEnvironment(MutableMapping[str, str]):
+    """The live process environment as a mapping that reads declared names only.
+
+    A read of an undeclared name refuses ``ENV_UNDECLARED_READ`` (it is not a missing
+    key); a write projects the key through :func:`write_env`. Callers that need a copy
+    use :func:`copy_environment`.
+    """
+
+    def __getitem__(self, key: str) -> str:
+        value = read_text(key)
+        if value is None:
+            raise KeyError(key)
+        return value
+
+    def __setitem__(self, key: str, value: str) -> None:
+        write_env(key, value)
+
+    def __delitem__(self, key: str) -> None:
+        if key not in environment_names():
+            raise KeyError(key)
+        unset_env(key)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(sorted(environment_names()))
+
+    def __len__(self) -> int:
+        return len(environment_names())
+
+
+#: The one live view of the process environment.
+PROCESS_ENVIRONMENT = ProcessEnvironment()
+
+
+def copy_environment(source: Mapping[str, str]) -> dict[str, str]:
+    """A plain copy of ``source``; the process view copies without per-name checks."""
+    if isinstance(source, ProcessEnvironment):
+        return inherited_environment()
+    return dict(source)
 
 
 def environment_view(source: Mapping[str, str] | None = None) -> Mapping[str, str]:

@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.core.environment import project_environment, read_env, write_env
+
 """Custom Observability Module.
 
 CONCEPT:MERISTEM-OS.config.secrets-authentication — Telemetry & Observability
@@ -51,7 +53,6 @@ import base64
 import contextlib
 import logging
 import math
-import os
 import re
 from dataclasses import dataclass
 from importlib.util import find_spec
@@ -60,7 +61,6 @@ from urllib.parse import urlparse
 
 from scion_sdk.privacy_reference import persistence_reference
 
-from arbora.core.settings import setting
 from arbora.observability.langfuse_trust import resolve_langfuse_host
 
 if TYPE_CHECKING:
@@ -224,7 +224,7 @@ def _resolve_otel_endpoint(
 
     if bool(public_key) != bool(secret_key):
         raise ValueError("OTLP credential pair is incomplete")
-    target = str(endpoint or setting("OTEL_EXPORTER_OTLP_ENDPOINT", "") or "").strip()
+    target = str(endpoint or read_env("OTEL_EXPORTER_OTLP_ENDPOINT", "") or "").strip()
     if not target and (
         (public_key and secret_key) or langfuse_credentials_configured()
     ):
@@ -257,9 +257,9 @@ class _OtelHeaderRefs:
 def _load_otel_header_refs() -> _OtelHeaderRefs:
     """Read the configured OTLP auth secret references (durable config, refs only)."""
     return _OtelHeaderRefs(
-        header_ref=str(setting("OTEL_EXPORTER_OTLP_HEADERS_REF", "") or "").strip(),
-        public_ref=str(setting("OTEL_EXPORTER_OTLP_PUBLIC_KEY_REF", "") or "").strip(),
-        secret_ref=str(setting("OTEL_EXPORTER_OTLP_SECRET_KEY_REF", "") or "").strip(),
+        header_ref=str(read_env("OTEL_EXPORTER_OTLP_HEADERS_REF", "") or "").strip(),
+        public_ref=str(read_env("OTEL_EXPORTER_OTLP_PUBLIC_KEY_REF", "") or "").strip(),
+        secret_ref=str(read_env("OTEL_EXPORTER_OTLP_SECRET_KEY_REF", "") or "").strip(),
     )
 
 
@@ -371,11 +371,11 @@ def _resolve_otel_transport(endpoint: str) -> Any:
     from scion_sdk.tls.resolve import resolve_tls_profile
 
     same_langfuse_origin = same_origin(endpoint, resolve_langfuse_host())
-    profile_name = str(setting("OTEL_TLS_PROFILE", "") or "")
-    profile_ref = str(setting("OTEL_TLS_PROFILE_REF", "") or "")
+    profile_name = str(read_env("OTEL_TLS_PROFILE", "") or "")
+    profile_ref = str(read_env("OTEL_TLS_PROFILE_REF", "") or "")
     if same_langfuse_origin and not (profile_name or profile_ref):
-        profile_name = str(setting("LANGFUSE_TLS_PROFILE", "") or "")
-        profile_ref = str(setting("LANGFUSE_TLS_PROFILE_REF", "") or "")
+        profile_name = str(read_env("LANGFUSE_TLS_PROFILE", "") or "")
+        profile_ref = str(read_env("LANGFUSE_TLS_PROFILE_REF", "") or "")
     return resolve_tls_profile(
         "OTEL",
         profile_name=profile_name or None,
@@ -729,9 +729,7 @@ def _resolve_setup_otel_context(
         )
 
     # Step 2: Resolve endpoint and protocol
-    target_protocol = str(
-        protocol or setting("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
-    ).strip()
+    target_protocol = str(protocol or read_env("OTEL_EXPORTER_OTLP_PROTOCOL")).strip()
     if target_protocol != "http/protobuf":
         logger.warning("OTLP setup skipped: unsupported protocol")
         return None
@@ -749,13 +747,13 @@ def _resolve_setup_otel_context(
 def _set_otel_env_vars(ctx: _SetupOtelContext) -> None:
     """Step 3: set environment variables for downstream OTel SDK consumers."""
     if ctx.target_endpoint:
-        os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = ctx.target_endpoint
+        write_env("OTEL_EXPORTER_OTLP_ENDPOINT", ctx.target_endpoint)
     if ctx.resolved_headers:
-        os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = ctx.resolved_headers
+        write_env("OTEL_EXPORTER_OTLP_HEADERS", ctx.resolved_headers)
     if ctx.target_protocol:
-        os.environ["OTEL_EXPORTER_OTLP_PROTOCOL"] = ctx.target_protocol
+        write_env("OTEL_EXPORTER_OTLP_PROTOCOL", ctx.target_protocol)
     if ctx.target_service_name:
-        os.environ["OTEL_SERVICE_NAME"] = ctx.target_service_name
+        write_env("OTEL_SERVICE_NAME", ctx.target_service_name)
 
 
 def _build_otel_span_processors(ctx: _SetupOtelContext) -> list[Any] | None:
@@ -765,7 +763,7 @@ def _build_otel_span_processors(ctx: _SetupOtelContext) -> list[Any] | None:
     """
     try:
         transport_security = _resolve_otel_transport(ctx.target_endpoint)
-        os.environ.update(transport_security.child_env())
+        project_environment(transport_security.child_env())
     except Exception as exc:
         logger.warning(
             "OTLP setup skipped: transport security profile is invalid (%s)",
@@ -965,9 +963,7 @@ def _resolve_verify_otel_state() -> tuple[str, str, str | None]:
     try:
         endpoint = _resolve_otel_endpoint(None)
         if endpoint:
-            runtime_headers = str(
-                setting("OTEL_EXPORTER_OTLP_HEADERS", "") or ""
-            ).strip()
+            runtime_headers = str(read_env("OTEL_EXPORTER_OTLP_HEADERS") or "").strip()
             resolved_headers, _ = _resolve_otel_headers(
                 endpoint=endpoint,
                 headers=runtime_headers or None,
@@ -988,11 +984,10 @@ def _build_verify_report_base(endpoint: str, resolved_headers: str) -> dict[str,
         "headers_set": bool(resolved_headers),
         "protocol": (
             "http/protobuf"
-            if setting("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
-            == "http/protobuf"
+            if read_env("OTEL_EXPORTER_OTLP_PROTOCOL") == "http/protobuf"
             else "unsupported"
         ),
-        "service_configured": bool(setting("OTEL_SERVICE_NAME", "")),
+        "service_configured": bool(read_env("OTEL_SERVICE_NAME")),
         "exporter_ok": False,
         "agent_instrumented": _agent_instrumented_metadata_only,
         "content_capture": False,

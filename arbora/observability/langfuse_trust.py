@@ -10,7 +10,6 @@ credentials, and hosts are never returned in status objects or logged.
 
 from __future__ import annotations
 
-import os
 import re
 import ssl
 import sys
@@ -40,7 +39,12 @@ from packaging.version import InvalidVersion, Version
 from scion_sdk.config import AgentConfig
 from scion_sdk.tls.profile import ResolvedTLSProfile
 
-from arbora.core.settings import setting
+from arbora.core.environment import (
+    PROCESS_ENVIRONMENT,
+    copy_environment,
+    read_env,
+    read_reference,
+)
 
 _LANGFUSE_DEFAULT_HOST = ""
 
@@ -71,7 +75,7 @@ def resolve_langfuse_host(
     if environ is not None:
         host = str(environ.get("LANGFUSE_HOST", "") or "")
     else:
-        host = str(setting("LANGFUSE_HOST", "") or "")
+        host = str(read_env("LANGFUSE_HOST", "") or "")
     candidate = host or default
     return _validated_langfuse_host(candidate) if candidate else ""
 
@@ -130,6 +134,7 @@ _ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _LANGFUSE_SERVER_NAMES = frozenset({"langfuse-agent", "langfuse-mcp"})
 _MATERIALIZED_TRUST_FLAG = "LANGFUSE_TRUST_MATERIALIZED"
 _PARENT_KG_INGESTION_FLAG = "_arbora_parent_kg_ingestion"
+_CHILD_POLICY_KEYS = ("LANGFUSE_CAPTURE_CONTENT", "LANGFUSE_KG_AUTO_INGEST")
 _PARENT_TRUST_SELECTORS = frozenset(
     {
         "LANGFUSE_TLS_PROFILE",
@@ -212,8 +217,8 @@ class LangfuseTrustStatus:
 
 
 def _value(
-    environ: MutableMapping[str, str],
     name: str,
+    environ: MutableMapping[str, str],
     agent_config: AgentConfig | None = None,
 ) -> str:
     value = environ.get(name)
@@ -224,9 +229,9 @@ def _value(
         value = getattr(agent_config, field_name, None)
         if value not in (None, ""):
             return str(value).strip()
-    if environ is not os.environ:
+    if environ is not PROCESS_ENVIRONMENT:
         return ""
-    return str(setting(name, "") or "").strip()
+    return str(read_env(name, "") or "").strip()
 
 
 def langfuse_credentials_configured(
@@ -242,13 +247,13 @@ def langfuse_credentials_configured(
     ``langfuse_agent.auth`` reads for the standalone agent/MCP server — is
     accepted too, so one variable pair configures both.
     """
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     public_ready = bool(
-        _value(target_env, "LANGFUSE_PUBLIC_KEY_REF", agent_config)
-    ) or bool(_value(target_env, "LANGFUSE_PUBLIC_KEY", agent_config))
+        _value("LANGFUSE_PUBLIC_KEY_REF", target_env, agent_config)
+    ) or bool(_value("LANGFUSE_PUBLIC_KEY", target_env, agent_config))
     secret_ready = bool(
-        _value(target_env, "LANGFUSE_SECRET_KEY_REF", agent_config)
-    ) or bool(_value(target_env, "LANGFUSE_SECRET_KEY", agent_config))
+        _value("LANGFUSE_SECRET_KEY_REF", target_env, agent_config)
+    ) or bool(_value("LANGFUSE_SECRET_KEY", target_env, agent_config))
     return public_ready and secret_ready
 
 
@@ -286,6 +291,17 @@ def langfuse_provider_contract_ready() -> bool:
     )
 
 
+def _environment_reference(
+    target: str, environ: MutableMapping[str, str]
+) -> str | None:
+    """The value of the variable an ``env://`` reference names, within ``environ``."""
+    if _ENV_NAME_RE.fullmatch(target) is None:
+        return None
+    if environ is PROCESS_ENVIRONMENT:
+        return read_reference(target, None)
+    return environ.get(target)
+
+
 def _resolve_secret_reference(
     reference: str,
     *,
@@ -295,10 +311,7 @@ def _resolve_secret_reference(
     """Resolve one reference within the caller's explicit runtime boundary."""
 
     if reference.startswith("env://"):
-        target = reference.removeprefix("env://")
-        if _ENV_NAME_RE.fullmatch(target) is None:
-            return None
-        return environ.get(target)
+        return _environment_reference(reference.removeprefix("env://"), environ)
     if resolver is not None:
         return resolver(reference)
     from scion_sdk.credentials.resolution import resolve_secret_reference
@@ -385,7 +398,7 @@ def _resolve_one_langfuse_credential(
     resolver: Callable[[str], str | None] | None,
 ) -> str:
     """Resolve one Langfuse credential (public or secret key), by ref or direct value."""
-    reference = _concrete_runtime_value(_value(target_env, ref_key, agent_config))
+    reference = _concrete_runtime_value(_value(ref_key, target_env, agent_config))
     if reference:
         if _secret_reference_is_malformed(reference):
             raise LangfuseTrustError("langfuse_credentials_missing")
@@ -393,7 +406,7 @@ def _resolve_one_langfuse_credential(
             reference, environ=target_env, resolver=resolver
         )
     else:
-        value = _concrete_runtime_value(_value(target_env, direct_key, agent_config))
+        value = _concrete_runtime_value(_value(direct_key, target_env, agent_config))
     if not value or _value_has_control_char_or_oversize(value):
         raise LangfuseTrustError("langfuse_credentials_missing")
     if _credential_material_is_sentinel(value):
@@ -415,7 +428,7 @@ def resolve_langfuse_credentials(
     — the same names ``langfuse_agent.auth.get_client`` reads for the
     standalone agent/MCP server — so one configured variable pair serves both.
     """
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     resolved = [
         _resolve_one_langfuse_credential(
             ref_key, direct_key, target_env, agent_config, resolver
@@ -435,9 +448,9 @@ def resolve_langfuse_persistence_hmac_key(
     resolver: Callable[[str], str | None] | None = None,
 ) -> str | None:
     """Resolve the optional dedicated persistence key from one strict ref."""
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     reference = _concrete_runtime_value(
-        _value(target_env, "LANGFUSE_PERSISTENCE_HMAC_KEY_REF", agent_config)
+        _value("LANGFUSE_PERSISTENCE_HMAC_KEY_REF", target_env, agent_config)
     )
     if not reference:
         return None
@@ -664,7 +677,7 @@ def _build_trust_resolution_env(
     materialized by a parent process; a parent-materialized child env is
     otherwise authoritative over re-consulting the persisted AgentConfig.
     """
-    resolution_env = dict(target_env)
+    resolution_env = copy_environment(target_env)
     if materialized_trust:
         for key in _PARENT_TRUST_SELECTORS:
             resolution_env.pop(key, None)
@@ -674,7 +687,7 @@ def _build_trust_resolution_env(
         configured_value = (
             target_env.get(key, "")
             if materialized_trust
-            else _value(target_env, key, agent_config)
+            else _value(key, target_env, agent_config)
         )
         value = _concrete_runtime_value(configured_value)
         if value:
@@ -796,7 +809,7 @@ def _resolve_langfuse_trust(
     the shared ``TLS_PROFILES_REF`` catalog are preferred. Direct runtime CA
     references and standard trust environment variables are also supported.
     """
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     materialized_trust = _is_true(target_env.get(_MATERIALIZED_TRUST_FLAG, ""))
     resolution_env = _build_trust_resolution_env(
         target_env, agent_config, materialized_trust
@@ -868,7 +881,7 @@ def configure_langfuse_trust(
     destination_root: Path | None = None,
 ) -> LangfuseTrustStatus:
     """Validate and export Langfuse trust without returning sensitive paths."""
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     status, trust = _resolve_langfuse_trust(
         environ=target_env,
         agent_config=agent_config,
@@ -892,7 +905,7 @@ def resolve_langfuse_requests_transport(
     Secret references are resolved exactly once. Returned values are concrete
     process-lifetime adapters and must never be persisted or logged.
     """
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     status, trust = _resolve_langfuse_trust(
         environ=target_env,
         agent_config=agent_config,
@@ -967,7 +980,7 @@ def _resolve_child_host(
             for value in (
                 _concrete_runtime_value(child_env.get("LANGFUSE_HOST")),
                 _concrete_runtime_value(
-                    _value(target_env, "LANGFUSE_HOST", agent_config)
+                    _value("LANGFUSE_HOST", target_env, agent_config)
                 ),
             )
             if value
@@ -988,9 +1001,9 @@ def _resolve_child_policies(
 ) -> dict[str, bool]:
     """Parse the boolean child policy flags; raise on an unrecognized value."""
     policies: dict[str, bool] = {}
-    for policy_name in ("LANGFUSE_CAPTURE_CONTENT", "LANGFUSE_KG_AUTO_INGEST"):
+    for policy_name in _CHILD_POLICY_KEYS:
         policy_value = (
-            _value(target_env, policy_name, agent_config) or "false"
+            _value(policy_name, target_env, agent_config) or "false"
         ).casefold()
         if policy_value in {"1", "true", "yes", "on"}:
             policies[policy_name] = True
@@ -1008,7 +1021,7 @@ def _apply_child_credentials(
     resolver: Callable[[str], str | None] | None,
 ) -> None:
     """Resolve + set LANGFUSE_PUBLIC_KEY/SECRET_KEY on the child env, in place."""
-    credential_env = dict(target_env)
+    credential_env = copy_environment(target_env)
     for key in ("LANGFUSE_PUBLIC_KEY_REF", "LANGFUSE_SECRET_KEY_REF"):
         value = _concrete_runtime_value(child_env.get(key))
         if value:
@@ -1031,7 +1044,7 @@ def _apply_child_persistence_key(
     resolver: Callable[[str], str | None] | None,
 ) -> None:
     """Resolve + set the optional persistence HMAC key on the child env, in place."""
-    persistence_env = dict(target_env)
+    persistence_env = copy_environment(target_env)
     persistence_ref = _concrete_runtime_value(
         child_env.get("LANGFUSE_PERSISTENCE_HMAC_KEY_REF")
     )
@@ -1054,28 +1067,10 @@ def _build_child_trust_env(
     agent_config: AgentConfig | None,
 ) -> dict[str, str]:
     """Build the env used to configure + validate Langfuse transport trust."""
-    trust_env = dict(target_env)
-    for key in (
-        "LANGFUSE_TLS_PROFILE",
-        "LANGFUSE_TLS_PROFILE_REF",
-        "TLS_PROFILE",
-        "TLS_PROFILE_REF",
-        "TLS_PROFILES_REF",
-        "TLS_PROFILES",
-        "LANGFUSE_CA_BUNDLE_REF",
-        "LANGFUSE_CA_BUNDLE",
-        "REQUESTS_CA_BUNDLE",
-        "SSL_CERT_FILE",
-        "SSL_CERT_DIR",
-        "LANGFUSE_CLIENT_CERT_REF",
-        "LANGFUSE_CLIENT_KEY_REF",
-        "LANGFUSE_CLIENT_KEY_PASSWORD_REF",
-        "LANGFUSE_PROXY_URL_REF",
-        "LANGFUSE_PROXY_URL",
-        "LANGFUSE_NO_PROXY",
-    ):
+    trust_env = copy_environment(target_env)
+    for key in _TRUST_RELEVANT_ENV_KEYS:
         value = _concrete_runtime_value(child_env.get(key)) or _concrete_runtime_value(
-            _value(target_env, key, agent_config)
+            _value(key, target_env, agent_config)
         )
         if value:
             trust_env[key] = value
@@ -1151,7 +1146,7 @@ def prepare_langfuse_mcp_config(
     destination_root: Path | None = None,
 ) -> dict[str, Any]:
     """Project canonical Arbora settings into a Langfuse MCP child config."""
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     prepared = dict(config)
     if _PARENT_KG_INGESTION_FLAG in prepared:
         raise LangfuseTrustError("langfuse_configuration_invalid")
@@ -1197,14 +1192,14 @@ def native_langfuse_mcp_config(
     agent_config: AgentConfig | None = None,
 ) -> dict[str, Any] | None:
     """Build a lazy MCP entry when credentials are present (explicitly opt-out)."""
-    target_env = environ if environ is not None else os.environ
+    target_env = environ if environ is not None else PROCESS_ENVIRONMENT
     credentials_ready = langfuse_credentials_configured(
         environ=target_env,
         agent_config=agent_config,
     )
     if not credentials_ready:
         return None
-    enabled = _value(target_env, "LANGFUSE_MCP_ENABLED", agent_config)
+    enabled = _value("LANGFUSE_MCP_ENABLED", target_env, agent_config)
     if enabled and not _is_true(enabled):
         return None
     if not langfuse_provider_contract_ready():

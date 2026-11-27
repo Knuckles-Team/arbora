@@ -38,6 +38,8 @@ import threading
 import time
 from typing import Any
 
+from arbora.core.environment import read_env
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -1136,12 +1138,10 @@ def _collection_registry() -> Any:
     """
     from prometheus_client import REGISTRY
 
-    from arbora.core.settings import setting
-
     # Read through the central accessor (never bare os.environ) — and note this
     # is prometheus_client's OWN standard variable, set by whatever supervises
     # the workers, not a flag this package invents.
-    multiproc_dir = str(setting("PROMETHEUS_MULTIPROC_DIR", "") or "").strip()
+    multiproc_dir = str(read_env("PROMETHEUS_MULTIPROC_DIR") or "").strip()
     if not multiproc_dir:
         return REGISTRY
     try:

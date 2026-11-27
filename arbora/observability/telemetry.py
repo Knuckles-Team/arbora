@@ -13,7 +13,7 @@ import logging
 import threading
 from typing import Any, cast
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 __all__ = ["configure_standard_otel", "otel_endpoint", "reset_standard_otel"]
 
@@ -23,12 +23,16 @@ _lock = threading.Lock()
 _provider: Any = None
 
 
+#: The variables that name the collector, in precedence order.
+_ENDPOINT_NAMES = ("MEDULLA_OBS_ADDR", "OTEL_EXPORTER_OTLP_ENDPOINT")
+
+
 def otel_endpoint() -> str:
     """Return the configured collector endpoint, or ``""`` when none is set."""
-    if str(setting("OTEL_TRACES_EXPORTER", "") or "").strip().lower() == "none":
+    if str(read_env("OTEL_TRACES_EXPORTER") or "").strip().lower() == "none":
         return ""
-    for name in ("MEDULLA_OBS_ADDR", "OTEL_EXPORTER_OTLP_ENDPOINT"):
-        value = str(setting(name, "") or "").strip()
+    for name in _ENDPOINT_NAMES:
+        value = str(read_env(name, "") or "").strip()
         if value:
             return value if "://" in value else f"http://{value}"
     return ""
@@ -61,9 +65,9 @@ def configure_standard_otel(*, service_name: str = "arbora") -> bool:
         )
 
         service_ref = _service_topology_label(
-            str(setting("OTEL_SERVICE_NAME", "") or service_name)
+            str(read_env("OTEL_SERVICE_NAME") or service_name)
         )
-        headers = parse_otlp_headers(str(setting("OTEL_EXPORTER_OTLP_HEADERS", "")))
+        headers = parse_otlp_headers(str(read_env("OTEL_EXPORTER_OTLP_HEADERS")))
         traces = endpoint.rstrip("/")
         if not traces.endswith("/v1/traces"):
             traces = f"{traces}/v1/traces"
