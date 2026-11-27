@@ -66,9 +66,7 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-- `MEDULLA-IDENTITY-R744` provides the delegated run identity that `ARBORA-A2A-R001.2.2.1` consumes. The contract is `contracts/delegated-run-identity.md`.
-
-The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
 
 ### A2A task and approval projection
 
@@ -85,7 +83,7 @@ Governing [spec](spec.md).
 
 ### Existing system and reuse
 
-`arbora.a2a.application` already implements authenticated Agent Card and unary `message/send`, `tasks/get/list/cancel`; `arbora.a2a.service.A2AService` calls an `A2ARouter` and `A2ATaskAuthority`. `arbora.a2a.composition.build_a2a_service` wires `OrchestratorA2ARouter` and `WorkItemA2AAuthority` to the serving application. `arbora.a2a.models` provides typed A2A messages and tasks. Extend these modules and public ports. Keep the existing FastMCP owner loop, fleet and verified-session middleware. No new broker or task database is justified by this projection.
+`arbora.a2a.application` already implements authenticated Agent Card and unary `message/send`, `tasks/get/list/cancel`; `arbora.a2a.service.A2AService` calls an `A2ARouter` and `A2ATaskAuthority`. `arbora.a2a.composition.compose_a2a` wires `OrchestratorA2ARouter` and `WorkItemA2AAuthority` to the serving application. `arbora.a2a.models` provides typed A2A messages and tasks. Extend these modules and public ports. Keep the existing FastMCP owner loop, fleet and verified-session middleware. No new broker or task database is justified by this projection.
 
 ### Architecture and durable identities
 
