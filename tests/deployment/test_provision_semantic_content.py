@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 from arbora import semantic_provisioning
-from arbora.deployment import production_ops
+from arbora.mcp_server import production_ops_cli
 from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
@@ -194,7 +194,7 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
 ) -> None:
     engine: _Engine = wired["engine"]
 
-    code = production_ops.main(["provision-semantic-content", "--served-url", URL])
+    code = production_ops_cli.main(["provision-semantic-content", "--served-url", URL])
 
     report = json.loads(capsys.readouterr().out)
     assert code == 0, report
@@ -236,7 +236,10 @@ def test_rerun_registers_and_creates_nothing(
     engine.registered.update({"arbora", "universal-skills"})
     engine.graphs.update({GRAPH, "__control__"})
 
-    assert production_ops.main(["provision-semantic-content", "--served-url", URL]) == 0
+    assert (
+        production_ops_cli.main(["provision-semantic-content", "--served-url", URL])
+        == 0
+    )
 
     report = json.loads(capsys.readouterr().out)
     assert report["graph_created"] is False and report["registered"] == []
@@ -256,7 +259,10 @@ def test_failed_verification_exits_non_zero(
 
     monkeypatch.setattr(semantic_provisioning, "verify_semantic_content", refuse)
 
-    assert production_ops.main(["provision-semantic-content", "--served-url", URL]) == 1
+    assert (
+        production_ops_cli.main(["provision-semantic-content", "--served-url", URL])
+        == 1
+    )
     assert json.loads(capsys.readouterr().out)["ok"] is False
 
 
@@ -265,7 +271,7 @@ def test_served_url_is_required(
 ) -> None:
     monkeypatch.delenv("ARBORA_SERVED_MCP_URL", raising=False)
 
-    assert production_ops.main(["provision-semantic-content"]) == 1
+    assert production_ops_cli.main(["provision-semantic-content"]) == 1
     assert (
         json.loads(capsys.readouterr().out)["error_type"] == "ProductionOperationError"
     )

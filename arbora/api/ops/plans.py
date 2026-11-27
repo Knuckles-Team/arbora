@@ -55,6 +55,7 @@ from arbora.api.invoke.certification_gate import (
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params
 from arbora.api.ops.policy import policy_guard
+from arbora.api.ops.ports import port_of
 from arbora.api.ops.run_capacity import (
     CapacityReservation,
     release_quietly,
@@ -1065,11 +1066,9 @@ def _native_plan_claim_valid(
     )
 
 
-def _native_context_id(session: Any, owner_ref: str, run_id: str) -> str:
+def _native_context_id(identity: Any, session: Any, owner_ref: str, run_id: str) -> str:
     """Derive the canonical A2A context identity from the admitted owner."""
-    from arbora.a2a import authority as a2a_authority
-
-    return "a2a-context-" + a2a_authority._digest(  # noqa: SLF001
+    return "a2a-context-" + identity.digest(
         {"tenant": session.tenant, "owner": owner_ref, "context": run_id}
     )
 
@@ -1123,9 +1122,9 @@ async def _admit_native_plan_run(
     function never accepts a caller-selected native id or manufactures a lease.
     """
     import arbora.work_items as work_items
-    from arbora.a2a import authority as a2a_authority
     from arbora.security.session import use_session
 
+    identity = port_of(context, "run_identity")
     engine = context.services.get("task_plan_work_engine")
     if engine is None:
         raise OperationRefused(
@@ -1139,16 +1138,16 @@ async def _admit_native_plan_run(
     run_id = _native_plan_run_id(plan, caller)
     plan_digest = str(plan["plan_digest"])
     try:
-        owner_ref = a2a_authority.WorkItemA2AAuthority._owner_ref(session)
+        owner_ref = identity.owner_ref(session)
     except (AttributeError, PermissionError, TypeError, ValueError) as exc:
         raise OperationRefused("UNAUTHENTICATED") from exc
 
-    context_id = _native_context_id(session, owner_ref, run_id)
+    context_id = _native_context_id(identity, session, owner_ref, run_id)
     # Keep the A2A owner metadata schema because the existing run reader and
     # terminal projections already enforce this exact owner/tenant contract.
     # The plan digest is content identity; the request digest binds it to this
     # caller-bound replay identity and context.
-    request_digest = a2a_authority._digest(  # noqa: SLF001
+    request_digest = identity.digest(
         {
             "context_id": context_id,
             "plan_digest": plan_digest,
@@ -1156,7 +1155,7 @@ async def _admit_native_plan_run(
         }
     )
     metadata = {
-        "a2a_schema": a2a_authority._A2A_METADATA_SCHEMA,
+        "a2a_schema": identity.metadata_schema,
         "a2a_owner_ref": owner_ref,
         "a2a_run_id": run_id,
         "a2a_context_id": context_id,
@@ -1188,14 +1187,14 @@ async def _admit_native_plan_run(
                 "UNAVAILABLE", {"reason": "native WorkItem returned no identity"}
             )
         try:
-            if a2a_authority.WorkItemA2AAuthority._work_item_id(item_id) != item_id:
+            if identity.opaque_work_item_id(item_id) != item_id:
                 raise ValueError("native WorkItem identity is not opaque")
         except ValueError as exc:
             raise OperationRefused(
                 "UNAVAILABLE", {"reason": "native WorkItem identity is invalid"}
             ) from exc
         item = await asyncio.to_thread(work_items.get_work_item, engine, item_id)
-        if not a2a_authority.WorkItemA2AAuthority._owned(item, owner_ref):
+        if not identity.owned(item, owner_ref):
             raise OperationRefused(
                 "UNAVAILABLE", {"reason": "native WorkItem owner verification failed"}
             )
@@ -1224,7 +1223,7 @@ async def _admit_native_plan_run(
 
         # The engine capacity lease is taken before the claim and released when
         # the terminal outcome commits (ARBORA-HOST-R031.1).
-        owner_digest = a2a_authority._digest({"owner": owner_ref})  # noqa: SLF001
+        owner_digest = identity.digest({"owner": owner_ref})
         capacity = await run_capacity_of(context).reserve(
             context, run_id=run_id, work_item_id=item_id, owner_digest=owner_digest
         )

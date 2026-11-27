@@ -8,6 +8,7 @@ import pytest
 
 from arbora.deployment import production_ops
 from arbora.deployment.production_ops import refusal_detail
+from arbora.mcp_server import production_ops_cli
 
 # Built at run time so the source holds no credential-shaped literal.
 _KEY = "sk" + "-live-" + "0123456789abcdef"
@@ -56,12 +57,12 @@ def test_refusal_prints_code_and_message_and_redacts_secrets(
     assert len(refusal_detail(RuntimeError("X" * 5000))["error_message"]) <= 400
 
     # The command prints the code and message, with a digest and without a secret.
-    def refuse(_args: object) -> dict[str, object]:
+    def refuse(_args: object, _host: object) -> dict[str, object]:
         raise _EngineRefusal("PACK_REFUSED", f"password={_PLANTED[2]} not accepted")
 
     monkeypatch.setattr(production_ops, "_run", refuse)
     monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
-    assert production_ops.main(["check-fleet-coverage"]) == 1
+    assert production_ops_cli.main(["check-fleet-coverage"]) == 1
     printed = capsys.readouterr().out
     report = json.loads(printed.strip().splitlines()[-1])
     assert report["ok"] is False

@@ -8,6 +8,11 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.scale_records import (
+    ScaleActuationRequest,
+    ScaleActuationResult,
+    ScaleIntentState,
+)
 from arbora.api.domain.fleet.scaling.scaling_authority import ScaleIntent
 from arbora.api.invoke.pipeline import OperationRefused, _declared_owners
 from arbora.api.ops import fleet_deploy_watch, fleet_scaling
@@ -16,10 +21,7 @@ from arbora.api.registry import Effect, Idempotency, OpSpec
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     AllowScalePolicy,
     MemoryScaleIntentLedger,
-    ScaleActuationRequest,
-    ScaleActuationResult,
     ScaleIntentReconciler,
-    ScaleIntentState,
 )
 from tests.fleet.scaling.test_scaling_authority_contract import INTENT as PLAN_INTENT
 from tests.fleet.scaling.test_scaling_authority_contract import authority

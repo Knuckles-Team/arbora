@@ -15,10 +15,13 @@ import pytest
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import apps
+from arbora.api.ops.ports import PORTS_BINDING, OperationPorts
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Confirm, Idempotency
 from arbora.control_plane.admission import AdmissionState
+from arbora.control_plane.admission import port as admission_port
 from arbora.control_plane.admission.engine import SOURCE_METHODS, EngineAdmissionSources
+from arbora.control_plane.admission.port import ControlPlaneAppAdmission
 from arbora.control_plane.admission.run import TRANSITIONS
 
 NO_OP: Any = None
@@ -111,9 +114,9 @@ class FakeEngine:
 @pytest.fixture
 def engine(monkeypatch: pytest.MonkeyPatch) -> FakeEngine:
     fake = FakeEngine()
-    monkeypatch.setattr(apps, "engine_send", fake.send)
-    monkeypatch.setattr(apps, "guard", lambda *_m, **_k: None)
-    monkeypatch.setattr(apps, "parity_sample", lambda: 100)
+    monkeypatch.setattr(admission_port, "engine_send", fake.send)
+    monkeypatch.setattr(admission_port, "guard", lambda *_m, **_k: None)
+    monkeypatch.setattr(admission_port, "parity_sample", lambda: 100)
     return fake
 
 
@@ -121,7 +124,7 @@ def context(tenant: str = "t1", key: str = "k1") -> Any:
     return SimpleNamespace(
         caller=SimpleNamespace(tenant=tenant, principal="p"),
         idempotency_key=key,
-        services={},
+        services={PORTS_BINDING: OperationPorts(apps=ControlPlaneAppAdmission())},
     )
 
 

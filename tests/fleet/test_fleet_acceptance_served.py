@@ -10,6 +10,8 @@ import pytest
 
 from arbora.api.domain.fleet import acceptance
 from arbora.api.ops import fleet as fleet_ops
+from arbora.api.ops.ports import PORTS_BINDING, OperationPorts
+from arbora.fleet.acceptance_source import OnboardingAcceptance
 from arbora.security.operation_result import OpResult
 
 GOOD_DIGEST = "a" * 64
@@ -56,6 +58,7 @@ def _context() -> Any:
             "fleet_gateway": Gateway(),
             "fleet_onboarding": Onboarding(),
             "plan_step_invoke": _invoke,
+            PORTS_BINDING: OperationPorts(fleet_acceptance=OnboardingAcceptance()),
         },
     )
 

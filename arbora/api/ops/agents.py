@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import contextlib
+from collections.abc import AsyncIterator, Mapping
 from typing import Any
 
 from pydantic import Field
@@ -329,14 +330,8 @@ async def handle_agent(
                 }
             message = _with_client_session(context, message)
             message = await _provision_for_run(context, service, params, message)
-            from arbora.a2a.source_grant import (
-                resolve_verified_grant,
-                source_grant_scope,
-            )
-
-            grant = await resolve_verified_grant(context)
             try:
-                with source_grant_scope(grant):
+                async with _source_grant_scope(context):
                     result = await service.send_message(
                         message=message,
                         idempotency_key=context.idempotency_key,
@@ -390,6 +385,17 @@ async def handle_agent(
         else:
             raise ValueError("unknown agent operation")
     return {"value": result.model_dump(mode="json", by_alias=True)}
+
+
+@contextlib.asynccontextmanager
+async def _source_grant_scope(context: Any) -> AsyncIterator[None]:
+    """Bind the verified caller's source grant for one admission; none when not composed."""
+    grants = context.services.get("source_grants")
+    if grants is None:
+        yield
+        return
+    async with grants.admission_scope(context):
+        yield
 
 
 async def handle_rlm(

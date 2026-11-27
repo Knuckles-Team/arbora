@@ -25,9 +25,11 @@ from meristem.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
 
+from arbora.a2a.run_identity import A2ARunIdentity  # noqa: E402
 from arbora.api.errors import EngineRefusal as EngineCodeRefusal  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
+from arbora.api.ops.ports import PORTS_BINDING, OperationPorts  # noqa: E402
 from arbora.security.actor_context import ActorContext, ActorType  # noqa: E402
 from arbora.security.session import GraphSession  # noqa: E402
 
@@ -222,6 +224,7 @@ def _context(engine: FakeEngine, model: RecordingModel) -> Any:
             "task_plan_engine": engine,
             "task_plan_model": model.model,
             "task_plan_feature_schema": SCHEMA_PIN,
+            PORTS_BINDING: OperationPorts(run_identity=A2ARunIdentity()),
         },
     )
 
@@ -496,7 +499,9 @@ async def test_native_plan_admission_uses_engine_identity_and_claim(monkeypatch)
     run_id = "run-" + "b" * 32
     plan_digest = "sha256:" + ("b" * 32) + ("c" * 32)
     plan = {"plan_digest": plan_digest}
-    context_id = plans._native_context_id(context.caller.session, owner, run_id)
+    context_id = plans._native_context_id(
+        A2ARunIdentity(), context.caller.session, owner, run_id
+    )
     request_digest = a2a_authority._digest(
         {
             "context_id": context_id,
@@ -632,7 +637,9 @@ async def test_native_plan_replay_does_not_reclaim_terminal_item(monkeypatch):
     run_id = "run-" + "e" * 32
     plan_digest = "sha256:" + ("e" * 32) + ("f" * 32)
     plan = {"plan_digest": plan_digest}
-    context_id = plans._native_context_id(context.caller.session, owner, run_id)
+    context_id = plans._native_context_id(
+        A2ARunIdentity(), context.caller.session, owner, run_id
+    )
     request_digest = a2a_authority._digest(
         {
             "context_id": context_id,

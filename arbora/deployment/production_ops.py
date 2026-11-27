@@ -19,9 +19,9 @@ import socket
 import subprocess  # nosec B404 -- fixed-argv backup/restore binaries
 import sys
 import time
-from contextlib import redirect_stdout
+from contextlib import AbstractContextManager, redirect_stdout
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from filelock import FileLock
 
@@ -30,7 +30,16 @@ from arbora.core.environment import inherited_environment, read_env
 from arbora.core.settings import ArboraConfig as AgentConfig
 from arbora.core.settings import RuntimeConfig, platform_config_file
 from arbora.deployment.doctor_support import PROBE_FAULTS
-from arbora.security.key_cache import JwksCache
+
+
+class OneShotHost(Protocol):
+    """The host composition a one-shot operation runs under (ARBORA-HOST-R038.2).
+
+    ``open`` yields the verified process ``(session, engine)`` for the span of one operation;
+    the process that runs the command owns both, so this unit never imports the host.
+    """
+
+    def open(self) -> AbstractContextManager[tuple[Any, Any]]: ...
 
 
 class ProductionOperationError(RuntimeError):
@@ -423,7 +432,9 @@ async def _restore_validate(archive_root: Path, scratch_root: Path) -> dict[str,
         shutil.rmtree(destination, ignore_errors=True)
 
 
-async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
+async def _provision_semantic_content(
+    served_url: str, host: OneShotHost
+) -> dict[str, Any]:
     """Provision Arbora's semantic packs under its own verified process session.
 
     The session and engine come from the same bootstrap the served process
@@ -431,22 +442,9 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     """
 
     from arbora.api.contracts import pack_import_authority
-
-    # ``runtime`` binds bootstrap's host slots on import; import it first.
-    from arbora.mcp_server import bootstrap, runtime
-    from arbora.security.actor_context import use_actor
-    from arbora.security.session import use_session
     from arbora.semantic_provisioning import provision_semantic_content
 
-    session = runtime._mint_process_session(
-        "http", JwksCache(config := RuntimeConfig()), config
-    )
-    with use_actor(session.actor), use_session(session):
-        from arbora.mcp_server.served_engine import EngineHandles
-
-        # This one-shot process is its own composition root and owns its engine.
-        engine = EngineHandles().served()
-        bootstrap._wait_for_engine_materialization(engine)
+    with host.open() as (session, engine):
         report = await provision_semantic_content(
             engine=engine,
             session=session,
@@ -460,6 +458,7 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
 
 async def _onboard_fleet(
     served_url: str,
+    host: OneShotHost,
     allow_mass_withdrawal: frozenset[str] = frozenset(),
     *,
     sandbox: bool = False,
@@ -486,23 +485,12 @@ async def _onboard_fleet(
         self_served_connectors,
     )
     from arbora.fleet.virtual_catalog import VirtualCatalog
-    from arbora.mcp_server import bootstrap, runtime
-    from arbora.security.actor_context import use_actor
-    from arbora.security.session import use_session
 
     profile = load_sandbox_profile() if sandbox else None
     endpoints = configured_fleet_endpoints(exclude=self_served_connectors())
     if profile is not None:
         endpoints = select_endpoints(endpoints, profile)
-    session = runtime._mint_process_session(
-        "http", JwksCache(config := RuntimeConfig()), config
-    )
-    with use_actor(session.actor), use_session(session):
-        from arbora.mcp_server.served_engine import EngineHandles
-
-        # This one-shot process is its own composition root and owns its engine.
-        engine = EngineHandles().served()
-        bootstrap._wait_for_engine_materialization(engine)
+    with host.open() as (session, engine):
         report = await onboard_fleet(
             FleetOnboarding(
                 engine=engine,
@@ -524,7 +512,7 @@ async def _onboard_fleet(
     }
 
 
-async def _check_fleet_coverage() -> dict[str, Any]:
+async def _check_fleet_coverage(host: OneShotHost) -> dict[str, Any]:
     """Run the fleet coverage gate as an operator command.
 
     The org registry (``workspace.yml``) and the deployed endpoints
@@ -540,8 +528,6 @@ async def _check_fleet_coverage() -> dict[str, Any]:
         configured_fleet_endpoints,
         self_served_connectors,
     )
-    from arbora.mcp_server import bootstrap, runtime
-    from arbora.security.actor_context import use_actor
     from arbora.security.anonymous import session_context
     from arbora.security.session import use_session
 
@@ -549,15 +535,7 @@ async def _check_fleet_coverage() -> dict[str, Any]:
     registered = registered_connectors(exclude=exclude)
     endpoints = configured_fleet_endpoints(exclude=exclude)
 
-    session = runtime._mint_process_session(
-        "http", JwksCache(config := RuntimeConfig()), config
-    )
-    with use_actor(session.actor), use_session(session):
-        from arbora.mcp_server.served_engine import EngineHandles
-
-        # This one-shot process is its own composition root and owns its engine.
-        engine = EngineHandles().served()
-        bootstrap._wait_for_engine_materialization(engine)
+    with host.open() as (session, engine):
         claims = session_context(session)
         context = ReadContext(
             tenant_id=str(claims["tenant"]),
@@ -679,36 +657,37 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _provision(args: argparse.Namespace) -> dict[str, Any]:
+def _provision(args: argparse.Namespace, host: OneShotHost) -> dict[str, Any]:
     if not args.served_url:
         raise ProductionOperationError(
             "--served-url (or ARBORA_SERVED_MCP_URL) is required"
         )
-    return asyncio.run(_provision_semantic_content(args.served_url))
+    return asyncio.run(_provision_semantic_content(args.served_url, host))
 
 
 _OPERATIONS: dict[str, Any] = {
-    "backup": lambda args: asyncio.run(_backup(args.archive_root)),
-    "restore-validate": lambda args: asyncio.run(
+    "backup": lambda args, host: asyncio.run(_backup(args.archive_root)),
+    "restore-validate": lambda args, host: asyncio.run(
         _restore_validate(args.archive_root, args.scratch_root)
     ),
     "provision-semantic-content": _provision,
-    "onboard-fleet": lambda args: asyncio.run(
+    "onboard-fleet": lambda args, host: asyncio.run(
         _onboard_fleet(
             args.served_url,
+            host,
             _server_names(args.allow_mass_withdrawal),
             sandbox=args.sandbox,
         )
     ),
-    "check-fleet-coverage": lambda args: asyncio.run(_check_fleet_coverage()),
-    "deliver-registry-manifest": lambda args: deliver_registry_manifest(
+    "check-fleet-coverage": lambda args, host: asyncio.run(_check_fleet_coverage(host)),
+    "deliver-registry-manifest": lambda args, host: deliver_registry_manifest(
         args.source, platform_config_file("workspace.yml").parent
     ),
 }
 
 
-def _run(args: argparse.Namespace) -> dict[str, Any]:
-    return _OPERATIONS[args.operation](args)
+def _run(args: argparse.Namespace, host: OneShotHost) -> dict[str, Any]:
+    return _OPERATIONS[args.operation](args, host)
 
 
 def _exit_status(report: dict[str, Any]) -> int:
@@ -779,7 +758,7 @@ def _rate_limit_detail(exc: BaseException) -> dict[str, Any]:
     }
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, host: OneShotHost) -> int:
     from arbora.core.settings import load_config
 
     args = _parser().parse_args(argv)
@@ -800,7 +779,7 @@ def main(argv: list[str] | None = None) -> int:
                         "Anonymous provisioning requires a local HTTP served URL"
                     )
                 validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
-            report = _run(args)
+            report = _run(args, host)
     except PROBE_FAULTS as exc:  # CLI returns one privacy-safe failure
         detail = refusal_detail(exc)
         if "error_code" not in detail:
@@ -819,7 +798,3 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(json.dumps(report, sort_keys=True))
     return _exit_status(report)
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

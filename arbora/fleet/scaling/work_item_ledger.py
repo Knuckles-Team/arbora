@@ -17,14 +17,11 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from arbora import work_items
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet.scaling.scaling_intent_reconciler import (
+from arbora.api.domain.fleet.scale_records import (
     MAX_LEASE_TTL_S,
     BreakGlassAudit,
     BreakGlassAuthorization,
     ControllerLease,
-    MemoryScaleIntentLedger,
-    PersistedIntent,
     ScaleActuationResult,
     ScaleExecutionRecord,
     ScaleIntentConflict,
@@ -35,8 +32,13 @@ from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleObservation,
     ScaleObservationConflict,
     ScaleObservationStatus,
-    _aware,
-    _derived_id,
+    aware_utc,
+    derived_id,
+)
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.fleet.scaling.scaling_intent_reconciler import (
+    MemoryScaleIntentLedger,
+    PersistedIntent,
     break_glass_audit,
 )
 
@@ -146,7 +148,7 @@ class WorkItemScaleIntentLedger:
         await self._submit(REVISION_KIND, revision_key, binding, max_attempts=1)
         now = intent.created_at
         execution = ScaleExecutionRecord(
-            execution_id=_derived_id("execution", intent.execution_key),
+            execution_id=derived_id("execution", intent.execution_key),
             intent_id=intent.intent_id,
             intent_revision=intent.intent_revision,
             execution_key=intent.execution_key,
@@ -173,7 +175,7 @@ class WorkItemScaleIntentLedger:
     async def acquire_controller_lease(
         self, intent: ScaleIntentRecord, controller_id: str, *, now: datetime
     ) -> ControllerLease | None:
-        now = _aware(now, "now")
+        now = aware_utc(now, "now")
         if now >= intent.fence.expires_at:
             raise ScaleLeaseUnavailable("scale intent fence is expired")
         item = await self._item(intent)
@@ -239,7 +241,7 @@ class WorkItemScaleIntentLedger:
         lease: ControllerLease,
         now: datetime,
     ) -> dict[str, Any]:
-        now = _aware(now, "now")
+        now = aware_utc(now, "now")
         state = _state(item)
         stored = state.get("lease")
         if stored is None or stored["lease_instance_id"] != lease.lease_instance_id:
@@ -296,7 +298,7 @@ class WorkItemScaleIntentLedger:
                 "state": ScaleIntentState.STARTED.value,
                 "attempt": lease.attempt,
                 "lease": lease,
-                "updated_at": _aware(now, "now"),
+                "updated_at": aware_utc(now, "now"),
             }
         )
         fresh = await self._read(KIND, intent.execution_key) or item
@@ -334,7 +336,7 @@ class WorkItemScaleIntentLedger:
                 "result_attempt": lease.attempt,
                 "lease": lease,
                 "result": result,
-                "updated_at": _aware(now, "now"),
+                "updated_at": aware_utc(now, "now"),
             }
         )
         await self._write_under_lease(
@@ -366,7 +368,7 @@ class WorkItemScaleIntentLedger:
             work_items.defer_work_item,
             item["work_item_id"],
             _claim(lease),
-            next_retry_at=_aware(now, "now").timestamp(),
+            next_retry_at=aware_utc(now, "now").timestamp(),
             reason_ref=result.error_code,
         )
 
@@ -444,7 +446,7 @@ class WorkItemScaleIntentLedger:
             update={
                 "state": ScaleIntentState.VERIFIED.value,
                 "observation_id": observation.observation_id,
-                "updated_at": _aware(now, "now"),
+                "updated_at": aware_utc(now, "now"),
             }
         )
         return {
@@ -500,7 +502,7 @@ class WorkItemScaleIntentLedger:
             audit = break_glass_audit(
                 intent,
                 authorization,
-                now=_aware(now, "now"),
+                now=aware_utc(now, "now"),
                 persisted=_execution(state) if state else None,
                 existing=None
                 if stored is None

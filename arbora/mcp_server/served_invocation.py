@@ -901,6 +901,18 @@ def _with_city_ports(
     return {**{name: port for name in CITY_SERVICES}, **bindings}
 
 
+def _with_operation_ports(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the operation ports the handlers call instead of importing a subsystem (R038.1)."""
+    if bindings is None:
+        return bindings
+    from arbora.api.ops.ports import PORTS_BINDING
+    from arbora.mcp_server.operation_ports import build_operation_ports
+
+    return {PORTS_BINDING: build_operation_ports(), **bindings}
+
+
 def _with_delivery_ports(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -914,8 +926,12 @@ def _with_delivery_ports(
     if bindings is None:
         return bindings
     from arbora.api.ops.delivery_ports import delivery_bindings
+    from arbora.mcp_server.backing.tools import engine_tools
 
-    return {**delivery_bindings(), **bindings}
+    def lane_client(graph: str) -> Any:
+        return engine_tools._client_for(graph)  # noqa: SLF001
+
+    return {**delivery_bindings(lane_client), **bindings}
 
 
 def _with_provisioning_ports(
@@ -1179,7 +1195,7 @@ def compose_served_invocation(
     bindings = _with_fleet_source_executor(bindings, pool, graph, process_session)
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
-    bindings = _with_delivery_ports(_with_city_ports(bindings))
+    bindings = _with_operation_ports(_with_delivery_ports(_with_city_ports(bindings)))
     bindings = _with_provisioning_ports(bindings)
     bindings = _with_operator_audit(bindings)
     bindings = _with_federation_sources(bindings)
