@@ -23,6 +23,7 @@ from arbora.fleet.state import FleetState
 from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
+from arbora.mcp_server.sql_schema_binding import serve_sql_schema
 from arbora.observability.metric_evidence import EngineMetricEvidence
 from arbora.observability.state import (
     Errors,
@@ -121,6 +122,8 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         ports=ports,
     )
     fleet = FleetState(config=caches.tools.authority.config)
+    gateway = GatewayState()
+    gateway.sql_schema.set(serve_sql_schema)
     return HostContext(
         runs=RunState(origins=origins, a2a=a2a, decide=decide, ports=ports),
         fleet=fleet,
@@ -132,7 +135,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         browser=BrowserState(),
         authority=caches.tools.authority,
         observability=_compose_observability(engine, caches.tools.authority, fleet),
-        gateway=GatewayState(),
+        gateway=gateway,
         config=caches.tools.authority.config,
     )
 
