@@ -48,6 +48,10 @@ class _Actuator:
         )
 
 
+async def _snapshot(context: Any) -> Any:
+    return authority()
+
+
 def _context(caller: Any, **services: Any) -> Any:
     return SimpleNamespace(caller=caller, services=services)
 
@@ -83,7 +87,7 @@ async def test_reconcile_scale_and_watch_served() -> None:
     context = _context(
         OPERATOR,
         scale_reconciler=_reconciler(actuator, ledger),
-        scale_authority=authority(),
+        scale_authority=SimpleNamespace(snapshot=_snapshot),
     )
     op = _op(fleet_scaling, "fleet.reconcile.run")
     params = {"intent": INTENT, "controller_id": "writer-1"}

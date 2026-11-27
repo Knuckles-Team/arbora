@@ -8,6 +8,7 @@ both read the engine's own vocabulary and never a message Arbora wrote.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 
@@ -32,6 +33,25 @@ def decode(payload: Any) -> Any:
     if isinstance(payload, (bytes, bytearray, memoryview)):
         return msgpack.unpackb(bytes(payload), raw=False)
     return payload
+
+
+def node_properties(blob: Any) -> dict[str, Any]:
+    """One node's properties from the engine's MessagePack blob (or an already-plain map)."""
+    if isinstance(blob, Mapping):
+        return dict(blob)
+    if isinstance(blob, (bytes, bytearray, memoryview)):
+        loaded = msgpack.unpackb(bytes(blob), raw=False)
+        return loaded if isinstance(loaded, dict) else {}
+    return {}
+
+
+def node_rows(raw: Any) -> list[tuple[str, dict[str, Any]]]:
+    """``(node id, properties)`` of each present node an engine node read answered."""
+    rows: list[tuple[str, dict[str, Any]]] = []
+    for row in decode(raw) or ():
+        if isinstance(row, (list, tuple)) and len(row) == 2 and row[1] is not None:
+            rows.append((str(row[0]), node_properties(row[1])))
+    return rows
 
 
 async def engine_send(

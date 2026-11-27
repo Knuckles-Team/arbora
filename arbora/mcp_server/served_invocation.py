@@ -737,6 +737,35 @@ def _with_provisioning_ports(
     }
 
 
+def _with_scale_ports(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the scale reconciler over engine WorkItems and the graph authority (R024.14, R024.15).
+
+    The ledger is the engine's WorkItems (claim, lease and expiry fence the controller,
+    the idempotency key holds the identity) and the authority snapshot is read from
+    graph nodes as the verified caller; Arbora keeps neither. A port the host already
+    bound is kept; the reconciler needs the WorkItem engine and the scale actuator.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.fleet.scaling.graph_authority import GraphScaleAuthority
+    from arbora.fleet.scaling.scaling_intent_reconciler import (
+        AdmittedScalePolicy,
+        ScaleIntentReconciler,
+    )
+    from arbora.fleet.scaling.work_item_ledger import WorkItemScaleIntentLedger
+
+    bound = {"scale_authority": GraphScaleAuthority(), **bindings}
+    engine, actuator = bound.get("task_plan_work_engine"), bound.get("scale_actuator")
+    if "scale_reconciler" in bound or engine is None or actuator is None:
+        return bound
+    reconciler = ScaleIntentReconciler(
+        WorkItemScaleIntentLedger(engine), actuator, policy=AdmittedScalePolicy()
+    )
+    return {"scale_reconciler": reconciler, **bound}
+
+
 def _with_security_evaluation(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -992,6 +1021,7 @@ def compose_served_invocation(
         from arbora.mcp_server.served_engine import ServedEngine
 
         bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
+    bindings = _with_scale_ports(bindings)
     if bindings is not None and "media_ref_store" not in bindings:
         # ARBORA-A2A-R001.5.5: uploaded image bytes live in the engine, never here.
         from arbora.a2a.media_refs import SessionMediaRefStore

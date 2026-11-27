@@ -18,7 +18,7 @@ from typing import Any
 import msgpack
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import decode, engine_send
+from arbora.api.ops._engine import decode, engine_send, node_rows
 from arbora.fleet.city_layout import (
     CatalogEntry,
     override_from_properties,
@@ -51,30 +51,13 @@ def _pack(value: Mapping[str, Any]) -> bytes:
     return msgpack.packb(dict(value), use_bin_type=True)
 
 
-def _properties(blob: Any) -> dict[str, Any]:
-    if isinstance(blob, Mapping):
-        return dict(blob)
-    if isinstance(blob, (bytes, bytearray, memoryview)):
-        loaded = msgpack.unpackb(bytes(blob), raw=False)
-        return loaded if isinstance(loaded, dict) else {}
-    return {}
-
-
-def _rows(raw: Any) -> list[tuple[str, dict[str, Any]]]:
-    rows: list[tuple[str, dict[str, Any]]] = []
-    for row in decode(raw) or ():
-        if isinstance(row, (list, tuple)) and len(row) == 2 and row[1] is not None:
-            rows.append((str(row[0]), _properties(row[1])))
-    return rows
-
-
 async def _by_label(
     context: Any, label: str, *, limit: int, after: str | None = None
 ) -> list[tuple[str, dict[str, Any]]]:
     request: dict[str, Any] = {"label": label, "limit": limit}
     if after is not None:
         request["after"] = after
-    return _rows(await engine_send(context, "GetNodesByLabel", request))
+    return node_rows(await engine_send(context, "GetNodesByLabel", request))
 
 
 def edit_layer_id(tenant: str) -> str:
@@ -195,7 +178,9 @@ async def _anchor_chunk(
     page = neighbours[:CHUNK_LIMIT]
     ids = [anchor, *page]
     request = {"node_ids": ids}
-    props = dict(_rows(await engine_send(context, "GetNodePropertiesBatch", request)))
+    props = dict(
+        node_rows(await engine_send(context, "GetNodePropertiesBatch", request))
+    )
     if anchor not in props:
         raise OperationRefused("NOT_FOUND", {"reason": "unknown anchor"})
     more = len(neighbours) > CHUNK_LIMIT
@@ -217,7 +202,7 @@ async def _chunk(
 
 async def _layer(context: Any, tenant: str) -> dict[str, Any] | None:
     request = {"node_ids": [edit_layer_id(tenant)]}
-    rows = _rows(await engine_send(context, "GetNodePropertiesBatch", request))
+    rows = node_rows(await engine_send(context, "GetNodePropertiesBatch", request))
     return rows[0][1] if rows else None
 
 

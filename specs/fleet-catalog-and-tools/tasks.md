@@ -550,3 +550,5 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T281 [US1] ARBORA-FLEET-R089 Per-connector connection state is a served read. Size: XS, 1 PR, 1 hour.
 - [x] T282 [US1] ARBORA-FLEET-R024.12 The deploy rollback acts through one governed fleet call. Size: XS, 1 PR, 1 hour.
 - [x] T283 [US1] ARBORA-FLEET-R024.13 The scale actuator applies a typed request through one governed fleet call. Size: S, 1 PR, 2 hours.
+- [x] T284 [US1] ARBORA-FLEET-R024.14 The scale reconciler runs over engine WorkItems. Size: M, 1 PR, 4 hours.
+- [x] T285 [US1] ARBORA-FLEET-R024.15 The scale authority snapshot is read from graph nodes. Size: S, 1 PR, 2 hours.

@@ -10,7 +10,6 @@ service actor.
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Mapping
 from typing import Any
 
@@ -83,8 +82,7 @@ async def handle_fleet_reconcile_run(
     intent = _model(params["intent"], ScaleIntentRecord)
     try:
         with bind_request(context):
-            result = await asyncio.to_thread(
-                reconciler.reconcile,
+            result = await reconciler.reconcile(
                 intent,
                 controller_id=params["controller_id"],
                 dry_run=bool(params.get("dry_run", False)),
@@ -102,10 +100,11 @@ async def handle_fleet_scale_evaluate(
     """Validate a proposed intent against the current scaling authority revision."""
     del op
     _require_scope(context)
-    authority = bound_service(
+    source = bound_service(
         context, "scale_authority", reason="the scaling authority is not composed"
     )
     intent = _model(params["intent"], ScaleIntent)
+    authority = await source.snapshot(context)
     try:
         validate_scale_intent(intent, authority)
     except ValueError as exc:
