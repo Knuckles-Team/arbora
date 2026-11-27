@@ -21,10 +21,16 @@ from arbora.access.credential_use import (
 )
 from arbora.access.resource_gate import ResourceGate
 from arbora.access.resource_grants import ResourceAccessRequest
-from arbora.pin_lag.medulla import PinLagUnavailable, require_methods, require_models
+from arbora.pin_lag.medulla import (
+    PinLagUnavailable,
+    require_enum_member,
+    require_methods,
+    require_models,
+)
 
 __all__ = [
-    "CREDENTIAL_DECISION_METHOD",
+    "CREDENTIAL_DECISION_KIND",
+    "DECISION_TTL_SECONDS",
     "RESOURCE_DECISION_METHOD",
     "CredentialPorts",
     "credential_ports_for_host",
@@ -33,12 +39,12 @@ __all__ = [
 ]
 
 RESOURCE_DECISION_METHOD = "CheckResourceAccess"
-#: The engine decision of scoped credential reuse; engine ``main`` does not serve it yet,
-#: so every use refuses ``PROVIDER_UNAVAILABLE`` (listed in the cross-repo gaps).
-CREDENTIAL_DECISION_METHOD = "CheckCredentialUse"
-#: The engine's ``ResourceProtocol`` is the transport of the call: a connector tool call
-#: is an MCP call, whatever protocol the connector enforces on the resource.
-_WIRE_PROTOCOL = "mcp"
+#: The engine decision of scoped credential reuse is the typed ``Decide`` question kind
+#: ``credential_reuse`` (admit, deny or abstain, with a reason); a pinned engine without its
+#: answer model refuses ``PROVIDER_UNAVAILABLE`` (PIN-LAG, ARBORA-IDENTITY-R023.3).
+CREDENTIAL_DECISION_KIND = "credential_reuse"
+#: The engine decision names no expiry: Arbora re-asks per use and bounds each admission.
+DECISION_TTL_SECONDS = 60
 
 #: ``send(method, params, tenant)``: the engine as the host service identity.
 EngineSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
@@ -53,12 +59,15 @@ def resource_decider(
     async def decide(request: ResourceAccessRequest) -> Mapping[str, Any]:
         require_methods(RESOURCE_DECISION_METHOD)
         require_models(("ResourceAccessDecision",))
+        # The real protocol goes on the wire (ssh, database, web, rdp, mcp, a2a or
+        # knowledge); a pinned engine whose enum lacks it refuses AUTHORITY_UNAVAILABLE.
+        require_enum_member("ResourceProtocol", request.protocol)
         answer = await send(
             RESOURCE_DECISION_METHOD,
             {
                 "agent_id": request.client,
                 "operation": request.operation,
-                "protocol": _WIRE_PROTOCOL,
+                "protocol": request.protocol,
                 "resource_ref": request.resource_ref,
             },
             request.tenant,
@@ -93,34 +102,31 @@ class CredentialPorts:
 
     def __init__(
         self,
-        send: EngineSend,
+        ask: Any,
         vault: Any,
         *,
         broker: Any = None,
         clock: Callable[[], float] = time.time,
         emit: Callable[[Mapping[str, str]], None] = _emit,
     ) -> None:
-        self._send = send
+        self._ask = ask
         self._vault = vault
         self._broker = broker
         self.clock = clock
         self.emit = emit
 
     async def decide(self, request: CredentialUseRequest) -> Mapping[str, Any]:
-        require_methods(CREDENTIAL_DECISION_METHOD)
-        answer = await self._send(
-            CREDENTIAL_DECISION_METHOD,
-            {
-                "owner": request.owner_principal,
-                "agent_id": request.client,
-                "connector": request.connector,
-                "provider": request.provider,
-                "scopes": list(request.scopes),
-                "purpose": request.operation,
-            },
-            request.tenant,
+        """The engine ``credential_reuse`` verdict as the allow answer the resolver reads.
+
+        Only an ``admit`` verdict allows; deny and abstain refuse. The vault reference is
+        Arbora's own path of the owner's credential for this provider.
+        """
+        from arbora.a2a.engine_deciders import EngineCredentialReuseDecider
+
+        verdict = await EngineCredentialReuseDecider(self._ask).decide(
+            request, tenant=request.tenant
         )
-        return answer if isinstance(answer, Mapping) else {}
+        return _reuse_answer(verdict, request, self.clock())
 
     async def vault_get(self, ref: str) -> Mapping[str, Any] | None:
         import asyncio
@@ -168,7 +174,26 @@ class CredentialPorts:
         return await self._broker.complete(challenge, deadline)
 
 
+def _reuse_answer(
+    verdict: Mapping[str, Any] | None, request: CredentialUseRequest, now: float
+) -> Mapping[str, Any]:
+    """The resolver's allow answer of an ``admit`` verdict; deny and abstain allow nothing."""
+    if verdict is None or verdict.get("verdict") != "admit":
+        return {"allow": False}
+    return {
+        "allow": True,
+        "decision_ref": verdict.get("decision_ref") or "decision:unnamed",
+        "vault_ref": (
+            f"credentials/{request.tenant}/{request.owner_principal}/{request.provider}"
+        ),
+        "expires_at": int(now) + DECISION_TTL_SECONDS,
+        "revocation_revision": 0,
+        "token_profile": "opaque",
+    }
+
+
 def credential_ports_for_host(
-    send: EngineSend, vault: Any, *, broker: Any = None
+    ask: Any, vault: Any, *, broker: Any = None
 ) -> CredentialPorts:
-    return CredentialPorts(send, vault, broker=broker)
+    """The host's credential ports: ``ask`` is the engine ``Decide`` seam of the host."""
+    return CredentialPorts(ask, vault, broker=broker)

@@ -10,8 +10,9 @@ user store: every effect goes through the injected :class:`ScimIdentityPort`.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -94,33 +95,44 @@ async def _body(request: Request) -> dict[str, Any]:
     return body
 
 
-def _created(port: ScimIdentityPort, user_id: str, body: dict[str, Any]) -> Response:
+async def _settled(result: Any) -> Any:
+    """A port may be synchronous or an engine-backed coroutine; both are served."""
+    return await result if inspect.isawaitable(result) else result
+
+
+async def _created(
+    port: ScimIdentityPort, user_id: str, body: dict[str, Any]
+) -> Response:
     return JSONResponse(
-        {"id": scim_create_user(port, body)},
+        {"id": await _settled(scim_create_user(port, body))},
         status_code=201,
         media_type="application/scim+json",
     )
 
 
-def _updated(port: ScimIdentityPort, user_id: str, body: dict[str, Any]) -> Response:
-    scim_update_user(port, user_id, body)
-    return JSONResponse({"id": user_id}, media_type="application/scim+json")
-
-
-def _patched(port: ScimIdentityPort, user_id: str, body: dict[str, Any]) -> Response:
-    scim_patch_user(port, user_id, body)
-    return JSONResponse({"id": user_id}, media_type="application/scim+json")
-
-
-def _deactivated(
+async def _updated(
     port: ScimIdentityPort, user_id: str, body: dict[str, Any]
 ) -> Response:
-    scim_deactivate_user(port, user_id)
+    await _settled(scim_update_user(port, user_id, body))
+    return JSONResponse({"id": user_id}, media_type="application/scim+json")
+
+
+async def _patched(
+    port: ScimIdentityPort, user_id: str, body: dict[str, Any]
+) -> Response:
+    await _settled(scim_patch_user(port, user_id, body))
+    return JSONResponse({"id": user_id}, media_type="application/scim+json")
+
+
+async def _deactivated(
+    port: ScimIdentityPort, user_id: str, body: dict[str, Any]
+) -> Response:
+    await _settled(scim_deactivate_user(port, user_id))
     return Response(status_code=204)
 
 
 #: (method, has user id) to the handler and its outcome name.
-_DISPATCH: dict[tuple[str, bool], tuple[Callable[..., Response], str]] = {
+_DISPATCH: dict[tuple[str, bool], tuple[Callable[..., Awaitable[Response]], str]] = {
     ("POST", False): (_created, "created"),
     ("PUT", True): (_updated, "updated"),
     ("PATCH", True): (_patched, "patched"),
@@ -142,7 +154,7 @@ def scim_app(ports: ScimPorts) -> Starlette:
             return _error(405, "SCIM_METHOD_NOT_ALLOWED", "method not allowed")
         action, outcome = route
         try:
-            response = action(ports.identity, user_id, await _body(request))
+            response = await action(ports.identity, user_id, await _body(request))
         except (IdentityUnavailable, ValueError):
             ports.emit(
                 {"op": "scim", "provider": provider, "outcome": "SCIM_USER_INVALID"}

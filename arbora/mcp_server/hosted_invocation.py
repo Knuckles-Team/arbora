@@ -40,6 +40,12 @@ class HostedInvocation:
     decision_principal: Callable[[], str] | None = None
     #: The host tenant the capability-ranking questions are asked for (R083.5).
     decision_tenant: Callable[[], str] | None = None
+    #: The SCIM ports (credentials, identity port, audit) the composition root built, or
+    #: ``None`` when no SCIM credential is delivered; the API application mounts them.
+    scim_ports: Any = None
+    #: The engine ``Decide`` seam of the host (``kind, params, tenant`` to the record); the
+    #: credential reuse ports bind it (ARBORA-IDENTITY-R023.3).
+    decide_ask: Any = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
@@ -88,6 +94,7 @@ class HostedInvocation:
             visibility=self.services.policy_gate.check_op,
             authenticator=self.authenticator,
             invoke=invoke,
+            scim_ports=self.scim_ports,
         )
 
     def run_compatibility_application(self) -> Any:

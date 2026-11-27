@@ -212,7 +212,7 @@ class ActorContextMiddleware(Middleware):
         claims = self._claims(context)
         if not claims:
             return result
-        from arbora.identity.client_session import record_session_open
+        from arbora.identity.ports import record_session_open
         from arbora.mcp_server import runtime
         from arbora.security.request_identity import actor_from_claims
 

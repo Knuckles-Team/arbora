@@ -11,6 +11,8 @@ import weakref
 from dataclasses import dataclass, field
 from typing import Any
 
+from arbora.fleet.actor_exchange import ActorExchange
+from arbora.fleet.credential_reuse import CredentialReuse
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
@@ -57,3 +59,16 @@ class FleetState:
     declarations: Declarations = field(default_factory=Declarations)
     #: The one ranking port every fleet ranking site asks (ARBORA-FLEET-R083).
     ranking: HostRanking = field(default_factory=HostRanking)
+    actor: ActorExchange = field(default_factory=ActorExchange)
+    credentials: CredentialReuse = field(default_factory=CredentialReuse)
+
+    @property
+    def actor_issuer(self) -> Any:
+        """The exchange issuer of delegated identity, or ``None`` until bound."""
+        return self.actor.issuer
+
+    def actor_claims(self, actor: Any) -> Any:
+        return self.actor.claims(actor)
+
+    def actor_audit(self, event: Any) -> None:
+        self.actor.audit(event)

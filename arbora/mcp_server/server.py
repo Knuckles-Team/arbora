@@ -448,6 +448,12 @@ def mcp_server(
 
     register_harness_host(fleet_mux)
     _bind_served_fleet(invocation, fleet_mux, fleet_catalog_reader)
+    from arbora.identity.ports import bind_actor_exchange
+
+    bind_actor_exchange(host_context.fleet)
+    from arbora.fleet.credential_reuse import bind_credential_reuse
+
+    bind_credential_reuse(host_context.fleet, invocation)
     _register_resident_surface(mcp, fleet_mux, invocation)
 
     transport = getattr(args, "transport", "stdio")

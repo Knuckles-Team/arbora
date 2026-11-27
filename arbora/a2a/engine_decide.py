@@ -18,7 +18,12 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from .engine_deciders import HELD_ITEM_KIND, TOOL_ACTION_KIND, AskDecide
+from .engine_deciders import (
+    CREDENTIAL_REUSE_KIND,
+    HELD_ITEM_KIND,
+    TOOL_ACTION_KIND,
+    AskDecide,
+)
 
 #: The one option both admission families declare.
 ADMISSION_OPTION = "admission"
@@ -32,14 +37,30 @@ FAMILY_PARAMS: Mapping[str, tuple[str, ...]] = {
         "action_class",
     ),
     HELD_ITEM_KIND: ("item_kind", "item_ref", "content_digest"),
+    CREDENTIAL_REUSE_KIND: (
+        "owner",
+        "agent_id",
+        "connector",
+        "provider",
+        "scopes",
+        "purpose",
+    ),
 }
 
 Send = Callable[[str, dict[str, Any], str], Awaitable[Any]]
 
 
+def _anchor(params: Mapping[str, str]) -> str:
+    """The reference one question governs: the pending call, the held item or the agent."""
+    for name in ("pending_call_id", "item_ref", "agent_id"):
+        if params.get(name):
+            return str(params[name])
+    return ""
+
+
 def question_id(kind: str, params: Mapping[str, str]) -> str:
     """A stable id of one question: the kind and the reference it governs."""
-    anchor = params.get("pending_call_id") or params.get("item_ref") or ""
+    anchor = _anchor(params)
     return f"a2a.{kind}:{anchor}"
 
 
