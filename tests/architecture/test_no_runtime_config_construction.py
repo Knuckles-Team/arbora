@@ -20,6 +20,7 @@ COMPOSITION_ROOTS = frozenset(
     {
         "mcp_server/host_context.py",
         "identity_cli.py",
+        "mcp_server/production_ops_cli.py",
         "deployment/doctor.py",
         "deployment/production_ops.py",
         "deployment/provision.py",

@@ -33,7 +33,7 @@ class ProcessHost:
             "http", JwksCache(config := RuntimeConfig()), config
         )
         with use_actor(session.actor), use_session(session):
-            engine = EngineHandles().served()
+            engine = EngineHandles(config=config).served()
             bootstrap._wait_for_engine_materialization(engine)
             yield session, engine
 
