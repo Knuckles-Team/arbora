@@ -258,7 +258,7 @@ Each row below has no test bound by a `spec` marker. `Existing` names a test in 
 | `ARBORA-HOST-R009.2` | `tests/agent_host/test_create_agent_server.py::test_terminal_mode_serves_http_in_distinct_thread` | Planned, not yet written |
 | `ARBORA-HOST-R009.3` | `tests/agent_host/test_log_sink.py::test_real_http_request_reaches_production_sink_and_authorized_read` | Exists |
 | `ARBORA-HOST-R009.6` | `tests/agent_host/test_terminal_host_served.py::test_combined_mode_serves_http_and_scoped_logs` | Planned, not yet written |
-| `ARBORA-HOST-R009.8.2.2.2` | `tests/agent_host/test_overstory_logs_served.py::test_retention_gap_clears_protected_content` | Planned, not yet written |
+| `ARBORA-HOST-R009.8.2.2.2` | `tests/agent_host/test_overstory_logs_served.py::test_retention_gap_clears_protected_content` | Served HTTP half written; the browser half waits on the Overstory host-log view |
 | `ARBORA-HOST-R010.2` | `tests/test_environment_manifest.py::test_census_matches_declarations_and_dynamic_read_refuses` | Planned, not yet written |
 | `ARBORA-HOST-R010.3` | `tests/mcp_server/test_launch_configuration_served.py::test_refusals_start_nothing` | Planned, not yet written |
 | `ARBORA-HOST-R010.4` | `tests/test_environment_manifest.py::test_disabled_component_needs_no_credential` | Planned, not yet written |
