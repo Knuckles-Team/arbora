@@ -80,3 +80,18 @@ def test_refusals_exit_two_and_write_nothing(
         assert cli.main(argv) == 2
         assert code in capsys.readouterr().err
         assert files() == before
+
+
+@pytest.mark.spec("ARBORA-HOST-R008.6")
+def test_targets_prints_the_matrix(capsys: pytest.CaptureFixture[str]) -> None:
+    import json
+
+    assert cli.main(["targets"]) == 0
+    rows = json.loads(capsys.readouterr().out)
+    assert {row["harness"] for row in rows} == {
+        "claude-code",
+        "opencode",
+        "codex",
+        "grok",
+        "hosted",
+    }
