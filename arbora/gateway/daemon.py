@@ -276,33 +276,6 @@ def daemon_status() -> dict[str, Any]:
         return {"running": False, **public_error_payload(exc, logger=logger)}
 
 
-def drain_task_queue() -> list[str]:
-    """Purge the durable task-queue store (recovery from a corrupt/stuck queue).
-
-    A broken queue can't be safely drained by reading it, so we remove the
-    store files outright; the host then starts with an empty queue. SQLite
-    backend = ``kg_task_queue.db`` (+ WAL/SHM siblings). Returns removed paths.
-    """
-    from pathlib import Path
-
-    from meristem.core.paths import data_dir
-
-    base = data_dir() / "kg_task_queue.db"
-    removed: list[str] = []
-    for p in (base, Path(f"{base}-wal"), Path(f"{base}-shm")):
-        try:
-            if p.exists():
-                p.unlink()
-                removed.append(str(p))
-        except OSError as exc:
-            logger.warning(
-                "could not remove a task-queue artifact: %s",
-                exc,
-            )
-    logger.warning("Drained task queue (removed_count=%d).", len(removed))
-    return removed
-
-
 def stop_host_daemon() -> None:
     """Graceful shutdown: best-effort engine checkpoint, then release the lock.
 

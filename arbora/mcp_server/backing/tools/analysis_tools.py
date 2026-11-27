@@ -865,33 +865,7 @@ async def _analysis_action_check_constraints(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'check_constraints'
-    from meristem.harness.constraint_engine import (
-        ConstraintEngine,
-    )
-
-    if not query:
-        return "Error: check_constraints needs a tool_name in `query`."
-    if not engine:
-        return "Error: check_constraints requires a knowledge engine to instantiate ConstraintEngine."
-    ce = ConstraintEngine(knowledge_engine=engine)
-    allowed, violations = ce.check_tool_call(
-        tool_name=query,
-        args={"target": target} if target else None,
-    )
-    result = {
-        "allowed": allowed,
-        "tool_name": query,
-        "violations": [
-            {
-                "constraint_id": v.constraint_id,
-                "violation_context": v.violation_context,
-                "timestamp": v.timestamp,
-                "auto_blocked": v.auto_blocked,
-            }
-            for v in violations
-        ],
-    }
-    return json.dumps(result, default=str)
+    raise not_served("harness.constraint_engine", "MEDULLA-DECISION-ENGINE")
 
 
 async def _analysis_action_extract_claims(

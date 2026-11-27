@@ -217,3 +217,141 @@ def test_the_retired_import_check_finds_a_planted_import(tmp_path: Path) -> None
         encoding="utf-8",
     )
     assert _retired_imports(planted) == ["agent_utilities.api", "agent_utilities.graph"]
+
+
+# The pin-lag guard modules are the one place a pinned meristem release's earlier
+# module locations may be read; each is removed after the meristem re-pin.
+_FENCE_EXEMPT = ("arbora/pin_lag/", "tests/pin_lag/")
+_MERISTEM_ROOT_NAMES = frozenset(
+    {
+        "__version__",
+        "PUBLIC_HOST_MODULES",
+        "create_graph_agent",
+        "execute_graph",
+        "initialize_graph_from_workspace",
+        "environment_declarations",
+    }
+)
+
+
+def _from_meristem_root(node: Any) -> list[str]:
+    """``from meristem import x`` names the module ``meristem.x`` unless ``x`` is a root export."""
+    if node.level != 0 or node.module != "meristem":
+        return []
+    return [
+        f"meristem.{a.name}" for a in node.names if a.name not in _MERISTEM_ROOT_NAMES
+    ]
+
+
+def _meristem_modules(path: Path) -> set[str]:
+    """Every ``meristem`` submodule a file imports; the bare root package is allowed."""
+    import ast
+
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        found.update(_node_imports(node))
+        if isinstance(node, ast.ImportFrom):
+            found.update(_from_meristem_root(node))
+    return {module for module in found if module.startswith("meristem.")}
+
+
+def _is_public(module: str, public: tuple[str, ...]) -> bool:
+    return any(module == name or module.startswith(f"{name}.") for name in public)
+
+
+def _fence_violations(root: Path, public: tuple[str, ...]) -> list[str]:
+    """Retired-harness imports and non-public ``meristem`` imports under ``root``."""
+    violations: list[str] = []
+    for path in sorted(root.rglob("*.py")):
+        rel = path.relative_to(root).as_posix()
+        violations += [f"{rel}: {m}" for m in _retired_imports(path)]
+        violations += [
+            f"{rel}: {m}"
+            for m in sorted(_meristem_modules(path))
+            if not _is_public(m, public)
+        ]
+    return violations
+
+
+def _fenced_tree_violations(public: tuple[str, ...]) -> list[str]:
+    repo = Path(__file__).parents[1]
+    found = [
+        f"{area}/{line}"
+        for area in ("arbora", "tests")
+        for line in _fence_violations(repo / area, public)
+    ]
+    return [line for line in found if not line.startswith(_FENCE_EXEMPT)]
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.69")
+@pytest.mark.spec("ARBORA-HOST-R007.1")
+def test_arbora_imports_only_meristem_public_modules() -> None:
+    """Every import under ``arbora/`` and ``tests/`` is a declared meristem public module."""
+    from arbora.pin_lag.meristem import fence_modules
+
+    public, _installed = fence_modules()
+    assert "meristem.host_ports" in public
+    assert _fenced_tree_violations(public) == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.69")
+@pytest.mark.spec("ARBORA-HOST-R007.1")
+def test_arbora_imports_only_declared_meristem_modules() -> None:
+    from arbora.pin_lag.meristem import MAIN_PUBLIC_HOST_MODULES
+
+    assert _fenced_tree_violations(MAIN_PUBLIC_HOST_MODULES) == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.69")
+def test_fence_detects_planted_violation(tmp_path: Path) -> None:
+    from arbora.pin_lag.meristem import MAIN_PUBLIC_HOST_MODULES
+
+    (tmp_path / "planted.py").write_text(
+        "from meristem.harness.edit_engine import apply_edits\n"
+        "from meristem import host_ports\n"
+        "from meristem.graph.state import GraphState\n"
+        "import agent_utilities.graph\n"
+        "import importlib\n"
+        "importlib.import_module('meristem.core.paths')\n",
+        encoding="utf-8",
+    )
+    assert _fence_violations(tmp_path, MAIN_PUBLIC_HOST_MODULES) == [
+        "planted.py: agent_utilities.graph",
+        "planted.py: meristem.core.paths",
+        "planted.py: meristem.harness.edit_engine",
+    ]
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.69")
+def test_the_pinned_release_without_the_declaration_refuses_unavailable() -> None:
+    import meristem
+
+    from arbora.pin_lag.meristem import (
+        MAIN_PUBLIC_HOST_MODULES,
+        PinLagUnavailable,
+        fence_modules,
+        public_host_modules,
+    )
+
+    public, installed = fence_modules()
+    if hasattr(meristem, "PUBLIC_HOST_MODULES"):
+        assert installed and public == tuple(meristem.PUBLIC_HOST_MODULES)
+        assert public == MAIN_PUBLIC_HOST_MODULES
+        return
+    assert not installed and public == MAIN_PUBLIC_HOST_MODULES
+    with pytest.raises(PinLagUnavailable):
+        public_host_modules()
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.70")
+def test_no_retired_harness_import_remains() -> None:
+    repo = Path(__file__).parents[1]
+    offenders = [
+        f"{area}/{path.relative_to(repo / area).as_posix()}"
+        for area in ("arbora", "tests")
+        for path in sorted((repo / area).rglob("*.py"))
+        if _retired_imports(path)
+    ]
+    # The planted-import test above writes its fixture at runtime, not under tests/.
+    assert [o for o in offenders if o != "tests/test_package_layout.py"] == []

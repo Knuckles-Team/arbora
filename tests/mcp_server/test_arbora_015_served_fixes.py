@@ -365,3 +365,31 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
     assert artifacts[0].parts[0].text == "see https://x.example"
     dumped = artifacts[0].model_dump(mode="json", by_alias=True)
     assert dumped["artifactId"] == f"{task_id}:reply"
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.54")
+def test_native_intent_event_emitted(monkeypatch) -> None:
+    from meristem import host_ports
+
+    from arbora.mcp_server import runtime
+
+    events: list[dict[str, Any]] = []
+    monkeypatch.setattr(host_ports, "emit_run_event", events.append)
+    runtime._emit_native_intent_event(
+        "act",
+        "run-1",
+        {"op": "fleet.call", "params": {"server": "s", "tool": "t"}},
+        {"ok": False, "error": {"code": "UNAVAILABLE"}},
+    )
+    assert events == [
+        {
+            "type": "tool_call",
+            "run_id": "run-1",
+            "tool_name": "act",
+            "op": "fleet.call",
+            "server": "s",
+            "tool": "t",
+            "ok": False,
+            "error": "UNAVAILABLE",
+        }
+    ]

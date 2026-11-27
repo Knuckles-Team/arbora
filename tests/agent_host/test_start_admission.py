@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, Mock
 import meristem.graph
 import pytest
 import uvicorn
+from fastapi.testclient import TestClient
 
 import arbora.agent_host as host
 from arbora.agent_host.start_admission import (
@@ -410,3 +411,40 @@ def test_caller_lease_maps_never_become_start_authority(
         owner.context().check(
             workspace=str(tmp_path), interfaces="terminal", web_logs=False
         )
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.4")
+def test_start_admits_and_runs_graph(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[object, dict, str]] = []
+
+    async def execute_graph(graph, graph_config, query):
+        calls.append((graph, graph_config, query))
+        return {"output": f"ran: {query}"}
+
+    monkeypatch.setattr(meristem.graph, "execute_graph", execute_graph)
+    app = host.build_agent_host_app(graph="g", graph_config={"valid_domains": []})
+    response = TestClient(app).post(
+        "/a2a",
+        json={
+            "jsonrpc": "2.0",
+            "method": "message/send",
+            "id": 1,
+            "params": {
+                "message": {
+                    "role": "user",
+                    "parts": [{"kind": "text", "text": "hello"}],
+                    "messageId": "m-1",
+                }
+            },
+        },
+    )
+    assert response.status_code == 200
+    assert calls == [("g", {"valid_domains": []}, "hello")]
+    assert response.json()["result"]["history"][-1]["parts"][0]["text"] == "ran: hello"
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.4")
+def test_agent_host_names_no_retired_harness_module() -> None:
+    import arbora.agent_host as host
+
+    assert "agent_utilities" not in (host.__doc__ or "")

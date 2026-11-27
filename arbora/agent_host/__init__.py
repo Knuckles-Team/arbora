@@ -1,8 +1,8 @@
 """First-party connector agent host (ARBORA-HOST-R009, MERISTEM-BOUNDARY-R015).
 
 A fleet connector's ``agent_server.py`` previously called
-``agent_utilities.create_agent_server(...)`` to start a standalone HTTP/A2A
-listener for its pydantic-graph agent -- the last ``meristem`` import
+the retired harness server factory to start a standalone HTTP/A2A
+listener for its pydantic-graph agent -- the last harness import
 in about 60 connectors. This module gives Arbora the same call signature so
 a connector can depend on Arbora (already downstream of meristem in
 the composition order) instead of importing meristem directly.
@@ -10,7 +10,7 @@ the composition order) instead of importing meristem directly.
 Scope of this first increment (the MERISTEM-BOUNDARY-R015 pilot slice): Arbora
 owns the HTTP shell -- health, agent-card discovery, and a bounded A2A
 ``message/send`` exchange. Agent/model construction stays with
-meristem's public API (``agent_utilities.create_graph_agent`` /
+meristem's public API (``meristem.graph.create_graph_agent`` /
 ``initialize_graph_from_workspace`` and ``meristem.graph.execute_graph``),
 which remains the agent orchestration authority per both repositories'
 ``AGENTS.md``. Deliberately NOT ported in this increment, matching
@@ -126,8 +126,8 @@ def build_agent_host_app(
 ):
     """Build the FastAPI app that hosts one connector agent.
 
-    ``graph``/``graph_config`` are the bundle ``agent_utilities.create_graph_agent``
-    or ``agent_utilities.initialize_graph_from_workspace`` already returns --
+    ``graph``/``graph_config`` are the bundle ``meristem.graph.create_graph_agent``
+    or ``meristem.graph.initialize_graph_from_workspace`` already returns --
     callers keep using those AU entry points for construction; only the HTTP
     hosting moves here.
     """
@@ -293,7 +293,7 @@ def create_agent_server(
     **_unused_au_hosting_kwargs: Any,
 ) -> None:
     """Build and serve a connector agent -- the Arbora-hosted replacement for
-    ``agent_utilities.create_agent_server``.
+    the retired harness server factory.
 
     Call signature intentionally mirrors AU's: a connector's
     ``agent_server.py`` passes the same keyword arguments it already builds

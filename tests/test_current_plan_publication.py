@@ -13,10 +13,13 @@ from typing import Any
 
 import pytest
 from meristem import host_ports
-from meristem.harness.plan import PlanItem, PlanState
 
 from arbora import current_plan_publication as publication
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+from arbora.pin_lag.meristem import plan_types
+
+PlanItem = plan_types().PlanItem
+PlanState = plan_types().PlanState
 
 REAL_ADMIT = publication._admit
 

@@ -6,14 +6,16 @@ from types import SimpleNamespace
 
 import pytest
 from meristem import host_ports
-from meristem.harness.plan import PlanState
 
 from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.mcp_server.task_plan import TaskPlanConfig
+from arbora.pin_lag.meristem import plan_types
 from tests.a2a.test_operation_bridge import session as Session
 from tests.test_current_plan_publication import claim, engine
 from tests.test_current_plan_publication import transport as transport
+
+PlanState = plan_types().PlanState
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
 

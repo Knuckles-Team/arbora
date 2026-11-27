@@ -302,26 +302,25 @@ def _python_env_detail(ver: str, optional: dict[str, bool]) -> str:
 
 
 def _check_python_env() -> dict[str, Any]:
+    import importlib.metadata
     import sys
 
     try:
-        import meristem
-
-        ver = getattr(meristem, "__version__", "unknown")
-    except Exception as exc:  # noqa: BLE001
+        ver = importlib.metadata.version("meristem")
+    except importlib.metadata.PackageNotFoundError:
         return _result(
             "python_env",
             "fail",
-            f"meristem not importable ({type(exc).__name__})",
+            "meristem not installed",
             remediation="pip install meristem",
         )
     optional = _optional_extras_present()
-    py_ok = sys.version_info >= (3, 10)
+    py_ok = sys.version_info >= (3, 12)
     return _result(
         "python_env",
         "ok" if py_ok else "warn",
-        _python_env_detail(str(ver), optional),
-        remediation=None if py_ok else "meristem needs Python 3.10+",
+        _python_env_detail(ver, optional),
+        remediation=None if py_ok else "arbora needs Python 3.12+",
         data=optional,
     )
 
