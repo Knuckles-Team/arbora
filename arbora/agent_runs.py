@@ -53,6 +53,8 @@ __all__ = [
     "MAX_RUN_EVENT_PAYLOAD_BYTES",
     "RUN_EVENT_PAYLOAD_ERROR_SCHEMA",
     "decide_run",
+    "ignore_event",
+    "keep_plan",
     "record_run_event",
     "resolve_model",
     "run_config",
@@ -382,21 +384,26 @@ def run_config() -> dict[str, Any]:
     return {"agent_model": default} if default else {}
 
 
-def decide_run(request: Any) -> Any:
+def keep_plan(plan: Any, owner: Any) -> Any:
+    """The plan as the harness decided it: the default ``shape_plan`` of :func:`decide_run`."""
+    return plan
+
+
+def decide_run(
+    request: Any, *, shape_plan: Callable[[Any, Any], Any] = keep_plan
+) -> Any:
     """The run plan for ``request``.
 
     The engine serves no run-plan decision method, so this returns the
     harness's documented default plan. A run without a model fails closed.
+    ``shape_plan(plan, owner)`` is the host's per-run shaping of the plan (the held-output
+    block and the enforced tool subset of an A2A run), composed by the host.
     """
     from meristem.graph import default_run_plan
 
     owner = current_native_run(request)
     plan = default_run_plan(request, run_config())
-    from arbora.a2a.held_output import plan_for_owner
-    from arbora.a2a.tool_subset import plan_with_subset
-
-    plan = plan_for_owner(plan, owner)  # ARBORA-A2A-R022: the held-output block
-    plan = plan_with_subset(plan, owner)  # ARBORA-A2A-R002.2.1: the enforced subset
+    plan = shape_plan(plan, owner)
     if owner is not None and owner.hosted_invocation is not None:
         from arbora.api.domain.mcp_server.task_plan_runtime import admitted_run_plan
 
@@ -526,8 +533,15 @@ def _event_suffix(event_id: Any, ordered: bool) -> str:
     return uuid.uuid4().hex
 
 
+def ignore_event(event: Mapping[str, Any]) -> None:
+    """The default ``notify`` of :func:`record_run_event`: nobody watches the terminals."""
+
+
 def record_run_event(
-    event: Mapping[str, Any], *, engine_provider: Callable[[], Any]
+    event: Mapping[str, Any],
+    *,
+    engine_provider: Callable[[], Any],
+    notify: Callable[[Mapping[str, Any]], None] = ignore_event,
 ) -> None:
     """Write one run event to the engine as a ``RunEvent`` node.
 
@@ -541,7 +555,6 @@ def record_run_event(
     if not _valid_event_identity(run_id, event_type, step):
         logger.warning("run event not persisted: invalid event identity")
         return
-    from arbora.agent_host.port_backends import TERMINALS
     from arbora.api.domain.agent_host.usage_ledger import forward_step_usage
 
     if event_type == "step_usage":
@@ -549,7 +562,7 @@ def record_run_event(
     status = event.get("status")
     if isinstance(status, str):
         canonical_run_status(status, str(event.get("previous_status") or ""))
-    TERMINALS.note(event)
+    notify(event)  # the host watches each run to its terminal outcome
     payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
     engine = _engine(engine_provider)
     event_id = event.get("event_id")

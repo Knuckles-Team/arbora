@@ -73,13 +73,18 @@ def test_no_register_call_remains() -> None:
 def test_build_host_ports_sets_every_named_provider_on_the_real_record() -> None:
     host = build_host_context()
     ports = harness_ports.build_host_ports(host)
+    from arbora.agent_host.port_backends import TERMINALS
     from arbora.agent_runs import decide_run, record_run_event, resolve_model
 
     assert type(ports) is HostPorts
-    assert ports.decide is decide_run
+    assert ports.decide.func is decide_run
+    assert ports.decide.keywords == {"shape_plan": harness_ports.shaped_run_plan}
     assert ports.models is resolve_model
     assert ports.events.func is record_run_event
-    assert ports.events.keywords == {"engine_provider": host.engine.served}
+    assert ports.events.keywords == {
+        "engine_provider": host.engine.served,
+        "notify": TERMINALS.note,
+    }
     for name in (
         "native",
         "remote",

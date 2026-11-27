@@ -223,7 +223,7 @@ def test_terminal_exit_stops_owned_thread_and_keeps_reused_services(
     def client(host: Any, admitted: Any) -> None:
         exits.append(host.endpoint)
 
-    owner = terminal_owner(tmp_path, client, FakeLogRuntime(sink))
+    owner = terminal_owner(tmp_path, client, supervisor, FakeLogRuntime(sink))
     context = owner.context()
     configuration = owner.configuration
     checked = context.check_runtime(configuration, owner.resources)
@@ -232,14 +232,16 @@ def test_terminal_exit_stops_owned_thread_and_keeps_reused_services(
         admitted=checked,
         configuration=configuration,
         runtime=owner.resources,
-        supervisor=supervisor,
     )
     assert len(exits) == 1 and sink.drains == 1
     assert supervisor.running() == ("borrowed",)
     assert not any(t.name == HTTP_THREAD_NAME for t in threading.enumerate())
 
     failing = terminal_owner(
-        tmp_path, lambda host, admitted: 1 / 0, FakeLogRuntime(FakeSink("host-2"))
+        tmp_path,
+        lambda host, admitted: 1 / 0,
+        CoServiceSupervisor(),
+        FakeLogRuntime(FakeSink("host-2")),
     )
     with pytest.raises(ZeroDivisionError):
         create_agent_server(**launch_arguments(failing))
