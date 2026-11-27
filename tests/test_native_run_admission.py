@@ -261,6 +261,7 @@ def test_nonambiguous_refusal_is_not_retried() -> None:
     assert namespace.calls == ["lookup", "submit"]
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.spec("ARBORA-OPS-R917.3")
 async def test_role_run_refuses_missing_profile_and_narrows_tools(
     monkeypatch: pytest.MonkeyPatch,

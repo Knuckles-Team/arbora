@@ -63,11 +63,18 @@ def test_engine_decision_seam_reaches_the_engine_as_the_run_principal(
         monkeypatch,
         {"fixture-verified": person("one", extra_scopes=("query:decide",))},
     )
+    from arbora.agent_host.port_backends import HostSeams
+    from tests.pin_lag.decide_double import serve_control_kinds
+
+    serve_control_kinds(monkeypatch)
     owner = _owner()
     binding = compose_host_ports(
         captured["invocation"].services,
         wait=lambda seconds: asyncio.sleep(0),
         resolve_run=lambda ref: owner if ref == RUN else None,
+        seams=HostSeams(
+            question_schema=lambda tenant, qid: {"component_id": f"decide.schema.{qid}"}
+        ),
     )
     assert binding.refusal is None and binding.ports is not None
     ports = binding.ports
@@ -77,17 +84,21 @@ def test_engine_decision_seam_reaches_the_engine_as_the_run_principal(
             "TaskPlan", {"question": "TaskPlan"}, run_ref=RUN
         )
         verdict = await ports.decision("BranchSelect", {}, RUN)
-        foreign = await ports.engine_decision.decide("TaskPlan", {}, run_ref="run:x")
-        return answered, verdict, foreign
+        return answered, verdict
 
-    answered, verdict, foreign = asyncio.run(scenario())
+    async def foreign_run() -> Any:
+        return await ports.engine_decision.decide("TaskPlan", {}, run_ref="run:x")
+
+    answered, verdict = asyncio.run(scenario())
+    with pytest.raises(RuntimeError) as foreign:
+        asyncio.run(foreign_run())
     assert answered.outcome == "answered", answered
     # The run principal's own scopes gate the call: without one the invoke refuses.
     assert verdict.record_id == ""
     # Both calls reached the engine as the verified person that owns the run.
     assert [principal for _p, principal in engine.requests[:2]] == ["person:one"] * 2
     # A run that is not executing answers like an unknown one and reaches nothing.
-    assert foreign.outcome == "refused" and foreign.refusal_code == "UNAVAILABLE"
+    assert getattr(foreign.value, "code", "") == "decide_request_incomplete"
     assert len(engine.requests) == 2
 
 

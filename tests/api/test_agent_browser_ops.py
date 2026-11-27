@@ -35,6 +35,7 @@ def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
     assert all(op.examples for op in registry)
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.spec("ARBORA-OPS-R023", "ARBORA-OPS-R002")
 @pytest.mark.asyncio
 async def test_agent_run_uses_the_existing_a2a_service(

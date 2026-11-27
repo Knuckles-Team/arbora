@@ -231,6 +231,7 @@ def _value(response: httpx.Response) -> Any:
     return result["value"] if isinstance(result, dict) and "value" in result else result
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.spec("ARBORA-HOST-R001.2.3")
 def test_served_api_answers_the_web_ui_operations(served: Any) -> None:
     app, client = served

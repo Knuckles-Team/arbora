@@ -284,6 +284,8 @@ class HostSeams:
     ) = None
     clock_ms: Callable[[], int] = wall_clock_ms
     changeset: Any = None
+    #: ``(tenant, question id)`` to the published feature-schema pin of that question.
+    question_schema: Callable[[str, str], Mapping[str, Any] | None] | None = None
 
 
 def production_backends(

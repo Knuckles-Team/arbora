@@ -8,6 +8,7 @@ from scion_sdk.identity import ActorContext, ActorType, use_actor
 from arbora.observability import correlation as c
 
 
+@pytest.mark.spec("ARBORA-HOST-R008.1006")
 def test_inject_carries_one_correlation_id_and_the_identity():
     actor = ActorContext(actor_id="alice", actor_type=ActorType.HUMAN, tenant_id="t1")
     with c.bind_carrier({c.CORRELATION_HEADER: "run-1", c.SESSION_HEADER: "s1"}):

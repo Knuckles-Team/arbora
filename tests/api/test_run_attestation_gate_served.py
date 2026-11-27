@@ -19,19 +19,26 @@ from arbora.security.session import use_session
 from tests.a2a.test_operation_bridge import session
 from tests.api._engine_double import EngineDouble, context
 
-_MODELS = ("LocalCertificationAttestation", "DecisionEvalOpCertification")
-_SKILL = {"id": "skill:one", "revision": 3, "digest": "d3", "attestation_digest": "a1"}
+_MODELS = (
+    "CertificationReadRequest",
+    "CertificationReadAnswer",
+    "DecisionEvalOpCertification",
+)
+_SKILL = {"id": "skill:one", "revision": 3, "digest": "d3"}
 _RUN = {op.id: op for op in agents.operations()}["agents.run"]
 _PLAN = {op.id: op for op in plans.operations()}["agents.plan_run"]
 
 
 def _stored(*, skill: str = "skill:one", digest: str = "d3", revision: int = 3) -> Any:
+    """The engine's ``CertificationReadAnswer`` holding the latest attestation."""
     return {
-        "body": {
-            "skill": {"component_id": skill, "definition_digest": digest},
-            "completion_revision": revision,
-        },
-        "digest": "a1",
+        "attestation": {
+            "body": {
+                "skill": {"component_id": skill, "definition_digest": digest},
+                "completion_revision": revision,
+            },
+            "digest": "a1",
+        }
     }
 
 
@@ -60,7 +67,19 @@ def _run_context(a2a: _A2A) -> Any:
     return ctx
 
 
+@pytest.fixture(autouse=True)
+def _default_agent_entry(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The host registers the default fleet agent: its library entry holds no skill."""
+    from arbora.api.ops import agent_library
+
+    registered = EngineDouble(monkeypatch)
+    entry = {"agent_id": "arbora", "skills": []}
+    registered.serve("AgentLibrary", lambda params: {"entry": entry})
+    registered.install(agent_library)
+
+
 _REFUSALS = (
+    ({"attestation": None}, "attestation_missing"),
     (None, "attestation_missing"),
     (_stored(revision=2), "attestation_stale"),
     (_stored(digest="dX"), "attestation_mismatch"),
@@ -85,7 +104,11 @@ async def test_agents_run_refuses_each_attestation_case_before_any_run(
     assert method == "DecisionEval"
     assert sent["op"] == {
         "op": "certification",
-        "request": {"tenant_id": "tenant:one", "digest": "a1"},
+        "request": {
+            "tenant_id": "tenant:one",
+            "component_id": "skill:one",
+            "definition_digest": "d3",
+        },
     }
 
 
@@ -122,7 +145,8 @@ async def test_a_pin_without_the_certification_read_refuses_naming_it(
 ) -> None:
     from medulla.generated import models
 
-    monkeypatch.setattr(models, "LocalCertificationAttestation", object, raising=False)
+    monkeypatch.setattr(models, "CertificationReadRequest", object, raising=False)
+    monkeypatch.setattr(models, "CertificationReadAnswer", object, raising=False)
     monkeypatch.delattr(models, "DecisionEvalOpCertification", raising=False)
     ctx = _run_context(_A2A())
     with pytest.raises(OperationRefused) as refused:
@@ -134,13 +158,21 @@ async def test_a_pin_without_the_certification_read_refuses_naming_it(
 
 
 @pytest.mark.spec("ARBORA-OPS-R872")
-async def test_a_run_that_declares_no_skill_has_nothing_to_attest(
+async def test_a_default_agent_run_declaring_no_skill_has_nothing_to_attest(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     engine = _engine(monkeypatch, None)
+    from arbora.api.ops import agent_library
+
+    library = EngineDouble(monkeypatch)
+    entry = {"agent_id": "arbora", "skills": []}
+    library.serve("AgentLibrary", lambda params: {"entry": entry})
+    library.install(agent_library)
     a2a = _A2A()
     await agents.handle_agent(_run_context(a2a), {"message": {"parts": []}}, _RUN)
+    # The default agent's own library entry holds no skill, so no attestation is read.
     assert engine.sent == [] and len(a2a.started) == 1
+    assert library.sent[0][1]["op"]["agent_id"] == "arbora"
 
 
 @pytest.mark.spec("ARBORA-OPS-R872")
@@ -217,7 +249,6 @@ async def test_the_graph_skills_run_once_attested_and_declared_skills_only_add(
         "id": "skill:two",
         "revision": 1,
         "digest": "e",
-        "attestation_digest": "a2",
     }
     a2a = _A2A()
     with pytest.raises(OperationRefused) as refused:
@@ -280,3 +311,31 @@ async def test_a_composed_definition_reader_replaces_the_engine_read(
     await agents.handle_agent(ctx, {**_NAMED, "skills": [_SKILL]}, _RUN)
     assert asked == ["helper"] and len(a2a.started) == 1
     assert [m for m, *_ in engine.sent] == ["DecisionEval"]
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+async def test_a_named_workflow_takes_its_skills_from_the_registry_record(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.invoke import certification_gate as gate
+
+    seen: list[dict[str, Any]] = []
+
+    async def send(context: Any, method: str, params: dict[str, Any]) -> Any:
+        seen.append({"method": method, **params})
+        return {"skills": _GRAPH_SKILL}
+
+    monkeypatch.setattr("arbora.api.ops._engine.engine_send", send)
+    identity = {"name": "wf", "version": "1"}
+    skills = await gate.definition_skills(context(), workflow=identity)
+    assert skills == [{"id": "skill:one", "digest": "d3"}]
+    assert seen == [{"method": "WorkflowRegistry", "op": "read", "identity": identity}]
+
+    # A record without a skills list is an unreadable definition, never an empty one.
+    async def bare(context: Any, method: str, params: dict[str, Any]) -> Any:
+        return {"identity": identity}
+
+    monkeypatch.setattr("arbora.api.ops._engine.engine_send", bare)
+    with pytest.raises(OperationRefused) as refused:
+        await gate.definition_skills(context(), workflow=identity)
+    assert refused.value.details["reason"] == "attestation_source_unavailable"

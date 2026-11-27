@@ -311,7 +311,7 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R008.1007` | `tests/observability/test_runtime_health.py::test_a_failing_probe_is_unhealthy_with_its_reason` | Exists |
 | `ARBORA-HOST-R008.1008` | `tests/deployment/test_guards.py::test_json_reader_rejects_duplicate_keys` | Exists |
 | `ARBORA-HOST-R001.2.5` | `arbora/agent_runs.py::bind_run_ports` | Exists |
-| `ARBORA-HOST-R001.2.5` | `tests/test_agent_runs_engine_port.py::test_bound_port_invokes_registry_with_run_principal` | Planned, not yet written |
+| `ARBORA-HOST-R001.2.5` | `tests/pin_lag/test_host_ports_served.py::test_engine_decision_seam_reaches_the_engine_as_the_run_principal` | Exists |
 | `ARBORA-HOST-R007.3` | `tests/observability/test_gateway_metrics.py::test_no_series_uses_the_retired_prefix` | Planned, not yet written |
 | `ARBORA-HOST-R007.3` | `tests/gateway/test_rate_limit.py::test_rate_limit_counter_renamed` | Planned, not yet written |
 | `ARBORA-HOST-R031.1` | `arbora/api/ops/plans.py::_admit_native_plan_run` | Planned, not yet written |

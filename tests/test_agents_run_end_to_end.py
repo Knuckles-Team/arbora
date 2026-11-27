@@ -187,6 +187,7 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     host_ports.register_run_event_sink(None)
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.spec("ARBORA-HOST-R001.2.2")
 def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     engine: FakeEngine, monkeypatch: pytest.MonkeyPatch

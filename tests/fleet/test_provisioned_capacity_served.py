@@ -125,6 +125,7 @@ class _Service:
         return SimpleNamespace(model_dump=lambda **_kw: {"id": "task-1"})
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.asyncio
 @pytest.mark.spec("ARBORA-FLEET-R024.6")
 async def test_agents_run_reaches_provisioner_and_consumer(sdk: Any) -> None:
@@ -155,6 +156,7 @@ async def test_agents_run_reaches_provisioner_and_consumer(sdk: Any) -> None:
     assert ledger.held_by("run-1") == 2 and journal.verify()
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.asyncio
 @pytest.mark.spec("ARBORA-FLEET-R024.6")
 async def test_agents_run_refuses_a_foreign_tenant_and_a_lagging_sdk() -> None:

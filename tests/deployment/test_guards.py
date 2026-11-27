@@ -51,6 +51,7 @@ def test_regular_reader_is_bounded(tmp_path):
     ("payload", "ok"),
     [(b'{"a": 1}', True), (b'{"a": 1, "a": 2}', False), (b"not json", False)],
 )
+@pytest.mark.spec("ARBORA-HOST-R008.1008")
 def test_json_reader_rejects_duplicate_keys(payload, ok):
     if ok:
         assert assets._json_without_duplicates(payload, code="bad") == {"a": 1}

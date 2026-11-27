@@ -98,6 +98,7 @@ def test_broker_scope_revocation_after_connection_await_stops_dispatch():
     asyncio.run(scenario())
 
 
+@pytest.mark.spec("ARBORA-HOST-R007.2.55")
 def test_packaged_console_injects_exact_identity_factory(monkeypatch):
     import importlib
     import sys

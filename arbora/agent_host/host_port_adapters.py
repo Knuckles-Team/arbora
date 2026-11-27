@@ -9,12 +9,14 @@ types come from ``arbora.pin_lag.meristem`` so a pinned release without them ref
 from __future__ import annotations
 
 import asyncio
+import re
 import shutil
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from arbora.deployment.placement import decide_params
 from arbora.pin_lag.meristem import PinLagUnavailable, changeset_types, port_types
 
 #: ``(operation id, params, run ref[, plan_ref])`` to the engine result as plain data. An
@@ -24,6 +26,14 @@ RunCall = Callable[..., Awaitable[Mapping[str, Any]]]
 PLAN_REQUIRED = "CONFIRMATION_REQUIRED"
 
 DECIDE_OP = "eg.query.Decide"
+#: The harness's control-step questions, as the engine's snake_case ``QuestionKind``.
+CONTROL_QUESTION_KINDS: Mapping[str, str] = {
+    "BranchSelect": "branch_select",
+    "DecisionTableEval": "decision_table_eval",
+}
+#: ``(tenant id, question id) -> the pinned feature schema`` or ``None`` when none is pinned.
+SchemaOf = Callable[[str, str], Mapping[str, Any] | None]
+TenantOf = Callable[[str], str]
 ASSEMBLE_OP = "eg.storage.AgentAssemble"
 LOG_OP = "eg.coordination.DecisionLog"
 
@@ -39,19 +49,98 @@ def _answer(raw: Mapping[str, Any]) -> Any:
     )
 
 
+def _wire_kind(kind: str) -> str:
+    """The engine's snake_case ``QuestionKind`` for a harness question."""
+    if kind in CONTROL_QUESTION_KINDS:
+        return CONTROL_QUESTION_KINDS[kind]
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", kind).lower()
+
+
+def _typed_param(name: str, value: Any) -> dict[str, Any]:
+    """One ``TypedParam``; a float or a nested value has no typed form and is refused."""
+    from medulla.decision_client import param
+
+    if isinstance(value, bool):
+        return param(name, "bool", value)
+    if isinstance(value, int):
+        return param(name, "int", value)
+    if isinstance(value, str):
+        return param(name, "iri" if name == "decision_iri" else "text", value)
+    raise port_types().EngineDecisionRefused("decide_param_untyped")
+
+
+def _question_params(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """The payload as typed params: scalars by name, ``inputs`` as ``input.<name>``."""
+    typed: list[dict[str, Any]] = []
+    for name, value in payload.items():
+        if name == "inputs" and isinstance(value, Mapping):
+            typed += [_typed_param(f"input.{k}", v) for k, v in value.items()]
+        else:
+            typed.append(_typed_param(str(name), value))
+    return typed
+
+
+def decide_request(
+    kind: str,
+    payload: Mapping[str, Any],
+    *,
+    tenant: str,
+    schema_of: SchemaOf | None,
+    task_id: str = "",
+) -> dict[str, Any]:
+    """The full ``DecideRequest`` the host sends for one harness question (PIN-LAG).
+
+    The harness port carries only ``(kind, payload)``. The host supplies the rest: the
+    run's verified tenant, a question id, the pinned feature schema and the candidate set.
+    A pinned engine that does not list the question kind refuses ``UNAVAILABLE`` naming
+    it; an unpinned schema or an untyped payload value refuses, and nothing is sent.
+    """
+    from medulla.decision_client import decide_request as build
+
+    from arbora.pin_lag.medulla import require_question_kind
+
+    wire = _wire_kind(kind)
+    require_question_kind(wire)
+    question_id = f"process.{wire}"
+    schema = schema_of(tenant, question_id) if schema_of is not None else None
+    if not tenant or schema is None:
+        raise port_types().EngineDecisionRefused("decide_request_incomplete")
+    params = _question_params({"task_id": task_id, **payload} if task_id else payload)
+    return build(
+        tenant,
+        (question_id, wire, "ordinary"),
+        {"source": "declared", "options": []},
+        schema,
+        params=params,
+    )
+
+
 class EngineDecisionAdapter:
     """``EngineDecisionPort`` over registered engine operations under the run principal."""
 
     def __init__(
-        self, call: RunCall, method_op: Callable[[str], str | None] = lambda _: None
+        self,
+        call: RunCall,
+        method_op: Callable[[str], str | None] = lambda _: None,
+        *,
+        tenant_of: TenantOf = lambda _: "",
+        schema_of: SchemaOf | None = None,
     ) -> None:
         self._call = call
         self._method_op = method_op
+        self._tenant_of = tenant_of
+        self._schema_of = schema_of
 
     async def decide(
         self, kind: str, params: Mapping[str, Any], *, run_ref: str
     ) -> Any:
-        return _answer(await self._call(DECIDE_OP, {"kind": kind, **params}, run_ref))
+        request = decide_request(
+            kind,
+            params,
+            tenant=self._tenant_of(run_ref),
+            schema_of=self._schema_of,
+        )
+        return _answer(await self._call(DECIDE_OP, decide_params(request), run_ref))
 
     async def assemble(self, request: Mapping[str, Any], *, run_ref: str) -> Any:
         return _answer(await self._call(ASSEMBLE_OP, dict(request), run_ref))
@@ -85,13 +174,21 @@ class EngineDecisionAdapter:
 
 def decision_port(
     call: RunCall,
+    *,
+    tenant_of: TenantOf = lambda _: "",
+    schema_of: SchemaOf | None = None,
 ) -> Callable[[str, Mapping[str, Any], str], Awaitable[Any]]:
     """``DecisionPort``: a control-step question answered by the engine decision."""
 
     async def decide(question: str, payload: Mapping[str, Any], task_id: str) -> Any:
-        raw = await call(
-            DECIDE_OP, {"kind": question, "task_id": task_id, **payload}, task_id
+        request = decide_request(
+            question,
+            payload,
+            tenant=tenant_of(task_id),
+            schema_of=schema_of,
+            task_id=task_id,
         )
+        raw = await call(DECIDE_OP, decide_params(request), task_id)
         return port_types().DecisionVerdict(
             record_id=str(raw.get("record_id") or ""),
             taken_task_ids=tuple(raw.get("taken_task_ids") or ()),

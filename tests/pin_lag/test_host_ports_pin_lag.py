@@ -165,7 +165,12 @@ def test_media_symbols_refuse_when_the_pinned_engine_lacks_them(
 
 
 @pytest.mark.pin_lag
-def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> None:
+def test_real_path_binds_every_port_through_the_main_shape(
+    main_shape: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tests.pin_lag.decide_double import serve_control_kinds
+
+    serve_control_kinds(monkeypatch)
     seen: list[tuple[str, Mapping[str, Any], str]] = []
 
     async def call(
@@ -195,7 +200,11 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
         ) -> Mapping[str, Any]:
             return {"record_id": "rec", "taken_task_ids": ["t2"]}
 
-        taken = await adapters.decision_port(verdict)("BranchSelect", {}, "t1")
+        taken = await adapters.decision_port(
+            verdict,
+            tenant_of=lambda _: "tenant:one",
+            schema_of=lambda t, q: {"component_id": f"decide.schema.{q}"},
+        )("BranchSelect", {}, "t1")
         assert taken.taken_task_ids == ("t2",)
 
         gate = asyncio.Event()
