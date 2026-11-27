@@ -5,6 +5,7 @@ Provider: medulla MEDULLA-DECISION-ENGINE-R180.4
 Provider: medulla MEDULLA-DECISION-ENGINE-R180.8
 Provider: meristem MERISTEM-RUN-R018.5
 Consumer: arbora ARBORA-OPS-R898
+Consumer: arbora ARBORA-OPS-R898.5
 
 ## Wire shape
 
