@@ -314,7 +314,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
 - [x] T048 ARBORA-FLEET-R006.4 Residual harvest-named symbol renamed off the removed path.
 - [x] T049 ARBORA-FLEET-R006.5 Closing audit: no harvest or hydration code remains.
-- [x] T050 ARBORA-FLEET-R007.1 RETIRED: owned by scion-sdk (SCION-CONNECTOR-CONTROL-R916).
+- [x] T050 ARBORA-FLEET-R007.1 RETIRED: owned by scion-sdk.
 - [x] T051 ARBORA-FLEET-R007.2 The arbora bridge surface registers native prompts, resources and resource templates.
 - [ ] T052 ARBORA-FLEET-R007.3 The served bridge exercises native prompts, resources and templates end to end.
 - [ ] T053 ARBORA-FLEET-R011 Registry core computes a canonical digest and authorized find.

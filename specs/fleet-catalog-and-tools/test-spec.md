@@ -402,7 +402,7 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 | T-ARBORA-FLEET-R006.3.4 | ARBORA-FLEET-R006.3.4 | Test: `tests/fleet/test_harvest_inventory.py::test_harvest_specs_absent` (L1) asserts the spec symbols are gone; the `_probe_skills` and `_probe_prompts` tests pass. |
 | T-ARBORA-FLEET-R006.4 | ARBORA-FLEET-R006.4 | Test: `tests/fleet/test_harvest_inventory.py::test_no_harvest_named_symbol` (L1) greps `multiplexer.py` for `_harvest` names outside comments; `probe_catalog` tests pass. |
 | T-ARBORA-FLEET-R006.5 | ARBORA-FLEET-R006.5 | Test: `tests/fleet/test_no_harvest_remains.py::test_baseline_is_zero` (L1) passes. |
-| T-ARBORA-FLEET-R007.1 | ARBORA-FLEET-R007.1 | Retired; see SCION-CONNECTOR-CONTROL-R916. |
+| T-ARBORA-FLEET-R007.1 | ARBORA-FLEET-R007.1 | Retired; owned by scion-sdk. |
 | T-ARBORA-FLEET-R007.2 | ARBORA-FLEET-R007.2 | Test: `tests/mcp_server/test_arbora_surface_native_primitives.py::test_backing_surface_exposes_prompts_resources_and_templates` lists the prompt, the resource and the template and reads both through an MCP client. |
 | T-ARBORA-FLEET-R007.3 | ARBORA-FLEET-R007.3 | Test: `tests/mcp/test_fastmcp4_native.py::test_served_bridge_native_primitives` (L3) runs against the started MCP surface. |
 | T-ARBORA-FLEET-R012.1 | ARBORA-FLEET-R012.1 | A test builds the registry from an in-memory method catalog, proves a malformed catalog refuses the build and a catalog digest change moves the registry digest. A source scan finds no read of the packaged contract directory. |
