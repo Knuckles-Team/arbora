@@ -596,7 +596,7 @@ def _required(d: EnvironmentDeclaration, environ: Mapping[str, str]) -> bool:
     if d.required_when == "always":
         return True
     match = _CONDITION.match(d.required_when)
-    return bool(match) and _truthy(environ, match.group(1))  # type: ignore[union-attr]
+    return match is not None and _truthy(environ, match.group(1))
 
 
 def _arbora_value_error(d: EnvironmentDeclaration, text: str) -> str | None:

@@ -43,7 +43,11 @@ SyncMode = Literal["delta", "full", "reconcile"]
 _REF_RE = re.compile(r"^(?:vault|env|secret)://[A-Za-z0-9_./#-]+$")
 _ALIAS_RE = re.compile(r"^[a-z][a-z0-9_-]{0,62}$")
 _SAFE_RECORD_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,191}$")
-_SYNC_MODES = frozenset({"delta", "full", "reconcile"})
+_SYNC_MODES: dict[str, SyncMode] = {
+    "delta": "delta",
+    "full": "full",
+    "reconcile": "reconcile",
+}
 
 
 class SourceSyncSupport(BaseModel):
@@ -990,12 +994,13 @@ def normalize_source_sync_preview(
 
     rendered_source = str(source or "").strip().lower()
     rendered_mode = str(mode or "delta").strip().lower()
-    if rendered_mode not in _SYNC_MODES:
+    sync_mode = _SYNC_MODES.get(rendered_mode)
+    if sync_mode is None:
         raise ValueError("mode must be one of delta, full, or reconcile")
     return SourceSyncPreview(
         schema_version="atlas-source-sync-preview.v1",
         source=rendered_source,
-        mode=rendered_mode,  # type: ignore[arg-type]
+        mode=sync_mode,
         ids=_preview_ids(ids_json),
         connection=(str(connection or "").strip().lower() or None),
         graph=(str(graph or "").strip().lower() or None),
