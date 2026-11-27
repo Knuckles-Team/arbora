@@ -90,4 +90,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T076 ARBORA-A2A-R025 Admit anonymous chat under the text-only constraint
 - [ ] T083 ARBORA-A2A-R026 Refuse a model task plan that breaks the plan model with a typed code
 - [ ] T085 ARBORA-A2A-R001.2.1 Durable event cursor and run-event publisher
-- [ ] T086A ARBORA-A2A-R001.2.2.1 A reclaimed run acts as its owner through the delegation claim
+- [ ] T087 ARBORA-A2A-R001.2.2.1 A reclaimed run acts as its owner through the delegation claim
