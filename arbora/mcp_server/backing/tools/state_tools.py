@@ -112,7 +112,7 @@ def _resolve_feed_urls(url: str, urls: str) -> list[str]:
         parsed: object = None
         try:
             parsed = _json.loads(raw)
-        except Exception:  # noqa: BLE001 — not JSON → fall back to delimiters
+        except ValueError:  # not JSON → fall back to delimiters
             parsed = None
         if isinstance(parsed, list):
             out.extend(str(x).strip() for x in parsed)
@@ -228,7 +228,8 @@ def register_state_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
             if action == "sync":
                 return _feeds_sync_action(engine, url, mode)
             return _json.dumps({"error": f"unknown action {action!r}"})
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["graph_feeds"] = graph_feeds

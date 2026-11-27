@@ -82,7 +82,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
                     url = str(
                         resolve_runtime_value(config.get("url", ""), sensitive=False)
                     )
-                except Exception as exc:  # noqa: BLE001 - omit an unresolvable URL
+                except Exception as exc:  # omit an unresolvable URL
                     logger.debug(
                         "fleet catalog URL unresolved for %s (%s)",
                         name,

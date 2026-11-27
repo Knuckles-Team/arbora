@@ -129,7 +129,7 @@ def _validate_tool_kwargs_against_signature(
 
     try:
         parameters = inspect.signature(tool_func).parameters
-    except (TypeError, ValueError):  # noqa: BLE001 — signature introspection
+    except (TypeError, ValueError):  # signature introspection
         # failing (e.g. a builtin/C-implemented callable with no inspectable
         # signature) is not this guard's problem to solve: this validation is
         # purely an ADDITIONAL fail-fast check layered in front of the real
@@ -480,7 +480,7 @@ def safe_json_load(s: Any) -> Any:
     if isinstance(s, str):
         try:
             return json.loads(s)
-        except Exception as exc:  # noqa: BLE001 — non-JSON string is a normal input, not a failure
+        except ValueError as exc:  # non-JSON string is a normal input, not a failure
             logger.debug(
                 "safe_json_load: input is not JSON, returned as-is: %s",
                 type(exc).__name__,
@@ -892,7 +892,10 @@ def _build_server(
 
         try:
             body = await request.json()
-        except Exception:  # noqa: BLE001 — malformed body ⇒ empty query, not a 500
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "malformed body ⇒ empty query, not a 500", exc_info=True
+            )
             body = {}
         query = body.get("query") or {}
         text = str(query.get("text") or body.get("text") or "")
@@ -1142,7 +1145,7 @@ def _attach_headless_fleet_loader(
             fleet=fleet,
             authority_scope=partial(verified_tool_session_scope, authority),
         )
-    except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed
+    except Exception as exc:  # cause recorded verbatim below, never swallowed
         mcp._fleet_mux_unavailable_reason = (
             f"fleet loader attach failed in this headless build ({type(exc).__name__})"
         )

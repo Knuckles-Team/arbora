@@ -29,6 +29,7 @@ compliance/redaction logic):
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Callable
 from typing import Any
 
@@ -90,7 +91,10 @@ def _doctor_posture(names: tuple[str, ...]) -> dict[str, Any]:
         from arbora.deployment.doctor import run_doctor
 
         report = run_doctor(only=list(names))
-    except Exception as exc:  # noqa: BLE001 — one doctor slice must not break posture()
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "one doctor slice must not break posture()", exc_info=True
+        )
         return {
             "status": "error",
             "counts": {"error": 1},
@@ -133,7 +137,10 @@ def _policy_version() -> dict[str, Any]:
             "default_tier": defaults.get("tier"),
             "rule_count": len(rules),
         }
-    except Exception as exc:  # noqa: BLE001 — a policy-version read must not break posture()
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "a policy-version read must not break posture()", exc_info=True
+        )
         return {"error": f"policy version read failed ({type(exc).__name__})"}
 
 
@@ -146,7 +153,10 @@ def _nodes_by_label(engine: Any, label: str) -> list[tuple[str, dict[str, Any]]]
         return []
     try:
         return fn(label, 0) or []
-    except Exception:  # noqa: BLE001 — one label's read failure must not break the rollup
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "one label's read failure must not break the rollup", exc_info=True
+        )
         return []
 
 
@@ -166,7 +176,10 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
         return None
     try:
         rows = stream_fn(label, batch_size=256)
-    except Exception:  # noqa: BLE001 — a rollup failure must not break posture()
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "a rollup failure must not break posture()", exc_info=True
+        )
         return None
     if rows is None:
         return None
@@ -264,7 +277,10 @@ def _export(
     if not ids and cypher.strip():
         try:
             rows = engine.query_cypher(cypher, as_of=as_of or None)
-        except Exception as exc:  # noqa: BLE001 — surface as data, not a 500
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "surface as data, not a 500", exc_info=True
+            )
             return {
                 "surface": "compliance",
                 "action": "export",

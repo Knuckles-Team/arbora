@@ -7,6 +7,7 @@ modules without changing tool behavior or names.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections.abc import Callable
 from typing import Any
@@ -81,7 +82,10 @@ def _chunk_batch_mutations(
     for mutation in mutations:
         try:
             size = len(msgpack.packb(mutation, use_bin_type=True, default=str))
-        except Exception:  # noqa: BLE001 — conservative fallback estimate
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "conservative fallback estimate", exc_info=True
+            )
             size = len(json.dumps(mutation, default=str).encode("utf-8"))
         if current and (len(current) >= max_ops or current_bytes + size > budget):
             chunks.append(current)
@@ -230,7 +234,10 @@ def _bulk_ingest_batch_update(
     for chunk_index, chunk in enumerate(chunks):
         try:
             applied = engine.batch_typed_mutations(chunk, upsert=upsert)
-        except Exception as e:  # noqa: BLE001 — surface as data, not a 500
+        except Exception as e:
+            logging.getLogger(__name__).debug(
+                "surface as data, not a 500", exc_info=True
+            )
             return public_error_json(
                 e,
                 context={
@@ -686,7 +693,10 @@ def register_write_ingest_tools(
                             {"action": "recall_media", "occurrences": rows},
                             default=str,
                         )
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
+                        logging.getLogger(__name__).debug(
+                            "fail-closed fallback", exc_info=True
+                        )
                         return public_error_json(e)
 
                 def _do_workflow_action(action_name: str) -> str:

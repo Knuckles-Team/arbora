@@ -157,7 +157,7 @@ def _discover_domains() -> dict[str, list[str]]:
     """
     try:
         from medulla import client as _client_mod
-    except Exception as exc:  # noqa: BLE001 — engine client absent ⇒ register nothing
+    except Exception as exc:  # engine client absent ⇒ register nothing
         # Degrade gracefully (a deployment with no engine client bound yet — e.g.
         # `tiny` pre-bootstrap — must not crash the whole MCP process just
         # because engine_<domain> introspection can't run), but LOUDLY: a silent
@@ -524,7 +524,10 @@ def _dispatch(
         )
     try:
         client = _client_for(graph)
-    except Exception as exc:  # noqa: BLE001 — engine unreachable is a normal degrade
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "engine unreachable is a normal degrade", exc_info=True
+        )
         return public_error_json(
             exc,
             code="dependency_unavailable",
@@ -582,7 +585,10 @@ def _dispatch(
             code="invalid_request",
             context={"domain": domain, "action": action},
         )
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data, not 500
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine errors as data, not 500", exc_info=True
+        )
         return public_error_json(exc, context={"domain": domain, "action": action})
     return json.dumps(result, default=_json_default)
 

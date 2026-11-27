@@ -70,7 +70,7 @@ def _configure_arbora_otel(telemetry: Telemetry) -> None:
         from arbora.observability.custom_observability import setup_otel
 
         setup_otel(telemetry, service_name="arbora")
-    except Exception as exc:  # noqa: BLE001 - observability cannot prevent serving
+    except Exception as exc:  # observability cannot prevent serving
         logger.warning(
             "Arbora OTLP setup failed; trace export is disabled: %s",
             exc,
@@ -96,7 +96,7 @@ def _configure_telemetry_engine_otel(telemetry: Telemetry) -> None:
             "Arbora OTLP trace export (standard env vars): %s",
             "enabled" if configured else "disabled",
         )
-    except Exception as exc:  # noqa: BLE001 - observability cannot prevent serving
+    except Exception as exc:  # observability cannot prevent serving
         logger.warning(
             "Arbora TelemetryEngine OTel setup failed: %s",
             exc,
@@ -721,5 +721,5 @@ def mcp_server(
         if fleet_mux is not None:
             try:
                 asyncio.run(fleet_mux.aclose())
-            except Exception as exc:  # noqa: BLE001 — best-effort teardown of a lazily-mounted fleet child at process exit
+            except Exception as exc:  # best-effort teardown of a lazily-mounted fleet child at process exit
                 logger.warning("fleet loader close failed: %s", exc)

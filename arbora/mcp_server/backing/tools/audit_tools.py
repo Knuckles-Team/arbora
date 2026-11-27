@@ -28,6 +28,7 @@ inventing a new tool convention.
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Callable
 from typing import Any
 
@@ -92,7 +93,10 @@ def _verify(engine_provider: Callable[[], Any]) -> dict[str, Any]:
         }
     try:
         report = engine.graph.audit_verify()
-    except Exception as exc:  # noqa: BLE001 — surface engine errors as data, not 500
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "surface engine errors as data, not 500", exc_info=True
+        )
         return {
             "surface": "audit",
             "action": "verify",

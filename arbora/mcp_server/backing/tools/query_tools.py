@@ -77,7 +77,8 @@ def _persist_section_node(engine: Any, n: dict[str, Any]) -> bool:
     try:
         engine.add_node(n["id"], n["type"], props)
         return True
-    except Exception:  # noqa: BLE001 — best-effort per node
+    except Exception:
+        logging.getLogger(__name__).debug("best-effort per node", exc_info=True)
         return False
 
 
@@ -86,7 +87,8 @@ def _persist_section_edge(engine: Any, e: dict[str, Any]) -> bool:
     try:
         engine.add_edge(e["source"], e["target"], e["type"], **props)
         return True
-    except Exception:  # noqa: BLE001 — best-effort per edge
+    except Exception:
+        logging.getLogger(__name__).debug("best-effort per edge", exc_info=True)
         return False
 
 
@@ -320,7 +322,7 @@ def _annotate_path_hops(engine: Any, path: list[Any]) -> list[dict[str, Any]]:
             if erows:
                 rel = erows[0].get("rel")
                 conf = erows[0].get("confidence")
-        except Exception:  # noqa: BLE001 — annotation is best-effort
+        except Exception:  # annotation is best-effort
             logger.debug("edge annotation lookup failed", exc_info=True)
         hops.append({"from": a, "to": b, "rel": rel, "confidence": conf})
     return hops
@@ -793,7 +795,7 @@ def _uql_fanout_target_evidence(
         target_graph = name if union_read and name != "default" else ""
         with engine_routing.bound_to_graph(target_graph):
             return list(fetch(ids) or [])
-    except Exception as exc:  # noqa: BLE001 — evidence is best-effort per target
+    except Exception as exc:  # evidence is best-effort per target
         logger.warning(
             "UQL fan-out provenance target failed (target=%s exception_type=%s)",
             name,
@@ -864,7 +866,8 @@ def _run_graph_query_uql_single(
         return public_error_json(
             exc, code="permission_denied" if graph else "operation_failed"
         )
-    except Exception as exc:  # noqa: BLE001 — public MCP error boundary
+    except Exception as exc:
+        logging.getLogger(__name__).debug("public MCP error boundary", exc_info=True)
         return public_error_json(exc)
 
 
@@ -1239,7 +1242,7 @@ def _run_graph_query_fanout_primary(
             # the ambient session's own graph).
             fn = fanout_query if name == "default" else content_graph_query
             results[name] = fn(name, engine)
-        except Exception as exc:  # noqa: BLE001 — mirrors fanout_execute's per-target catch below (same non-leaking, BUG-048-classified label): a denied/failed primary must surface as a labeled error, never propagate raw or silently vanish
+        except Exception as exc:  # mirrors fanout_execute's per-target catch below (same non-leaking, BUG-048-classified label): a denied/failed primary must surface as a labeled error, never propagate raw or silently vanish
             logger.warning(
                 "Graph fan-out primary target failed (exception_type=%s)",
                 type(exc).__name__,
@@ -2029,7 +2032,7 @@ def _engine_domain_methods(domain: str) -> list[str] | None:
     installed engine build (never guessed — see module comment above)."""
     try:
         from arbora.mcp_server.backing.tools.engine_tools import ENGINE_DOMAINS
-    except Exception:  # noqa: BLE001 — engine_tools itself unavailable
+    except ImportError:  # engine_tools itself unavailable
         return None
     return ENGINE_DOMAINS.get(domain)
 
@@ -2077,7 +2080,8 @@ async def _catalog_graphs(tools: ToolTable) -> dict[str, Any]:
             "required scope"
         )
         return entry
-    except Exception as exc:  # noqa: BLE001 — best-effort listing
+    except Exception as exc:
+        logging.getLogger(__name__).debug("best-effort listing", exc_info=True)
         entry = _capability_entry(True, methods=methods)
         entry["list_error"] = type(exc).__name__
         return entry
@@ -2098,7 +2102,10 @@ async def _catalog_sql() -> dict[str, Any]:
 
     try:
         projection = await graph_tools.sql_schema()
-    except Exception as exc:  # noqa: BLE001 — covers SqlSchemaUnavailable + any other failure
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "covers SqlSchemaUnavailable + any other failure", exc_info=True
+        )
         return _capability_entry(
             False,
             reason=f"sql-schema introspection unavailable: {type(exc).__name__}",
@@ -2110,7 +2117,8 @@ async def _safe_catalog_entry(awaitable: Any) -> dict[str, Any]:
     """One modality's introspection failure never breaks the whole catalog."""
     try:
         return await awaitable
-    except Exception as exc:  # noqa: BLE001 — see docstring
+    except Exception as exc:
+        logging.getLogger(__name__).debug("see docstring", exc_info=True)
         return _capability_entry(
             False, reason=f"introspection failed: {type(exc).__name__}"
         )
@@ -2216,7 +2224,10 @@ async def _graph_catalog_response(
                 ),
                 default=str,
             )
-        except Exception as exc:  # noqa: BLE001 — deterministic client error
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "deterministic client error", exc_info=True
+            )
             return public_error_json(exc, code="invalid_request")
     if normalized_action != "list":
         return public_error_json(
@@ -2225,7 +2236,8 @@ async def _graph_catalog_response(
         )
     try:
         engine_provider()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
         return public_error_json(exc, code="dependency_unavailable")
     catalog = await _build_graph_catalog(tools)
     return json.dumps(catalog, default=str)
@@ -2299,7 +2311,8 @@ async def _graph_context_get(engine: Any, context_id: str) -> str:
         if _ttl and _created and (float(_created) + float(_ttl) < time.time()):
             return json.dumps({"error": "context expired", "expired": True})
         return json.dumps(row, default=str)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
         return public_error_json(exc)
 
 
@@ -2329,7 +2342,8 @@ async def _graph_context_prune(engine: Any) -> str:
 
         pruned, expired = await run_blocking_ordered(_prune_expired)
         return json.dumps({"pruned": pruned, "expired": expired})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
         return public_error_json(exc)
 
 
@@ -2357,7 +2371,8 @@ async def _graph_context_list(engine: Any, session_id: str) -> str:
                 )
         items.sort(key=lambda x: x.get("created_at") or 0, reverse=True)
         return json.dumps(items[:50], default=str)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
         return public_error_json(exc)
 
 
@@ -2654,7 +2669,8 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
             )
         try:
             return _engine_nl_query(question, limit=limit, operation="graph_ask")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return EvidenceBundle.from_payload(
                 public_error_json(e), operation="graph_ask"
             )
@@ -2710,7 +2726,8 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
             )
         try:
             return _engine_nl_query(text, limit=limit, operation="nl_query")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return EvidenceBundle.from_payload(
                 public_error_json(e), operation="nl_query"
             )
@@ -2756,7 +2773,8 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
             )
         try:
             bundle = _engine_nl_query(question, limit=limit, operation="ask_data")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
         return json.dumps(
             {
@@ -2951,7 +2969,8 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
             from arbora.security.session import resolve_session
 
             resolve_session(required_scope="kg:read")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
         return await _graph_catalog_response(
             tools,
@@ -3270,7 +3289,8 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
                     },
                     default=str,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
+                logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
                 return public_error_json(e)
 
         try:
@@ -3288,7 +3308,8 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
         try:
             rows = engine.query_cypher(cypher, qparams)
             return json.dumps({"action": action, "results": rows}, default=str)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return public_error_json(e)
 
     tools["graph_code_nav"] = graph_code_nav

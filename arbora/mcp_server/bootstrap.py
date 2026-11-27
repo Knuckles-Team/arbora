@@ -371,7 +371,11 @@ async def _keep_process_authority_current(
                     "already expired; the next authority check will fail closed"
                 )
                 return
-            except Exception as exc:  # noqa: BLE001 — keepalive is best-effort renewal; a hard failure surfaces at the next real authority check either way
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "keepalive is best-effort renewal; a hard failure surfaces at the next real authority check either way",
+                    exc_info=True,
+                )
                 _log_renewal_failure("Delegation authority keepalive", exc)
     except asyncio.CancelledError:
         # D-SWG-3: expected, normal shutdown — the caller's
@@ -565,7 +569,10 @@ def _process_authority_refresh_loop(
             continue
         try:
             _refresh_process_authority(authority, session)
-        except Exception as exc:  # noqa: BLE001 - retry; expiry remains fail-closed
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "retry; expiry remains fail-closed", exc_info=True
+            )
             _log_renewal_failure("Graph process authority", exc)
             if lease.state in TERMINAL_LEASE_STATES:
                 return

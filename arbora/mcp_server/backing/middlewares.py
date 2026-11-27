@@ -198,7 +198,7 @@ class ActorContextMiddleware(Middleware):
             from fastmcp.server.dependencies import get_access_token
 
             token = getattr(get_access_token(), "token", None)
-        except Exception:  # noqa: BLE001 - no validated credential in scope
+        except (ImportError, RuntimeError):  # no validated credential in scope
             return None
         return token if isinstance(token, str) and token else None
 
