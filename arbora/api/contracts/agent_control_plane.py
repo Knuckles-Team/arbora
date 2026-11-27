@@ -7,6 +7,7 @@ session-scoped medulla client before any operation can run.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Literal
@@ -442,7 +443,10 @@ class AgentControlPlane:
                 return await self._execute(request)
         except PermissionError as exc:
             return self._failed_result(request, exc, code="permission_denied")
-        except Exception as exc:  # noqa: BLE001 - public API returns typed failures
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "public API returns typed failures", exc_info=True
+            )
             return self._failed_result(request, exc)
 
     async def _execute(self, request: GraphRlmRequest) -> GraphRlmResult:

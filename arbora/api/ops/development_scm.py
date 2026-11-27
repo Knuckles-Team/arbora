@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import time
 from collections.abc import Callable, Mapping
 from datetime import datetime
@@ -407,7 +408,10 @@ class ScmPollService:
                     {},
                     f"scm-poll:{tenant}:{int(self._clock.now() // self._tick_s)}",
                 )
-            except Exception as exc:  # noqa: BLE001 - one tenant never stops the rest
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "one tenant never stops the rest", exc_info=True
+                )
                 if self._sink is not None:
                     self._sink(exc)
 

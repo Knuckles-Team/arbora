@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -319,7 +320,10 @@ class HookChain:
                 kind, spans, code = await self._ask(
                     hook, op_id, subject, tenant, request_id, surface
                 )
-            except Exception:  # noqa: BLE001 - every failure rejects, closed
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "every failure rejects, closed", exc_info=True
+                )
                 records.append(self._record(hook, "failed", started))
                 return HookOutcome(
                     subject, OpError("HOOK_FAILED", {"hook": hook.name}), tuple(records)
@@ -334,7 +338,10 @@ class HookChain:
             if kind == "redact":
                 try:
                     subject = apply_spans(subject, spans)
-                except Exception:  # noqa: BLE001 - an unusable span rejects, closed
+                except Exception:
+                    logging.getLogger(__name__).debug(
+                        "an unusable span rejects, closed", exc_info=True
+                    )
                     records[-1] = self._record(hook, "failed", started)
                     return HookOutcome(
                         subject,

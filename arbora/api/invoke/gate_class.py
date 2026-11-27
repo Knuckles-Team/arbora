@@ -11,6 +11,7 @@ one.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -130,7 +131,10 @@ async def resolve_gate(reader: GateReader, op_id: str, tenant: str) -> GateResol
     """
     try:
         answer = await reader(op_id, tenant)
-    except Exception:  # noqa: BLE001 - an unreadable answer is no answer
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable answer is no answer", exc_info=True
+        )
         return STRICT_DEFAULT
     if not isinstance(answer, Mapping):
         return STRICT_DEFAULT
