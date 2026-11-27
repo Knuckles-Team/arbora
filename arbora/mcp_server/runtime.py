@@ -1025,6 +1025,10 @@ def _register_graph_tool_surface(
             feature_schema=invocation.decision_feature_schema,
             principal=invocation.decision_principal,
         )
+        from arbora.a2a.held_output_source import bind_held_output
+
+        # ARBORA-A2A-R022.1: a finished run's reply becomes a held output.
+        bind_held_output(host.runs.a2a.authority, invocation)
     mount_sdk_a2a(mcp, stream_handler=rpc_handler)
 
 

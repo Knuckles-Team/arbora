@@ -229,6 +229,9 @@ class WorkItemA2AAuthority:
         #: output of one run (ARBORA-A2A-R022). ``None`` sets no held output, and the
         #: run then carries no block, so the critique gate holds its output.
         self._held_output_refs = held_output_refs
+        #: Produces the held-output refs of a finished run from engine methods
+        #: (ARBORA-A2A-R022.1); ``None`` produces none and every output stays held.
+        self.held_output_source: Any = None
         #: Records the run's ``agent_run`` delegation at admission
         #: (``ARBORA-A2A-R001.2.2``); ``None`` admits a run without one.
         self.delegations = delegations
@@ -910,7 +913,7 @@ class WorkItemA2AAuthority:
             )
         if reply is not None:
             reply = reply[:_MAX_OUTPUT_CHARS]
-        answered = await observer.finish(reply) if observer is not None else False
+        answered = await self._finish_reply(observer, session, task_id, reply, outcome)
         if reply is not None and not answered:
             await self._publish(
                 item_id,
@@ -950,6 +953,24 @@ class WorkItemA2AAuthority:
             completion_kwargs=completion_kwargs,
         )
         return usage
+
+    async def _finish_reply(
+        self,
+        observer: Any,
+        session: Any,
+        task_id: str,
+        reply: str | None,
+        outcome: str,
+    ) -> bool:
+        """Hold the reply as an output (R022.1), then finish its stream; was it answered."""
+        if reply and outcome == "succeeded" and self.held_output_source is not None:
+            await self.held_output_source.produce(
+                self._engine()[0],
+                tenant=str(session.tenant),
+                task_id=task_id,
+                text=reply,
+            )
+        return await observer.finish(reply) if observer is not None else False
 
     async def _commit_outcome(
         self,
@@ -1640,9 +1661,10 @@ class WorkItemA2AAuthority:
             raise _ReplyUnavailable("reply_too_large")
         if not text:
             return None, None
-        from .held_output import lift_held_output, reply_artifact
+        from .held_output import reply_artifact
+        from .held_output_source import held_block
 
-        held = lift_held_output(event.get("result"))
+        held = held_block(event.get("result"), engine, task_id)
         return [reply_artifact(task_id, text)], held
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:

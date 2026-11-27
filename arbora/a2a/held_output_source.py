@@ -1,0 +1,203 @@
+"""The source of a run's held-output refs (ARBORA-A2A-R022.1).
+
+Arbora composes the source with engine methods; medulla owns the shapes
+(``MEDULLA-DECISION-ENGINE-R038.3``). When a native run ends with a reply, before the
+reply is read:
+
+1. the reply is written as a held ``run_output_proposal`` node through the engine node
+   write (``CreateNodeIfAbsent``); its id is ``item_ref``;
+2. the engine ``held_item_admission`` question is asked about that node and the exact
+   digest of the reply; the sealing record's id is ``engine_decision_ref`` and the
+   answer's checklist is the checklist;
+3. the four refs are stored on a second node, so a later task read lifts the same block
+   the harness lifts (``arbora.a2a.held_output.lift_held_output``).
+
+Both writes are create-if-absent under an id derived from the tenant, the task and the
+digest: replay owner is the run (``task_id``), and a replayed run writes nothing twice.
+Arbora decides nothing. A missing checklist, an unanswered question or a refused write
+yields no refs, so the output stays held (``POLICY_EVIDENCE_MISSING``).
+
+PIN-LAG: the engine's held-item answer carries no checklist on the pinned shapes; the
+ask is filed as ``MEDULLA FOR ARBORA (w16)``. Until the answer carries one, no block is
+produced and the gate holds every output.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import logging
+from collections.abc import Mapping
+from typing import Any
+
+from arbora.unique_records import create_record
+
+from .engine_deciders import HELD_ITEM_KIND, AskDecide
+from .held_output import lift_held_output, reply_bytes
+
+__all__ = [
+    "HELD_ITEM_LABEL",
+    "HELD_REFS_LABEL",
+    "HeldOutputSource",
+    "bind_held_output",
+    "held_block",
+    "held_item_id",
+    "read_held_refs",
+]
+
+logger = logging.getLogger(__name__)
+
+HELD_ITEM_LABEL = "HeldItem"
+HELD_REFS_LABEL = "HeldOutputRefs"
+ITEM_KIND = "run_output_proposal"
+_MAX_CHECKLIST = 64
+
+
+def held_item_id(tenant: str, task_id: str, digest: str) -> str:
+    """The node id of one run's held output: stable for the tenant, task and bytes."""
+    material = json.dumps([tenant, task_id, digest], separators=(",", ":"))
+    return "held:" + hashlib.sha256(material.encode()).hexdigest()
+
+
+def _checklist(value: Any) -> list[dict[str, str]] | None:
+    """The answer's typed checklist, or ``None`` when absent or malformed."""
+    if not isinstance(value, list) or not 0 < len(value) <= _MAX_CHECKLIST:
+        return None
+    items: list[dict[str, str]] = []
+    for entry in value:
+        ident = entry.get("id") if isinstance(entry, Mapping) else None
+        question = entry.get("question") if isinstance(entry, Mapping) else None
+        if not (isinstance(ident, str) and ident and isinstance(question, str)):
+            return None
+        if not question:
+            return None
+        items.append({"id": ident, "question": question})
+    return items
+
+
+def _answer_value(record: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
+    answer = record.get("answer") if isinstance(record, Mapping) else None
+    value = answer.get("value") if isinstance(answer, Mapping) else None
+    return value if isinstance(value, Mapping) else None
+
+
+class HeldOutputSource:
+    """Produce the held-output refs of one finished run from engine methods."""
+
+    def __init__(self, ask: AskDecide) -> None:
+        self._ask = ask
+
+    async def produce(
+        self, engine: Any, *, tenant: str, task_id: str, text: str
+    ) -> dict[str, Any] | None:
+        """Write the held node, ask the engine, store the refs; ``None`` holds the output."""
+        digest = hashlib.sha256(reply_bytes(task_id, text)).hexdigest()
+        item_ref = held_item_id(tenant, task_id, digest)
+        try:
+            await asyncio.to_thread(
+                create_record,
+                engine,
+                item_ref,
+                HELD_ITEM_LABEL,
+                {
+                    "held_item_kind": ITEM_KIND,
+                    "content_digest": digest,
+                    "lifecycle": "active",
+                    "task_id": task_id,
+                },
+            )
+            record = await self._ask(
+                HELD_ITEM_KIND,
+                {
+                    "item_kind": ITEM_KIND,
+                    "item_ref": item_ref,
+                    "content_digest": digest,
+                },
+                tenant,
+            )
+            value = _answer_value(record)
+            checklist = _checklist(None if value is None else value.get("checklist"))
+            decision = None if value is None else value.get("verdict_ref")
+            if not (isinstance(decision, str) and decision and checklist):
+                return None
+            block = {
+                "item_ref": item_ref,
+                "content_digest": digest,
+                "engine_decision_ref": decision,
+                "checklist": checklist,
+            }
+            await asyncio.to_thread(
+                create_record,
+                engine,
+                f"{item_ref}:refs",
+                HELD_REFS_LABEL,
+                {
+                    "task_id": task_id,
+                    "item_ref": item_ref,
+                    "content_digest": digest,
+                    "engine_decision_ref": decision,
+                    "checklist_json": json.dumps(checklist, separators=(",", ":")),
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - no refs leaves the output held
+            logger.warning(
+                "held output refs unavailable for %s: %s", task_id, type(exc).__name__
+            )
+            return None
+        return block
+
+
+def read_held_refs(engine: Any, task_id: str) -> dict[str, Any] | None:
+    """The stored four-key block of ``task_id``'s held output, or ``None``."""
+    rows = engine.query_cypher(
+        "MATCH (n) WHERE n.type = $label AND n.task_id = $task_id "
+        "RETURN n.item_ref AS item_ref, n.content_digest AS content_digest, "
+        "n.engine_decision_ref AS engine_decision_ref, "
+        "n.checklist_json AS checklist_json LIMIT 2",
+        {"label": HELD_REFS_LABEL, "task_id": task_id},
+    )
+    if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
+        return None
+    row = rows[0]
+    try:
+        checklist = json.loads(str(row.get("checklist_json")))
+    except ValueError:
+        return None
+    items = _checklist(checklist)
+    fields = ("item_ref", "content_digest", "engine_decision_ref")
+    if items is None or not all(isinstance(row.get(name), str) for name in fields):
+        return None
+    return {**{name: row[name] for name in fields}, "checklist": items}
+
+
+def held_block(result: Any, engine: Any, task_id: str) -> dict[str, Any] | None:
+    """The run's held-output block: the harness's own, else the stored refs."""
+    return lift_held_output(result) or read_held_refs(engine, task_id)
+
+
+def bind_held_output(authority: Any, invocation: Any) -> bool:
+    """Bind the source to ``authority`` once the host has the engine ``Decide`` seam.
+
+    ``invocation`` is the served invocation: its engine sender, decision graph, tenant
+    feature-schema pin and service principal. Returns whether it was bound. A host
+    without any of them keeps no source, and every output stays held (R022.1).
+    """
+    from .engine_decide import build_ask_decide
+
+    send = getattr(invocation, "engine_send", None)
+    schema = getattr(invocation, "decision_feature_schema", None)
+    principal = getattr(invocation, "decision_principal", None)
+    if None in (send, schema, principal) or not hasattr(
+        authority, "held_output_source"
+    ):
+        return False
+    authority.held_output_source = HeldOutputSource(
+        build_ask_decide(
+            send,
+            graph=getattr(invocation, "decision_graph", ""),
+            feature_schema=schema,
+            principal=principal,
+        )
+    )
+    return True

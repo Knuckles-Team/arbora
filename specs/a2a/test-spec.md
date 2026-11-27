@@ -81,6 +81,12 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 
 - `tests/a2a/test_application.py::test_send_message_holds_output_until_bound_critique_passes` and `tests/a2a/test_application.py::test_send_message_rejects_untyped_preflight_and_failed_critique`: traverse held-item admission with a verified caller. Bind critique to the exact output. Missing, mismatched, rejected, or abstained verdicts leave output held. Routing alone cannot satisfy critique acceptance. These are proposed tests; no execution is claimed.
 
+### Held-output refs source (ARBORA-A2A-R022.1)
+
+- `tests/a2a/test_held_output_source.py::test_the_source_writes_the_held_node_and_the_decision_refs`: the held node id is `item_ref`, the sealing record is `engine_decision_ref`, and a replay writes nothing new.
+- `tests/a2a/test_held_output_source.py::test_a_send_with_an_artifact_is_admitted_end_to_end` and `::test_a_critique_deny_keeps_the_output_held`: a send over the real `/a2a` route is admitted, and a rejected critique sends nothing.
+- `tests/a2a/test_held_output_source.py::test_without_a_checklist_or_an_answer_no_refs_exist_and_the_output_stays_held`: no checklist or no answer yields no block.
+
 ## Non-blocking `message/send` (ARBORA-A2A-R001.6)
 
 - `tests/a2a/test_nonblocking_send.py::test_non_blocking_send_outlives_the_client_read_timeout`: a 31 s turn over the served HTTP route answers in under 5 s and `tasks/get` follows it to `completed`.
