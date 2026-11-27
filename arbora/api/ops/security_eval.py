@@ -16,10 +16,10 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import Field, ValidationError
 
-from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops._question import (
+    FamilyRefusal,
     advisory_scores,
     chosen_option,
     decide_question,
@@ -140,11 +140,11 @@ class EngineSecurityEvaluation:
             params,
         )
         try:
-            record = await decide_question(context, "probe_selection", request)
-        except EngineRefusal as refused:
-            if refused.code == _NO_ENTRY:
-                return EvaluationCatalog()
-            raise
+            record = await decide_question(
+                context, "probe_selection", request, family_codes=frozenset({_NO_ENTRY})
+            )
+        except FamilyRefusal:
+            return EvaluationCatalog()
         return EvaluationCatalog(
             entries=tuple(
                 CatalogEntry(entry_id=name) for name, _ in advisory_scores(record)

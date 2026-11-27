@@ -12,8 +12,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import engine_send
+from arbora.api.invoke.steps import claim_values
+from arbora.api.ops import _engine
 from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_question_kind
 
 #: One in the engine's Q32 fixed-point scale; a chosen advisory option scores it.
@@ -40,15 +42,58 @@ def question_request(
     )
 
 
+class FamilyRefusal(Exception):
+    """A refusal the engine's question family names (the leading token of its detail)."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
+async def _send_decide(
+    context: Any, request: Mapping[str, Any], family_codes: frozenset[str]
+) -> Any:
+    from medulla import EngineResponseError
+    from medulla.generated import send_by_id
+
+    _engine._require_method("Decide")
+    graph = await _engine.caller_dispatch_graph(context)
+    try:
+        with _engine.client_scope(
+            context.client, claim_values(context.caller.engine_claims)
+        ):
+            payload = await send_by_id(
+                context.client,
+                "Decide",
+                {"request": dict(request)},
+                graph,
+                idempotency_key=None,
+            )
+    except EngineResponseError as exc:
+        token = (exc.detail or "").split(":", 1)[0].strip()
+        if token in family_codes:
+            raise FamilyRefusal(token) from exc
+        raise EngineRefusal(_engine.refusal_code(exc.code, exc.detail)) from exc
+    return _engine.decode(payload)
+
+
 async def decide_question(
-    context: Any, kind: str, request: Mapping[str, Any]
+    context: Any,
+    kind: str,
+    request: Mapping[str, Any],
+    *,
+    family_codes: frozenset[str] = frozenset(),
 ) -> Mapping[str, Any]:
-    """Send ``Decide`` and return its one sealed record; engine refusals pass through."""
+    """Send ``Decide`` and return its one sealed record.
+
+    A refusal whose detail leads with one of ``family_codes`` is the family's own and
+    raises :class:`FamilyRefusal`; every other engine refusal keeps its engine code.
+    """
     try:
         require_question_kind(kind)
     except PinLagUnavailable as missing:
         raise refusal(missing) from missing
-    answer = await engine_send(context, "Decide", {"request": dict(request)})
+    answer = await _send_decide(context, request, family_codes)
     records = answer.get("records") if isinstance(answer, Mapping) else None
     if not isinstance(records, list) or len(records) != 1:
         raise OperationRefused(
@@ -87,6 +132,7 @@ def q32_permille(permille: int) -> int:
 
 
 __all__ = [
+    "FamilyRefusal",
     "Q32_ONE",
     "advisory_scores",
     "chosen_option",

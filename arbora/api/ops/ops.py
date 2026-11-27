@@ -25,7 +25,7 @@ from arbora.api.ops._common import (
     build_read_op,
     build_write_op,
 )
-from arbora.api.registry import Effect, OpSpec
+from arbora.api.registry import Confirm, Effect, OpSpec
 
 
 class OpsDoctorParams(Params):
@@ -301,6 +301,164 @@ async def hooks_uninstall(
     return await _hooks(context, params, install=False)
 
 
+PROCESS_QUESTION = "process_remediation"
+#: The engine family's own refusals (MEDULLA-DECISION-ENGINE-R820).
+PROCESS_REFUSALS = frozenset({"LIVENESS_EVIDENCE_STALE", "LIVENESS_EVIDENCE_MISMATCH"})
+ProcessVerdict = Literal["zombie", "hung", "progressing"]
+
+
+class LivenessEvidence(Params):
+    """The harness's run-bound liveness evidence for one process."""
+
+    evidence_run_id: str = Field(min_length=1, max_length=256)
+    observed_at_ms: int = Field(ge=0)
+    last_progress_ms: int = Field(ge=0)
+    cpu_time_ms: int = Field(ge=0)
+    output_bytes: int = Field(ge=0)
+    holds_child_output: bool
+
+
+class ProcessProposeParams(Params):
+    run_id: str = Field(min_length=1, max_length=256)
+    process_id: str = Field(min_length=1, max_length=256)
+    evidence: LivenessEvidence
+
+
+class ProcessTerminateParams(ProcessProposeParams):
+    #: The digest the approved plan binds; it must equal the evidence's own digest.
+    evidence_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class ProcessProposal(Params):
+    run_id: str
+    process_id: str
+    evidence_digest: str
+    verdict: ProcessVerdict
+
+
+class ProcessProposeResult(Params):
+    value: ProcessProposal
+
+
+class ProcessTerminateResult(Params):
+    value: dict[str, Any]
+
+
+@runtime_checkable
+class ProcessTerminator(Protocol):
+    """The harness termination of one run's process (MERISTEM-HARNESS-CYCLE-R063)."""
+
+    async def terminate(
+        self, *, run_id: str, process_id: str, approval_ref: str
+    ) -> None: ...
+
+
+def liveness_digest(params: Mapping[str, Any]) -> str:
+    """SHA-256 over the run, process and liveness evidence the proposal is about."""
+    import hashlib
+    import json
+
+    body = {
+        "run_id": params["run_id"],
+        "process_id": params["process_id"],
+        "evidence": dict(params["evidence"]),
+    }
+    return hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+async def _process_verdict(context: Any, params: Mapping[str, Any]) -> ProcessVerdict:
+    """Ask the engine whether the evidence shows a zombie, a hung or a live process."""
+    from medulla import decision_client as dc
+
+    from arbora.api.ops._question import (
+        FamilyRefusal,
+        chosen_option,
+        decide_question,
+        question_request,
+    )
+    from arbora.api.ops.plans import _feature_schema
+
+    evidence = params["evidence"]
+    request = question_request(
+        str(context.caller.tenant),
+        f"ops.process:{params['run_id']}:{params['process_id']}",
+        PROCESS_QUESTION,
+        dc.declared([dc.DeclaredOption("remediation")]),
+        await _feature_schema(context, str(context.caller.tenant)),
+        [
+            dc.param("run_id", "text", params["run_id"]),
+            dc.param("evidence_run_id", "text", evidence["evidence_run_id"]),
+            dc.param("observed_at_ms", "int", evidence["observed_at_ms"]),
+            dc.param("last_progress_ms", "int", evidence["last_progress_ms"]),
+            dc.param("cpu_time_ms", "int", evidence["cpu_time_ms"]),
+            dc.param("output_bytes", "int", evidence["output_bytes"]),
+            dc.param("holds_child_output", "bool", evidence["holds_child_output"]),
+        ],
+    )
+    try:
+        record = await decide_question(
+            context, PROCESS_QUESTION, request, family_codes=PROCESS_REFUSALS
+        )
+    except FamilyRefusal as refused:
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        raise OperationRefused(
+            "POLICY_DENIED", {"engine_code": refused.code}
+        ) from refused
+    verdict = chosen_option(record)
+    if verdict not in ("zombie", "hung", "progressing"):
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        raise OperationRefused("RECEIPT_MISMATCH", {"reason": "unknown verdict"})
+    return verdict  # type: ignore[return-value]
+
+
+async def handle_process_propose(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Return the engine's verdict on one process as a proposal; nothing is stopped."""
+    verdict = await _process_verdict(context, params)
+    proposal = ProcessProposal(
+        run_id=params["run_id"],
+        process_id=params["process_id"],
+        evidence_digest=liveness_digest(params),
+        verdict=verdict,
+    )
+    return {"value": proposal.model_dump(mode="json")}
+
+
+async def handle_process_terminate(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Apply one termination the approval binds to this run, process and evidence."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    terminator: ProcessTerminator = bound_service(
+        context, "process_terminator", reason="process terminator is not composed"
+    )
+    if liveness_digest(params) != params["evidence_digest"]:
+        raise OperationRefused("POLICY_DENIED", {"reason": "evidence_mismatch"})
+    verdict = await _process_verdict(context, params)
+    if verdict == "progressing":
+        raise OperationRefused("POLICY_DENIED", {"reason": "process_is_progressing"})
+    await terminator.terminate(
+        run_id=params["run_id"],
+        process_id=params["process_id"],
+        approval_ref=params["evidence_digest"],
+    )
+    return {
+        "value": {
+            "run_id": params["run_id"],
+            "process_id": params["process_id"],
+            "evidence_digest": params["evidence_digest"],
+            "verdict": verdict,
+            "terminated": True,
+        }
+    }
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -360,6 +518,26 @@ def operations() -> tuple[OpSpec, ...]:
             scope="ops:admin",
             effect=Effect.ADMIN,
         ),
+        build_read_op(
+            op_id="ops.process.propose",
+            summary="Propose whether a run's process is a zombie, hung or progressing",
+            examples=("is this run's process stuck",),
+            params=ProcessProposeParams,
+            result=ProcessProposeResult,
+            handler="arbora.api.ops.ops.handle_process_propose",
+            scope="ops:read",
+        ),
+        build_write_op(
+            op_id="ops.process.terminate",
+            summary="Terminate one run's process under an approval bound to its evidence",
+            examples=("stop this zombie process",),
+            params=ProcessTerminateParams,
+            result=ProcessTerminateResult,
+            handler="arbora.api.ops.ops.handle_process_terminate",
+            scope="ops:admin",
+            effect=Effect.ADMIN,
+            confirm=Confirm.PLAN,
+        ),
         build_write_op(
             op_id="ops.hooks.install",
             summary="Install the managed memory hook block for the agent surfaces",
@@ -404,6 +582,10 @@ __all__ = [
     "OpsRestoreResult",
     "OpsTenantsParams",
     "OpsTenantsResult",
+    "ProcessProposal",
+    "ProcessTerminator",
+    "handle_process_propose",
+    "handle_process_terminate",
     "RestoreReceipt",
     "TenantPage",
     "handle_ops_backup",

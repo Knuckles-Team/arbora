@@ -255,3 +255,113 @@ def test_backup_and_restore_need_console_step_up_and_write_audit() -> None:
         assert len(runtime.calls) == 1
         assert [e["result_status"] for e in audit.events][0] == "PENDING"
         assert len(audit.events) == 2
+
+
+def _evidence(**over):
+    evidence = {
+        "evidence_run_id": "run-1",
+        "observed_at_ms": 9_000,
+        "last_progress_ms": 1_000,
+        "cpu_time_ms": 5,
+        "output_bytes": 0,
+        "holds_child_output": False,
+    }
+    return {**evidence, **over}
+
+
+def _process_params(**over):
+    return {
+        "run_id": "run-1",
+        "process_id": "proc-1",
+        "evidence": _evidence(),
+        **over,
+    }
+
+
+class _Terminator:
+    def __init__(self) -> None:
+        self.stopped: list[dict] = []
+
+    async def terminate(self, **kwargs) -> None:
+        self.stopped.append(kwargs)
+
+
+def _decided(monkeypatch, option):
+    from tests.api._question_support import answered, served
+
+    return served(monkeypatch, decide=lambda _p: answered(option))
+
+
+@pytest.mark.spec("ARBORA-OPS-R055.1")
+async def test_process_proposal_is_proposal_only(monkeypatch) -> None:
+    terminator = _Terminator()
+    for verdict in ("zombie", "hung", "progressing"):
+        ctx, engine = _decided(monkeypatch, verdict)
+        ctx.services["process_terminator"] = terminator
+        answer = await ops_admin.handle_process_propose(
+            ctx, _process_params(), _OPS["ops.process.propose"]
+        )
+        proposal = answer["value"]
+        assert proposal["verdict"] == verdict
+        assert proposal["evidence_digest"] == ops_admin.liveness_digest(
+            _process_params()
+        )
+        question = engine.sent[0][1]["request"]
+        assert question["question"]["kind"] == "process_remediation"
+    # A proposal stops nothing.
+    assert terminator.stopped == []
+    assert _OPS["ops.process.propose"].scopes == frozenset({"ops:read"})
+
+
+@pytest.mark.spec("ARBORA-OPS-R055.1")
+async def test_process_proposal_passes_engine_evidence_refusals_through(
+    monkeypatch,
+) -> None:
+    from medulla import EngineResponseError
+
+    from tests.api._question_support import served
+
+    for code in ("LIVENESS_EVIDENCE_STALE", "LIVENESS_EVIDENCE_MISMATCH"):
+        ctx, _ = served(
+            monkeypatch, decide=EngineResponseError("INVALID_REQUEST", f"{code}: x")
+        )
+        with pytest.raises(OperationRefused) as refused:
+            await ops_admin.handle_process_propose(
+                ctx, _process_params(), _OPS["ops.process.propose"]
+            )
+        assert refused.value.details["engine_code"] == code
+
+
+@pytest.mark.spec("ARBORA-OPS-R055")
+@pytest.mark.spec("ARBORA-OPS-R055.2")
+async def test_process_remediation_requires_run_bound_approval(monkeypatch) -> None:
+    op = _OPS["ops.process.terminate"]
+    assert op.scopes == frozenset({"ops:admin"}) and op.effect.value == "admin"
+    assert op.confirm.value == "plan"
+    digest = ops_admin.liveness_digest(_process_params())
+    params = _process_params(evidence_digest=digest)
+    terminator = _Terminator()
+    ctx, _engine = _decided(monkeypatch, "zombie")
+    ctx.services["process_terminator"] = terminator
+    answer = await ops_admin.handle_process_terminate(ctx, params, op)
+    assert answer["value"]["terminated"] is True
+    assert terminator.stopped == [
+        {"run_id": "run-1", "process_id": "proc-1", "approval_ref": digest}
+    ]
+    # Evidence that no longer matches the approved digest applies nothing.
+    drifted = {**params, "evidence": _evidence(last_progress_ms=8_999)}
+    with pytest.raises(OperationRefused) as mismatch:
+        await ops_admin.handle_process_terminate(ctx, drifted, op)
+    assert mismatch.value.code == "POLICY_DENIED"
+    # A process the engine finds progressing is not stopped.
+    live, _ = _decided(monkeypatch, "progressing")
+    live.services["process_terminator"] = terminator
+    with pytest.raises(OperationRefused) as progressing:
+        await ops_admin.handle_process_terminate(live, params, op)
+    assert progressing.value.code == "POLICY_DENIED"
+    # No composed terminator is UNAVAILABLE before any engine call.
+    bare, engine = _decided(monkeypatch, "zombie")
+    with pytest.raises(OperationRefused) as unbound:
+        await ops_admin.handle_process_terminate(bare, params, op)
+    assert unbound.value.code == "UNAVAILABLE" and engine.sent == []
+    assert len(terminator.stopped) == 1
