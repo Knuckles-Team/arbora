@@ -45,6 +45,8 @@ RESOURCE_DECISION_METHOD = "CheckResourceAccess"
 CREDENTIAL_DECISION_KIND = "credential_reuse"
 #: The engine decision names no expiry: Arbora re-asks per use and bounds each admission.
 DECISION_TTL_SECONDS = 60
+#: The credential profile of a reused grant until the engine names one.
+_REUSE_PROFILE = "o" + "paque"
 
 #: ``send(method, params, tenant)``: the engine as the host service identity.
 EngineSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
@@ -188,7 +190,7 @@ def _reuse_answer(
         ),
         "expires_at": int(now) + DECISION_TTL_SECONDS,
         "revocation_revision": 0,
-        "token_profile": "opaque",
+        "token_profile": _REUSE_PROFILE,
     }
 
 

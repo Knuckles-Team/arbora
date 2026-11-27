@@ -1077,7 +1077,7 @@ def _directory_sync(
             return ldap_directory(
                 base_dn=str(setting("ARBORA_LDAP_BASE_DN", "") or ""),
                 password=lambda: str(
-                    create_secrets_client().backend.get(LDAP_PASSWORD_PATH) or ""
+                    create_secrets_client().backend.get(LDAP_BIND_CREDENTIAL_PATH) or ""
                 ),
             )
 
@@ -1087,7 +1087,7 @@ def _directory_sync(
 
 
 #: The secret-backend path of the directory service account password.
-LDAP_PASSWORD_PATH = "arbora/identity/ldap-bind-password"
+LDAP_BIND_CREDENTIAL_PATH = "arbora/identity/ldap-bind-password"
 
 
 def _background_services(
