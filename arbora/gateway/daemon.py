@@ -15,14 +15,13 @@ and surface its state via the ``/daemon/*`` routes on ``dashboard_router``.
 from __future__ import annotations
 
 import logging
-import os
 import threading
 import time
 from dataclasses import replace
 from typing import Any
 
 from arbora.api.errors import not_served
-from arbora.core.settings import setting
+from arbora.core.environment import read_env, write_env
 from arbora.security.anonymous import session_context
 from arbora.security.error_surface import public_error_payload
 from arbora.security.log_redaction import redact_for_log
@@ -104,7 +103,7 @@ def start_daemon_metrics_listener() -> bool:
     * the bind itself fails (port already in use, permission denied, ...).
     """
     global _metrics_started
-    if not setting("KG_DAEMON_METRICS", True):
+    if not read_env("KG_DAEMON_METRICS"):
         logger.info("Daemon metrics listener disabled (KG_DAEMON_METRICS=false).")
         return False
     with _metrics_lock:
@@ -122,8 +121,8 @@ def start_daemon_metrics_listener() -> bool:
             )
             return False
         any_interface = ".".join(("0", "0", "0", "0"))
-        host = str(setting("KG_DAEMON_METRICS_HOST", any_interface) or any_interface)
-        port = int(setting("KG_DAEMON_METRICS_PORT", 9110) or 9110)
+        host = str(read_env("KG_DAEMON_METRICS_HOST", any_interface) or any_interface)
+        port = int(read_env("KG_DAEMON_METRICS_PORT") or 9110)
         try:
             start_http_server(port, addr=host)
         except OSError as exc:
@@ -254,7 +253,7 @@ def start_host_daemon() -> Any:
 
         require_token_secret()
         # The gateway process is the authoritative daemon host.
-        os.environ["KG_DAEMON_ROLE"] = "host"
+        write_env("KG_DAEMON_ROLE", "host")
         raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
     # CONCEPT:MERISTEM-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
     # router runs in its OWN process
@@ -269,7 +268,7 @@ def daemon_status() -> dict[str, Any]:
     """Return the consolidated daemon's status (role + live threads + jobs)."""
     eng = _engine
     if eng is None:
-        return {"running": False, "role": setting("KG_DAEMON_ROLE", "auto")}
+        return {"running": False, "role": read_env("KG_DAEMON_ROLE", "auto")}
     try:
         return eng.unified_daemon_status()
     except Exception as exc:  # noqa: BLE001

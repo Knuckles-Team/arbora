@@ -60,6 +60,11 @@ def test_declared_values_are_typed_by_their_declaration(monkeypatch) -> None:
     assert env.read_reference("REFERENCE_UNSET_X", None) is None
 
 
+def _unread(names: list[str], text: str, read: set[str | None]) -> list[str]:
+    """The literal names that no source mentions and the census never read."""
+    return [n for n in names if "{" not in n and n not in text and n not in read]
+
+
 @pytest.mark.spec("ARBORA-HOST-R010.2")
 def test_every_table_row_names_its_type_default_secret_flag_and_owner_row() -> None:
     from arbora.core.environment_names import NAMES
@@ -68,15 +73,15 @@ def test_every_table_row_names_its_type_default_secret_flag_and_owner_row() -> N
     for spec in (ROOT / "specs").glob("*/requirements.md"):
         rows.update(re.findall(r"\| `([A-Z0-9-]+-R[0-9.]+)` \|", spec.read_text()))
     text = _text()
+    read = {r.name for r in em.package_census()}
     names = [row[0] for row in NAMES]
+    assert _unread(names, text, read) == [], "declared but no source reads them"
     assert names == sorted(set(names)), "one row per name, in order"
     for name, kind, default, owner, sites, sensitive in NAMES:
         assert kind in em._TYPES, name
         assert owner in rows, (name, owner)
         assert not (sensitive and default), name
         assert default is None or em._valid(kind, default) or kind == "string", name
-        if "{" not in name:
-            assert name in text, f"{name} is declared but no source names it"
         for site in sites:
             module = SOURCE.parent / (site.replace(".", "/") + ".py")
             assert module.exists() or module.with_suffix("").is_dir(), (name, site)
