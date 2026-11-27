@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 
-class _WireModel(BaseModel):
+class WireModel(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True,
@@ -51,12 +51,12 @@ class _WireModel(BaseModel):
     )
 
 
-class A2ATextPart(_WireModel):
+class A2ATextPart(WireModel):
     kind: Literal["text"] = "text"
     text: str = Field(min_length=1, max_length=65_536)
 
 
-class A2AInlineTextFile(_WireModel):
+class A2AInlineTextFile(WireModel):
     bytes: str = Field(min_length=1, max_length=87_384)
     mime_type: Literal["text/plain", "text/markdown"]
     name: str | None = Field(default=None, max_length=256)
@@ -82,7 +82,7 @@ class A2AInlineTextFile(_WireModel):
 MEDIA_FILE_MAX_BYTES = 25 * 1024 * 1024
 
 
-class A2AInlineMediaFile(_WireModel):
+class A2AInlineMediaFile(WireModel):
     """An inline audio, image, video or document file (ARBORA-OPS-R899.5).
 
     The modality seam turns it into prompt text (audio: a transcript); the
@@ -117,7 +117,7 @@ class A2AInlineMediaFile(_WireModel):
         return base64.b64decode(self.bytes, validate=True)
 
 
-class A2AMediaRefFile(_WireModel):
+class A2AMediaRefFile(WireModel):
     """An image carried by upload reference (ARBORA-A2A-R001.5.5)."""
 
     uri: str = Field(pattern=r"^media:sha256:[0-9a-f]{64}$")
@@ -125,19 +125,19 @@ class A2AMediaRefFile(_WireModel):
     name: str | None = Field(default=None, max_length=256)
 
 
-class A2ADataPart(_WireModel):
+class A2ADataPart(WireModel):
     """A structured JSON part; the tool-task extension reads ``toolTask`` from it."""
 
     kind: Literal["data"]
     data: dict[str, Any]
 
 
-class A2AFilePart(_WireModel):
+class A2AFilePart(WireModel):
     kind: Literal["file"]
     file: A2AInlineTextFile | A2AInlineMediaFile | A2AMediaRefFile
 
 
-class A2AMessage(_WireModel):
+class A2AMessage(WireModel):
     """Text, bounded inline text files, and inline media files.
 
     Media files (audio, image, video, documents) never reach the harness as
@@ -163,7 +163,7 @@ class A2AMessage(_WireModel):
     @model_validator(mode="after")
     def _bounded_task(self) -> A2AMessage:
         # File count and aggregate text bounds live in one place:
-        # ``arbora.a2a.parts.admit_file_parts`` (ARBORA-A2A-R001.5.1).
+        # ``arbora.api.domain.a2a.parts.admit_file_parts`` (ARBORA-A2A-R001.5.1).
         if len(self.task_text()) > 100_000:
             raise ValueError("message exceeds the execution task size bound")
         return self
@@ -232,13 +232,13 @@ class A2AMessage(_WireModel):
 _KEPT_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 
 
-class A2AContextBudget(_WireModel):
+class A2AContextBudget(WireModel):
     """Evaluate-only context bound used by assembly/tool-subset selection."""
 
     tokens: int = Field(ge=256, le=1_000_000)
 
 
-class A2ARouteDecision(_WireModel):
+class A2ARouteDecision(WireModel):
     """A routing result; references are opaque authority-owned identifiers."""
 
     agent_name: str = Field(min_length=1, max_length=256)
@@ -265,7 +265,7 @@ class A2ARouteDecision(_WireModel):
         return normalized
 
 
-class A2AOperationInvokeParams(_WireModel):
+class A2AOperationInvokeParams(WireModel):
     """``arbora.op/invoke`` params (ARBORA-A2A-R006.1).
 
     Mirrors the shared hosted-operation registry's ``invoke`` call shape so
@@ -278,7 +278,7 @@ class A2AOperationInvokeParams(_WireModel):
     idempotency_key: str | None = Field(default=None, min_length=1, max_length=256)
 
 
-class A2APlanConfirmParams(_WireModel):
+class A2APlanConfirmParams(WireModel):
     """``arbora.plan/confirm`` params (ARBORA-A2A-R005.1/R006.1).
 
     The signed human approval exchange this carries is served by
@@ -297,8 +297,8 @@ def parse_confirmation(raw: Any) -> A2APlanConfirmParams:
     A missing, unknown or mixed kind (one kind's fields on the other) is refused with
     ``CONFIRMATION_KIND_INVALID`` before any grant is read (ARBORA-A2A-R005.3).
     """
-    from .held_item_admission import HeldItemAdmissionRequest
-    from .tool_action_admission import (
+    from arbora.api.domain.a2a.held_item_admission import HeldItemAdmissionRequest
+    from arbora.api.domain.a2a.tool_action_admission import (
         ConfirmationKindInvalid,
         ToolActionAdmissionRequest,
     )
@@ -334,7 +334,7 @@ A2ATaskState = Literal[
 ]
 
 
-class A2AArtifact(_WireModel):
+class A2AArtifact(WireModel):
     """One output of a task: the agent's reply text."""
 
     artifact_id: str = Field(min_length=1, max_length=512)
@@ -342,7 +342,7 @@ class A2AArtifact(_WireModel):
     parts: list[A2ATextPart] = Field(min_length=1, max_length=32)
 
 
-class A2AReplyUnavailable(_WireModel):
+class A2AReplyUnavailable(WireModel):
     """A completed task can have an explicitly unavailable reply artifact."""
 
     status: Literal["unavailable"] = "unavailable"
@@ -351,7 +351,7 @@ class A2AReplyUnavailable(_WireModel):
     ]
 
 
-class A2ATaskStatus(_WireModel):
+class A2ATaskStatus(WireModel):
     state: A2ATaskState
     timestamp: str | None = None
 
@@ -360,7 +360,7 @@ class A2ATaskStatus(_WireModel):
 TRANSITION_PAGE_LIMIT = 200
 
 
-class A2ATransition(_WireModel):
+class A2ATransition(WireModel):
     """One WorkItem state change from the engine's transition ledger, unchanged."""
 
     state: str = Field(min_length=1, max_length=64)
@@ -368,14 +368,14 @@ class A2ATransition(_WireModel):
     revision: int = Field(ge=0)
 
 
-class A2ATransitionPage(_WireModel):
+class A2ATransitionPage(WireModel):
     """One page of the ledger in commit order, and the cursor to continue."""
 
     entries: list[A2ATransition] = Field(max_length=TRANSITION_PAGE_LIMIT)
     next_cursor: str | None = Field(default=None, max_length=512)
 
 
-class A2ATask(_WireModel):
+class A2ATask(WireModel):
     id: str = Field(pattern=r"^(?:a2a-|work-item:)[0-9a-f]{64}$")
     context_id: str = Field(pattern=r"^a2a-context-[0-9a-f]{64}$")
     kind: Literal["task"] = "task"
@@ -387,7 +387,7 @@ class A2ATask(_WireModel):
     transition_history_next_cursor: str | None = None
 
 
-class A2AListResult(_WireModel):
+class A2AListResult(WireModel):
     tasks: list[A2ATask]
     next_cursor: str | None = None
 
@@ -404,7 +404,7 @@ class A2AStreamingAuthority(Protocol):
     async def resume_from_cursor(self, task_id: str, after_seq: int = 0) -> Any: ...
 
 
-class A2APushTarget(_WireModel):
+class A2APushTarget(WireModel):
     """One webhook a task's terminal state is pushed to (ARBORA-A2A-R013.1).
 
     ``token_ref`` is a secrets-backend reference, never a token value.
@@ -440,14 +440,14 @@ class A2ATransitionHistoryAuthority(Protocol):
     ) -> A2ATransitionPage | None: ...
 
 
-class A2AExtension(_WireModel):
+class A2AExtension(WireModel):
     uri: str = Field(min_length=1, max_length=512)
     description: str = Field(max_length=1024)
     required: bool = False
     params: dict[str, Any] = Field(default_factory=dict)
 
 
-class A2AAgentCapabilities(_WireModel):
+class A2AAgentCapabilities(WireModel):
     """Capabilities advertised on the Agent Card.
 
     Each field defaults to ``False`` and can only become ``True`` through
@@ -499,7 +499,7 @@ class A2AAgentCapabilities(_WireModel):
         )
 
 
-class A2ASkill(_WireModel):
+class A2ASkill(WireModel):
     id: str
     name: str
     description: str
@@ -508,7 +508,7 @@ class A2ASkill(_WireModel):
     output_modes: list[str]
 
 
-class A2AMediaLimits(_WireModel):
+class A2AMediaLimits(WireModel):
     """The admission limit table, published as enforced (ARBORA-A2A-R001.5.6)."""
 
     allowed_types: list[str]
@@ -518,7 +518,7 @@ class A2AMediaLimits(_WireModel):
     inline_max_bytes: int
 
 
-class A2AAgentCard(_WireModel):
+class A2AAgentCard(WireModel):
     name: str
     description: str
     url: str

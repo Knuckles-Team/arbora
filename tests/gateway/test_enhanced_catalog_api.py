@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     CatalogComponent,
     ComponentContent,
     ComponentPin,
@@ -19,7 +19,7 @@ from arbora.fleet.catalog_reader import (
     ReadReceipt,
     ServerRegistration,
 )
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     CatalogServer as FleetServer,
 )
 from arbora.gateway import enhanced_catalog_api as api

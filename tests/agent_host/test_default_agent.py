@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host.default_agent import (
+from arbora.api.domain.agent_host.default_agent import (
     DefaultAgentDefinition,
     DefaultAgentRegistrar,
 )

@@ -162,7 +162,7 @@ def _draft(item: Mapping[str, Any], context: Any) -> dict[str, Any]:
 def _mutation_context(
     context: Any, purpose: str, expected: int | None
 ) -> dict[str, Any]:
-    from arbora.mcp_server.decide_wiring import mutation_context as build
+    from arbora.api.domain.mcp_server.decide_wiring import mutation_context as build
 
     return {**build(context.caller.session, purpose), "expected_revision": expected}
 

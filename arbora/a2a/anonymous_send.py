@@ -839,8 +839,9 @@ def anonymous_text_app(service: AnonymousTextService) -> FastAPI:
                         raise ValueError("Invalid identifier")
                     if body["jsonrpc"] != "2.0" or body["method"] != "message/send":
                         raise PermissionError("Operation unavailable")
+                    from arbora.api.domain.a2a.models import A2ATextPart
+
                     from .application import _SendParams
-                    from .models import A2ATextPart
 
                     params = _SendParams.model_validate(body["params"])
                     message = params.message
@@ -860,8 +861,13 @@ def anonymous_text_app(service: AnonymousTextService) -> FastAPI:
                     result = await service.send(
                         text=message.parts[0].text, key=message.message_id
                     )
+                    from arbora.api.domain.a2a.models import (
+                        A2AArtifact,
+                        A2ATask,
+                        A2ATaskStatus,
+                    )
+
                     from .authority import _STATE_MAP
-                    from .models import A2AArtifact, A2ATask, A2ATaskStatus
 
                     answer = result.get("text")
                     task = A2ATask(

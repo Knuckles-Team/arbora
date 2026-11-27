@@ -16,8 +16,11 @@ import pytest
 
 from arbora.a2a.engine_decide import build_ask_decide, decide_request_for
 from arbora.a2a.engine_deciders import EngineHeldItemDecider, EngineToolActionDecider
-from arbora.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
-from arbora.a2a.tool_action_admission import ToolActionAdmitter, ToolActionRefusal
+from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
+from arbora.api.domain.a2a.tool_action_admission import (
+    ToolActionAdmitter,
+    ToolActionRefusal,
+)
 from tests._support import unwrap_decide
 from tests.a2a.test_engine_deciders import HELD, main_shape  # noqa: F401
 
@@ -146,7 +149,7 @@ def test_request_carries_policy_schema_option_and_typed_params() -> None:
 
 
 def _tool_request() -> Any:
-    from arbora.a2a.tool_action_admission import ToolActionAdmissionRequest
+    from arbora.api.domain.a2a.tool_action_admission import ToolActionAdmissionRequest
 
     return ToolActionAdmissionRequest(
         task_id="task-1",
@@ -187,7 +190,7 @@ def test_tool_action_admits_and_denies_through_the_production_seam(
 def test_held_item_admits_and_rejects_through_the_production_seam(
     main_shape: None,  # noqa: F811
 ) -> None:
-    from arbora.a2a.held_item_admission import HeldItemAdmissionRequest
+    from arbora.api.domain.a2a.held_item_admission import HeldItemAdmissionRequest
 
     typed = HeldItemAdmissionRequest(
         task_id="task-1",

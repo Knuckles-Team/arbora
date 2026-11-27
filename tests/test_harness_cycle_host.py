@@ -21,8 +21,11 @@ from arbora.agent_host.harness_cycle import (
     HostCycleProvider,
     HostProbeProvider,
 )
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.mcp_server import harness_ports
 from arbora.mcp_server.host_context import build_host_context
 from arbora.run_origin import RunOriginRegistry

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.fleet.definitions import (
+from arbora.api.domain.fleet.definitions import (
     REFUSALS,
     CompatibilityDecision,
     DefinitionGeneration,

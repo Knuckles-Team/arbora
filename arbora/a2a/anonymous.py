@@ -23,8 +23,9 @@ from urllib.parse import urlsplit
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATask
+
 from .authority import WorkItemA2AAuthority
-from .models import A2AMessage, A2ARouteDecision, A2ATask
 from .service import A2AService
 
 logger = logging.getLogger(__name__)
@@ -114,15 +115,16 @@ class AnonymousTaskStatus:
             if type(value) is not str or not value or len(value) > 256:
                 raise ValueError("Invalid native anonymous evidence")
         WorkItemA2AAuthority._work_item_id(self.run_id)
+        from arbora.api.domain.a2a.models import A2ATaskStatus
+
         from .authority import _STATE_MAP
-        from .models import A2ATaskStatus
 
         if self.status not in _STATE_MAP or self.authority_mode not in {
             "none",
             "verified",
         }:
             raise ValueError("Invalid native status")
-        from .models import A2ATask
+        from arbora.api.domain.a2a.models import A2ATask
 
         A2ATask(
             id=self.run_id,
@@ -367,8 +369,9 @@ class AnonymousTaskReadOwner:
             or item.authority_mode != "none"
         ):
             return None
+        from arbora.api.domain.a2a.models import A2ATaskStatus
+
         from .authority import _STATE_MAP
-        from .models import A2ATaskStatus
 
         state = _STATE_MAP.get(item.status)
         if state is None:

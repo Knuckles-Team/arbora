@@ -9,8 +9,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet import epistemic_adapter as adapter
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     COMMONS_GRAPH,
     COMPONENT_CURRENT_SOURCE,
     COMPONENT_SEARCH_SOURCE,
@@ -18,6 +17,7 @@ from arbora.fleet.catalog_reader import (
     ComponentSearchRequest,
     ReadContext,
 )
+from arbora.fleet import epistemic_adapter as adapter
 
 CONTEXT = ReadContext(
     tenant_id="tenant-a",

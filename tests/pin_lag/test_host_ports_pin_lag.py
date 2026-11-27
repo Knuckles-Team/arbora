@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host import host_port_adapters as adapters
+from arbora.api.domain.agent_host import host_port_adapters as adapters
 from arbora.pin_lag import meristem as guard
 
 

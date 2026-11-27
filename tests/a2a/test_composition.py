@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.a2a.models import A2AAgentCapabilities
 from arbora.a2a.service import A2AService
+from arbora.api.domain.a2a.models import A2AAgentCapabilities
 from tests.a2a._push_support import world
 from tests.a2a.test_application import Authority, Router
 

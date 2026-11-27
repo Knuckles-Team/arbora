@@ -533,7 +533,7 @@ async def _check_fleet_coverage() -> dict[str, Any]:
     session. The report is the gate's own verdict: it exits non-zero when
     ``ok`` is false (ARBORA-FLEET-R060.3).
     """
-    from arbora.fleet.catalog_reader import FleetCatalogReader, ReadContext
+    from arbora.api.domain.fleet.catalog_reader import FleetCatalogReader, ReadContext
     from arbora.fleet.coverage import check_fleet_coverage, registered_connectors
     from arbora.fleet.epistemic_adapter import GeneratedFleetCatalogPort
     from arbora.fleet.onboarding import (

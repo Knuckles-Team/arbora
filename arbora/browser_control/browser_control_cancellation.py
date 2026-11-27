@@ -6,12 +6,12 @@ import asyncio
 import logging
 from typing import Any, Literal
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     CancelCallRequest,
     ReconcileCallRequest,
 )
-from arbora.browser_control.browser_control_common import CancellationEffect
+from arbora.api.domain.browser_control.browser_control_common import CancellationEffect
 from arbora.browser_control.browser_control_server import ControlCancelMessage
 from arbora.browser_control.browser_control_state import (
     BrowserControlMixinState,

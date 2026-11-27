@@ -35,8 +35,8 @@ def build_host_ports(
 
     from arbora.a2a.checkpoint import checkpoint_store
     from arbora.agent_host.harness_cycle import HostProbeProvider
-    from arbora.agent_host.host_port_adapters import bind_host_ports
     from arbora.agent_runs import decide_run, record_run_event, resolve_model
+    from arbora.api.domain.agent_host.host_port_adapters import bind_host_ports
     from arbora.current_plan_publication import publication_scope
     from arbora.fleet import client_toolsets
     from arbora.pin_lag.meristem import emit_run_event
@@ -92,7 +92,7 @@ def build_host_ports(
 
 def bind_host_ports_of(host: HostContext, **composition: Any) -> None:
     """Build the record and hold it on ``host.runs.ports``; a refusal is held, not raised."""
-    from arbora.agent_host.host_port_adapters import HostPortsBinding
+    from arbora.api.domain.agent_host.host_port_adapters import HostPortsBinding
     from arbora.pin_lag.meristem import PinLagUnavailable
 
     try:

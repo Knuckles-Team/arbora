@@ -9,7 +9,7 @@ from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
-from arbora.fleet.ranking import FLOOR_ONLY, RankCandidate, RankingPort
+from arbora.api.domain.fleet.ranking import FLOOR_ONLY, RankCandidate, RankingPort
 from arbora.fleet.surfaces import count_items, surface_report
 
 ItemKind = Literal[

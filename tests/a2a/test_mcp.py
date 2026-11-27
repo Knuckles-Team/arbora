@@ -8,8 +8,8 @@ from typing import Any
 import pytest
 
 from arbora.a2a import mcp as a2a_mcp
-from arbora.a2a.models import A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.key_cache import JwksCache

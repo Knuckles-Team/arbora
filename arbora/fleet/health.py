@@ -26,14 +26,14 @@ from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.fleet.catalog_machine import (
+from arbora.api.domain.fleet.catalog_machine import (
     CatalogState,
     autoscaling_ready,
     convergence_ready,
 )
 
 if TYPE_CHECKING:
-    from arbora.fleet.catalog_reader import GenerationStatus
+    from arbora.api.domain.fleet.catalog_reader import GenerationStatus
 
 #: ``not_served``: this release has no reader for the authority (AuthorityNotServed).
 #: It is "not applicable", never a failure, and never gates readiness.

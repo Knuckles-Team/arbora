@@ -24,7 +24,10 @@ from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.api.domain.mcp_server import task_plan_runtime
 from arbora.api.http.auth import (
     AmbientHTTPAuthenticator,

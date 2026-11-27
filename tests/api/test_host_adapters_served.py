@@ -13,7 +13,10 @@ from typing import Any
 import pytest
 
 from arbora.agent_host.port_backends import PROCESS_TABLE
-from arbora.agent_host.port_services import SandboxProcess, SandboxProcessTable
+from arbora.api.domain.agent_host.port_services import (
+    SandboxProcess,
+    SandboxProcessTable,
+)
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import ops as ops_admin
 from arbora.api.ops.host_adapters import HarnessProbeRunner, SandboxProcessTerminator

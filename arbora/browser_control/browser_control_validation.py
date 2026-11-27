@@ -7,7 +7,7 @@ from urllib.parse import urlsplit
 
 from jsonschema import Draft202012Validator
 
-from arbora.browser_control.browser_control_api import BrowserChannelBinding
+from arbora.api.domain.browser_control.browser_control_api import BrowserChannelBinding
 from arbora.browser_control.browser_control_attendance_api import RecentAuthGrant
 
 

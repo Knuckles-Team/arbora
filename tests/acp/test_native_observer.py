@@ -249,7 +249,7 @@ async def test_admission_callback_receives_owner_id_before_execution(
 
     from arbora import work_items
     from arbora.a2a.authority import WorkItemA2AAuthority
-    from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+    from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
     from arbora.mcp_server.task_plan import TaskPlanConfig
 
     session = identity("alice")

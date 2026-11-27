@@ -23,10 +23,10 @@ from arbora.api.contracts import (
     WorkflowCatalogReadPort,
     WorkflowCatalogRecord,
 )
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     CatalogServer as FleetCatalogServer,
 )
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     FleetCatalog,
     FleetCatalogReader,
 )

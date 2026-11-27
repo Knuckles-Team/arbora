@@ -16,8 +16,13 @@ import asyncio
 import inspect
 from typing import Any
 
+from arbora.api.domain.a2a.models import (
+    TRANSITION_PAGE_LIMIT,
+    A2ATransition,
+    A2ATransitionPage,
+)
+
 from .authority import A2ATransitionHistoryUnavailable, WorkItemA2AAuthority
-from .models import TRANSITION_PAGE_LIMIT, A2ATransition, A2ATransitionPage
 
 __all__ = ["EngineTransitionHistory"]
 

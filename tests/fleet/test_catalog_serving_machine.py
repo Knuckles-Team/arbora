@@ -7,15 +7,15 @@ import re
 
 import pytest
 
-from arbora.fleet import catalog_machine as cm
-from arbora.fleet import multiplexer as multiplexer_module
-from arbora.fleet.catalog_machine import (
+from arbora.api.domain.fleet import catalog_machine as cm
+from arbora.api.domain.fleet.catalog_machine import (
     CATALOG_EDGES,
     CatalogEvent,
     CatalogState,
     IllegalCatalogTransition,
     transition,
 )
+from arbora.fleet import multiplexer as multiplexer_module
 
 _LEGAL = [(s, e, g, t) for (s, e, g), t in CATALOG_EDGES.items()]
 

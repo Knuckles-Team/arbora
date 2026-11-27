@@ -7,7 +7,7 @@ from dataclasses import replace
 
 import pytest
 
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     CATALOG_GENERATION_BEHIND,
     CatalogGeneration,
     FleetCatalogReader,
@@ -15,15 +15,15 @@ from arbora.fleet.catalog_reader import (
     catalog_digest,
     convergence_timeout_s,
 )
+from arbora.api.domain.fleet.mcp_resource_reconciliation import (
+    MCP_RESOURCE_FAMILIES,
+    ReconciliationReceipt,
+)
 from arbora.fleet.health import (
     FleetAuthorities,
     collect_fleet_health,
     health_payload,
     with_catalog_generation,
-)
-from arbora.fleet.mcp_resource_reconciliation import (
-    MCP_RESOURCE_FAMILIES,
-    ReconciliationReceipt,
 )
 from tests.test_fleet_catalog_reader import (
     SERVER,

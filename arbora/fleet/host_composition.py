@@ -14,9 +14,9 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.api.domain.fleet.engine_admission import EngineAdmission
 from arbora.core.environment import read_env
 from arbora.fleet.definition_admission import DefinitionAdmission
-from arbora.fleet.engine_admission import EngineAdmission
 from arbora.fleet.ingest_worker_unit import (
     IngestWorkerSupervisor,
     IngestWorkerUnit,

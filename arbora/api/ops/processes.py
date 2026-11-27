@@ -213,7 +213,7 @@ def _run_id(context: Any) -> str:
 
 def _prompt_reader(context: Any) -> Any:
     """``prompt IRI -> text`` read through the engine as the verified caller."""
-    from arbora.agent_host.port_services import BODY_PROPERTIES
+    from arbora.api.domain.agent_host.port_services import BODY_PROPERTIES
 
     async def read(iri: str) -> str | None:
         try:
@@ -249,9 +249,9 @@ def _decide_call(context: Any) -> Any:
 
 
 def _run_ports(context: Any, evidence: Any, graph: str) -> Any:
+    from arbora.api.domain.processes.run_ports import process_host_ports
     from arbora.api.ops.pin_guards import refusal
     from arbora.pin_lag.medulla import PinLagUnavailable
-    from arbora.processes.run_ports import process_host_ports
 
     clock = context.services.get("now_ms")
     wait = context.services.get("process_wait") or asyncio.sleep
@@ -324,8 +324,8 @@ async def handle_process_run(
         ProcessPromptUnresolved,
         resolve_prompts,
     )
+    from arbora.api.domain.processes.run_ports import RunEvidence
     from arbora.api.ops.plans import _plan_model, execute_task_plan
-    from arbora.processes.run_ports import RunEvidence
 
     planned = await handle_process_plan(context, params, op)
     plan = planned["plan"]

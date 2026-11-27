@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.fleet.catalog_machine import CATALOG_EDGES, CatalogEvent, CatalogState
+from arbora.api.domain.fleet.catalog_machine import (
+    CATALOG_EDGES,
+    CatalogEvent,
+    CatalogState,
+)
 from tests.ontology.machine_description import check_machine, load_store
 
 

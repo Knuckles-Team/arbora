@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
+from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.browser_control.browser_control_runtime import (
     dispatch_browser_control,
 )
@@ -183,7 +183,9 @@ async def test_discovery_reports_unavailable_without_granting_a_session(session)
 
 @pytest.mark.asyncio
 async def test_discovery_tracks_binding_and_teardown(session):
-    from arbora.browser_control.browser_control_api import BrowserDiscoveryReceipt
+    from arbora.api.domain.browser_control.browser_control_api import (
+        BrowserDiscoveryReceipt,
+    )
 
     class DiscoveryService:
         async def discover(self, request):
@@ -210,7 +212,9 @@ async def test_discovery_tracks_binding_and_teardown(session):
 async def test_webui_start_binds_bridge_before_first_browser_and_clears_on_stop(
     session,
 ):
-    from arbora.browser_control.browser_control_api import BrowserDiscoveryReceipt
+    from arbora.api.domain.browser_control.browser_control_api import (
+        BrowserDiscoveryReceipt,
+    )
     from arbora.webui_host.webui_co_service import _serve_until_stopped
 
     stop = threading.Event()

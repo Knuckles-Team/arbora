@@ -162,7 +162,7 @@ def _workflow_lookup(
 
     The engine client is built on the first lookup, once (ARBORA-HOST-R022.1).
     """
-    from arbora.mcp_server.workflow_registry import workflow_lookup
+    from arbora.api.domain.mcp_server.workflow_registry import workflow_lookup
 
     return workflow_lookup(client_factory, str(getattr(session, "graph", "")))
 

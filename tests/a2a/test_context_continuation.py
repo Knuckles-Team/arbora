@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.a2a.models import A2AMessage, A2ATextPart
+from arbora.api.domain.a2a.models import A2AMessage, A2ATextPart
 
 CONTEXT = "a2a-context-" + "a" * 64
 SESSION = SimpleNamespace(tenant="tenant", graph="graph")
@@ -109,7 +109,7 @@ def test_changed_caller_after_read_refuses(monkeypatch: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_foreign_context_never_submits_or_executes(monkeypatch: Any) -> None:
-    from arbora.a2a.models import A2ARouteDecision
+    from arbora.api.domain.a2a.models import A2ARouteDecision
 
     authority, _ = reader(monkeypatch, [{"items": [], "next_cursor": None}])
     monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")

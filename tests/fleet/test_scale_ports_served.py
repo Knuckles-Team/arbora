@@ -16,11 +16,11 @@ import msgpack
 import pytest
 
 from arbora import work_items
+from arbora.api.domain.fleet.scaling import graph_authority
+from arbora.api.domain.fleet.scaling.graph_authority import INVENTORY, REVISION_LABEL
 from arbora.api.domain.fleet.scaling.scaling_authority import ScaleIntent
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import fleet_scaling
-from arbora.fleet.scaling import graph_authority
-from arbora.fleet.scaling.graph_authority import INVENTORY, REVISION_LABEL
 from arbora.fleet.scaling.work_item_ledger import WorkItemScaleIntentLedger
 from arbora.mcp_server.served_invocation import (
     _with_provisioning_ports,

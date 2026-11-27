@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.ranking import QUESTION_IDS
+from arbora.api.domain.fleet.ranking import QUESTION_IDS
 from arbora.mcp_server.host_context import bind_ranking, build_host_context
 from arbora.observability import runtime_health
 from tests.api.test_ops_admin_ops import _context, _FakeOpsAdminStore, ops_admin

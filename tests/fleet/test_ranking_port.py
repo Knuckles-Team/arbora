@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.fleet.lexical_floor import LexicalFloor
-from arbora.fleet.ranking import MedullaRanking, RankCandidate
+from arbora.api.domain.fleet.lexical_floor import LexicalFloor
+from arbora.api.domain.fleet.ranking import MedullaRanking, RankCandidate
 from arbora.mcp_server.host_caches import HostCaches
 
 CATALOG = [

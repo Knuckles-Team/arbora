@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.engine_admission import EngineAdmission
 from arbora.fleet.definition_admission import DefinitionAdmission
-from arbora.fleet.engine_admission import EngineAdmission
 from arbora.fleet.onboarding import (
     FleetEndpoint,
     FleetOnboarding,
@@ -185,7 +185,7 @@ async def test_missing_engine_shape_refuses_unavailable(monkeypatch) -> None:
     def lacking() -> None:
         raise pin_lag.refusal(PinLagUnavailable("SkillUpgradeRequest"))
 
-    from arbora.fleet import engine_admission
+    from arbora.api.domain.fleet import engine_admission
 
     monkeypatch.setattr(
         engine_admission, "pin_lag", SimpleNamespace(guard_skill_upgrade=lacking)

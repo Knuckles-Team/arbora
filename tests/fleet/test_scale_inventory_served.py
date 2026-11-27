@@ -12,8 +12,8 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.fleet.scaling import graph_authority, inventory_writer
-from arbora.fleet.scaling.graph_authority import INVENTORY
+from arbora.api.domain.fleet.scaling import graph_authority, inventory_writer
+from arbora.api.domain.fleet.scaling.graph_authority import INVENTORY
 from tests.api._loopback_engine import loopback  # noqa: F401
 from tests.fleet.scaling.test_scaling_authority_contract import authority
 from tests.test_served_operation_api import served  # noqa: F401

@@ -85,12 +85,12 @@ ToolResult = _fastmcp_tools.ToolResult
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
+import arbora.api.domain.fleet.catalog_reader as _catalog_reader
 import arbora.core.priority as _resource_priority
-import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
+from arbora.api.domain.fleet import catalog_machine as _catalog_machine
 from arbora.api.domain.fleet.approval_meta import approval_call_kwargs
 from arbora.core.capability_contract import Capability
-from arbora.fleet import catalog_machine as _catalog_machine
 from arbora.fleet.local_skill_catalog import (
     LOCAL_SKILLS_SERVER,
     build_local_skill_catalog,
@@ -2316,7 +2316,7 @@ class MCPMultiplexer:
         self._catalog: dict[str, dict] | None = None
         # ARBORA-FLEET-R081: the one serving state of the catalog. Cold is not
         # empty: a failed first read leaves it Cold. Written only through
-        # ``_catalog_event`` (``arbora.fleet.catalog_machine.transition``).
+        # ``_catalog_event`` (``arbora.api.domain.fleet.catalog_machine.transition``).
         self._catalog_state = _catalog_machine.CatalogState.COLD
         # ``_exposed`` tracks prefixed tools registered as live FastMCP tools
         # (process-global, so lazy mounts don't double-register). Visibility,
@@ -6472,8 +6472,8 @@ class MCPMultiplexer:
         retired scorer did; an engine order is kept whole, since the engine owns the
         semantic match. Each row's ``score`` is the floor's evidence for it.
         """
-        from arbora.fleet.lexical_floor import evidence
-        from arbora.fleet.ranking import RankCandidate
+        from arbora.api.domain.fleet.lexical_floor import evidence
+        from arbora.api.domain.fleet.ranking import RankCandidate
 
         candidates = [
             RankCandidate(

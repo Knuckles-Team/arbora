@@ -16,7 +16,7 @@ from typing import Any, Literal, Protocol
 from pydantic import ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from .models import A2APlanConfirmParams, _WireModel
+from .models import A2APlanConfirmParams, WireModel
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class ToolActionAdmissionRequest(A2APlanConfirmParams):
     action_class: ActionClass
 
 
-class ToolActionApproval(_WireModel):
+class ToolActionApproval(WireModel):
     """The engine verdict and the references it produced."""
 
     model_config = ConfigDict(

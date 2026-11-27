@@ -10,10 +10,10 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.api.domain.fleet.definitions import VersionedDefinition
 from arbora.api.domain.fleet.scaling import scaling_authority
 from arbora.fleet.catalog_replay import receipts_from_rows
 from arbora.fleet.connect_contract import ConnectContract
-from arbora.fleet.definitions import VersionedDefinition
 from arbora.fleet.onboarding import HandshakeOnboarder
 from tests.fleet.test_handshake_onboard import _Registry, _setup
 

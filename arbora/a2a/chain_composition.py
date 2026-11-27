@@ -16,13 +16,16 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from arbora.access.credential_reuse_decider import AskDecide
+from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter, HeldItemDecider
+from arbora.api.domain.a2a.tool_action_admission import (
+    ToolActionAdmitter,
+    ToolActionDecider,
+)
 
 from .approval import PendingCallBinding
 from .confirm import ApprovalChain, RegisteredKeyProducer
 from .engine_deciders import EngineHeldItemDecider, EngineToolActionDecider
 from .grant_store import HumanGrantStore
-from .held_item_admission import HeldItemAdmitter, HeldItemDecider
-from .tool_action_admission import ToolActionAdmitter, ToolActionDecider
 
 LEASE_KIND = "arbora.human_grant"
 

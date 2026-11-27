@@ -170,7 +170,7 @@ async def store_secret_step(
     reference and Arbora keeps no value; with no vault tool bound it refuses
     ``SECRET_INLINE_REFUSED`` and runs nothing.
     """
-    from arbora.deployment.trust_bundle import store_secrets
+    from arbora.api.domain.deployment.trust_bundle import store_secrets
 
     _, stored = await store_secrets(config, invoke, caller, plan_digest=plan_digest)
     return {"stored_secrets": stored}
@@ -185,7 +185,7 @@ async def propagate_trust_step(
     components: Sequence[str],
 ) -> dict[str, Any]:
     """The ``propagate-trust`` step: mount and verify the bundle in every component."""
-    from arbora.deployment.trust_bundle import propagate_trust
+    from arbora.api.domain.deployment.trust_bundle import propagate_trust
 
     if not (config.get("trust") or {}).get("bundle_path"):
         return {"trust": []}

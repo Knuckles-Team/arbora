@@ -50,15 +50,15 @@ from typing import Any
 from pydantic import BaseModel
 from scion_sdk.privacy import persistence_reference
 
-from arbora.api.errors import not_served
-from arbora.fleet.lexical_floor import evidence
-from arbora.fleet.ranking import (
+from arbora.api.domain.fleet.lexical_floor import evidence
+from arbora.api.domain.fleet.ranking import (
     FLOOR_ONLY,
     RankCandidate,
     Ranked,
     RankingPort,
     run_with_port,
 )
+from arbora.api.errors import not_served
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,

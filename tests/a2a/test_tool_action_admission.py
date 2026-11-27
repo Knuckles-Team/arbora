@@ -9,8 +9,8 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from arbora.a2a.models import parse_confirmation
-from arbora.a2a.tool_action_admission import (
+from arbora.api.domain.a2a.models import parse_confirmation
+from arbora.api.domain.a2a.tool_action_admission import (
     ConfirmationKindInvalid,
     ToolActionAdmissionRequest,
     ToolActionAdmitter,

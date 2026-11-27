@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.a2a.authority import _opening_session
-from arbora.a2a.models import A2AMessage
+from arbora.api.domain.a2a.models import A2AMessage
 
 
 def _message(metadata: dict[str, object]) -> A2AMessage:

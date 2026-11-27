@@ -12,19 +12,19 @@ from pydantic import (
     model_validator,
 )
 
-from arbora.browser_control.browser_control_common import (
-    _DIGEST,
-    _RESULT_ERROR_CODE,
+from arbora.api.domain.browser_control.browser_control_common import (
+    DIGEST,
     PROTOCOL_VERSION,
+    RESULT_ERROR_CODE,
     CancellationEffect,
-    _bounded_json,
-    _identifier,
+    bounded_json,
+    checked_identifier,
 )
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 
-_Identifier = Annotated[str, AfterValidator(_identifier)]
-_Digest = Annotated[str, Field(pattern=_DIGEST.pattern)]
-_ResultError = Annotated[str, Field(pattern=_RESULT_ERROR_CODE.pattern)]
+_Identifier = Annotated[str, AfterValidator(checked_identifier)]
+_Digest = Annotated[str, Field(pattern=DIGEST.pattern)]
+_ResultError = Annotated[str, Field(pattern=RESULT_ERROR_CODE.pattern)]
 
 
 class _WireMessage(BaseModel):
@@ -48,7 +48,7 @@ class CatalogRegisterMessage(_WireMessage):
         ids = [tool.tool_id for tool in self.tools]
         if len(ids) != len(set(ids)):
             raise ValueError("catalog tool ids must be unique")
-        _bounded_json(self.model_dump(mode="json"))
+        bounded_json(self.model_dump(mode="json"))
         return self
 
 
@@ -74,8 +74,8 @@ class ControlResultMessage(_WireMessage):
 
     @model_validator(mode="after")
     def _bounded_result(self) -> ControlResultMessage:
-        _bounded_json(self.model_dump(mode="json"))
-        _bounded_json(self.result, limit=1_500)
+        bounded_json(self.model_dump(mode="json"))
+        bounded_json(self.result, limit=1_500)
         if (self.status == "failed") != (self.error_code is not None):
             raise ValueError("failed results require one safe error_code")
         return self

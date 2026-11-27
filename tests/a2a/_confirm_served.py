@@ -22,9 +22,9 @@ from arbora.a2a.confirm import ApprovalChain, RegisteredKeyProducer, emit_input_
 from arbora.a2a.engine_decide import build_ask_decide
 from arbora.a2a.engine_deciders import EngineHeldItemDecider, EngineToolActionDecider
 from arbora.a2a.grant_store import HumanGrantStore
-from arbora.a2a.held_item_admission import HeldItemAdmitter
 from arbora.a2a.service import A2AService
-from arbora.a2a.tool_action_admission import ToolActionAdmitter
+from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter
+from arbora.api.domain.a2a.tool_action_admission import ToolActionAdmitter
 from arbora.api.invoke.plan import PlanBinding
 from arbora.core.claims import params_digest
 from arbora.identity.approval import RegisteredApprovalKey

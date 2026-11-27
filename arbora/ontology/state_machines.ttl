@@ -1130,7 +1130,7 @@ arbora:ConnectorDesiredStatusMachine_quarantined-release-disabled a owl:Class ;
 
 # ---------------------------------------------------------------------------
 # Catalog serving (ARBORA-FLEET-R081.1, R081.3).
-# Python: CatalogState, CatalogEvent, CATALOG_EDGES in arbora/fleet/catalog_machine.py.
+# Python: CatalogState, CatalogEvent, CATALOG_EDGES in arbora/api/domain/fleet/catalog_machine.py.
 # ---------------------------------------------------------------------------
 
 arbora:CatalogServingMachine a owl:Class, :StateMachine ;

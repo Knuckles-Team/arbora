@@ -10,6 +10,11 @@ import httpx
 import pytest
 from fastmcp import Client, FastMCP
 
+from arbora.api.domain.fleet.mcp_resource_reconciliation import (
+    MCP_RESOURCE_FAMILIES,
+    PublicationRefusedError,
+    ReconciliationReceipt,
+)
 from arbora.api.ops import policy
 from arbora.api.registry import Registry
 from arbora.fleet.agent_surface import (
@@ -17,11 +22,6 @@ from arbora.fleet.agent_surface import (
     SurfaceCandidate,
     export_skills,
     register_agent_surface,
-)
-from arbora.fleet.mcp_resource_reconciliation import (
-    MCP_RESOURCE_FAMILIES,
-    PublicationRefusedError,
-    ReconciliationReceipt,
 )
 
 RELEASE = "sha256:" + "c" * 64

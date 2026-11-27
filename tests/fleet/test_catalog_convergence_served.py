@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.catalog_reader import CatalogGeneration, GenerationStatus
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.fleet import (
     ConvergenceResult,
@@ -14,7 +15,6 @@ from arbora.api.ops.fleet import (
     operations,
 )
 from arbora.api.registry import Surface
-from arbora.fleet.catalog_reader import CatalogGeneration, GenerationStatus
 
 DIGEST = "a" * 64
 

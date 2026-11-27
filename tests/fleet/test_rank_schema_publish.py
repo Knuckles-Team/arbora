@@ -15,8 +15,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.ranking import QUESTION_IDS, HostRanking
 from arbora.api.task_plan_schema import catalog_rank_pins, publish_at_startup, rank_pin
-from arbora.fleet.ranking import QUESTION_IDS, HostRanking
 from arbora.mcp_server.host_context import bind_ranking
 from tests.fleet.test_ranking_served import (
     PRINCIPAL,

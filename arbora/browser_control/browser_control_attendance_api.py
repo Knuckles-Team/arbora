@@ -7,14 +7,14 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from arbora.browser_control.browser_control_common import (
-    _DIGEST,
-    _TRUST_EVIDENCE,
+from arbora.api.domain.browser_control.browser_control_common import (
+    DIGEST,
     RECENT_AUTH_GRANT_SECONDS,
-    _identifier,
-    _opaque_ref,
-    _timestamps_are_finite,
-    _trusted_issuer,
+    TRUST_EVIDENCE,
+    checked_identifier,
+    checked_opaque_ref,
+    timestamps_are_finite,
+    trusted_issuer,
 )
 from arbora.security.session import GraphSession
 
@@ -26,7 +26,7 @@ def _validate_recent_auth_references(grant: RecentAuthGrant) -> None:
         grant.browser_session_ref,
         grant.principal_ref,
     ):
-        _opaque_ref(value)
+        checked_opaque_ref(value)
     required_prefixes = (
         (grant.grant_ref, "attended_", "recent-auth reference"),
         (grant.login_session_ref, "login_", "recent-auth login reference"),
@@ -57,14 +57,14 @@ class RecentAuthGrant:
 
     def __post_init__(self) -> None:
         _validate_recent_auth_references(self)
-        _identifier(self.route_id)
+        checked_identifier(self.route_id)
         timestamps = (
             self.access_token_expires_at,
             self.grant_issued_at,
             self.grant_expires_at,
             self.attended_auth_time,
         )
-        if not _timestamps_are_finite(timestamps):
+        if not timestamps_are_finite(timestamps):
             raise ValueError("recent-auth timestamps must be finite")
         if not self.attended_auth_time <= self.grant_issued_at < self.grant_expires_at:
             raise ValueError("recent-auth evidence is not chronological")
@@ -72,9 +72,9 @@ class RecentAuthGrant:
             raise ValueError("recent-auth grant cannot outlive the access token")
         if self.grant_expires_at - self.grant_issued_at > RECENT_AUTH_GRANT_SECONDS:
             raise ValueError("recent-auth grant cannot exceed sixty seconds")
-        if _TRUST_EVIDENCE.fullmatch(self.attended_acr) is None:
+        if TRUST_EVIDENCE.fullmatch(self.attended_acr) is None:
             raise ValueError("recent-auth authentication evidence is invalid")
-        _trusted_issuer(self.attended_issuer)
+        trusted_issuer(self.attended_issuer)
 
 
 class AttendedArmReceipt(BaseModel):
@@ -89,7 +89,7 @@ class AttendedArmReceipt(BaseModel):
     @field_validator("attended_arm_ref")
     @classmethod
     def _arm_ref(cls, value: str) -> str:
-        value = _opaque_ref(value)
+        value = checked_opaque_ref(value)
         if not value.startswith("attended_"):
             raise ValueError("arm receipt reference must be server generated")
         return value
@@ -97,14 +97,14 @@ class AttendedArmReceipt(BaseModel):
     @field_validator("attended_arm_expires_at")
     @classmethod
     def _expiry(cls, value: float) -> float:
-        if not _timestamps_are_finite((value,)) or value <= 0:
+        if not timestamps_are_finite((value,)) or value <= 0:
             raise ValueError("arm receipt expiry must be finite and positive")
         return value
 
     @field_validator("catalog_digest", "tool_scope_digest")
     @classmethod
     def _digests(cls, value: str) -> str:
-        if _DIGEST.fullmatch(value) is None:
+        if DIGEST.fullmatch(value) is None:
             raise ValueError("arm receipt digest must be canonical sha256")
         return value
 

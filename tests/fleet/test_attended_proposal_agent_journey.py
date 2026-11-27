@@ -23,9 +23,10 @@ from pydantic_ai.models.function import FunctionModel
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
-from arbora.agent_host.host_port_adapters import HostPortsBinding
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.api.domain.agent_host.host_port_adapters import HostPortsBinding
+from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
     ControlResultMessage,
@@ -34,7 +35,6 @@ from arbora.browser_control.browser_control_runtime import dispatch_browser_oper
 from arbora.core.agent_names import preloaded_agent_tools
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet import shared_multiplexer
-from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import install_gateway_application

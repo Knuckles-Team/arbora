@@ -11,7 +11,7 @@ from typing import Any, cast
 import pytest
 from scion_sdk.privacy import persistence_reference
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserChannelBinding,
     CancelCallRequest,
@@ -19,6 +19,14 @@ from arbora.browser_control.browser_control_api import (
     IssueLeaseRequest,
     ReconcileCallRequest,
     RenewLeaseRequest,
+)
+from arbora.api.domain.browser_control.browser_control_common import (
+    CancellationEffect,
+    ConfirmationPolicy,
+    MutationClass,
+    canonical_json,
+    content_sha256,
+    schema_sha256,
 )
 from arbora.browser_control.browser_control_attendance_api import RecentAuthGrant
 from arbora.browser_control.browser_control_binding import (
@@ -31,14 +39,6 @@ from arbora.browser_control.browser_control_client import (
     ControlCancelledMessage,
     ControlConfirmMessage,
     ControlResultMessage,
-)
-from arbora.browser_control.browser_control_common import (
-    CancellationEffect,
-    ConfirmationPolicy,
-    MutationClass,
-    canonical_json,
-    content_sha256,
-    schema_sha256,
 )
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 from arbora.browser_control.browser_control_registration import (
@@ -2061,7 +2061,9 @@ async def _wait_for_messages(sent: list[Any], count: int) -> None:
 async def test_discovery_reuses_owner_checks_and_withdraws_disconnected_catalog(
     session,
 ):
-    from arbora.browser_control.browser_control_api import BrowserDiscoveryRequest
+    from arbora.api.domain.browser_control.browser_control_api import (
+        BrowserDiscoveryRequest,
+    )
 
     with use_session(session):
         service, connection, _engine, sent, tool = await _setup(session)
@@ -2093,7 +2095,9 @@ async def test_discovery_withdraws_channel_retired_during_verification(
     monkeypatch: pytest.MonkeyPatch,
     retirement: str,
 ) -> None:
-    from arbora.browser_control.browser_control_api import BrowserDiscoveryRequest
+    from arbora.api.domain.browser_control.browser_control_api import (
+        BrowserDiscoveryRequest,
+    )
 
     verified = asyncio.Event()
     resume = asyncio.Event()

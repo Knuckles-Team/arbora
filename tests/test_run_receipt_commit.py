@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host.port_services import RunTraceReceipts
+from arbora.api.domain.agent_host.port_services import RunTraceReceipts
 
 RUN = "run:r36"
 OWNER = SimpleNamespace(

@@ -11,8 +11,11 @@ from meristem.host_ports import HostPorts
 from pydantic_ai.models.test import TestModel
 
 from arbora import agent_runs
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.core.settings import runtime_config
 from arbora.current_plan_publication import publication_scope
 from arbora.run_origin import RunOriginRegistry

@@ -7,8 +7,8 @@ from typing import Any
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.browser_control.browser_control_api import BrowserChannelBinding
-from arbora.browser_control.browser_control_common import content_sha256
+from arbora.api.domain.browser_control.browser_control_api import BrowserChannelBinding
+from arbora.api.domain.browser_control.browser_control_common import content_sha256
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 
 _CONTROL_CAPABILITIES = (

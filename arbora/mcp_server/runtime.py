@@ -51,9 +51,9 @@ from functools import partial
 from types import MappingProxyType
 from typing import Any, cast
 
+from arbora.api.domain.fleet.ranking import FLOOR_ONLY
 from arbora.core.environment import read_env
 from arbora.core.settings import RuntimeConfig
-from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.observability.state import SubsystemWindows
 from arbora.security.anonymous import session_context
@@ -1142,7 +1142,7 @@ def _attach_headless_fleet_loader(
     cause is recorded on ``mcp`` for ``intent_tools._fleet_mux`` to raise; the
     full exception is logged server-side.
     """
-    from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+    from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
     from arbora.fleet.multiplexer import attach_fleet_loader
 
     try:

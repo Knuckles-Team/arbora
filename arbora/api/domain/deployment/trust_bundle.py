@@ -145,6 +145,32 @@ def _endpoint(value: str) -> tuple[str, int]:
     return host, int(port)
 
 
+def _trust_inputs(config: Mapping[str, Any]) -> tuple[str, Mapping[str, Any], Any]:
+    """The bundle path, mount tool and TLS endpoints, or ``TRUST_BUNDLE_MISSING``."""
+    trust = config.get("trust") or {}
+    bundle = trust.get("bundle_path")
+    if not (isinstance(bundle, str) and bundle and Path(bundle).is_file()):
+        raise OperationRefused("TRUST_BUNDLE_MISSING", {"bundle_path": bool(bundle)})
+    tool = (config.get("tools") or {}).get("trust_mount")
+    if not (isinstance(tool, Mapping) and tool.get("server") and tool.get("tool")):
+        raise OperationRefused("TRUST_BUNDLE_MISSING", {"missing": "tools.trust_mount"})
+    return bundle, tool, trust.get("endpoints") or {}
+
+
+def _verify_tls(
+    endpoint: object, bundle: str, component: str, connect: TlsConnect | None
+) -> None:
+    """Open the component's TLS endpoint against the bundle or refuse it by name."""
+    try:
+        if not endpoint:
+            raise ValueError("no endpoint")
+        (connect or tls_connect)(*_endpoint(str(endpoint)), bundle)
+    except (OSError, ValueError, ssl.SSLError) as error:
+        raise OperationRefused(
+            "TRUST_VERIFY_FAILED", {"component": component}
+        ) from error
+
+
 async def propagate_trust(
     config: Mapping[str, Any],
     invoke: StepInvoke,
@@ -162,14 +188,7 @@ async def propagate_trust(
     ``TRUST_BUNDLE_MISSING`` before any call; a component whose TLS check fails
     refuses ``TRUST_VERIFY_FAILED`` naming it.
     """
-    trust = config.get("trust") or {}
-    bundle = trust.get("bundle_path")
-    if not (isinstance(bundle, str) and bundle and Path(bundle).is_file()):
-        raise OperationRefused("TRUST_BUNDLE_MISSING", {"bundle_path": bool(bundle)})
-    tool = (config.get("tools") or {}).get("trust_mount")
-    if not (isinstance(tool, Mapping) and tool.get("server") and tool.get("tool")):
-        raise OperationRefused("TRUST_BUNDLE_MISSING", {"missing": "tools.trust_mount"})
-    endpoints = trust.get("endpoints") or {}
+    bundle, tool, endpoints = _trust_inputs(config)
     rows: list[TrustRow] = []
     for component in sorted(set(components) | set(CORE_COMPONENTS)):
         outcome = await invoke(
@@ -189,14 +208,6 @@ async def propagate_trust(
         )
         if isinstance(outcome, OpError) or getattr(outcome, "code", "OK") != "OK":
             raise OperationRefused("TRUST_VERIFY_FAILED", {"component": component})
-        endpoint = endpoints.get(component)
-        try:
-            if not endpoint:
-                raise ValueError("no endpoint")
-            (connect or tls_connect)(*_endpoint(str(endpoint)), bundle)
-        except (OSError, ValueError, ssl.SSLError) as error:
-            raise OperationRefused(
-                "TRUST_VERIFY_FAILED", {"component": component}
-            ) from error
+        _verify_tls(endpoints.get(component), bundle, component, connect)
         rows.append(TrustRow(component, MOUNT_PATH, ENV_VAR, True))
     return rows

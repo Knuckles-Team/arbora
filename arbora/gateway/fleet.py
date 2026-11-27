@@ -37,9 +37,9 @@ from typing import Any
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from arbora.api.domain.fleet.catalog_machine import CatalogState
 from arbora.api.errors import not_served
 from arbora.core.environment import read_env
-from arbora.fleet.catalog_machine import CatalogState
 from arbora.fleet.health import (
     AuthorityNotServed,
     FleetAuthorities,

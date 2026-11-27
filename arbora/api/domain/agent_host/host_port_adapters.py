@@ -609,15 +609,8 @@ class ChangesetSubmitter:
             },
         )
         if committed.get("outcome") != "answered":
-            conflict = committed.get("refusal_code") == "SOURCE_CONFLICT"
-            found = (committed.get("payload") or {}).get("paths") or ()
-            return types.SourceConflict(
-                paths=tuple(str(path) for path in found) if conflict else ()
-            )
-        receipt = ((committed.get("payload") or {}).get("value") or {}).get(
-            "changeset"
-        ) or {}
-        changeset_id = str(receipt.get("id") or "")
+            return _commit_conflict(types, committed)
+        changeset_id = _receipt_id(committed)
         if not changeset_id:
             return types.SourceConflict(paths=())
         await self._confirmed(
@@ -756,3 +749,20 @@ def bind_host_ports(**bound: Any) -> HostPortsBinding:
         return HostPortsBinding(build_host_ports(**bound), None)
     except PinLagUnavailable as refusal:
         return HostPortsBinding(None, refusal)
+
+
+def _commit_conflict(types: Any, committed: Mapping[str, Any]) -> Any:
+    """The source conflict a refused commit reports, with its paths when it is one."""
+    conflict = committed.get("refusal_code") == "SOURCE_CONFLICT"
+    found = (committed.get("payload") or {}).get("paths") or ()
+    return types.SourceConflict(
+        paths=tuple(str(path) for path in found) if conflict else ()
+    )
+
+
+def _receipt_id(committed: Mapping[str, Any]) -> str:
+    """The changeset id of an answered commit, or an empty string."""
+    receipt = ((committed.get("payload") or {}).get("value") or {}).get(
+        "changeset"
+    ) or {}
+    return str(receipt.get("id") or "")

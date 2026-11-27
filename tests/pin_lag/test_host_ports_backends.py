@@ -20,7 +20,8 @@ from arbora.agent_host.host_port_composition import (
     compose_host_ports,
     run_principal_call,
 )
-from arbora.agent_host.port_services import (
+from arbora.agent_runs import NativeRunContext
+from arbora.api.domain.agent_host.port_services import (
     ApprovalInboxWaiter,
     RunTraceReceipts,
     RunVerdictConfirm,
@@ -30,7 +31,6 @@ from arbora.agent_host.port_services import (
     SummaryService,
     TechniqueMeasureService,
 )
-from arbora.agent_runs import NativeRunContext
 from arbora.core.settings import RuntimeConfig
 from arbora.security import request_identity
 from tests.api._served_support import capture_invocation, person, route_methods

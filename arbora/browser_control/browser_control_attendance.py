@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from arbora.browser_control.browser_control_api import BrowserChannelBinding
+from arbora.api.domain.browser_control.browser_control_api import BrowserChannelBinding
 from arbora.browser_control.browser_control_attendance_api import (
     AttendedArmReceipt,
     RecentAuthGrant,

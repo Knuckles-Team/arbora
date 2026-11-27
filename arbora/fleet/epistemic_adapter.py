@@ -21,7 +21,7 @@ from medulla.generated.storage import (
     send_agent_component_search,
 )
 
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     COMMONS_GRAPH,
     COMPONENT_CONTENT_SOURCE,
     COMPONENT_CURRENT_SOURCE,
@@ -39,7 +39,7 @@ from arbora.fleet.catalog_reader import (
     ServerPage,
     ServerRegistration,
 )
-from arbora.fleet.mcp_resource_reconciliation import receipt_from_engine
+from arbora.api.domain.fleet.mcp_resource_reconciliation import receipt_from_engine
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 _KINDS = {

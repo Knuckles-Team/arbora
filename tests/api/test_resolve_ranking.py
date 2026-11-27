@@ -42,7 +42,7 @@ async def test_the_served_path_awaits_an_engine_ask() -> None:
     async def ask(question_id, query, candidates):
         return [c.id for c in candidates][::-1]
 
-    from arbora.fleet.ranking import MedullaRanking
+    from arbora.api.domain.fleet.ranking import MedullaRanking
 
     resolver = IntentResolver(ranking=MedullaRanking(ask))
     arranged, sourced = await resolver.arrange_sourced(

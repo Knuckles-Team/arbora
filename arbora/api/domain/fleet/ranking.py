@@ -20,7 +20,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 
-from arbora.fleet.lexical_floor import LexicalFloor
+from arbora.api.domain.fleet.lexical_floor import LexicalFloor
 
 __all__ = [
     "FLOOR_ONLY",

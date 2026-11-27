@@ -7,11 +7,11 @@ from typing import Any
 from scion_sdk.privacy import persistence_reference
 
 from arbora.access.action_policy import ActionRequest
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
 )
-from arbora.browser_control.browser_control_common import (
+from arbora.api.domain.browser_control.browser_control_common import (
     MutationClass,
     content_sha256,
 )

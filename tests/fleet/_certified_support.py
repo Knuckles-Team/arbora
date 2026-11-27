@@ -7,10 +7,10 @@ from collections.abc import Mapping
 from types import SimpleNamespace
 from typing import Any
 
+from arbora.api.domain.fleet.admission import AdmissionGate
+from arbora.api.domain.fleet.engine_admission import EngineAdmission
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Idempotency, Surface
-from arbora.fleet.admission import AdmissionGate
-from arbora.fleet.engine_admission import EngineAdmission
 from tests.api.test_invoke_contract import operation, run, setup_services
 from tests.fleet.test_admission_wiring import GOOD, _RunParams
 
@@ -168,7 +168,7 @@ class World:
 
 def no_pin_lag(monkeypatch: Any) -> None:
     """Treat the engine ``main`` shapes as served (the structural double speaks them)."""
-    from arbora.fleet import engine_admission
+    from arbora.api.domain.fleet import engine_admission
 
     monkeypatch.setattr(
         engine_admission,

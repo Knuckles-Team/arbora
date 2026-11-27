@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host import host_port_adapters as adapters
+from arbora.api.domain.agent_host import host_port_adapters as adapters
 from arbora.api.task_plan_schema import (
     PROCESS_QUESTION_IDS,
     process_schema_pins,

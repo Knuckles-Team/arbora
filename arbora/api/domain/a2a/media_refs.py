@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
-from arbora.a2a.models import A2AInlineMediaFile
+from arbora.api.domain.a2a.models import A2AInlineMediaFile
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ async def resolve_media_refs(
     now: datetime | None = None,
 ) -> Any:
     """The message with each reference part replaced by the inline bytes it names."""
-    from arbora.a2a.models import A2AFilePart, A2AMediaRefFile
+    from arbora.api.domain.a2a.models import A2AFilePart, A2AMediaRefFile
 
     refs = [
         part
@@ -193,22 +193,30 @@ async def resolve_media_refs(
     if not owner:
         raise MediaRefRefused("media_ref_unknown")
     moment = now or datetime.now(UTC)
-    parts = []
-    for part in message.parts:
-        if part in refs:
-            stored = await store.get(owner, ref_digest(part.file.uri), moment)
-            if stored.media_type != part.file.mime_type:
-                raise MediaRefRefused("media_ref_unknown")
-            part = A2AFilePart(
-                kind="file",
-                file=A2AInlineMediaFile(
-                    bytes=base64.b64encode(stored.data).decode("ascii"),
-                    mime_type=stored.media_type,
-                    name=part.file.name,
-                ),
-            )
-        parts.append(part)
+    parts = [
+        await _inline_part(store, owner, part, moment) if part in refs else part
+        for part in message.parts
+    ]
     return message.model_copy(update={"parts": parts})
+
+
+async def _inline_part(
+    store: MediaRefStore, owner: str, part: Any, moment: datetime
+) -> Any:
+    """The inline file part holding the stored bytes a reference part names."""
+    from arbora.api.domain.a2a.models import A2AFilePart
+
+    stored = await store.get(owner, ref_digest(part.file.uri), moment)
+    if stored.media_type != part.file.mime_type:
+        raise MediaRefRefused("media_ref_unknown")
+    return A2AFilePart(
+        kind="file",
+        file=A2AInlineMediaFile(
+            bytes=base64.b64encode(stored.data).decode("ascii"),
+            mime_type=stored.media_type,
+            name=part.file.name,
+        ),
+    )
 
 
 def run_media(message: Any, capability: Any) -> dict[str, Any]:
@@ -218,8 +226,8 @@ def run_media(message: Any, capability: Any) -> dict[str, Any]:
     fallback mode is ``refuse`` until the engine decision carries one, so a typed
     harness refusal reaches the caller as a task failure and no image is dropped.
     """
-    from arbora.a2a.parts import IMAGE_TYPES
     from arbora.api.contracts.agent_control_contracts import AgentAttachment
+    from arbora.api.domain.a2a.parts import IMAGE_TYPES
 
     images = [
         AgentAttachment(media_type=file.mime_type, data=file.decoded_bytes())

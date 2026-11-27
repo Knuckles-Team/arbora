@@ -13,8 +13,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from arbora.fleet.catalog_reader import FleetCatalogReader
-from arbora.fleet.mcp_resource_reconciliation import (
+from arbora.api.domain.fleet.catalog_reader import FleetCatalogReader
+from arbora.api.domain.fleet.mcp_resource_reconciliation import (
     MCP_RESOURCE_FAMILIES,
     PublicationRefusedError,
     receipt_from_engine,

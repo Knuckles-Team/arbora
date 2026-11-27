@@ -9,7 +9,7 @@ from arbora.a2a.admission import (
     HarnessConfigRecord,
     ToolSubsetAdmissionRequest,
 )
-from arbora.a2a.models import A2AContextBudget
+from arbora.api.domain.a2a.models import A2AContextBudget
 
 DIGEST = "ab" * 32
 TOOLS = ["kg.query", "kg.write"]

@@ -8,6 +8,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.domain.browser_control.browser_control_api import (
+    BrowserDiscoveryReceipt,
+)
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import bound_service, build_write_op
 from arbora.api.registry import (
@@ -19,7 +22,6 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
-from arbora.browser_control.browser_control_api import BrowserDiscoveryReceipt
 
 
 class BrowserParams(BaseModel):

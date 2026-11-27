@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     CatalogRegistrationReceipt,
 )
 from arbora.browser_control.browser_control_client import BrowserClientMessage

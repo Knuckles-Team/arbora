@@ -15,10 +15,9 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from arbora.api.domain.a2a.models import A2APlanConfirmParams
 from arbora.api.invoke.plan import PLAN_TTL_MS, PlanBinding
 from arbora.api.invoke.steps import VerifiedCaller, authenticate
-
-from .models import A2APlanConfirmParams
 
 
 class PendingCallBinding(BaseModel):

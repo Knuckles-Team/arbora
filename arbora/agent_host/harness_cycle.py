@@ -17,7 +17,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from arbora.agent_host.host_port_adapters import RunCall
+from arbora.api.domain.agent_host.host_port_adapters import RunCall
 
 __all__ = [
     "COMPONENTS_OP",

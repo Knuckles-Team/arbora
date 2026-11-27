@@ -29,7 +29,10 @@ from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.fleet.state import FleetState

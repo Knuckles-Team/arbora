@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.fleet.mcp_resource_reconciliation import (
+from arbora.api.domain.fleet.mcp_resource_reconciliation import (
     MCP_RESOURCE_FAMILIES,
     PublicationGateResult,
     PublicationRefusedError,
@@ -146,7 +146,7 @@ def test_publish_step_refuses_missing_stale_invalid_and_allows_match() -> None:
     import asyncio
     from dataclasses import replace
 
-    from arbora.fleet.catalog_reader import FleetCatalogReader
+    from arbora.api.domain.fleet.catalog_reader import FleetCatalogReader
     from tests.fleet.test_catalog_convergence import EnginePort, receipt_for
 
     now_ms = 5_000_000
@@ -176,6 +176,6 @@ def test_publish_step_refuses_missing_stale_invalid_and_allows_match() -> None:
 
     assert reader.publish_generation(candidate, fresh, now_ms=now_ms) is candidate
     assert reader.published is candidate
-    from arbora.fleet.catalog_reader import FleetCatalog
+    from arbora.api.domain.fleet.catalog_reader import FleetCatalog
 
     assert isinstance(reader.published, FleetCatalog)

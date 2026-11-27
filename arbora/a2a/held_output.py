@@ -24,7 +24,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from .models import A2AArtifact, A2ATextPart
+from arbora.api.domain.a2a.models import A2AArtifact, A2ATextPart
 
 __all__ = [
     "HELD_OUTPUT_FIELDS",

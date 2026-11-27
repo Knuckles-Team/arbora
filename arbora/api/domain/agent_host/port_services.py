@@ -1,6 +1,6 @@
 """The backends behind the harness host ports that need more than one engine call.
 
-Each service takes the host's run-principal :data:`~arbora.agent_host.host_port_adapters.RunCall`
+Each service takes the host's run-principal :data:`~arbora.api.domain.agent_host.host_port_adapters.RunCall`
 (registry ``invoke`` as the executing run's verified principal) or an injected seam,
 holds no durable state and decides nothing: the engine owns every fact and refusal.
 Process handles are the one local thing, because an operating-system process cannot live
@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from arbora.agent_host.host_port_adapters import RunCall
+from arbora.api.domain.agent_host.host_port_adapters import RunCall
 from arbora.api.invoke.plan import approval_id_for
 
 COMPILE_OP = "eg.query.ContextCompile"
@@ -60,22 +60,9 @@ class ApprovalInboxWaiter:
             lease = await self._read(run_id, approval_id)
             if lease is None:
                 return {"verdict": "reject"}
-            status = str(lease.get("status", ""))
-            if status in {"consumed", "revoked"}:
-                grant = lease.get("grant") or {}
-                return {
-                    "verdict": "approve" if status == "consumed" else "reject",
-                    "approver": str(
-                        lease.get("decided_by") or grant.get("approver") or ""
-                    ),
-                    "decided_at_ms": int(lease.get("updated_at_ms") or self._now_ms()),
-                }
-            deadline = min(
-                int(lease.get("expires_at_ms") or 0),
-                int(lease.get("hard_expires_at_ms") or 0),
-            )
-            if deadline and self._now_ms() >= deadline:
-                return {"verdict": "timeout"}
+            decision = _decision(lease, self._now_ms())
+            if decision is not None:
+                return decision
             await self._wait(self._poll)
 
 
@@ -418,3 +405,26 @@ class RunVerdictConfirm:
             "verdict": "deny",
             "refusal_code": str(raw.get("refusal_code") or "confirm_unsigned"),
         }
+
+
+def _decided_record(
+    lease: Mapping[str, Any], status: str, now_ms: int
+) -> dict[str, Any]:
+    grant = lease.get("grant") or {}
+    return {
+        "verdict": "approve" if status == "consumed" else "reject",
+        "approver": str(lease.get("decided_by") or grant.get("approver") or ""),
+        "decided_at_ms": int(lease.get("updated_at_ms") or now_ms),
+    }
+
+
+def _decision(lease: Mapping[str, Any], now_ms: int) -> dict[str, Any] | None:
+    """The verdict of one approval lease, or ``None`` while it is still open."""
+    status = str(lease.get("status", ""))
+    if status in {"consumed", "revoked"}:
+        return _decided_record(lease, status, now_ms)
+    deadline = min(
+        int(lease.get("expires_at_ms") or 0),
+        int(lease.get("hard_expires_at_ms") or 0),
+    )
+    return {"verdict": "timeout"} if deadline and now_ms >= deadline else None

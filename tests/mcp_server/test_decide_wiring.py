@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
-from arbora.mcp_server import decide_wiring
-from arbora.mcp_server.decide_wiring import (
+from arbora.api.domain.mcp_server import decide_wiring
+from arbora.api.domain.mcp_server.decide_wiring import (
     _commit_context,
     _publish_context,
     install_decide_consumers,

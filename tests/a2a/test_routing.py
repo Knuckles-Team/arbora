@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from arbora.a2a.models import A2AMessage, A2ATextPart
 from arbora.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
+from arbora.api.domain.a2a.models import A2AMessage, A2ATextPart
 
 PRINCIPAL = "principal:sha256:" + hashlib.sha256(b"person:one").hexdigest()
 

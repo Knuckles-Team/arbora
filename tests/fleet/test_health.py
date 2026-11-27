@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.catalog_machine import CatalogState
+from arbora.api.domain.fleet.catalog_machine import CatalogState
 from arbora.fleet.health import (
     AuthorityNotServed,
     FleetAuthorities,

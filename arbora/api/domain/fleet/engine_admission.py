@@ -22,8 +22,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from arbora.api.domain.fleet.admission_models import AdmissionRefused, canonical_digest
+from arbora.api.domain.fleet.definitions import CompatibilityDecision
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet.definitions import CompatibilityDecision
 from arbora.pin_lag import medulla as pin_lag
 
 logger = logging.getLogger(__name__)

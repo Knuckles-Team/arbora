@@ -12,15 +12,17 @@ from dataclasses import dataclass
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
     BrowserProposalRequest,
     IssueLeaseRequest,
     RevokeLeaseRequest,
 )
+from arbora.api.domain.browser_control.browser_control_common import (
+    canonical_internal_json,
+)
 from arbora.browser_control.browser_control_client import ControlProposalResponseMessage
-from arbora.browser_control.browser_control_common import canonical_internal_json
 from arbora.browser_control.browser_control_server import (
     ProposalRequestMessage,
     ProposalWithdrawnMessage,

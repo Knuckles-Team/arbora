@@ -404,7 +404,7 @@ async def _receipted_publish_context(
 
     from arbora.api.contracts import PolicyDisposition, PolicyReceipt
     from arbora.api.contracts.provisioning import opaque_principal
-    from arbora.mcp_server.decide_wiring import mutation_context
+    from arbora.api.domain.mcp_server.decide_wiring import mutation_context
 
     request = action_for(verify())
     digest = request.digest()
@@ -951,8 +951,8 @@ def _with_scale_ports(
     """
     if bindings is None:
         return bindings
+    from arbora.api.domain.fleet.scaling.graph_authority import GraphScaleAuthority
     from arbora.fleet.scaling.engine_policy import EngineScalePolicy
-    from arbora.fleet.scaling.graph_authority import GraphScaleAuthority
     from arbora.fleet.scaling.scaling_intent_reconciler import ScaleIntentReconciler
     from arbora.fleet.scaling.work_item_ledger import WorkItemScaleIntentLedger
 
@@ -1239,7 +1239,7 @@ def compose_served_invocation(
     bindings = _with_scale_ports(bindings)
     if bindings is not None and "media_ref_store" not in bindings:
         # ARBORA-A2A-R001.5.5: uploaded image bytes live in the engine, never here.
-        from arbora.a2a.media_refs import SessionMediaRefStore
+        from arbora.api.domain.a2a.media_refs import SessionMediaRefStore
         from arbora.mcp_server.served_engine import ServedEngine as _Engine
 
         bindings = {

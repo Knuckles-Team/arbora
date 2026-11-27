@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, cast
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserLeaseReceipt,
     CancelCallRequest,
@@ -12,11 +12,11 @@ from arbora.browser_control.browser_control_api import (
     RenewLeaseRequest,
     RevokeLeaseRequest,
 )
-from arbora.browser_control.browser_control_binding import binding_properties
-from arbora.browser_control.browser_control_common import (
+from arbora.api.domain.browser_control.browser_control_common import (
     DEFAULT_LEASE_SECONDS,
     MAX_LEASE_SECONDS,
 )
+from arbora.browser_control.browser_control_binding import binding_properties
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 from arbora.browser_control.browser_control_durability import (
     create_lease,

@@ -57,8 +57,8 @@ def test_a_retrying_warmup_reports_its_typed_state_and_stops() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R078")
 def test_a_catalog_read_before_install_is_a_retryable_refusal() -> None:
+    from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
 
     reader = DeferredFleetCatalogReader()
     assert reader.installed is False
