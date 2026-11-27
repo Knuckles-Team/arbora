@@ -30,7 +30,7 @@ import socket
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +44,12 @@ _PEER_TIMEOUT_S = 8.0
 
 def origin() -> str:
     """This registry's stable origin label (``ARD_PUBLISHER_DOMAIN`` or hostname)."""
-    return str(setting("ARD_PUBLISHER_DOMAIN", default=socket.gethostname()))
+    return str(read_env("ARD_PUBLISHER_DOMAIN", socket.gethostname()))
 
 
 def default_mode() -> str:
     """The configured default federation mode (``none``/``referrals``/``auto``)."""
-    mode = str(setting("ARD_FEDERATION_MODE", default="none")).lower().strip()
+    mode = str(read_env("ARD_FEDERATION_MODE")).lower().strip()
     return mode if mode in {"none", "referrals", "auto"} else "none"
 
 

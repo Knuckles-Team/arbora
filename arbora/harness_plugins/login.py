@@ -28,6 +28,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 
 import httpx
 
+from arbora.core.environment import read_env
 from arbora.harness_plugins.profiles import NATIVE_CLIENT_ID, HarnessProfile
 
 KEYRING_SERVICE = "arbora-harness-plugin"
@@ -118,7 +119,7 @@ class TokenStore:
 
     @staticmethod
     def _keyring() -> Any:
-        if os.environ.get("ARBORA_PLUGIN_FILE_STORE") == "1":
+        if read_env("ARBORA_PLUGIN_FILE_STORE") == "1":
             return None
         try:
             import keyring
