@@ -304,7 +304,10 @@ def plan_candidate(
     With ``junit`` the exit-criteria matrix is audited first and a gap refuses
     ``EXIT_CRITERIA_UNMET`` naming every missing obligation; nothing is planned.
     """
-    from .genesis_environments import EnvironmentProfileError, load_environment_profile
+    from arbora.deployment.genesis_environments import (
+        EnvironmentProfileError,
+        load_environment_profile,
+    )
 
     candidate, digest = read_candidate(path, trusted_digest=trusted_digest)
     audit = (

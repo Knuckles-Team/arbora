@@ -1,7 +1,7 @@
 """Shared capacity partition/config fixtures for ``tests/fleet/`` AIMD tests.
 
 ``CAPACITY_PARTITION`` and ``CAPACITY_CONFIG`` are the one tenant/config pair
-every ``arbora.api.domain.fleet.error_budget`` / ``arbora.fleet.throttle_service``
+every ``arbora.api.domain.fleet.error_budget`` / ``arbora.api.domain.fleet.throttle_service``
 test in this directory decides against; duplicating the same
 ``Partition``/``AimdConfig`` literals in each module just lets them drift
 apart under edits.

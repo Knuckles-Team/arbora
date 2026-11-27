@@ -24,10 +24,10 @@ from arbora.api.domain.fleet.error_budget import (
     ThrottleMode,
     decide,
 )
+from arbora.api.domain.fleet.throttle_service import ThrottleRegistry
 from arbora.api.invoke import OpError, invoke
 from arbora.api.ops import capacity
 from arbora.api.registry import Confirm, Effect, PrincipalRule, Registry, Surface
-from arbora.fleet.throttle_service import ThrottleRegistry
 from tests.api._ops_support import service_context as _context
 
 pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R002")
@@ -169,7 +169,7 @@ def test_denied_set_mode_leaves_throttle_state_unchanged() -> None:
 @pytest.mark.spec("ARBORA-CAPACITY-R001.3.4")
 @pytest.mark.asyncio
 async def test_receipt_reflects_readback_and_mismatch() -> None:
-    from arbora.fleet.capacity_proposals import (
+    from arbora.api.domain.fleet.capacity_proposals import (
         CAPACITY_APPLY_MISMATCH,
         CapacityAppliedReceipt,
     )
@@ -216,7 +216,7 @@ async def test_receipt_reflects_readback_and_mismatch() -> None:
 def test_a_reader_gets_the_receipt_over_http_and_mcp_through_the_invoke_pipeline() -> (
     None
 ):
-    from arbora.fleet.capacity_proposals import CapacityAppliedReceipt
+    from arbora.api.domain.fleet.capacity_proposals import CapacityAppliedReceipt
 
     registry = ThrottleRegistry()
     registry.record_receipt(

@@ -15,6 +15,16 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
+from arbora.deployment.genesis_environments import (
+    EnvironmentProfile,
+    EnvironmentProfileError,
+    MissingSecretReferenceError,
+    list_environment_profiles,
+    load_environment_profile,
+    profile_summary,
+    validate_environment_profile,
+)
+
 from .config_generator import (
     PROFILES,
     config_doctor,
@@ -26,15 +36,6 @@ from .config_generator import (
 from .exit_criteria import (
     ExitCriteriaAudit,
     audit_exit_criteria,
-)
-from .genesis_environments import (
-    EnvironmentProfile,
-    EnvironmentProfileError,
-    MissingSecretReferenceError,
-    list_environment_profiles,
-    load_environment_profile,
-    profile_summary,
-    validate_environment_profile,
 )
 from .local_gates import (
     GateBlockedError,

@@ -5,11 +5,8 @@
 
 from __future__ import annotations
 
-from arbora.finance.receipts import ServedReceiptEngine
-from arbora.finance.schedule import (
-    FinanceScheduleEntry,
-    record_schedule_run,
-)
+from arbora.api.domain.finance.receipts import ServedReceiptEngine
+from arbora.api.domain.finance.schedule import FinanceScheduleEntry, record_schedule_run
 from tests.finance._receipt_engine import ReceiptMachine
 
 

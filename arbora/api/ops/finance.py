@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator
 
+from arbora.api.domain.finance import guides, read_models
 from arbora.api.domain.finance.fleet_read_port import ReadRequest
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, bound_service, build_read_op
@@ -34,7 +35,6 @@ from arbora.api.registry import (
     SubjectSource,
     Verb,
 )
-from arbora.finance import guides, read_models
 
 #: The venue connector server and its tools, reached through ``fleet.call``.
 VENUE_SERVER = "emerald-exchange"

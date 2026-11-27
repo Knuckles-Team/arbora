@@ -7,8 +7,11 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.throttle_service import (
+    FALLBACK_MODEL_LIMIT,
+    ModelCapacityGate,
+)
 from arbora.fleet.capacity_binding import model_capacity_ask, with_capacity
-from arbora.fleet.throttle_service import FALLBACK_MODEL_LIMIT, ModelCapacityGate
 
 ANSWER = {
     "limit": 6,

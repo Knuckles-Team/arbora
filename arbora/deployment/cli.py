@@ -15,18 +15,18 @@ import sys
 from collections.abc import Callable
 
 from arbora.core.environment import read_env
+from arbora.deployment.genesis_environments import (
+    EnvironmentProfileError,
+    list_environment_profiles,
+    load_environment_profile,
+    profile_summary,
+)
 
 from .config_generator import (
     PROFILES,
     config_doctor,
     config_reference,
     write_config,
-)
-from .genesis_environments import (
-    EnvironmentProfileError,
-    list_environment_profiles,
-    load_environment_profile,
-    profile_summary,
 )
 
 
@@ -95,12 +95,13 @@ def _run_onboard(args: argparse.Namespace) -> int:
     """Record one deploy or reuse choice per declared component (ARBORA-DEPLOY-R013.2)."""
     from pathlib import Path
 
+    from arbora.deployment.manifest import ManifestRefused, load_manifest
+
     from .component_choices import (
         ChoiceRefused,
         ask_once_per_component,
         build_inventory,
     )
-    from .manifest import ManifestRefused, load_manifest
 
     try:
         manifest = load_manifest(Path(args.root), args.manifest)

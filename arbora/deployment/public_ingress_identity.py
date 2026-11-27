@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any
 
-from .genesis_environments import EnvironmentProfileError
+from arbora.deployment.genesis_environments import EnvironmentProfileError
 
 #: The only schema version this slice accepts. A profile migration (mapping
 #: old keys to new ones) is out of scope for this slice — see plan.md

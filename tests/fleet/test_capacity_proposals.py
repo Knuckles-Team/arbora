@@ -7,12 +7,12 @@ from dataclasses import replace
 
 import pytest
 
-from arbora.api.domain.fleet.error_budget import ThrottleDecision, ThrottleMode
-from arbora.fleet.capacity_proposals import (
+from arbora.api.domain.fleet.capacity_proposals import (
     PROPOSAL_FIELD_INVALID,
     CapacityProposalError,
     build_proposal,
 )
+from arbora.api.domain.fleet.error_budget import ThrottleDecision, ThrottleMode
 from tests.fleet._capacity_support import CELL, PARTITION
 
 

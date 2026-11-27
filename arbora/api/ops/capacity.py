@@ -1,7 +1,7 @@
 """Hosted capacity-throttle status and mode operations.
 
 ARBORA-CAPACITY-R002 (status/mode half): projects the in-process
-:class:`~arbora.fleet.throttle_service.ThrottleRegistry` through the same
+:class:`~arbora.api.domain.fleet.throttle_service.ThrottleRegistry` through the same
 operation registry, identity and error-handling chokepoint every other
 Arbora operation uses (see :mod:`arbora.api.ops.browser` for the sibling
 pattern). ``capacity.throttle.status`` declares only ``capacity:read``;

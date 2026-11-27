@@ -18,16 +18,16 @@ from arbora.api.domain.fleet.error_budget import (
     OutcomeSample,
     ThrottleMode,
 )
-from arbora.api.errors import ArboraErrorCode, to_envelope
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import fleet
-from arbora.fleet.throttle_service import (
+from arbora.api.domain.fleet.throttle_service import (
     CAPACITY_THROTTLED,
     CapacityThrottled,
     ControllerConfig,
     PartitionLimiter,
     classify_outcome,
 )
+from arbora.api.errors import ArboraErrorCode, to_envelope
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import fleet
 from tests.fleet._capacity_support import (
     OTHER,
     PARTITION,

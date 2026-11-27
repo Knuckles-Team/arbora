@@ -11,12 +11,12 @@ from typing import Any
 
 import pytest
 
-from arbora.api.domain.fleet.error_budget import ThrottleDecision, ThrottleMode
-from arbora.fleet.capacity_proposals import (
+from arbora.api.domain.fleet.capacity_proposals import (
     CAPACITY_APPLY_MISMATCH,
     CAPACITY_EPOCH_CONFLICT,
     VERDICT_UNAVAILABLE,
 )
+from arbora.api.domain.fleet.error_budget import ThrottleDecision, ThrottleMode
 from tests.fleet._capacity_support import (
     CELL,
     PARTITION,
@@ -153,7 +153,7 @@ async def test_apply_modes_and_epoch_conflict() -> None:
     registry_cell = replace(CELL, capacity=4, max_capacity=4)
     ceiling.default = registry_cell
     proposal_limit = 6
-    from arbora.fleet.capacity_proposals import (
+    from arbora.api.domain.fleet.capacity_proposals import (
         CapacityVerdict,
         VerdictKind,
         apply,
@@ -192,7 +192,7 @@ async def test_apply_modes_and_epoch_conflict() -> None:
 
 @pytest.mark.spec("ARBORA-CAPACITY-R001.3.3")
 async def test_a_replica_cell_submits_a_scaling_intent_not_a_cell_update() -> None:
-    from arbora.fleet.capacity_proposals import (
+    from arbora.api.domain.fleet.capacity_proposals import (
         CapacityVerdict,
         VerdictKind,
         apply,

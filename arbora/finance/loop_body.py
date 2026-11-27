@@ -17,8 +17,8 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Protocol
 
-from arbora.finance.receipts import FinanceReceiptEngine
-from arbora.finance.schedule import (
+from arbora.api.domain.finance.receipts import FinanceReceiptEngine
+from arbora.api.domain.finance.schedule import (
     FinanceScheduleEntry,
     ScheduleRefused,
     due_occurrences,

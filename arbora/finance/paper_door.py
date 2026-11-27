@@ -24,13 +24,13 @@ from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from arbora.api.invoke.executor import execution_context, prepare_executor
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.finance.dca import (
+from arbora.api.domain.finance.dca import (
     DCAEvaluationError,
     price_reference,
     quantity_for_notional,
 )
+from arbora.api.invoke.executor import execution_context, prepare_executor
+from arbora.api.invoke.pipeline import OperationRefused
 
 __all__ = ["LatePaperDoor"]
 

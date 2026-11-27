@@ -8,13 +8,13 @@ from typing import Any
 
 import pytest
 
-from arbora.finance.loop_body import FinanceLoopBody
-from arbora.finance.schedule import (
+from arbora.api.domain.finance.schedule import (
     FinanceScheduleEntry,
     ScheduleRefused,
     due_occurrences,
     parse_trigger,
 )
+from arbora.finance.loop_body import FinanceLoopBody
 from arbora.fleet.loop_worker import LoopRun
 from tests.finance._receipt_engine import ReceiptMachine
 

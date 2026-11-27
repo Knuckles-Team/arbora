@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.finance.receipts import (
+from arbora.api.domain.finance.receipts import (
     FinanceReceiptEngine,
     claim_receipt,
     complete_receipt,

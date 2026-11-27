@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.finance import read_models
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.finance import read_models
 from tests.mcp_server._read_port_double import AS_OF, EVENT, MARKET, ORDER
 
 SCOPE = {"op": "markets.list", "tenant": "tenant:one", "account": "acct-1"}
