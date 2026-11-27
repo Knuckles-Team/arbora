@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Awaitable, Callable, Iterator, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -583,6 +583,11 @@ class FleetGateway:
 
     async def list(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").list(caller, **params)
+
+    async def server_groups(self, caller: Any, servers: Iterable[str]) -> Any:
+        return await self._catalog(caller, "mcp:discover").server_groups(
+            caller, servers
+        )
 
     async def catalog(
         self, caller: Any, *, server: str = "", include_tools: bool = True

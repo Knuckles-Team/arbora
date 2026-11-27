@@ -386,6 +386,13 @@ class MultiplexerOps:
             )
         return await self.search(caller, **{**params, "browse": True})
 
+    async def server_groups(
+        self, caller: Any, servers: Iterable[str]
+    ) -> dict[str, str]:
+        """The connector group of each named server in one catalog read (ARBORA-FLEET-R086)."""
+        _require_discover_scope(caller)
+        return await self.catalog.server_groups(caller, servers)
+
     def _fleet_names(self) -> tuple[set[str], set[str]]:
         """(registered connectors, configured endpoints), each by server name.
 

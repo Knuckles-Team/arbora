@@ -36,6 +36,7 @@ Guards held here (delete each with the re-pin that carries it):
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Iterable
 from typing import Any
 
@@ -319,6 +320,20 @@ def require_component_search_filters() -> None:
     """
     for field in COMPONENT_SEARCH_FILTER_FIELDS:
         require_model_field("AgentComponentSearchRequest", field)
+
+
+def world_view_layout_rules() -> Any | None:
+    """The engine's world-view layout module, or ``None`` on a release without it.
+
+    PIN-LAG (MEDULLA-WORLD-VIEW-R002): ``medulla.world_view`` is on engine ``main`` and
+    absent from the pinned release. Arbora's own copy of the derived-layout rules
+    (``arbora/fleet/city_layout.py``) answers only while this returns ``None``; delete
+    the copy with the re-pin that carries the module.
+    """
+    try:
+        return importlib.import_module("medulla.world_view")
+    except ImportError:
+        return None
 
 
 def agent_run_delegation_served() -> bool:

@@ -260,6 +260,30 @@ class FleetCatalog:
                 matched[item.id] = item
         return tuple(sorted(matched.values(), key=lambda item: item.id))
 
+    async def server_groups(
+        self, caller: Any, servers: Iterable[str]
+    ) -> dict[str, str]:
+        """The connector group of each named server, in one pass over the sources.
+
+        A server's group is the group of its lowest-id caller-visible item; a server
+        with no visible item, or whose item has no group, reads ``""`` (ARBORA-FLEET-R086).
+        """
+        wanted = set(servers)
+        lowest: dict[str, CatalogItem] = {}
+        for source in self._sources:
+            for item in await source():
+                held = lowest.get(str(item.server))
+                if (
+                    item.server in wanted
+                    and (held is None or item.id < held.id)
+                    and await self._authorized(item, caller)
+                ):
+                    lowest[str(item.server)] = item
+        return {
+            name: str(lowest[name].group or "") if name in lowest else ""
+            for name in wanted
+        }
+
     async def tool_counts(self) -> dict[str, int]:
         """Admitted ``tool`` items per catalog server.
 

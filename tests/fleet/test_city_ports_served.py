@@ -76,20 +76,33 @@ class FakeGraph:
 
 
 class FakeGateway:
-    """The fleet gateway's census and per-server item read."""
+    """The fleet gateway's census and one batched group read."""
+
+    GROUPS = {"alpha": "ops", "beta": "ops", "zeta": "data"}
+
+    def __init__(self) -> None:
+        self.group_reads: list[tuple[str, ...]] = []
+        self.item_reads = 0
 
     async def list(self, caller: Any, **params: Any) -> dict[str, Any]:
-        if params.get("summary"):
-            return {
-                "servers": [
-                    {"server": "zeta"},
-                    {"server": "alpha"},
-                    {"server": "beta"},
-                ],
-                "next_cursor": None,
-            }
-        group = {"alpha": "ops", "beta": "ops", "zeta": "data"}[params["servers"][0]]
-        return {"items": [{"group": group}], "next_cursor": None}
+        if not params.get("summary"):
+            self.item_reads += 1
+            raise AssertionError("the layout reads no per-server item page")
+        return {
+            "servers": [{"server": "zeta"}, {"server": "alpha"}, {"server": "beta"}],
+            "next_cursor": None,
+        }
+
+    def assert_one_batch(self) -> None:
+        """One group read named every server, and no per-server page was read."""
+        assert self.item_reads == 0
+        assert [sorted(read) for read in self.group_reads] == [
+            ["alpha", "beta", "zeta"]
+        ]
+
+    async def server_groups(self, caller: Any, servers: Any) -> dict[str, str]:
+        self.group_reads.append(tuple(servers))
+        return {name: self.GROUPS[name] for name in servers}
 
 
 @pytest.fixture
@@ -100,7 +113,11 @@ def graph(monkeypatch: pytest.MonkeyPatch) -> FakeGraph:
 
 
 def _call(op_id: str, params: dict[str, Any]) -> Any:
-    bindings = _with_city_ports({"fleet_gateway": FakeGateway()})
+    return _call_with(op_id, params, FakeGateway())
+
+
+def _call_with(op_id: str, params: dict[str, Any], gateway: FakeGateway) -> Any:
+    bindings = _with_city_ports({"fleet_gateway": gateway})
     assert bindings is not None
     return asyncio.run(
         invoke(
@@ -144,8 +161,10 @@ def test_the_layout_is_derived_client_side_with_stored_overrides(
         "position_z": 1,
         "override_reason": "removed connector",
     }
-    result = _call("fleet.city.layout", {})
+    gateway = FakeGateway()
+    result = _call_with("fleet.city.layout", {}, gateway)
     assert isinstance(result, OpResult) and result.code == "OK", result
+    gateway.assert_one_batch()
     envelope = result.value["value"]
     assert [d["name"] for d in envelope["districts"]] == ["data", "ops"]
     by_id = {b["server_id"]: b for b in envelope["buildings"]}
