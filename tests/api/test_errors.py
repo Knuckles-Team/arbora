@@ -78,8 +78,10 @@ def test_invoke_error_uses_the_same_closed_code_mapping() -> None:
     assert status == 403
     assert envelope["error"]["code"] == "SCOPE_REQUIRED"
     assert envelope["error"]["details"] == {"missing_scopes": ["identity:admin"]}
-    with pytest.raises(ValueError):
-        to_envelope(InvokeError("NOT_IN_CONTRACT"), **CONTEXT)
+    status, unmapped = to_envelope(InvokeError("NOT_IN_CONTRACT"), **CONTEXT)
+    assert status == 500
+    assert unmapped["error"]["code"] == "INTERNAL"
+    assert unmapped["error"]["details"] == {"unmapped_code": "NOT_IN_CONTRACT"}
 
 
 def test_indeterminate_outcome_keeps_only_fixed_audit_reason() -> None:
@@ -212,7 +214,7 @@ def test_audit_reference_is_never_projected_for_other_sources(source, monkeypatc
     assert envelope["error"]["details"] == {}
 
 
-@pytest.mark.parametrize("source", ["arbora", "engine", "unknown"])
+@pytest.mark.parametrize("source", ["engine", "unknown"])
 def test_audit_reference_does_not_bypass_unknown_code_refusal(source, monkeypatch):
     from arbora.api.registry.eg_binding import EgContractError
 
@@ -225,6 +227,15 @@ def test_audit_reference_does_not_bypass_unknown_code_refusal(source, monkeypatc
             ),
             **CONTEXT,
         )
+
+
+def test_an_unmapped_arbora_code_is_internal_and_projects_no_audit_reference():
+    _, envelope = to_envelope(
+        InvokeError("NOT_IN_CONTRACT", {"audit_ref": json.dumps(["a" * 64, 1])}),
+        **CONTEXT,
+    )
+    assert envelope["error"]["code"] == "INTERNAL"
+    assert envelope["error"]["details"] == {"unmapped_code": "NOT_IN_CONTRACT"}
 
 
 def test_a2a_uses_the_closed_mapping_and_confirmation_is_a_result() -> None:
