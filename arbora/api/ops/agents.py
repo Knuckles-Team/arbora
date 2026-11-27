@@ -160,12 +160,21 @@ async def _binding_tools(context: Any, instance_id: str) -> list[str]:
     ]
 
 
-def client_session_id(caller: Any) -> str:
-    """The opening session of a caller: its session reference claim, else the MCP session."""
+def _bearer_session_ref(caller: Any) -> str:
+    session = getattr(caller, "session", None)
+    return str(getattr(getattr(session, "actor", None), "session_ref", None) or "")
+
+
+def _claimed_session_ref(caller: Any) -> str:
     claims = getattr(caller, "engine_claims", None) or {}
-    reference = claims.get("session_ref") if hasattr(claims, "get") else None
+    return str(claims.get("session_ref") or "") if hasattr(claims, "get") else ""
+
+
+def client_session_id(caller: Any) -> str:
+    """The opening session of a caller: its session claim, its bearer session, else the MCP session."""
+    reference = _claimed_session_ref(caller) or _bearer_session_ref(caller)
     if reference:
-        return str(reference)
+        return reference
     from arbora.api.mcp.caller import mcp_request_ref
 
     ref = mcp_request_ref()
@@ -214,8 +223,22 @@ async def _audit_run(
         op=op,
         params=params,
         result_status="failed" if failed else "ok",
+        surface=getattr(context, "surface", ""),
     )
-    await services.audit_write(event, AuditClass.EVENT, context.caller)
+    await _write_run_event(services, event, context.caller, AuditClass.EVENT)
+
+
+async def _write_run_event(
+    services: Any, event: dict[str, str], caller: Any, audit_class: Any
+) -> None:
+    """The run event is its own audit entry: reserve it, then write against that
+    reservation (the pipeline's one audit path)."""
+    if event.get("surface"):
+        from arbora.api.invoke.audit import run_event_caller
+
+        caller = run_event_caller(caller)
+        event["audit_ref"] = await services.audit_preflight(event, audit_class, caller)
+    await services.audit_write(event, audit_class, caller)
 
 
 async def _provision_for_run(

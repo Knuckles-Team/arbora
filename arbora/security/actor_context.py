@@ -365,6 +365,9 @@ class ActorContext:
     # runtime-only authority state so a short-lived JWT cannot become an
     # indefinite process session. Non-token/bootstrap actors leave it unset.
     credential_expires_at: int | None = None
+    # The opaque session reference of the verified bearer (ARBORA-IDENTITY-R026.1);
+    # never token text. Unset for a credential that opened no hosted session.
+    session_ref: str | None = None
     credential_lease: CredentialLease | None = field(
         default=None,
         compare=False,

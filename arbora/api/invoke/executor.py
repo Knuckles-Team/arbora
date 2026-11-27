@@ -67,6 +67,9 @@ class ExecutionContext:
     # The reserved audit event of this call; a write result echoes it as its
     # receipt (ARBORA-IDENTITY-R001.1).
     audit_ref: str = ""
+    # The surface that carried the call; a composite that audits a further event
+    # of its own needs it to bind that event.
+    surface: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "services", MappingProxyType(dict(self.services)))

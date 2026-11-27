@@ -60,6 +60,14 @@ class FakeAudit:
     def __init__(self) -> None:
         self.entries: list[dict[str, Any]] = []
         self.evidence: list[dict[str, str] | None] = []
+        self.reservations: dict[Any, int] = {}
+
+    def _reservation(self, fields: dict[str, Any], seq: int, reserved: bool) -> int:
+        """The engine links an outcome to the reservation of its own request id."""
+        request = fields.get("request_id")
+        if reserved:
+            self.reservations[request] = seq
+        return self.reservations.get(request, seq - 1)
 
     async def audit_append(
         self, *, evidence: dict[str, str] | None = None, **fields: Any
@@ -68,10 +76,11 @@ class FakeAudit:
         self.evidence.append(evidence)
         self.entries.append(fields)
         reserved = fields["status"] == "reserved"
+        reservation = self._reservation(fields, seq, reserved)
         return {
             "graph": fields["tenant"] if "tenant" in fields else "tenant:one",
             "seq": seq,
-            "reservation_seq": seq if reserved else seq - 1,
+            "reservation_seq": seq if reserved else reservation,
             "outcome_seq": None if reserved else seq,
             "replayed": False,
             "entry_sha256": "0" * 64,
@@ -148,6 +157,7 @@ def _actor() -> ActorContext:
         authenticated=True,
         roles=SCOPES,
         credential_expires_at=int(time.time()) + 3600,
+        session_ref="session:web-ui-one",
     )
 
 
