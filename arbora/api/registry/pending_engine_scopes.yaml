@@ -11,6 +11,8 @@ pending_engine_scopes:
   - knowledge:flag
   - participant:read
   - participant:write
+  - process:approve
+  - process:read
   - runs:control
   - sessions:read
   - skills:author
