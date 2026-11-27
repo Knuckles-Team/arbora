@@ -1,7 +1,7 @@
 """Zalo Official Account channel adapter (ARBORA-MESSAGING-R009).
 
 Inbound is webhook based: the shared ingress fills the queue after verify_inbound accepts the signature.
-Credentials: ``setting('MESSAGING_ZALO_TOKEN')``.
+Credentials: ``MESSAGING_ZALO_TOKEN``.
 """
 
 from __future__ import annotations

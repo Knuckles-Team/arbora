@@ -29,7 +29,6 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
-from arbora.core.settings import setting
 from arbora.messaging.action_dispatch import (
     NotificationSpec,
     send_notification,
@@ -43,6 +42,7 @@ from arbora.messaging.models import InboundEvent, MediaAttachment, SendResult
 
 if TYPE_CHECKING:
     from arbora.messaging.base import MessagingBackend
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
@@ -343,8 +343,8 @@ class MessagingService:
         pref = self._last_channel(user_id or _DEFAULT_USER)
         if pref:
             return pref
-        platform = str(setting("MESSAGING_DEFAULT_PLATFORM", "telegram"))
-        channel_id = str(setting("MESSAGING_DEFAULT_CHANNEL", ""))
+        platform = str(read_env("MESSAGING_DEFAULT_PLATFORM"))
+        channel_id = str(read_env("MESSAGING_DEFAULT_CHANNEL"))
         return (platform, channel_id) if channel_id else ("", "")
 
     # ── Last-active channel state (durable KG node, CONCEPT:MERISTEM-ECO.messaging.last-active-channel-routing) ─
@@ -509,8 +509,8 @@ class MessagingService:
         return {
             "configured": self.configured_platforms(),
             "connected": [pid for pid, b in self._backends.items() if b.is_connected],
-            "default_platform": str(setting("MESSAGING_DEFAULT_PLATFORM", "telegram")),
-            "default_channel_set": bool(setting("MESSAGING_DEFAULT_CHANNEL", "")),
+            "default_platform": str(read_env("MESSAGING_DEFAULT_PLATFORM")),
+            "default_channel_set": bool(read_env("MESSAGING_DEFAULT_CHANNEL")),
         }
 
 

@@ -23,14 +23,14 @@ def test_alert_intake_bind_and_payload_bounds():
 
 
 def test_alert_intake_token_resolution_fails_closed_without_reference(monkeypatch):
-    monkeypatch.setattr(alert_intake, "setting", lambda *_args: "")
+    monkeypatch.setattr(alert_intake, "read_env", lambda *_args: "")
     assert alert_intake._resolve_alert_intake_token() is None
 
 
 def test_alert_intake_token_resolution_uses_runtime_secret_reference(monkeypatch):
     monkeypatch.setattr(
         alert_intake,
-        "setting",
+        "read_env",
         lambda key, *_args: (
             "env://ALERT_INTAKE_TOKEN"
             if key == "MESSAGING_ALERT_INTAKE_TOKEN_REF"

@@ -14,7 +14,7 @@ an ``InboundEvent``. The base owns the three inbound shapes the spec names:
   ``arbora/messaging/inbox.py`` derives its row id from the platform message
   id, so a replayed item never opens a second turn.
 
-Credentials come from ``setting('MESSAGING_<ID>_TOKEN')`` (the secrets backend
+Credentials come from ``MESSAGING_<ID>_TOKEN`` (the secrets backend
 resolves it). The webhook signing secret is the secrets reference in
 ``MESSAGING_<ID>_WEBHOOK_SECRET_REF``. The HTTP client library is imported
 inside ``connect`` and its absence raises ``AdapterImportFailed``.
@@ -30,7 +30,7 @@ import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from typing import Any, ClassVar
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import InboundSignatureInvalid, MessagingBackend
 from arbora.messaging.capabilities import CAPABILITY_MATRIX, MessagingCapabilities
 from arbora.messaging.models import (
@@ -101,10 +101,12 @@ class HttpChannelBackend(MessagingBackend):
     def _key(self, suffix: str) -> str:
         return f"MESSAGING_{self.platform.upper()}_{suffix}"
 
+    def _read(self, suffix: str, default: Any = "") -> Any:
+        """One declared ``MESSAGING_<PLATFORM>_<SUFFIX>`` setting of this platform."""
+        return read_env(self._key(suffix), default)
+
     def _base_url(self) -> str:
-        url = self.config.webhook_url or str(
-            setting(self._key("URL"), self.default_url) or ""
-        )
+        url = self.config.webhook_url or str(self._read("URL", self.default_url) or "")
         return url.rstrip("/")
 
     # ── lifecycle ───────────────────────────────────────────────────
@@ -116,9 +118,7 @@ class HttpChannelBackend(MessagingBackend):
             raise AdapterImportFailed(
                 f"Install: pip install arbora[messaging-{self.platform}]"
             ) from exc
-        self._token = (
-            self.config.token or str(setting(self._key("TOKEN"), "") or "") or None
-        )
+        self._token = self.config.token or str(self._read("TOKEN", "") or "") or None
         if not self._token:
             raise ValueError(f"Set {self._key('TOKEN')}.")
         if not self._base_url():
@@ -239,7 +239,7 @@ class HttpChannelBackend(MessagingBackend):
     def verify_inbound(self, headers: Mapping[str, str], body: bytes) -> InboundEvent:
         if self.inbound_mode != "webhook":
             return super().verify_inbound(headers, body)
-        secret = resolve_secret(str(setting(self._key("WEBHOOK_SECRET_REF"), "") or ""))
+        secret = resolve_secret(str(self._read("WEBHOOK_SECRET_REF", "") or ""))
         if not secret:
             raise InboundSignatureInvalid("no signing secret is configured")
         given = {k.lower(): v for k, v in headers.items()}.get(SIGNATURE_HEADER, "")
@@ -261,7 +261,7 @@ class HttpChannelBackend(MessagingBackend):
 
     async def _open_stream(self) -> AsyncIterator[Mapping[str, Any]]:
         headers, params = self.auth()
-        url = str(setting(self._key("STREAM_URL"), "") or "") or (
+        url = str(self._read("STREAM_URL", "") or "") or (
             self._base_url() + self.stream_path
         )
         async with self._client.stream(
@@ -309,7 +309,7 @@ class HttpChannelBackend(MessagingBackend):
         if self.inbound_mode == "poll":
             interval = clamp(
                 float(
-                    setting(self._key("POLL_INTERVAL_S"), POLL_INTERVAL_DEFAULT_S)
+                    self._read("POLL_INTERVAL_S", POLL_INTERVAL_DEFAULT_S)
                     or POLL_INTERVAL_DEFAULT_S
                 ),
                 POLL_INTERVAL_RANGE_S,

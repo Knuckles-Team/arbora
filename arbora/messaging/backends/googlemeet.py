@@ -15,7 +15,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -57,7 +57,7 @@ class GoogleMeetBackend(MessagingBackend):
                 "Install: pip install arbora[messaging-googlemeet]"
             ) from None
 
-        creds_path = self.config.token or setting("GOOGLE_MEET_SERVICE_ACCOUNT", "")
+        creds_path = self.config.token or read_env("GOOGLE_MEET_SERVICE_ACCOUNT")
         if not creds_path:
             raise ValueError("Set GOOGLE_MEET_SERVICE_ACCOUNT path.")
         creds = service_account.Credentials.from_service_account_file(

@@ -12,15 +12,16 @@ import sys
 import threading
 from typing import Any
 
+from arbora.core.environment import read_env
+
 logger = logging.getLogger(__name__)
 _MESSAGING_LOG_HANDLER_MARK = "_arbora_messaging_visibility_handler"
 
 
 def _ensure_messaging_log_visibility() -> None:
     """Keep channel and router lifecycle logs visible on stderr under stdio."""
-    from arbora.core.settings import setting
 
-    level_name = str(setting("MESSAGING_LOG_LEVEL", "INFO")).strip().upper()
+    level_name = str(read_env("MESSAGING_LOG_LEVEL")).strip().upper()
     level = getattr(logging, level_name, logging.INFO)
     if not isinstance(level, int):
         level = logging.INFO
@@ -152,9 +153,8 @@ def run_poll_loop(
     # the one unified Telegram/Mattermost/… delivery instead of each tool wiring its own
     # notifier. Opt-in via MESSAGING_ALERT_INTAKE_PORT; runs as an INDEPENDENT task so a
     # failure here never affects the inbound listeners.
-    from arbora.core.settings import setting
 
-    _intake_port = setting("MESSAGING_ALERT_INTAKE_PORT", "")
+    _intake_port = read_env("MESSAGING_ALERT_INTAKE_PORT", "")
     if _intake_port:
         from arbora.messaging.alert_intake import serve_alert_intake
 

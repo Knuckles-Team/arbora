@@ -1,7 +1,7 @@
 """QQ Bot channel adapter (ARBORA-MESSAGING-R009).
 
 Inbound is a long-lived outbound connection with a bounded reconnect backoff.
-Credentials: ``setting('MESSAGING_QQBOT_TOKEN')``.
+Credentials: ``MESSAGING_QQBOT_TOKEN``.
 """
 
 from __future__ import annotations

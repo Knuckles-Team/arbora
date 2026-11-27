@@ -30,6 +30,8 @@ __all__ = [
     "read_env",
     "read_reference",
     "read_text",
+    "register_platform",
+    "template_covers",
     "unset_env",
     "write_env",
 ]
@@ -50,29 +52,53 @@ def _refuse(code: str, name: str) -> Exception:
     return EnvironmentRefusal(code, [name])
 
 
+def _template(name: str) -> tuple[re.Pattern[str], str]:
+    """The pattern and slot name of a declared name with one ``{SLOT}``."""
+    parts = _SLOT.split(name)
+    body = "".join(
+        re.escape(p) if i % 2 == 0 else "([A-Z][A-Z0-9_]*)" for i, p in enumerate(parts)
+    )
+    return re.compile(f"^{body}$"), parts[1]
+
+
+def template_covers(template: str, name: str) -> bool:
+    """Whether ``name`` is one the ``{SLOT}`` declaration ``template`` enumerates."""
+    pattern, slot = _template(template)
+    match = pattern.match(name)
+    return bool(match) and _slot_value(slot, match.group(1))
+
+
 @cache
 def _index() -> tuple[dict[str, EnvironmentDeclaration], tuple[Any, ...]]:
     from arbora.core.environment_manifest import arbora_declarations
 
     exact: dict[str, EnvironmentDeclaration] = {}
-    templates: list[tuple[re.Pattern[str], EnvironmentDeclaration, str]] = []
+    templates: list[tuple[re.Pattern[str], str, EnvironmentDeclaration]] = []
     for item in arbora_declarations():
         if "{" in item.name:
-            parts = _SLOT.split(item.name)
-            body = "".join(
-                re.escape(p) if i % 2 == 0 else "([A-Z][A-Z0-9_]*)"
-                for i, p in enumerate(parts)
-            )
-            templates.append((re.compile(f"^{body}$"), item, parts[1]))
+            templates.append((*_template(item.name), item))
         else:
             exact[item.name] = item
     return exact, tuple(templates)
 
 
+_REGISTERED_PLATFORMS: set[str] = set()
+
+
+def register_platform(platform: str) -> None:
+    """Enumerate one installed messaging backend whose id the capability matrix lacks.
+
+    The platform families (``MESSAGING_{PLATFORM}_TOKEN`` and the rest) cover the
+    capability matrix and the backends the registry discovers; nothing else.
+    """
+    if _FAMILY.fullmatch(platform.upper()):
+        _REGISTERED_PLATFORMS.add(platform.upper())
+
+
 def _platforms() -> frozenset[str]:
     from arbora.messaging.capabilities import CAPABILITY_MATRIX
 
-    return frozenset(key.upper() for key in CAPABILITY_MATRIX)
+    return frozenset(key.upper() for key in CAPABILITY_MATRIX) | _REGISTERED_PLATFORMS
 
 
 def _slot_value(slot: str, value: str) -> bool:
@@ -87,7 +113,7 @@ def _declaration(name: str) -> EnvironmentDeclaration:
     found = exact.get(name)
     if found is not None:
         return found
-    for pattern, template, slot in templates:
+    for pattern, slot, template in templates:
         match = pattern.match(name)
         if match and _slot_value(slot, match.group(1)):
             return template

@@ -23,7 +23,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -127,7 +127,7 @@ class SlackBackend(MessagingBackend):
         app_token = self.config.extra.get("app_token", "")
 
         if not app_token:
-            app_token = setting("SLACK_APP_TOKEN", "")
+            app_token = read_env("SLACK_APP_TOKEN", "")
 
         self._app = AsyncApp(token=self.config.token)
         self._client = self._app.client

@@ -1,7 +1,7 @@
 """Zalo personal account channel adapter (ARBORA-MESSAGING-R009).
 
 Inbound is a long-lived outbound connection with a bounded reconnect backoff.
-Credentials: ``setting('MESSAGING_ZALOUSER_TOKEN')``.
+Credentials: ``MESSAGING_ZALOUSER_TOKEN``.
 """
 
 from __future__ import annotations

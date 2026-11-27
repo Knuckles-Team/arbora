@@ -22,6 +22,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -166,11 +167,9 @@ class TelegramBackend(MessagingBackend):
         if not self.config.token:
             raise ValueError("Set TELEGRAM_BOT_TOKEN or MESSAGING_TELEGRAM_TOKEN.")
 
-        from arbora.core.settings import setting
-
         builder = ApplicationBuilder().token(self.config.token)
         # A self-hosted Bot API server (or a test double) replaces the public one.
-        base_url = str(setting("TELEGRAM_API_BASE_URL", "") or "").strip()
+        base_url = str(read_env("TELEGRAM_API_BASE_URL") or "").strip()
         if base_url:
             builder = builder.base_url(base_url)
         self._app = builder.build()
@@ -418,14 +417,13 @@ class TelegramBackend(MessagingBackend):
         """
         if self._polling:
             return
-        from arbora.core.settings import setting
 
-        base = str(setting("MESSAGING_WEBHOOK_BASE_URL", "")).strip()
+        base = str(read_env("MESSAGING_WEBHOOK_BASE_URL")).strip()
         if base:
             import secrets
 
-            port = int(setting("MESSAGING_WEBHOOK_PORT", "8443"))
-            token = str(setting("MESSAGING_WEBHOOK_SECRET", "")) or secrets.token_hex(
+            port = int(read_env("MESSAGING_WEBHOOK_PORT"))
+            token = str(read_env("MESSAGING_WEBHOOK_SECRET", "")) or secrets.token_hex(
                 16
             )
             url_path = "messaging/webhook/telegram"

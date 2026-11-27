@@ -17,7 +17,7 @@ import logging
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class SenderSession:
 
 
 def _principal_map() -> Mapping[str, str]:
-    raw: Any = setting("MESSAGING_SENDER_PRINCIPALS", "")
+    raw: Any = read_env("MESSAGING_SENDER_PRINCIPALS")
     if isinstance(raw, str):
         try:
             raw = json.loads(raw) if raw.strip() else {}

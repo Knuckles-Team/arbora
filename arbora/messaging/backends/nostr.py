@@ -1,7 +1,7 @@
 """Nostr channel adapter (ARBORA-MESSAGING-R009).
 
 Inbound is a long-lived outbound connection with a bounded reconnect backoff.
-Credentials: ``setting('MESSAGING_NOSTR_TOKEN')``.
+Credentials: ``MESSAGING_NOSTR_TOKEN``.
 """
 
 from __future__ import annotations

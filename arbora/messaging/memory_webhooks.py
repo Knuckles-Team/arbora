@@ -20,7 +20,7 @@ import threading
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.action_dispatch import HttpPost
 from arbora.messaging.memory_subscriptions import (
     TOPICS,
@@ -207,7 +207,7 @@ def start_memory_webhook_pump(supervisor: Any, engine: Any, session: Any) -> Non
             with use_session(session):
                 return await client._send(method, params, None, idempotency_key=key)
 
-        graph = str(getattr(session, "graph", "") or setting("KG_DEFAULT_GRAPH", ""))
+        graph = str(getattr(session, "graph", "") or read_env("KG_DEFAULT_GRAPH"))
         journal = lambda entry: logger.info("memory webhook %s", json.dumps(entry))  # noqa: E731
         asyncio.run(
             run_pump(

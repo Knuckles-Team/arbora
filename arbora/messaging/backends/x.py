@@ -1,7 +1,7 @@
 """X mentions channel adapter (ARBORA-MESSAGING-R009).
 
 Inbound is polled on a bounded interval with a cursor.
-Credentials: ``setting('MESSAGING_X_TOKEN')``.
+Credentials: ``MESSAGING_X_TOKEN``.
 """
 
 from __future__ import annotations

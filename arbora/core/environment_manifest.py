@@ -128,6 +128,14 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
         ("arbora/agent_runs.py", "api_key_env"),
         ("arbora/core/environment.py", "name"),
         ("arbora/fleet/catalog_reader.py", "key"),
+        ("arbora/messaging/backends/_channel_http.py", "self._key(suffix)"),
+        ("arbora/messaging/backends/email.py", "name"),
+        ("arbora/messaging/registry.py", "var"),
+        ("arbora/messaging/registry.py", "name"),
+        (
+            "arbora/messaging/registry.py",
+            "f'{_ENV_PREFIX}{backend_id.upper()}_{suffix}'",
+        ),
         ("arbora/core/settings.py", "name"),
         ("arbora/identity/deployment_settings.py", "name"),
         ("arbora/observability/runtime_health.py", "CONFIG_KEY"),
@@ -349,6 +357,7 @@ _READ_HELPERS: dict[str, frozenset[str]] = {
     "arbora/fleet/catalog_reader.py": frozenset({"_bounded_setting"}),
     "arbora/identity/deployment_settings.py": frozenset({"_text"}),
     "arbora/identity/host_services.py": frozenset({"read"}),
+    "arbora/messaging/backends/email.py": frozenset({"self._setting"}),
     "arbora/mcp_server/backing/server_factory.py": frozenset({"_csv_setting"}),
     "arbora/mcp_server/composition.py": frozenset({"_ranged"}),
     "arbora/security/client_credentials.py": frozenset(
@@ -370,6 +379,29 @@ def _string_constant(node: ast.AST) -> tuple[str, str] | None:
     if not (isinstance(target, ast.Name) and isinstance(value, ast.Constant)):
         return None
     return (target.id, value.value) if isinstance(value.value, str) else None
+
+
+#: Variables whose literal values are environment names read through a pass-through
+#: helper, by module: the platform-native variable tables of the messaging registry.
+_NAME_TABLES: dict[str, frozenset[str]] = {
+    "arbora/messaging/registry.py": frozenset({"native_token_vars", "app_id_vars"}),
+}
+_NAME_SHAPE = re.compile(r"^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$")
+
+
+def _table_reads(path: str, tree: ast.AST) -> list[EnvironmentRead]:
+    tables = _NAME_TABLES.get(path, frozenset())
+    reads: list[EnvironmentRead] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign | ast.AnnAssign) or node.value is None:
+            continue
+        target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        if not (isinstance(target, ast.Name) and target.id in tables):
+            continue
+        for item in ast.walk(node.value):
+            if isinstance(item, ast.Constant) and _NAME_SHAPE.match(str(item.value)):
+                reads.append(EnvironmentRead(path, item.lineno, item.value, item.value))
+    return reads
 
 
 def _constants(tree: ast.AST) -> dict[str, str]:
@@ -411,7 +443,7 @@ def _file_reads(path: str, source: str) -> list[EnvironmentRead]:
         else:
             name = None
         reads.append(EnvironmentRead(path, node.lineno, name, ast.unparse(arg)))
-    return reads
+    return reads + _table_reads(path, tree)
 
 
 def census(root: Path) -> tuple[EnvironmentRead, ...]:
@@ -421,6 +453,15 @@ def census(root: Path) -> tuple[EnvironmentRead, ...]:
         rel = f"{root.name}/{file.relative_to(root).as_posix()}"
         reads.extend(_file_reads(rel, file.read_text(encoding="utf-8")))
     return tuple(reads)
+
+
+def _covered(name: str, known: set[str]) -> bool:
+    """Whether a declaration, or a ``{SLOT}`` family of one, names ``name``."""
+    from arbora.core.environment import template_covers
+
+    return name in known or any(
+        "{" in item and template_covers(item, name) for item in known
+    )
 
 
 def check_census(
@@ -435,7 +476,7 @@ def check_census(
         r.site
         for r in reads
         if (r.name is None and (r.path, r.expression) not in bound)
-        or (r.name is not None and r.name not in known)
+        or (r.name is not None and not _covered(r.name, known))
     ]
     if unknown:
         raise EnvironmentRefusal("ENV_UNDECLARED_READ", unknown)

@@ -11,7 +11,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -52,8 +52,8 @@ class VoiceCallBackend(MessagingBackend):
                 "Install: pip install arbora[messaging-voicecall]"
             ) from None
 
-        sid = self.config.app_id or setting("TWILIO_ACCOUNT_SID", "")
-        token = self.config.token or setting("TWILIO_AUTH_TOKEN", "")
+        sid = self.config.app_id or read_env("TWILIO_ACCOUNT_SID")
+        token = self.config.token or read_env("TWILIO_AUTH_TOKEN", "")
         if not sid or not token:
             raise ValueError("Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.")
         self._client = Client(sid, token)
@@ -74,7 +74,7 @@ class VoiceCallBackend(MessagingBackend):
         """Send SMS via Twilio. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from_number = self.config.extra.get(
-                "from_number", setting("TWILIO_FROM_NUMBER", "")
+                "from_number", read_env("TWILIO_FROM_NUMBER")
             )
             msg = await asyncio.to_thread(
                 self._client.messages.create,
@@ -99,7 +99,7 @@ class VoiceCallBackend(MessagingBackend):
         """Initiate a voice call. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
         from_number = self.config.extra.get(
-            "from_number", setting("TWILIO_FROM_NUMBER", "")
+            "from_number", read_env("TWILIO_FROM_NUMBER")
         )
         kwargs: dict[str, Any] = {"from_": from_number, "to": to}
         if twiml:

@@ -93,3 +93,18 @@ def test_a_tool_family_toggle_is_a_declared_pattern_with_a_fixed_shape(
         with pytest.raises(EnvironmentRefusal) as raised:
             env.read_env(refused)
         assert raised.value.code == "ENV_UNDECLARED_READ"
+
+
+@pytest.mark.spec("ARBORA-HOST-R010.2")
+def test_a_platform_family_declares_exactly_the_platforms_that_exist(
+    monkeypatch,
+) -> None:
+    from arbora.messaging.capabilities import CAPABILITY_MATRIX
+
+    for platform in CAPABILITY_MATRIX:
+        monkeypatch.setenv(f"MESSAGING_{platform.upper()}_TOKEN", "t")
+        assert env.read_env(f"MESSAGING_{platform.upper()}_TOKEN") == "t"
+    for refused in ("MESSAGING_NOSUCHPLATFORM_TOKEN", "MESSAGING_TOKEN"):
+        with pytest.raises(EnvironmentRefusal) as raised:
+            env.read_env(refused)
+        assert raised.value.code == "ENV_UNDECLARED_READ"

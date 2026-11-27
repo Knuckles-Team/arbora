@@ -39,7 +39,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 from urllib.parse import urlparse
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.messaging.base import MessagingBackend
 from arbora.messaging.capabilities import (
     CAPABILITY_MATRIX,
@@ -119,7 +119,7 @@ class MattermostBackend(MessagingBackend):
                 "Install: pip install arbora[messaging-mattermost]"
             ) from None
 
-        url = self.config.extra.get("url") or str(setting("MATTERMOST_URL", "")).strip()
+        url = self.config.extra.get("url") or str(read_env("MATTERMOST_URL")).strip()
         if not url or not self.config.token:
             raise ValueError("Set MATTERMOST_URL and MATTERMOST_TOKEN.")
 
@@ -140,7 +140,7 @@ class MattermostBackend(MessagingBackend):
         await asyncio.to_thread(self._driver.login)
 
         # Resolve the bot's own user id so the inbound stream can drop its own posts.
-        configured_bot = str(setting("MATTERMOST_BOT_USER", "")).strip()
+        configured_bot = str(read_env("MATTERMOST_BOT_USER")).strip()
         self._bot_user_id = await self._resolve_bot_user_id(configured_bot)
 
         self._connected = True
