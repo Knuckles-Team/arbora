@@ -27,6 +27,17 @@ SCENARIO_ACTION_UNCITED = "SCENARIO_ACTION_UNCITED"
 DECISION_RECORD_MISSING = "DECISION_RECORD_MISSING"
 PHASE_PREREQUISITE_UNVERIFIED = "PHASE_PREREQUISITE_UNVERIFIED"
 NO_MEMORY_LIFT = "NO_MEMORY_LIFT"
+CLAIM_LINEAGE_MISSING = "CLAIM_LINEAGE_MISSING"
+WRITE_CONFLICT_MISSING = "WRITE_CONFLICT_MISSING"
+WRITE_LOST = "WRITE_LOST"
+RESTRICTED_NODE_VISIBLE = "RESTRICTED_NODE_VISIBLE"
+CONTRADICTION_UNRECORDED = "CONTRADICTION_UNRECORDED"
+PLAN_GATE_FAILED = "PLAN_GATE_FAILED"
+ONE_PLAN_VIOLATED = "ONE_PLAN_VIOLATED"
+FACT_PROVENANCE_MISSING = "FACT_PROVENANCE_MISSING"
+UNREADABLE_SOURCE_ANSWERED = "UNREADABLE_SOURCE_ANSWERED"
+COVERAGE_BLOCK_MISSING = "COVERAGE_BLOCK_MISSING"
+CHANNEL_ANSWER_DIFFERS = "CHANNEL_ANSWER_DIFFERS"
 
 #: The rows that must be VERIFIED, and the latest P1 run passed, before a later phase runs.
 P1_ROWS: tuple[str, ...] = (
@@ -179,3 +190,139 @@ async def record_scenario_run(send: Send, tenant: str, run: ScenarioRun) -> Any:
         }
     }
     return await send("DecisionLog", params, tenant)
+
+
+#: What every claim of a scenario write carries (R006.2 lineage, R006.3 provenance).
+CLAIM_LINEAGE_FIELDS: tuple[str, ...] = ("source", "actor", "recorded_at", "confidence")
+
+
+def check_claim_lineage(claims: Iterable[Mapping[str, Any]]) -> int:
+    """Refuse a claim that lacks source, actor, time or confidence; return the count."""
+    count = 0
+    for claim in claims:
+        count += 1
+        missing = [f for f in CLAIM_LINEAGE_FIELDS if claim.get(f) in (None, "")]
+        if missing:
+            raise ScenarioRefused(
+                CLAIM_LINEAGE_MISSING, {"claim": claim.get("id"), "missing": missing}
+            )
+    return count
+
+
+def filter_claims(
+    claims: Iterable[Mapping[str, Any]],
+    *,
+    source: str | None = None,
+    min_confidence: float = 0.0,
+    valid_at: int | None = None,
+) -> list[Mapping[str, Any]]:
+    """The claims of ``source`` at or above ``min_confidence`` and valid at ``valid_at``."""
+    kept: list[Mapping[str, Any]] = []
+    for claim in claims:
+        if source is not None and claim.get("source") != source:
+            continue
+        if float(claim.get("confidence", 0.0)) < min_confidence:
+            continue
+        if valid_at is not None and not (
+            claim.get("valid_from", 0) <= valid_at < claim.get("valid_to", 2**62)
+        ):
+            continue
+        kept.append(claim)
+    return kept
+
+
+def check_write_conflict(first: Mapping[str, Any], second: Mapping[str, Any]) -> None:
+    """Two writers at one version: the first commits, the second is the refused conflict.
+
+    The served memory write answers a lost compare-and-set as ``swapped: false``; the
+    engine's typed claim write refuses ``WRITE_CONFLICT`` (``MEDULLA-DURABLE-KERNEL-R084``).
+    Either form is the one refusal, and the stored value stays the first writer's.
+    """
+
+    def lost(outcome: Mapping[str, Any]) -> bool:
+        return (
+            outcome.get("swapped") is False or outcome.get("code") == "WRITE_CONFLICT"
+        )
+
+    if lost(first) or not lost(second):
+        raise ScenarioRefused(
+            WRITE_CONFLICT_MISSING, {"first": dict(first), "second": dict(second)}
+        )
+
+
+def check_no_write_lost(written: Iterable[str], stored: Iterable[str]) -> None:
+    """Every acknowledged write is stored."""
+    lost = sorted(set(written) - set(stored))
+    if lost:
+        raise ScenarioRefused(WRITE_LOST, {"lost": lost})
+
+
+def check_restricted_hidden(
+    visible_ids: Iterable[str], restricted_ids: Iterable[str]
+) -> None:
+    """The restricted principal sees zero restricted nodes (R006.3 step 3)."""
+    leaked = sorted(set(visible_ids) & set(restricted_ids))
+    if leaked:
+        raise ScenarioRefused(RESTRICTED_NODE_VISIBLE, {"count": len(leaked)})
+
+
+def check_contradiction(
+    record: Mapping[str, Any] | None,
+    claim_ids: tuple[str, str],
+    kept_ids: Iterable[str],
+) -> None:
+    """The record names both claims and both claims stay (R006.3 step 4)."""
+    named = {record.get("left"), record.get("right")} if record else set()
+    if named != set(claim_ids) or not set(claim_ids) <= set(kept_ids):
+        raise ScenarioRefused(CONTRADICTION_UNRECORDED, {"claims": list(claim_ids)})
+
+
+def check_one_plan(plan: Mapping[str, Any]) -> None:
+    """One plan, one transaction, one security context joins the three modalities (R006.4)."""
+    stages = {stage.get("modality") for stage in plan.get("stages", ())}
+    one = (
+        plan.get("transaction")
+        and plan.get("security_context")
+        and len(plan.get("plans", ())) == 1
+    )
+    if not {"graph", "vector", "attribute"} <= stages or not one:
+        raise ScenarioRefused(ONE_PLAN_VIOLATED, {"stages": sorted(map(str, stages))})
+
+
+def check_plan_gate(verdict: Mapping[str, Any] | None) -> None:
+    """The falsification gate verdict is recorded and passed (R006.4 step 1)."""
+    if not verdict or verdict.get("passed") is not True:
+        raise ScenarioRefused(PLAN_GATE_FAILED)
+
+
+def check_fact_provenance(facts: Iterable[Mapping[str, Any]]) -> int:
+    """Each fact names its source, its mapping and its read time (R006.7 step 1)."""
+    count = 0
+    for fact in facts:
+        count += 1
+        if not all(fact.get(f) for f in ("source", "mapping", "read_at")):
+            raise ScenarioRefused(FACT_PROVENANCE_MISSING, {"fact": fact.get("id")})
+    return count
+
+
+def check_coverage(answer: Mapping[str, Any], unreadable: Iterable[str]) -> None:
+    """No fact of an unreadable source; each excluded source named with a stable reason."""
+    excluded = set(unreadable)
+    cited = {fact.get("source") for fact in answer.get("facts", ())}
+    if cited & excluded:
+        raise ScenarioRefused(
+            UNREADABLE_SOURCE_ANSWERED, {"sources": sorted(cited & excluded)}
+        )
+    block = {
+        item.get("source"): item.get("reason")
+        for item in answer.get("coverage", {}).get("excluded", ())
+    }
+    if set(block) != excluded or not all(block.values()):
+        raise ScenarioRefused(COVERAGE_BLOCK_MISSING, {"sources": sorted(excluded)})
+
+
+def check_same_answer(web: Mapping[str, Any], channel: Mapping[str, Any]) -> None:
+    """The browser route and the channel return the same text, citations and coverage."""
+    for field_name in ("text", "citations", "coverage"):
+        if web.get(field_name) != channel.get(field_name) or field_name not in web:
+            raise ScenarioRefused(CHANNEL_ANSWER_DIFFERS, {"field": field_name})
