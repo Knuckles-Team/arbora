@@ -39,7 +39,7 @@ from arbora.fleet.onboarding_capture import (
     _child_auth,
     _remember_declaration,
     capture_server_pack,
-    read_served_release,
+    open_release_session,
     self_served_connectors,
 )
 from arbora.fleet.surfaces import pack_surface_report
@@ -180,8 +180,8 @@ class FleetOnboarding:
     #: Records each onboarded connector version's release from the package index
     #: (ARBORA-HOST-R037); ``None`` records nothing.
     release_recorder: Any = None
-    #: Replaces :func:`read_served_release`, for example in tests.
-    release_reader: Any = None
+    #: Replaces :func:`open_release_session`, for example in tests.
+    release_session: Any = None
 
     @property
     def tenant_client(self) -> Any:
@@ -230,32 +230,42 @@ class FleetOnboarding:
             except EngineResponseError as exc:
                 raise ReleaseRecordRefused(refusal_code(exc.code, exc.detail)) from exc
 
-    async def _record_release(self, endpoint: FleetEndpoint, *, auth: Any) -> None:
-        """Record the release the connector serves; a failure never fails onboarding.
+    def release_gate(self) -> Any:
+        """The gate every connector this host launches or attaches passes.
 
-        A release that cannot be recorded stays unrecorded and the runner refuses
-        that connector with ``RELEASE_PIN_MISSING``; the next pass tries again.
+        It records the release a connector serves, then verifies the installed
+        content digest against the recorded pin (ARBORA-HOST-R037.3). ``None``
+        when this host composes no recorder: the gate then refuses.
         """
-        recorder = self.release_recorder
-        if recorder is None:
-            return
-        report = self.surfaces[endpoint.name]
-        try:
-            with onboarding_step("ReleaseRecord"):
-                served = await (self.release_reader or read_served_release)(
-                    endpoint, auth=auth
-                )
-                if served is None:
-                    report["release"] = {"state": "unreported"}
-                    return
-                report["release"] = dict(
-                    await recorder.record(served, self._send_release)
-                )
-        except Exception as exc:  # reported, never fatal
-            logger.warning(
-                "%s: release record failed: %s", endpoint.name, exc, exc_info=True
+        from scion_sdk.runner.release_pins import MedullaReleasePins
+
+        from arbora.fleet.release_gate import ReleaseGate
+
+        if self.release_recorder is None:
+            return None
+        return ReleaseGate(
+            recorder=self.release_recorder,
+            send=self._send_release,
+            pins=MedullaReleasePins(self.tenant_client, str(self.session.graph)),
+        )
+
+    async def _admit_release(
+        self, endpoint: FleetEndpoint, *, auth: Any
+    ) -> dict[str, Any]:
+        """Record, then verify, the release the connector serves, before its pack is read.
+
+        A refusal raises ``ReleaseVerificationError`` with its typed code and the
+        pass stops: no pack is captured or imported. A release that cannot be
+        recorded stays unrecorded and is refused with ``RELEASE_PIN_MISSING``;
+        the next pass tries again.
+        """
+        from arbora.fleet.release_gate import admit_release
+
+        opener = self.release_session or open_release_session
+        async with opener(endpoint, auth=auth) as session:
+            return dict(
+                await admit_release(session, endpoint.name, gate=self.release_gate())
             )
-            report["release"] = {"state": "not_recorded", "code": type(exc).__name__}
 
     def _record_contract(self, connector: str, pack: Any) -> None:
         """Digest the captured pack and report which resource keys moved.
@@ -460,7 +470,8 @@ class FleetOnboarding:
         """One onboarding pass; a failure marks only this connector (R041.4).
 
         A failed pass records ``onboarding_failed`` (or ``contract_rejected``
-        for an engine contract refusal) with a typed cause and re-raises, so
+        for an engine contract refusal, or ``release_refused`` for a release the
+        gate refused) with a typed cause and re-raises, so
         the pass loop reports it and goes on to the next connector.
         """
         try:
@@ -470,20 +481,8 @@ class FleetOnboarding:
             raise
 
     def _mark_failed(self, connector: str, error: Exception) -> None:
-        from arbora.fleet.connect_contract import ContractRefused
-
         report = self.surfaces.setdefault(connector, {})
-        contract = report.get("contract", {})
-        if contract.get("outcome") == "contract_rejected":
-            state, cause = "contract_rejected", str(contract.get("reason", ""))
-        elif isinstance(error, ProjectionFailed):
-            state, cause = "imported_projection_failed", error.code
-        elif isinstance(error, ContractRefused):
-            state, cause = "contract_rejected", error.code
-        elif "expired" in str(error).lower():
-            state, cause = "onboarding_failed", "authority_expired"
-        else:
-            state, cause = "onboarding_failed", type(error).__name__
+        state, cause = _failure_state(report, error)
         report["onboarding_state"] = state
         report["cause"] = cause
         report["counts"] = asdict(PackSurfaceCounts.build(report, {"outcome": state}))
@@ -511,13 +510,14 @@ class FleetOnboarding:
 
         if trigger is not None:
             logger.info("%s: onboarding pass (%s)", endpoint.name, trigger.reason)
+        release = await self._admit_release(endpoint, auth=auth)
         capture = self.capture or capture_server_pack
         with onboarding_step("capture"):
             pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
+        self.surfaces[endpoint.name]["release"] = release
         self._record_contract(endpoint.name, pack)
         self._check_contract(endpoint.name, pack)
-        await self._record_release(endpoint, auth=auth)
         if trigger is not None:
             self.surfaces[endpoint.name]["trigger"] = {
                 "reason": trigger.reason,
@@ -924,6 +924,26 @@ class FleetOnboarding:
         live = {entry.name: entry.url for entry in page.entries}
         urls = {name: served_url or live.get(name, "") for name in connectors}
         return {name: url for name, url in urls.items() if url}
+
+
+def _failure_state(report: Mapping[str, Any], error: Exception) -> tuple[str, str]:
+    """The onboarding state and typed cause one failed pass records."""
+    from scion_sdk.runner.errors import ReleaseVerificationError
+
+    from arbora.fleet.connect_contract import ContractRefused
+
+    contract = report.get("contract", {})
+    if isinstance(error, ReleaseVerificationError):
+        return "release_refused", error.code
+    if contract.get("outcome") == "contract_rejected":
+        return "contract_rejected", str(contract.get("reason", ""))
+    if isinstance(error, ProjectionFailed):
+        return "imported_projection_failed", error.code
+    if isinstance(error, ContractRefused):
+        return "contract_rejected", error.code
+    if "expired" in str(error).lower():
+        return "onboarding_failed", "authority_expired"
+    return "onboarding_failed", type(error).__name__
 
 
 def _failure(exc: BaseException) -> str:

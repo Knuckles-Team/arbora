@@ -314,6 +314,7 @@ markers = [
     "concept: binds a test to a concept ID (moved meristem tests)",
     "pin_lag: real path against a structural double of an upstream main shape; remove with the pin-lag guards",
     "real_boot: boots a real arbora process against a real EG server (linux x86_64)",
+    "real_release_gate: keeps the real connector release gate instead of the admitting fixture",
     "real_run_capacity: keeps the real engine run capacity port instead of the granting fixture",
 ]
 

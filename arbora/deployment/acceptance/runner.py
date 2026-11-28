@@ -285,6 +285,7 @@ class Arbora:
             follow_redirects=False,
         )
         await self._stack.enter_async_context(client)
+        # release-gate: not a connector; the acceptance client reaches arbora's own gateway
         streams = await self._stack.enter_async_context(
             streamable_http_client(f"{self.config.gateway_url}/mcp", http_client=client)
         )

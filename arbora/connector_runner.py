@@ -148,6 +148,7 @@ class ConnectorRunnerComposition:
             self._config.graph,
             required_scope=SOURCE_INGEST_SCOPE,
         ) as client:
+            # release-gate: the SDK's default_services reads the pins from this verified client; verify_release runs on every provisioning pass and has no off switch
             services = self._services_factory(
                 settings,
                 state_dir=self._config.state_dir,

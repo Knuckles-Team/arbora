@@ -237,6 +237,10 @@ _CURRENT_DISCOVERY_BINDING: contextvars.ContextVar[_typing.Any | None] = (
 )
 
 
+#: The bound of one release admission (recording reads the package index).
+RELEASE_ADMISSION_TIMEOUT_S = 120.0
+
+
 class ChildTransport:
     """Opens one child session: the launch environment, remote-url and header validation, TLS trust, and the stdio or remote transport."""
 
@@ -258,6 +262,8 @@ class ChildTransport:
         self._publish_live_tools = publish_live_tools
         # Called once per completed child handshake (ARBORA-FLEET-R041.7).
         self._handshake_listener: _typing.Callable[..., None] | None = None
+        #: The typed refusal code of each child the gate last refused.
+        self.release_refusals: dict[str, str] = {}
 
     def _admit_runtime_policy_tools(
         self,
@@ -629,6 +635,8 @@ class ChildTransport:
     ) -> tuple[_typing.Any, _typing.Any]:
         from arbora.core.transport import create_async_http_client
 
+        # release-gate: covered by arbora.fleet.child_transport.ChildTransport._open_one_session
+
         def _secure_httpx_factory(
             headers: dict[str, str] | None = None,
             timeout: _typing.Any = None,
@@ -871,6 +879,7 @@ class ChildTransport:
         child_error_sink = stack.enter_context(
             Path(os.devnull).open("w", encoding="utf-8")
         )
+        # release-gate: covered by arbora.fleet.child_transport.ChildTransport._open_one_session
         read_stream, write_stream = await stack.enter_async_context(
             stdio_client(server_params, errlog=child_error_sink)
         )
@@ -900,6 +909,26 @@ class ChildTransport:
         )
         self._verify_child_runtime_policy_before_spawn(runtime_policy)
         return await self._open_stdio_child_transport(server_params, stack)
+
+    async def _admit_release(self, server_name: str, session: _typing.Any) -> None:
+        """Record then verify the release this child serves; a refusal stops the launch.
+
+        The one gate of every child launch and attach (ARBORA-HOST-R037.3): the
+        pool, the catalog probe, the proxied and OAuth-gated calls and the fleet
+        probe all open their session through :meth:`_open_one_session`.
+        """
+        from scion_sdk.runner.errors import ReleaseVerificationError
+
+        from arbora.fleet.release_gate import admit_release
+
+        try:
+            async with asyncio.timeout(RELEASE_ADMISSION_TIMEOUT_S):
+                await admit_release(session, server_name)
+        except ReleaseVerificationError as refusal:
+            self.release_refusals[server_name] = refusal.code
+            logger.warning("MCP child refused by the release gate: %s", refusal.code)
+            raise
+        self.release_refusals.pop(server_name, None)
 
     def set_handshake_listener(
         self, listener: _typing.Callable[..., None] | None
@@ -1043,6 +1072,8 @@ class ChildTransport:
         # Keep the handshake bounded, but honor the same per-child connect
         # budget rather than imposing a second, hidden fixed ceiling.
         await asyncio.wait_for(session.initialize(), timeout=initialization_timeout)
+        # Before any tool list or call: verify the release this child serves.
+        await self._admit_release(server_name, session)
         # Production capability state is read directly from the live
         # _child_resilience.ChildRuntime session pool. A retired runtime can finish a late
         # reconnect after a catalog epoch changes, so this transport-open path

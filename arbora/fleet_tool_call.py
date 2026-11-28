@@ -64,17 +64,32 @@ async def call_fleet_tool(
     ``client`` replaces the FastMCP client (tests). The call fails with
     :class:`FleetToolCallError` and never echoes the arguments.
     """
-    from scion_sdk.transports.mcp_session import decode_tool_result
-
     if client is None:
         from fastmcp import Client
 
         target: Any = url or {"mcpServers": {server: _server_entry(server)}}
+        # release-gate: covered by arbora.fleet_tool_call._gated_call
         client = Client(target, timeout=timeout)
     arguments = _arguments(action, dict(params or {}), params_style)
+    return await _gated_call(client, tool, arguments, server or "fleet", timeout)
+
+
+async def _gated_call(
+    client: Any, tool: str, arguments: dict[str, Any], label: str, timeout: float
+) -> Any:
+    """Open ``client``, pass the one release gate, then call ``tool``."""
+    from scion_sdk.runner.errors import ReleaseVerificationError
+    from scion_sdk.transports.mcp_session import decode_tool_result
+
+    from arbora.fleet.release_gate import admit_release
+
     try:
         async with asyncio.timeout(timeout), client as open_client:
+            # The one release gate, before the tool call (ARBORA-HOST-R037.3).
+            await admit_release(open_client, label)
             return decode_tool_result(await open_client.call_tool(tool, arguments))
+    except ReleaseVerificationError:
+        raise  # the typed release refusal keeps its code
     except Exception as exc:
         raise FleetToolCallError(
             f"fleet tool call failed ({type(exc).__name__})"
