@@ -35,6 +35,7 @@ from arbora.control_plane.foundation import (
     tombstone_id,
     upstream_id_for,
 )
+from arbora.control_plane.foundation.models import RecordStatus
 
 _ZERO = "sha256:" + "0" * 64
 
@@ -56,7 +57,7 @@ def _finalize(model_type, digest_field: str, **fields):
 def _lifecycle() -> LifecycleState:
     return LifecycleState(
         lifecycle_version="lifecycle.v1",
-        status="active",
+        status=RecordStatus.ACTIVE,
         retention_policy_ref="retention:default",
     )
 

@@ -30,6 +30,7 @@ from arbora.control_plane.migrations import (
     SourceSnapshot,
     WriteCutoverFence,
 )
+from arbora.control_plane.migrations.models import CheckpointState, InventoryState
 
 
 def _digest(label: str) -> str:
@@ -75,7 +76,7 @@ def _inventory(snapshot: SourceSnapshot) -> MigrationInventory:
         source_revision=snapshot.revision,
         source_digest=_digest("record-one"),
         metadata_digest=_digest("record-metadata-one"),
-        state="present",
+        state=InventoryState.PRESENT,
         version=1,
         digest=_digest("inventory-item-one"),
     )
@@ -239,7 +240,7 @@ def test_staged_authority_reaches_checkpoint_and_replays_without_delta() -> None
         record_count=1,
         sequence=1,
         gate_ref="gate:checkpoint",
-        state="complete",
+        state=CheckpointState.COMPLETE,
         version=1,
         digest=_digest("checkpoint-one"),
     )
@@ -379,7 +380,7 @@ def test_cutover_fails_closed_on_gate_or_cas_and_rollback_is_explicit() -> None:
         record_count=1,
         sequence=1,
         gate_ref=blocked_gate.gate_ref,
-        state="complete",
+        state=CheckpointState.COMPLETE,
         version=1,
         digest=_digest("checkpoint-blocked"),
     )
@@ -404,7 +405,7 @@ def test_cutover_fails_closed_on_gate_or_cas_and_rollback_is_explicit() -> None:
         record_count=1,
         sequence=1,
         gate_ref=valid_gate.gate_ref,
-        state="complete",
+        state=CheckpointState.COMPLETE,
         version=1,
         digest=_digest("checkpoint-one"),
     )

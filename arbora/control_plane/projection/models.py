@@ -21,6 +21,7 @@ import math
 import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Annotated, Final, Literal
 
 from pydantic import (
@@ -755,22 +756,26 @@ class ProjectionCheckpoint(_ProjectionModel):
         )
 
 
+class OutcomeStatus(StrEnum):
+    """What applying one projected event ended as."""
+
+    APPLIED = "applied"
+    REPLAYED = "replayed"
+    REJECTED = "rejected"
+    GAP = "gap"
+    CONFLICT = "conflict"
+    FAILED = "failed"
+    DRIFT = "drift"
+    CLEANED = "cleaned"
+
+
 class ProjectionOutcome(_ProjectionModel):
     """One bounded result, suitable for logs and reconciliation dashboards."""
 
     outcome_version: Literal["control-plane-projection-outcome.v1"] = (
         "control-plane-projection-outcome.v1"
     )
-    status: Literal[
-        "applied",
-        "replayed",
-        "rejected",
-        "gap",
-        "conflict",
-        "failed",
-        "drift",
-        "cleaned",
-    ]
+    status: Annotated[OutcomeStatus, Field(strict=False)]
     aggregate_type: AggregateType
     aggregate_id: Identifier
     sequence: int = Field(ge=1)

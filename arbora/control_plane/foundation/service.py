@@ -20,6 +20,7 @@ from .models import (
     Permission,
     PrincipalIdentity,
     QuotaContract,
+    RecordStatus,
     ReleaseMutation,
     ReleaseOperation,
     ReleasePointer,
@@ -383,7 +384,7 @@ class FoundationControlPlane:
         organization = self._repository.get_organization(record.organization_id)
         if organization is None:
             raise FoundationLifecycleError("organization_unavailable")
-        if organization.lifecycle.status != "active":
+        if organization.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("organization_not_active")
         self._repository.put_tenant(record)
 
@@ -400,7 +401,7 @@ class FoundationControlPlane:
         principal = self._repository.get_principal(scope, record.principal_id)
         if principal is None:
             raise FoundationLifecycleError("client_principal_unavailable")
-        if principal.lifecycle.status != "active":
+        if principal.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("client_principal_not_active")
         self._repository.put_client(record)
 
@@ -427,7 +428,10 @@ class FoundationControlPlane:
         role = self._repository.get_role(scope, record.role_id)
         if principal is None or role is None:
             raise FoundationLifecycleError("membership_scope_or_reference_missing")
-        if principal.lifecycle.status != "active" or role.lifecycle.status != "active":
+        if (
+            principal.lifecycle.status != RecordStatus.ACTIVE
+            or role.lifecycle.status != RecordStatus.ACTIVE
+        ):
             raise FoundationLifecycleError("membership_reference_not_active")
         self._repository.put_membership(record)
 
@@ -452,7 +456,7 @@ class FoundationControlPlane:
         upstream = self._repository.get_upstream(
             scope, record.upstream_id, record.upstream_version
         )
-        if upstream is None or upstream.lifecycle.status != "active":
+        if upstream is None or upstream.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("route_upstream_scope_or_version_missing")
         self._repository.put_route(record)
 
@@ -464,7 +468,7 @@ class FoundationControlPlane:
             component_record = self._get_version(scope, component)
             if (
                 component_record is None
-                or component_record.lifecycle.status != "active"
+                or component_record.lifecycle.status != RecordStatus.ACTIVE
             ):
                 raise FoundationLifecycleError(
                     "config_component_scope_or_version_missing"
@@ -477,7 +481,7 @@ class FoundationControlPlane:
         self._require_tenant_scope(scope, record.organization_id, record.tenant_id)
         if record.config_ref is not None:
             config = self._get_version(scope, record.config_ref)
-            if config is None or config.lifecycle.status != "active":
+            if config is None or config.lifecycle.status != RecordStatus.ACTIVE:
                 raise FoundationLifecycleError(
                     "feature_config_scope_or_version_missing"
                 )
@@ -523,7 +527,7 @@ class FoundationControlPlane:
         if actor_principal_id != scope.principal_id:
             raise FoundationLifecycleError("release_actor_scope_mismatch")
         principal = self._repository.get_principal(scope, actor_principal_id)
-        if principal is None or principal.lifecycle.status != "active":
+        if principal is None or principal.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("release_actor_not_active_in_scope")
 
     def _resolve_release_target(
@@ -541,7 +545,7 @@ class FoundationControlPlane:
         target = self._lookup_version(scope, target_kind, target_id, target_version)
         if target is None:
             raise FoundationLifecycleError("release_target_scope_or_version_missing")
-        if target.lifecycle.status != "active":
+        if target.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("release_target_not_active")
         if (
             self._repository.get_tombstone(
@@ -795,7 +799,7 @@ class FoundationControlPlane:
         principal = self._repository.get_principal(scope, scope.principal_id)
         if principal is None:
             raise FoundationLifecycleError("scope_principal_unavailable")
-        if principal.lifecycle.status != "active":
+        if principal.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("scope_principal_not_active")
         if scope.client_id is not None:
             client = self._repository.get_client(scope, scope.client_id)
@@ -815,7 +819,7 @@ class FoundationControlPlane:
         tenant = self._repository.get_tenant(scope, tenant_id)
         if tenant is None:
             raise FoundationLifecycleError("tenant_unavailable")
-        if tenant.lifecycle.status != "active":
+        if tenant.lifecycle.status != RecordStatus.ACTIVE:
             raise FoundationLifecycleError("tenant_not_active")
         if require_principal:
             self._assert_scope_principal(scope)

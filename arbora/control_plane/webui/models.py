@@ -232,15 +232,22 @@ class AccessContext(_FrozenModel):
         return permission in self.permissions
 
 
+class IdentityState(StrEnum):
+    """Whether an identity record is live or deleted."""
+
+    ACTIVE = "active"
+    DELETED = "deleted"
+
+
 class TenantIdentity(_IdentityModel):
     tenant_ref: OpaqueRef
-    state: Literal["active", "deleted"] = "active"
+    state: Annotated[IdentityState, Field(strict=False)] = IdentityState.ACTIVE
 
 
 class WorkspaceIdentity(_IdentityModel):
     tenant_ref: OpaqueRef
     workspace_ref: OpaqueRef
-    state: Literal["active", "deleted"] = "active"
+    state: Annotated[IdentityState, Field(strict=False)] = IdentityState.ACTIVE
 
     @model_validator(mode="after")
     def _exact_refs(self) -> WorkspaceIdentity:
@@ -252,7 +259,7 @@ class UserIdentity(_IdentityModel):
     tenant_ref: OpaqueRef
     workspace_ref: OpaqueRef
     user_ref: OpaqueRef
-    state: Literal["active", "deleted"] = "active"
+    state: Annotated[IdentityState, Field(strict=False)] = IdentityState.ACTIVE
 
 
 class ProfileIdentity(_IdentityModel):
@@ -392,7 +399,7 @@ class MessageIdentity(_IdentityModel):
     sender_ref: OpaqueRef
     content_ref: ContentReference
     attachments: tuple[AttachmentIdentity, ...] = Field(max_length=MAX_ATTACHMENTS)
-    state: Literal["active", "deleted"] = "active"
+    state: Annotated[IdentityState, Field(strict=False)] = IdentityState.ACTIVE
 
     @model_validator(mode="after")
     def _content_scope_matches(self) -> MessageIdentity:

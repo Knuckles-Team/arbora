@@ -18,9 +18,11 @@ from .models import (
     BackfillBatch,
     BackfillObservation,
     CanonicalRecord,
+    CheckpointState,
     CohortReadCutover,
     CutoverEvent,
     CutoverState,
+    InventoryState,
     LegacyRetirement,
     MigrationEvent,
     MigrationInventory,
@@ -32,6 +34,7 @@ from .models import (
     RetirementState,
     ShadowDelta,
     ShadowReconciliation,
+    ShadowReconciliationState,
     SourceSnapshot,
     WriteCutoverFence,
     canonical_digest,
@@ -403,7 +406,9 @@ class InMemoryMigrationAuthority:
         if any(record.canonical_ref not in accepted for record in source_records):
             raise MigrationPrerequisiteError("shadow_record_not_backfilled")
         has_rejected = any(item.disposition != "accepted" for item in observations)
-        has_inventory_reject = any(item.state != "present" for item in inventory.items)
+        has_inventory_reject = any(
+            item.state != InventoryState.PRESENT for item in inventory.items
+        )
         return has_rejected, has_inventory_reject
 
     def _shadow_delta_for(
@@ -463,12 +468,12 @@ class InMemoryMigrationAuthority:
     @staticmethod
     def _shadow_reconciliation_state(
         has_rejected: bool, has_inventory_reject: bool, deltas: list[ShadowDelta]
-    ) -> Literal["clean", "needs_review", "blocked"]:
+    ) -> ShadowReconciliationState:
         if has_rejected or has_inventory_reject:
-            return "blocked"
+            return ShadowReconciliationState.BLOCKED
         if not deltas:
-            return "clean"
-        return "needs_review"
+            return ShadowReconciliationState.CLEAN
+        return ShadowReconciliationState.NEEDS_REVIEW
 
     @staticmethod
     def _build_shadow_reconciliation_candidate(
@@ -477,7 +482,7 @@ class InMemoryMigrationAuthority:
         source_snapshot_digest: str,
         target_snapshot_digest: str,
         deltas: list[ShadowDelta],
-        state: Literal["clean", "needs_review", "blocked"],
+        state: ShadowReconciliationState,
     ) -> ShadowReconciliation:
         """Build the (not-yet-persisted) ``ShadowReconciliation`` candidate record."""
         delta_tuple = tuple(deltas)
@@ -522,7 +527,7 @@ class InMemoryMigrationAuthority:
                 return existing
             raise MigrationReplayError("shadow_reconciliation_replay_drift")
         if (
-            candidate.state == "clean"
+            candidate.state == ShadowReconciliationState.CLEAN
             and plan.state == MigrationState.BACKFILL_OBSERVING
         ):
             updated = plan.transition(
@@ -599,7 +604,7 @@ class InMemoryMigrationAuthority:
             for reconciliation in self._reconciliations.values()
             if reconciliation.migration_ref == plan.migration_ref
             and reconciliation.source_snapshot_digest == plan.source_snapshot_digest
-            and reconciliation.state == "clean"
+            and reconciliation.state == ShadowReconciliationState.CLEAN
         ]
         if not matches:
             raise MigrationPrerequisiteError("clean_shadow_missing")
@@ -709,7 +714,7 @@ class InMemoryMigrationAuthority:
                 checkpoint.migration_ref != plan.migration_ref
                 or checkpoint.source_snapshot_digest != plan.source_snapshot_digest
                 or checkpoint.gate_ref != gate.gate_ref
-                or checkpoint.state != "complete"
+                or checkpoint.state != CheckpointState.COMPLETE
             ):
                 raise MigrationConflictError("projection_checkpoint_binding_mismatch")
             existing = self._checkpoints.get(checkpoint.checkpoint_ref)

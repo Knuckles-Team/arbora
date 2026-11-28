@@ -144,9 +144,17 @@ class RetirementEvent(StrEnum):
 
 type SourceDisposition = Literal["accepted", "rejected", "malformed"]
 type ApprovalState = Literal["unreviewed", "approved", "rejected"]
-type InventoryState = Literal[
-    "present", "missing", "duplicate", "rejected", "malformed"
-]
+
+
+class InventoryState(StrEnum):
+    """Whether one inventory item was found as expected, or how it was not."""
+
+    PRESENT = "present"
+    MISSING = "missing"
+    DUPLICATE = "duplicate"
+    REJECTED = "rejected"
+    MALFORMED = "malformed"
+
 
 _FORBIDDEN_INLINE_KEYS = frozenset(
     {
@@ -457,7 +465,7 @@ class InventoryItem(_VersionedModel):
     source_revision: OpaqueRef
     source_digest: Digest
     metadata_digest: Digest
-    state: InventoryState
+    state: Annotated[InventoryState, Field(strict=False)]
 
 
 class MigrationInventory(_VersionedModel):
@@ -636,6 +644,14 @@ class ShadowDelta(_VersionedModel):
         return self
 
 
+class ShadowReconciliationState(StrEnum):
+    """How a shadow comparison of source and target ended."""
+
+    CLEAN = "clean"
+    NEEDS_REVIEW = "needs_review"
+    BLOCKED = "blocked"
+
+
 class ShadowReconciliation(_VersionedModel):
     """Deterministic source/target comparison bound to both snapshot digests."""
 
@@ -646,7 +662,7 @@ class ShadowReconciliation(_VersionedModel):
     deltas: tuple[ShadowDelta, ...] = Field(max_length=MAX_EVIDENCE_ITEMS)
     delta_count: Count
     delta_digest: Digest
-    state: Literal["clean", "needs_review", "blocked"]
+    state: Annotated[ShadowReconciliationState, Field(strict=False)]
     deterministic: Literal[True] = True
 
     @model_validator(mode="after")
@@ -655,9 +671,9 @@ class ShadowReconciliation(_VersionedModel):
             raise ValueError("shadow_delta_count_mismatch")
         if self.delta_digest != canonical_digest(self.deltas):
             raise ValueError("shadow_delta_digest_mismatch")
-        if self.state == "clean" and self.deltas:
+        if self.state == ShadowReconciliationState.CLEAN and self.deltas:
             raise ValueError("shadow_clean_with_deltas")
-        if self.state == "needs_review" and not self.deltas:
+        if self.state == ShadowReconciliationState.NEEDS_REVIEW and not self.deltas:
             raise ValueError("shadow_nonclean_without_deltas")
         return self
 
@@ -767,6 +783,13 @@ class WriteCutoverFence(_VersionedModel):
         return self._successor(state=target)
 
 
+class CheckpointState(StrEnum):
+    """Whether a projection checkpoint is whole or the projection must be rebuilt."""
+
+    COMPLETE = "complete"
+    REBUILD_REQUIRED = "rebuild_required"
+
+
 class ProjectionCheckpoint(_VersionedModel):
     """Restart-safe projection checkpoint/rebuild evidence."""
 
@@ -778,7 +801,7 @@ class ProjectionCheckpoint(_VersionedModel):
     record_count: Count
     sequence: Version
     gate_ref: OpaqueRef
-    state: Literal["complete", "rebuild_required"]
+    state: Annotated[CheckpointState, Field(strict=False)]
 
 
 class LegacyRetirement(_VersionedModel):
