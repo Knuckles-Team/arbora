@@ -33,6 +33,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.core.lease_status import LeaseStatus
 from arbora.security.elevation import (
     ElevationApproval,
     ElevationRequest,
@@ -87,7 +88,7 @@ class ElevationPage(_Params):
 
 class LeaseList(_Params):
     kind: str | None = None
-    status: Literal["active", "consumed", "revoked", "expired"] | None = None
+    status: LeaseStatus | None = None
     cursor: str | None = None
     limit: int = Field(default=100, ge=1, le=100)
 

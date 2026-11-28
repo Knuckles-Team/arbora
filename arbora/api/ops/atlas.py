@@ -15,8 +15,9 @@ from __future__ import annotations
 import hashlib
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import Field, field_validator
 
@@ -81,11 +82,19 @@ class RunParams(Params):
     run_id: str = _Id
 
 
+class AtlasRunState(StrEnum):
+    """The lifecycle states a control-plane source run reports."""
+
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
 class RunsListParams(Params):
     connection_id: str | None = Field(default=None, min_length=1, max_length=256)
-    state: Literal["queued", "running", "succeeded", "failed", "cancelled"] | None = (
-        None
-    )
+    state: AtlasRunState | None = None
     limit: int = Field(default=25, ge=1, le=100)
     cursor: str | None = Field(default=None, min_length=1, max_length=512)
 

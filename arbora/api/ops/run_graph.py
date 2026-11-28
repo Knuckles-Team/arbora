@@ -126,6 +126,12 @@ class ExecutionStep(Params):
         self.status = target
 
 
+class ChildRunStatus(StrEnum):
+    """The one status a declared nested run carries: its own run is not observed here."""
+
+    UNOBSERVED = "unobserved"
+
+
 class ExecutionChildRun(Params):
     """A producer-declared nested run; never a conversation or a target."""
 
@@ -133,7 +139,7 @@ class ExecutionChildRun(Params):
     kind: Literal["child_run"] = "child_run"
     run_id: str = Field(min_length=1, max_length=512)
     task_id: str = Field(min_length=1, max_length=512)
-    status: Literal["unobserved"] = "unobserved"
+    status: ChildRunStatus = ChildRunStatus.UNOBSERVED
     depth: int = Field(ge=1, le=8, strict=True)
 
 

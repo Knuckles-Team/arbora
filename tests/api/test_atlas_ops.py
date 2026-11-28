@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import atlas
+from arbora.api.ops.atlas import AtlasRunState
 from arbora.api.registry import Effect, Verb
 from tests.api._engine_double import EngineDouble, context
 
@@ -349,7 +350,10 @@ async def test_runs_are_listed_read_and_cancelled_through_the_run_records(
 ) -> None:
     op = _OPS["ingest.sources.runs.list"]
     assert op.scopes == frozenset({"ingest:read"})
-    assert atlas.RunsListParams(state="failed", connection_id="c").limit == 25
+    assert (
+        atlas.RunsListParams(state=AtlasRunState("failed"), connection_id="c").limit
+        == 25
+    )
     with pytest.raises(ValidationError):
         atlas.RunsListParams(state="stuck")  # type: ignore[arg-type]
     served_atlas.runs["r1"] = {

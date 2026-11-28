@@ -12,6 +12,7 @@ reason. Arbora keeps no session index and no cost table.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import Field
@@ -77,8 +78,15 @@ class SessionsPage(Params):
     partial: bool
 
 
+class SessionCostStatus(StrEnum):
+    """Whether a session cost was measured or is unknown."""
+
+    MEASURED = "measured"
+    UNKNOWN = "unknown"
+
+
 class SessionCost(Params):
-    status: Literal["measured", "unknown"]
+    status: SessionCostStatus
     reason: str | None = None
     amount_minor: int | None = Field(default=None, ge=0)
     currency: str | None = None

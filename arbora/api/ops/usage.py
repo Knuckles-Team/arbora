@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import Field, ValidationError, model_validator
@@ -34,12 +35,21 @@ class UsageReadParams(_common.Params):
     group_by: Literal["model", "project", "agent"] | None = None
 
 
+class TurnPhase(StrEnum):
+    """The measured phases of one turn."""
+
+    REQUEST = "request"
+    RUN = "run"
+    QUEUE = "queue"
+    TOOL = "tool"
+
+
 class TurnTiming(_common.Params):
     """One measured turn phase; client elapsed time, never a provider rate."""
 
     run_id: str
     turn_index: int = Field(ge=0)
-    phase: Literal["request", "run", "queue", "tool"]
+    phase: TurnPhase
     duration_ms: int = Field(ge=0, le=MAX_ELAPSED_MS)
 
 

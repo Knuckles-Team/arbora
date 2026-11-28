@@ -22,7 +22,7 @@ import re
 from collections.abc import Iterator, Mapping
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -153,6 +153,13 @@ class ConstitutionSource(_Frozen):
     _blob = field_validator("blob_digest")(_digest)
 
 
+class PolicyEntityState(StrEnum):
+    """Whether a clause entity is in the active policy or retired from it."""
+
+    ACTIVE = "active"
+    RETIRED = "retired"
+
+
 class PolicyEntity(_Frozen):
     """One clause entity the engine read into the active policy."""
 
@@ -160,7 +167,7 @@ class PolicyEntity(_Frozen):
     version_digest: str
     constitution_ref: str = Field(min_length=1)
     clause_digest: str
-    state: Literal["active", "retired"]
+    state: PolicyEntityState
 
     _version = field_validator("version_digest")(_digest)
     _clause = field_validator("clause_digest")(_digest)
@@ -199,7 +206,7 @@ class PolicySourceBindResult(_common.Params):
 def _entities(
     answer: Mapping[str, Any], *, retired: bool, constitution: str
 ) -> list[PolicyEntity]:
-    state = "retired" if retired else "active"
+    state = PolicyEntityState.RETIRED if retired else PolicyEntityState.ACTIVE
     digest = str(answer.get("candidate_set_digest", ""))
     return [
         PolicyEntity(

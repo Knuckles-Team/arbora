@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from arbora.api.ops import access_service as service
+from arbora.security.elevation import ElevationStatus
 
 
 def _context(*, principal: str = "approver", delegated: bool = False):
@@ -132,7 +133,7 @@ async def test_elevation_write_returns_the_view_with_a_receipt(monkeypatch) -> N
     view = ElevationView(
         elevation_id="e1",
         grantee="alice",
-        status="requested",
+        status=ElevationStatus.REQUESTED,
         scopes=[ElevationScope(graph="g", action="read")],
         span_ms=1000,
         justification="why",

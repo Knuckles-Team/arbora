@@ -17,6 +17,7 @@ import base64
 import hashlib
 import json
 from collections.abc import Mapping
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, Literal
 
@@ -79,19 +80,27 @@ class BundleDownloadResult(Params):
     data_b64: str
 
 
+class BundleUploadPhase(StrEnum):
+    """One step of a staged bundle upload."""
+
+    BEGIN = "begin"
+    CHUNK = "chunk"
+    COMMIT = "commit"
+
+
 class BundleUploadParams(Params):
     """One staging step: ``begin`` opens a blob, ``chunk`` appends, ``commit`` seals it."""
 
-    phase: Literal["begin", "chunk", "commit"]
+    phase: BundleUploadPhase
     cursor: int | None = Field(default=None, ge=0)
     data_b64: str | None = None
 
     @model_validator(mode="after")
     def _phase_fields(self) -> BundleUploadParams:
-        needs_cursor = self.phase != "begin"
+        needs_cursor = self.phase != BundleUploadPhase.BEGIN
         if needs_cursor != (self.cursor is not None):
             raise ValueError("a cursor is given for chunk and commit only")
-        if (self.phase == "chunk") != (self.data_b64 is not None):
+        if (self.phase == BundleUploadPhase.CHUNK) != (self.data_b64 is not None):
             raise ValueError("data is given for chunk only")
         return self
 

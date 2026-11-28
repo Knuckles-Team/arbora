@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, Literal
 
@@ -66,9 +67,16 @@ class ReconcileParams(Params):
     tool: str = _ID
 
 
+class EffectState(StrEnum):
+    """Whether a delivery effect is recorded as done or has no record."""
+
+    DONE = "done"
+    ABSENT = "absent"
+
+
 class EffectReceipt(Params):
     idempotency_key: str
-    state: Literal["done", "absent"]
+    state: EffectState
     receipt: dict[str, Any] | None = None
 
 
