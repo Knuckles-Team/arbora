@@ -12,6 +12,7 @@ __all__ = [
     "WebUiPaginationError",
     "WebUiPilotBoundaryError",
     "WebUiRetentionError",
+    "WebUiTransitionRefused",
 ]
 
 
@@ -58,3 +59,20 @@ class WebUiPilotBoundaryError(WebUiDomainError):
     """An anonymous pilot operation crossed its private boundary."""
 
     code = "webui_anonymous_pilot_boundary"
+
+
+class WebUiTransitionRefused(WebUiDomainError):
+    """An identity's state machine lists no edge for this change; the entity is unchanged.
+
+    ``machine`` names the identity type; ``from_state`` and ``event`` are the stored
+    forms. A replacement whose state differs from the stored one by no listed edge
+    carries ``event`` ``replace``.
+    """
+
+    code = "webui_transition_refused"
+
+    def __init__(self, machine: str, from_state: str, event: str) -> None:
+        super().__init__(f"{self.code}: {machine} {from_state} --{event}-->")
+        self.machine = machine
+        self.from_state = from_state
+        self.event = event

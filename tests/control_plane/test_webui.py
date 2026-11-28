@@ -13,6 +13,7 @@ from arbora.control_plane.webui import (
     AttachmentIdentity,
     ContentReference,
     ConversationIdentity,
+    ConversationState,
     DashboardIdentity,
     InMemoryWebUiRepository,
     PageRequest,
@@ -84,7 +85,7 @@ def _conversation(
         workspace_ref=context.workspace_ref,
         conversation_ref=ref,
         session_ref=context.session_ref,
-        state="active",
+        state=ConversationState.ACTIVE,
         version=version,
         digest=_digest(f"conversation:{ref}:{version}"),
     )
