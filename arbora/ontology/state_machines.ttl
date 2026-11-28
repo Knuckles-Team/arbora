@@ -2637,3 +2637,239 @@ arbora:DeployRunMachine_serving-abort-failed a owl:Class ;
     :fromState arbora:DeployRunServing ;
     :toState arbora:DeployRunFailed ;
     :firedBy arbora:DeployRunMachine_Event_abort .
+
+# Child runtime (ARBORA-FLEET-R091).
+# Python: ChildState, ChildEvent, CHILD_EDGES in arbora/fleet/child_machines.py.
+# ---------------------------------------------------------------------------
+
+arbora:ChildRuntimeMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Child runtime" ;
+    rdfs:comment "The supervised connection of one multiplexer child. A new runtime waits for its first generation; a generation that connects is up; a lost or recycled generation restarts and reconnects; a boot failure or an exhausted restart budget parks the child as failed, which fails calls fast; the owner closes it." ;
+    :initialState arbora:ChildRuntimeStarting ;
+    :hasState arbora:ChildRuntimeStarting ,
+        arbora:ChildRuntimeUp ,
+        arbora:ChildRuntimeRestarting ,
+        arbora:ChildRuntimeFailed ,
+        arbora:ChildRuntimeClosed .
+
+arbora:ChildRuntimeState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Child runtime state" .
+
+arbora:ChildRuntimeTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Child runtime transition" .
+
+arbora:ChildRuntimeEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Child runtime event" .
+
+arbora:ChildRuntimeTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Child runtime transition refused" ;
+    rdfs:comment "ChildTransitionRefused, code CHILD_TRANSITION_ILLEGAL, fields machine (child_runtime), from_state and event. The child state does not change." .
+
+arbora:ChildRuntimeStarting a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeState ;
+    :storedForm "starting" .
+
+arbora:ChildRuntimeUp a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeState ;
+    :storedForm "up" .
+
+arbora:ChildRuntimeRestarting a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeState ;
+    :storedForm "restarting" .
+
+arbora:ChildRuntimeFailed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeState ;
+    :storedForm "failed" .
+
+arbora:ChildRuntimeClosed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeState, :TerminalState ;
+    :storedForm "closed" .
+
+arbora:ChildRuntimeMachine_Event_connect a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeEvent ;
+    :storedForm "connect" .
+
+arbora:ChildRuntimeMachine_Event_disconnect a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeEvent ;
+    :storedForm "disconnect" .
+
+arbora:ChildRuntimeMachine_Event_fail a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeEvent ;
+    :storedForm "fail" .
+
+arbora:ChildRuntimeMachine_Event_close a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeEvent ;
+    :storedForm "close" .
+
+arbora:ChildRuntimeMachine_starting-connect-up a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeStarting ;
+    :toState arbora:ChildRuntimeUp ;
+    :firedBy arbora:ChildRuntimeMachine_Event_connect .
+
+arbora:ChildRuntimeMachine_up-connect-up a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeUp ;
+    :toState arbora:ChildRuntimeUp ;
+    :firedBy arbora:ChildRuntimeMachine_Event_connect .
+
+arbora:ChildRuntimeMachine_restarting-connect-up a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeRestarting ;
+    :toState arbora:ChildRuntimeUp ;
+    :firedBy arbora:ChildRuntimeMachine_Event_connect .
+
+arbora:ChildRuntimeMachine_up-disconnect-restarting a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeUp ;
+    :toState arbora:ChildRuntimeRestarting ;
+    :firedBy arbora:ChildRuntimeMachine_Event_disconnect .
+
+arbora:ChildRuntimeMachine_restarting-disconnect-restarting a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeRestarting ;
+    :toState arbora:ChildRuntimeRestarting ;
+    :firedBy arbora:ChildRuntimeMachine_Event_disconnect .
+
+arbora:ChildRuntimeMachine_starting-fail-failed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeStarting ;
+    :toState arbora:ChildRuntimeFailed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_fail .
+
+arbora:ChildRuntimeMachine_up-fail-failed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeUp ;
+    :toState arbora:ChildRuntimeFailed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_fail .
+
+arbora:ChildRuntimeMachine_restarting-fail-failed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeRestarting ;
+    :toState arbora:ChildRuntimeFailed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_fail .
+
+arbora:ChildRuntimeMachine_starting-close-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeStarting ;
+    :toState arbora:ChildRuntimeClosed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_close .
+
+arbora:ChildRuntimeMachine_up-close-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeUp ;
+    :toState arbora:ChildRuntimeClosed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_close .
+
+arbora:ChildRuntimeMachine_restarting-close-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeRestarting ;
+    :toState arbora:ChildRuntimeClosed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_close .
+
+arbora:ChildRuntimeMachine_failed-close-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildRuntimeTransition ;
+    :fromState arbora:ChildRuntimeFailed ;
+    :toState arbora:ChildRuntimeClosed ;
+    :firedBy arbora:ChildRuntimeMachine_Event_close .
+
+# Child circuit breaker (ARBORA-FLEET-R091).
+# Python: BreakerState, BreakerEvent, BREAKER_EDGES in arbora/fleet/child_machines.py.
+# ---------------------------------------------------------------------------
+
+arbora:ChildBreakerMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Child circuit breaker" ;
+    rdfs:comment "The transport circuit breaker of one multiplexer child. Closed lets calls through; enough failures, or one failed probe, open it; after the cooldown the first call is a probe in half-open; a success closes it." ;
+    :initialState arbora:ChildBreakerClosed ;
+    :hasState arbora:ChildBreakerClosed ,
+        arbora:ChildBreakerOpen ,
+        arbora:ChildBreakerHalfOpen .
+
+arbora:ChildBreakerState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Child circuit breaker state" .
+
+arbora:ChildBreakerTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Child circuit breaker transition" .
+
+arbora:ChildBreakerEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Child circuit breaker event" .
+
+arbora:ChildBreakerTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Child circuit breaker transition refused" ;
+    rdfs:comment "BreakerTransitionRefused, code BREAKER_TRANSITION_ILLEGAL, fields machine (child_breaker), from_state and event. The breaker state does not change." .
+
+arbora:ChildBreakerClosed a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerState ;
+    :storedForm "closed" .
+
+arbora:ChildBreakerOpen a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerState ;
+    :storedForm "open" .
+
+arbora:ChildBreakerHalfOpen a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerState ;
+    :storedForm "half_open" .
+
+arbora:ChildBreakerMachine_Event_trip a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerEvent ;
+    :storedForm "trip" .
+
+arbora:ChildBreakerMachine_Event_probe a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerEvent ;
+    :storedForm "probe" .
+
+arbora:ChildBreakerMachine_Event_recover a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerEvent ;
+    :storedForm "recover" .
+
+arbora:ChildBreakerMachine_closed-trip-open a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerClosed ;
+    :toState arbora:ChildBreakerOpen ;
+    :firedBy arbora:ChildBreakerMachine_Event_trip .
+
+arbora:ChildBreakerMachine_open-trip-open a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerOpen ;
+    :toState arbora:ChildBreakerOpen ;
+    :firedBy arbora:ChildBreakerMachine_Event_trip .
+
+arbora:ChildBreakerMachine_half_open-trip-open a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerHalfOpen ;
+    :toState arbora:ChildBreakerOpen ;
+    :firedBy arbora:ChildBreakerMachine_Event_trip .
+
+arbora:ChildBreakerMachine_open-probe-half_open a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerOpen ;
+    :toState arbora:ChildBreakerHalfOpen ;
+    :firedBy arbora:ChildBreakerMachine_Event_probe .
+
+arbora:ChildBreakerMachine_closed-recover-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerClosed ;
+    :toState arbora:ChildBreakerClosed ;
+    :firedBy arbora:ChildBreakerMachine_Event_recover .
+
+arbora:ChildBreakerMachine_open-recover-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerOpen ;
+    :toState arbora:ChildBreakerClosed ;
+    :firedBy arbora:ChildBreakerMachine_Event_recover .
+
+arbora:ChildBreakerMachine_half_open-recover-closed a owl:Class ;
+    rdfs:subClassOf arbora:ChildBreakerTransition ;
+    :fromState arbora:ChildBreakerHalfOpen ;
+    :toState arbora:ChildBreakerClosed ;
+    :firedBy arbora:ChildBreakerMachine_Event_recover .
