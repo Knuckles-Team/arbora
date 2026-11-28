@@ -1,8 +1,6 @@
-"""Provisioning contracts and the SDK pin-lag guard (ARBORA-FLEET-R024.4)."""
+"""Provisioning contracts (ARBORA-FLEET-R024.4)."""
 
 from __future__ import annotations
-
-import sys
 
 import pytest
 from pydantic import ValidationError
@@ -13,8 +11,6 @@ from arbora.api.contracts.provisioning_capacity import (
     ProvisionRequest,
     ProvisionResult,
 )
-from arbora.pin_lag.scion_sdk import PROVISIONER_SYMBOL, require_provisioning
-from arbora.pin_lag.unavailable import PinLagUnavailable
 from tests.fleet._provisioning_support import IMAGE, request
 
 
@@ -60,12 +56,3 @@ def test_missing_binding_field_and_bad_digest_refuse() -> None:
     with pytest.raises(ValidationError):
         ProvisionRequest.model_validate({**request("k").model_dump(), "extra": 1})
     assert request("k").image_digest == IMAGE
-
-
-@pytest.mark.spec("ARBORA-FLEET-R024.4")
-def test_lagging_sdk_refuses_naming_the_symbol(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(sys.modules, "scion_sdk.provisioning.provisioner", None)
-    with pytest.raises(PinLagUnavailable) as lag:
-        require_provisioning()
-    assert lag.value.missing == PROVISIONER_SYMBOL
-    assert lag.value.code == "UNAVAILABLE"

@@ -6,11 +6,12 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from scion_sdk.credentials import binding as module
 
 from arbora.fleet import credential_admission as admission
 from arbora.fleet.credential_admission import CredentialRefusal, credentialed_call
 from arbora.fleet.credential_authority import CredentialAuthority
-from tests.gateway._sdk_binding_double import PROFILE, decision, install
+from tests.gateway._credential_fixtures import PROFILE, decision
 from tests.gateway.test_credential_authority import _Grants, _Receipts
 
 _CFG = {"credential_grant": PROFILE}
@@ -27,7 +28,6 @@ def _session() -> Any:
 async def test_a_credentialed_child_call_runs_under_the_verified_binding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    module = install(monkeypatch)
     monkeypatch.setattr("arbora.security.session.current_session", _session)
     receipts = _Receipts()
     authority = CredentialAuthority(_Grants(decision()), receipts, lambda: 1_000)
@@ -42,7 +42,6 @@ async def test_a_credentialed_child_call_runs_under_the_verified_binding(
 async def test_a_refused_or_unbound_authority_never_reaches_the_child(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    install(monkeypatch)
     monkeypatch.setattr("arbora.security.session.current_session", _session)
     authority = CredentialAuthority(
         _Grants(decision(allow=False, reason_code="RESOURCE_GRANT_MISSING")),

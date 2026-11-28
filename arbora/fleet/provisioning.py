@@ -16,6 +16,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from scion_sdk.provisioning import provisioner as sdk
+
 from arbora.api.contracts.provisioning_capacity import (
     AggregationRef,
     FleetCapacityProof,
@@ -29,7 +31,6 @@ from arbora.control_plane.runs.capacity import (
     CapacityReDecisionExhaustedError,
 )
 from arbora.core.provision_errors import ProvisionRefused
-from arbora.pin_lag.scion_sdk import require_provisioning
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,6 @@ def provision_instances(
     max_concurrent: int = DEFAULT_MAX_CONCURRENT_INSTANCES,
 ) -> ProvisionResult:
     """Allocate ``request`` once; refuse before any allocation when a guard fails."""
-    sdk = require_provisioning()
     started_at = clock()
     _check_guards(request, guards, max_concurrent)
     holder = request.idempotency_key

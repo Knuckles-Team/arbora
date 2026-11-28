@@ -7,10 +7,10 @@ from collections.abc import Mapping
 from typing import Any
 
 import pytest
+from scion_sdk.credentials import binding as module
 
 from arbora.fleet.credential_authority import CredentialAuthority, CredentialDenied
-from arbora.pin_lag.unavailable import PinLagUnavailable
-from tests.gateway._sdk_binding_double import PROFILE, decision, install
+from tests.gateway._credential_fixtures import PROFILE, decision
 
 _ASK: dict[str, Any] = {
     "tenant": "tenant:one",
@@ -57,7 +57,6 @@ def _authority(
 async def test_exact_grant_only_and_refusals_write_receipts(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    module = install(monkeypatch)
     receipts = _Receipts()
     ok_grants = _Grants(decision())
     ok = _authority(ok_grants, receipts)
@@ -113,7 +112,6 @@ async def test_exact_grant_only_and_refusals_write_receipts(
 async def test_an_admitted_call_writes_one_ok_receipt_with_the_digest(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    module = install(monkeypatch)
     receipts = _Receipts()
     authority = _authority(_Grants(decision()), receipts)
     async with authority.admitted(**_ASK) as binding:
@@ -121,19 +119,3 @@ async def test_an_admitted_call_writes_one_ok_receipt_with_the_digest(
     [row] = receipts.rows
     assert row["outcome"] == "ok"
     assert row["binding_digest"] == "sha256:" + module.binding_digest(binding)
-
-
-@pytest.mark.spec("ARBORA-OPS-R893")
-async def test_a_pin_without_the_sdk_binding_refuses_naming_it(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    import sys
-
-    monkeypatch.setitem(sys.modules, "scion_sdk.credentials.binding", None)
-    authority = _authority(_Grants(decision()), _Receipts())
-    with pytest.raises(PinLagUnavailable) as refused:
-        async with authority.admitted(**_ASK):
-            raise AssertionError("not admitted")
-    assert (
-        refused.value.missing == "scion_sdk.credentials.binding.CredentialAccessBinding"
-    )

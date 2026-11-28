@@ -144,44 +144,13 @@ def _desktop_params(grant_id: str) -> dict[str, object]:
     return {"grant_id": grant_id, "kind": "click", "target": "ok", "text": ""}
 
 
-def _install_desktop_double(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A structural double of ``scion_sdk.desktop`` for a pinned SDK that lacks it."""
-    import enum
-    import sys
-    from dataclasses import dataclass
-    from types import ModuleType
-
-    class Kind(enum.StrEnum):
-        CLICK = "click"
-        TYPE = "type"
-        VERIFY = "verify"
-
-    @dataclass(frozen=True)
-    class Action:
-        kind: Kind
-        target: str
-        text: str = ""
-
-    @dataclass(frozen=True)
-    class Grant:
-        targets: tuple[str, ...]
-
-    module = ModuleType("scion_sdk.desktop")
-    module.DesktopAction = Action  # type: ignore[attr-defined]
-    module.DesktopActionKind = Kind  # type: ignore[attr-defined]
-    module.DesktopGrant = Grant  # type: ignore[attr-defined]
-    module.DesktopProvider = object  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "scion_sdk.desktop", module)
-
-
 @pytest.mark.spec("ARBORA-HOST-R029")
 @pytest.mark.asyncio
-async def test_native_desktop_actions_require_verified_grant_without_focus_capture(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_native_desktop_actions_require_verified_grant_without_focus_capture() -> (
+    None
+):
     from arbora.api.invoke.pipeline import OperationRefused
 
-    _install_desktop_double(monkeypatch)
     provider = _Provider()
     grants = {
         "ok": _Grant(tenant="tenant-a", revoked=False, targets=("ok",)),
@@ -204,28 +173,6 @@ async def test_native_desktop_actions_require_verified_grant_without_focus_captu
     result = await browser.handle_desktop_action(context, _desktop_params("ok"), op)
     assert result["value"] == {"ok": True, "evidence": "clicked", "grant_id": "ok"}
     assert len(provider.calls) == 1
-
-
-@pytest.mark.spec("ARBORA-HOST-R029")
-@pytest.mark.asyncio
-async def test_desktop_action_stays_unavailable_while_the_sdk_port_is_unpublished(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    import sys
-
-    from arbora.api.invoke.pipeline import OperationRefused
-
-    monkeypatch.setitem(sys.modules, "scion_sdk.desktop", None)
-    provider = _Provider()
-    grants = {"ok": _Grant(tenant="tenant-a", revoked=False, targets=("ok",))}
-    op = next(o for o in browser.operations() if o.id == "browser.desktop_action")
-    with pytest.raises(OperationRefused) as refused:
-        await browser.handle_desktop_action(
-            _desktop_context(grants, provider), _desktop_params("ok"), op
-        )
-    assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == "scion_sdk.desktop.DesktopProvider"
-    assert provider.calls == []
 
 
 class _States:

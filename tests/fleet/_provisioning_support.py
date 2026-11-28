@@ -187,9 +187,7 @@ def _sdk_params() -> list[Any]:
     params=_sdk_params(), ids=lambda s: "double" if s is DOUBLE_SDK else "sdk"
 )
 def sdk(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> Any:
-    """The provisioner module under test; the double stands in while the wheel lags."""
+    """The provisioner module under test; the double stands in for the allocator."""
     if request.param is DOUBLE_SDK:
-        monkeypatch.setattr(
-            "arbora.fleet.provisioning.require_provisioning", lambda: DOUBLE_SDK
-        )
+        monkeypatch.setattr("arbora.fleet.provisioning.sdk", DOUBLE_SDK)
     return request.param
