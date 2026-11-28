@@ -25,10 +25,11 @@ cannot oscillate over the same desired state.
 """
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Final, Literal, NamedTuple
+from types import MappingProxyType
+from typing import Any, ClassVar, Final, Literal, NamedTuple
 
 from pydantic import (
     BaseModel,
@@ -542,8 +543,55 @@ class ScaleDecision(_ContractModel):
         return self
 
 
+class AuthorityExecutionState(StrEnum):
+    """The authority contract's lifecycle of one scale execution (ARBORA-FLEET-R024.20)."""
+
+    PREPARED = "prepared"
+    SIMULATED = "simulated"
+    STARTED = "started"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    ROLLED_BACK = "rolled_back"
+
+
+class AuthorityExecutionEvent(StrEnum):
+    START = "start"
+    SIMULATE = "simulate"
+    SUCCEED = "succeed"
+    FAIL = "fail"
+    ROLL_BACK = "roll_back"
+
+
+_AS, _AE = AuthorityExecutionState, AuthorityExecutionEvent
+
+
 class ScaleExecution(_ContractModel):
-    """Idempotent execution record, distinct from the policy decision."""
+    """Idempotent execution record, distinct from the policy decision.
+
+    ``state`` is an explicit machine; ``transition`` is the only function that
+    moves it and returns the next execution revision.
+    """
+
+    EDGES: ClassVar[
+        Mapping[
+            tuple[AuthorityExecutionState, AuthorityExecutionEvent],
+            AuthorityExecutionState,
+        ]
+    ] = MappingProxyType(
+        {
+            (_AS.PREPARED, _AE.START): _AS.STARTED,
+            (_AS.PREPARED, _AE.SIMULATE): _AS.SIMULATED,
+            (_AS.STARTED, _AE.SUCCEED): _AS.SUCCEEDED,
+            (_AS.STARTED, _AE.FAIL): _AS.FAILED,
+            (_AS.SUCCEEDED, _AE.ROLL_BACK): _AS.ROLLED_BACK,
+            (_AS.FAILED, _AE.ROLL_BACK): _AS.ROLLED_BACK,
+        }
+    )
+    INITIAL: ClassVar[AuthorityExecutionState] = AuthorityExecutionState.PREPARED
+    TERMINALS: ClassVar[tuple[AuthorityExecutionState, ...]] = (
+        AuthorityExecutionState.SIMULATED,
+        AuthorityExecutionState.ROLLED_BACK,
+    )
 
     schema_version: Literal["1"] = CONTRACT_VERSION
     execution_id: str
@@ -558,14 +606,7 @@ class ScaleExecution(_ContractModel):
     lease_fence: LeaseFence
     idempotency_key: str
     operation: Literal["scale", "rollback"]
-    state: Literal[
-        "prepared",
-        "simulated",
-        "started",
-        "succeeded",
-        "failed",
-        "rolled_back",
-    ]
+    state: AuthorityExecutionState
     started_at: datetime
     completed_at: datetime | None = None
     failure_code: str | None = None
@@ -605,16 +646,58 @@ class ScaleExecution(_ContractModel):
 
     @model_validator(mode="after")
     def validate_state(self) -> ScaleExecution:
-        terminal = {"succeeded", "failed", "rolled_back"}
+        terminal = {
+            AuthorityExecutionState.SUCCEEDED,
+            AuthorityExecutionState.FAILED,
+            AuthorityExecutionState.ROLLED_BACK,
+        }
         if self.state in terminal and self.completed_at is None:
             raise ValueError("terminal execution state requires completed_at")
-        if self.state == "failed" and self.failure_code is None:
+        if self.state == AuthorityExecutionState.FAILED and self.failure_code is None:
             raise ValueError("failed execution requires failure_code")
-        if self.state == "simulated" and self.completed_at is not None:
+        if (
+            self.state == AuthorityExecutionState.SIMULATED
+            and self.completed_at is not None
+        ):
             raise ValueError("simulated execution must not claim completed actuation")
         if self.operation == "rollback" and self.rollback_target_replicas is None:
             raise ValueError("rollback execution requires rollback_target_replicas")
         return self
+
+    def transition(
+        self, event: AuthorityExecutionEvent, **updates: object
+    ) -> ScaleExecution:
+        """The next execution revision after ``event``; ``updates`` carry the evidence fields."""
+        target = self.EDGES.get((AuthorityExecutionState(self.state), event))
+        if target is None:
+            raise AuthorityExecutionTransitionRefused(
+                AuthorityExecutionState(self.state), event
+            )
+        data = {
+            **self.model_dump(),
+            **updates,
+            "state": target,
+            "execution_revision": self.execution_revision + 1,
+        }
+        return type(self).model_validate(data)
+
+
+class AuthorityExecutionTransitionRefused(ValueError):
+    """The execution machine lists no edge for this event; the record is unchanged.
+
+    Code ``SCALE_AUTHORITY_TRANSITION_ILLEGAL``, fields ``machine``
+    (``scale_authority_execution``), ``from_state`` and ``event``.
+    """
+
+    code = "SCALE_AUTHORITY_TRANSITION_ILLEGAL"
+    machine = "scale_authority_execution"
+
+    def __init__(
+        self, from_state: AuthorityExecutionState, event: AuthorityExecutionEvent
+    ) -> None:
+        super().__init__(f"{self.code}: {from_state} --{event}-->")
+        self.from_state = from_state
+        self.event = event
 
 
 class ObservedOutcome(_ContractModel):
@@ -1076,6 +1159,9 @@ __all__ = [
     "ScaleAuthority",
     "ScaleCadence",
     "ScaleDecision",
+    "AuthorityExecutionEvent",
+    "AuthorityExecutionState",
+    "AuthorityExecutionTransitionRefused",
     "ScaleExecution",
     "ScaleIntent",
     "ScaleUnit",

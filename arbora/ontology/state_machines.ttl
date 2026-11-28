@@ -1952,3 +1952,248 @@ arbora:ExecutionStepMachine_running-task_cancelled-cancelled a owl:Class ;
     :fromState arbora:ExecutionStepRunning ;
     :toState arbora:ExecutionStepCancelled ;
     :firedBy arbora:ExecutionStepMachine_Event_task_cancelled .
+
+# Scale execution (ARBORA-FLEET-R024.19).
+# Python: ScaleExecutionState, ScaleExecutionEvent, ScaleExecutionRecord.EDGES in arbora/api/domain/fleet/scale_records.py.
+# ---------------------------------------------------------------------------
+
+arbora:ScaleExecutionMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Scale execution" ;
+    rdfs:comment "The durable lifecycle of one scale execution record. A dry run goes from persisted straight to simulated; a live run starts, then succeeds or fails; a failed retryable run starts again; every settled result is verified by one observation." ;
+    :initialState arbora:ScaleExecutionPersisted ;
+    :hasState arbora:ScaleExecutionPersisted ,
+        arbora:ScaleExecutionStarted ,
+        arbora:ScaleExecutionSimulated ,
+        arbora:ScaleExecutionSucceeded ,
+        arbora:ScaleExecutionFailed ,
+        arbora:ScaleExecutionVerified .
+
+arbora:ScaleExecutionState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Scale execution state" .
+
+arbora:ScaleExecutionTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Scale execution transition" .
+
+arbora:ScaleExecutionEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Scale execution event" .
+
+arbora:ScaleExecutionTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Scale execution transition refused" ;
+    rdfs:comment "ScaleExecutionTransitionRefused, code SCALE_EXECUTION_TRANSITION_ILLEGAL, fields machine (scale_execution), from_state and event. The state does not change." .
+
+arbora:ScaleExecutionPersisted a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionState ;
+    :storedForm "persisted" .
+
+arbora:ScaleExecutionStarted a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionState ;
+    :storedForm "started" .
+
+arbora:ScaleExecutionSimulated a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionState ;
+    :storedForm "simulated" .
+
+arbora:ScaleExecutionSucceeded a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionState ;
+    :storedForm "succeeded" .
+
+arbora:ScaleExecutionFailed a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionState ;
+    :storedForm "failed" .
+
+arbora:ScaleExecutionVerified a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionState, :TerminalState ;
+    :storedForm "verified" .
+
+arbora:ScaleExecutionMachine_Event_start a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionEvent ;
+    :storedForm "start" .
+
+arbora:ScaleExecutionMachine_Event_simulate a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionEvent ;
+    :storedForm "simulate" .
+
+arbora:ScaleExecutionMachine_Event_succeed a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionEvent ;
+    :storedForm "succeed" .
+
+arbora:ScaleExecutionMachine_Event_fail a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionEvent ;
+    :storedForm "fail" .
+
+arbora:ScaleExecutionMachine_Event_verify a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionEvent ;
+    :storedForm "verify" .
+
+arbora:ScaleExecutionMachine_persisted-start-started a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionPersisted ;
+    :toState arbora:ScaleExecutionStarted ;
+    :firedBy arbora:ScaleExecutionMachine_Event_start .
+
+arbora:ScaleExecutionMachine_started-start-started a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionStarted ;
+    :toState arbora:ScaleExecutionStarted ;
+    :firedBy arbora:ScaleExecutionMachine_Event_start .
+
+arbora:ScaleExecutionMachine_failed-start-started a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionFailed ;
+    :toState arbora:ScaleExecutionStarted ;
+    :firedBy arbora:ScaleExecutionMachine_Event_start .
+
+arbora:ScaleExecutionMachine_persisted-simulate-simulated a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionPersisted ;
+    :toState arbora:ScaleExecutionSimulated ;
+    :firedBy arbora:ScaleExecutionMachine_Event_simulate .
+
+arbora:ScaleExecutionMachine_started-succeed-succeeded a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionStarted ;
+    :toState arbora:ScaleExecutionSucceeded ;
+    :firedBy arbora:ScaleExecutionMachine_Event_succeed .
+
+arbora:ScaleExecutionMachine_started-fail-failed a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionStarted ;
+    :toState arbora:ScaleExecutionFailed ;
+    :firedBy arbora:ScaleExecutionMachine_Event_fail .
+
+arbora:ScaleExecutionMachine_simulated-verify-verified a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionSimulated ;
+    :toState arbora:ScaleExecutionVerified ;
+    :firedBy arbora:ScaleExecutionMachine_Event_verify .
+
+arbora:ScaleExecutionMachine_succeeded-verify-verified a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionSucceeded ;
+    :toState arbora:ScaleExecutionVerified ;
+    :firedBy arbora:ScaleExecutionMachine_Event_verify .
+
+arbora:ScaleExecutionMachine_failed-verify-verified a owl:Class ;
+    rdfs:subClassOf arbora:ScaleExecutionTransition ;
+    :fromState arbora:ScaleExecutionFailed ;
+    :toState arbora:ScaleExecutionVerified ;
+    :firedBy arbora:ScaleExecutionMachine_Event_verify .
+
+# ---------------------------------------------------------------------------
+# Scale authority execution (ARBORA-FLEET-R024.20).
+# Python: AuthorityExecutionState, AuthorityExecutionEvent, ScaleExecution.EDGES in arbora/api/domain/fleet/scaling/scaling_authority.py.
+# ---------------------------------------------------------------------------
+
+arbora:AuthorityExecutionMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Scale authority execution" ;
+    rdfs:comment "The authority contract's execution record of one scale intent. A prepared execution starts or is only simulated; a started one succeeds or fails; a settled one may be rolled back." ;
+    :initialState arbora:AuthorityExecutionPrepared ;
+    :hasState arbora:AuthorityExecutionPrepared ,
+        arbora:AuthorityExecutionSimulated ,
+        arbora:AuthorityExecutionStarted ,
+        arbora:AuthorityExecutionSucceeded ,
+        arbora:AuthorityExecutionFailed ,
+        arbora:AuthorityExecutionRolledBack .
+
+arbora:AuthorityExecutionState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Scale authority execution state" .
+
+arbora:AuthorityExecutionTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Scale authority execution transition" .
+
+arbora:AuthorityExecutionEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Scale authority execution event" .
+
+arbora:AuthorityExecutionTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Scale authority execution transition refused" ;
+    rdfs:comment "AuthorityExecutionTransitionRefused, code SCALE_AUTHORITY_TRANSITION_ILLEGAL, fields machine (scale_authority_execution), from_state and event. The state does not change." .
+
+arbora:AuthorityExecutionPrepared a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionState ;
+    :storedForm "prepared" .
+
+arbora:AuthorityExecutionSimulated a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionState, :TerminalState ;
+    :storedForm "simulated" .
+
+arbora:AuthorityExecutionStarted a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionState ;
+    :storedForm "started" .
+
+arbora:AuthorityExecutionSucceeded a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionState ;
+    :storedForm "succeeded" .
+
+arbora:AuthorityExecutionFailed a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionState ;
+    :storedForm "failed" .
+
+arbora:AuthorityExecutionRolledBack a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionState, :TerminalState ;
+    :storedForm "rolled_back" .
+
+arbora:AuthorityExecutionMachine_Event_start a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionEvent ;
+    :storedForm "start" .
+
+arbora:AuthorityExecutionMachine_Event_simulate a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionEvent ;
+    :storedForm "simulate" .
+
+arbora:AuthorityExecutionMachine_Event_succeed a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionEvent ;
+    :storedForm "succeed" .
+
+arbora:AuthorityExecutionMachine_Event_fail a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionEvent ;
+    :storedForm "fail" .
+
+arbora:AuthorityExecutionMachine_Event_roll_back a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionEvent ;
+    :storedForm "roll_back" .
+
+arbora:AuthorityExecutionMachine_prepared-start-started a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionTransition ;
+    :fromState arbora:AuthorityExecutionPrepared ;
+    :toState arbora:AuthorityExecutionStarted ;
+    :firedBy arbora:AuthorityExecutionMachine_Event_start .
+
+arbora:AuthorityExecutionMachine_prepared-simulate-simulated a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionTransition ;
+    :fromState arbora:AuthorityExecutionPrepared ;
+    :toState arbora:AuthorityExecutionSimulated ;
+    :firedBy arbora:AuthorityExecutionMachine_Event_simulate .
+
+arbora:AuthorityExecutionMachine_started-succeed-succeeded a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionTransition ;
+    :fromState arbora:AuthorityExecutionStarted ;
+    :toState arbora:AuthorityExecutionSucceeded ;
+    :firedBy arbora:AuthorityExecutionMachine_Event_succeed .
+
+arbora:AuthorityExecutionMachine_started-fail-failed a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionTransition ;
+    :fromState arbora:AuthorityExecutionStarted ;
+    :toState arbora:AuthorityExecutionFailed ;
+    :firedBy arbora:AuthorityExecutionMachine_Event_fail .
+
+arbora:AuthorityExecutionMachine_succeeded-roll_back-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionTransition ;
+    :fromState arbora:AuthorityExecutionSucceeded ;
+    :toState arbora:AuthorityExecutionRolledBack ;
+    :firedBy arbora:AuthorityExecutionMachine_Event_roll_back .
+
+arbora:AuthorityExecutionMachine_failed-roll_back-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:AuthorityExecutionTransition ;
+    :fromState arbora:AuthorityExecutionFailed ;
+    :toState arbora:AuthorityExecutionRolledBack ;
+    :firedBy arbora:AuthorityExecutionMachine_Event_roll_back .

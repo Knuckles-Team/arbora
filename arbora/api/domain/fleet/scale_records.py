@@ -11,9 +11,11 @@ import hashlib
 import json
 import math
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Final, Literal
+from types import MappingProxyType
+from typing import ClassVar, Final, Literal
 
 from pydantic import (
     BaseModel,
@@ -107,9 +109,44 @@ class ScaleIntentState(StrEnum):
     SIMULATED = "simulated"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
-    OBSERVED = "observed"
     VERIFIED = "verified"
     DENIED = "denied"
+
+
+class ScaleExecutionState(StrEnum):
+    """The durable lifecycle of one scale execution (ARBORA-FLEET-R024.19)."""
+
+    PERSISTED = "persisted"
+    STARTED = "started"
+    SIMULATED = "simulated"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    VERIFIED = "verified"
+
+
+class ScaleExecutionEvent(StrEnum):
+    """What moves an execution record from one state to the next."""
+
+    START = "start"
+    SIMULATE = "simulate"
+    SUCCEED = "succeed"
+    FAIL = "fail"
+    VERIFY = "verify"
+
+
+_ES, _EE = ScaleExecutionState, ScaleExecutionEvent
+#: States from which a started execution is not started again.
+SETTLED_STATES: frozenset[str] = frozenset(
+    {_ES.SIMULATED.value, _ES.SUCCEEDED.value, _ES.VERIFIED.value}
+)
+#: The event a typed actuator result fires, by the result's stored state.
+RESULT_EVENTS: Mapping[str, ScaleExecutionEvent] = MappingProxyType(
+    {
+        ScaleIntentState.SIMULATED.value: _EE.SIMULATE,
+        ScaleIntentState.SUCCEEDED.value: _EE.SUCCEED,
+        ScaleIntentState.FAILED.value: _EE.FAIL,
+    }
+)
 
 
 class ScaleObservationStatus(StrEnum):
@@ -321,7 +358,31 @@ class ScaleActuationResult(ScaleModel):
 
 
 class ScaleExecutionRecord(ScaleModel):
-    """Durable execution row, including the last typed result for crash repair."""
+    """Durable execution row, including the last typed result for crash repair.
+
+    ``state`` is the explicit machine of ARBORA-FLEET-R024.19; ``transition`` is
+    the only function that moves it.
+    """
+
+    EDGES: ClassVar[
+        Mapping[tuple[ScaleExecutionState, ScaleExecutionEvent], ScaleExecutionState]
+    ] = MappingProxyType(
+        {
+            (_ES.PERSISTED, _EE.START): _ES.STARTED,
+            (_ES.STARTED, _EE.START): _ES.STARTED,
+            (_ES.FAILED, _EE.START): _ES.STARTED,
+            (_ES.PERSISTED, _EE.SIMULATE): _ES.SIMULATED,
+            (_ES.STARTED, _EE.SUCCEED): _ES.SUCCEEDED,
+            (_ES.STARTED, _EE.FAIL): _ES.FAILED,
+            (_ES.SIMULATED, _EE.VERIFY): _ES.VERIFIED,
+            (_ES.SUCCEEDED, _EE.VERIFY): _ES.VERIFIED,
+            (_ES.FAILED, _EE.VERIFY): _ES.VERIFIED,
+        }
+    )
+    INITIAL: ClassVar[ScaleExecutionState] = ScaleExecutionState.PERSISTED
+    TERMINALS: ClassVar[tuple[ScaleExecutionState, ...]] = (
+        ScaleExecutionState.VERIFIED,
+    )
 
     schema_version: Literal["1"] = CONTRACT_VERSION
     execution_id: str
@@ -329,7 +390,7 @@ class ScaleExecutionRecord(ScaleModel):
     intent_revision: StrictInt = Field(ge=1)
     execution_key: str
     target: ScaleTargetBinding
-    state: ScaleIntentState
+    state: ScaleExecutionState
     attempt: StrictInt = Field(ge=0)
     dry_run: StrictBool = False
     actuator_called: StrictBool = False
@@ -363,6 +424,17 @@ class ScaleExecutionRecord(ScaleModel):
     _validate_updated = field_validator("updated_at")(
         lambda value: aware_utc(value, "updated_at")
     )
+
+    def transition(
+        self, event: ScaleExecutionEvent, **updates: object
+    ) -> ScaleExecutionRecord:
+        """The next record after ``event``, with ``updates`` applied alongside the state."""
+        target = self.EDGES.get((ScaleExecutionState(self.state), event))
+        if target is None:
+            raise ScaleExecutionTransitionRefused(
+                ScaleExecutionState(self.state), event
+            )
+        return self.model_copy(update={**updates, "state": target.value})
 
 
 class ScaleObservation(ScaleModel):
@@ -507,6 +579,24 @@ class ScaleReconcileResult(ScaleModel):
 
 class ScaleIntentConflict(RuntimeError):
     """An execution key or intent revision was replayed with another payload."""
+
+
+class ScaleExecutionTransitionRefused(ScaleIntentConflict):
+    """The execution machine lists no edge for this event from this state.
+
+    The record does not change. Code ``SCALE_EXECUTION_TRANSITION_ILLEGAL``,
+    fields ``machine`` (``scale_execution``), ``from_state`` and ``event``.
+    """
+
+    code = "SCALE_EXECUTION_TRANSITION_ILLEGAL"
+    machine = "scale_execution"
+
+    def __init__(
+        self, from_state: ScaleExecutionState, event: ScaleExecutionEvent
+    ) -> None:
+        super().__init__(f"{self.code}: {from_state} --{event}-->")
+        self.from_state = from_state
+        self.event = event
 
 
 class ScaleLeaseUnavailable(RuntimeError):
