@@ -9,7 +9,7 @@ The engine shapes of the probe snapshot and the transition record are part of th
 
 ## Wire shape
 
-The SDK facade `KnowledgeIngest.submit` sends one `ChangeSet` with mode `RECONCILE`. The binding is connector `inventory-records` and stream `machines`. `live_ids` lists every entity id of the record set. The engine method is `SourceIngest`. Entity types and relations are those of the `MEDULLA-MACHINE` data model: `Machine`, the seven part types, `ProbeSnapshot`, `MachineLifecycleTransitionRecord`, and the relations `hasComponent`, `bondMember`, `observes` and `transitionOf`.
+The SDK facade `KnowledgeIngest.submit` sends one `ChangeSet` with mode `RECONCILE`. The binding is connector `inventory-records` and stream `machines`. `live_ids` lists every entity id of the record set. The engine method is `SourceIngest`. Entity types and relations are those of the `MEDULLA-MACHINE` data model: `Machine`, the seven part types, `ProbeSnapshot`, `MachineLifecycleTransitionRecord`, and the relations `hasProcessor`, `hasMemoryModule`, `hasStorageDevice`, `hasNetworkInterface`, `hasNetworkBond`, `hasAccelerator`, `hasManagementController`, `bondMember`, `observes` and `transitionOf`. Each `has...` relation is a sub-property of the core `hasComponent` with exactly one range, because a pack relation is keyed by its domain and property. A record states the specific relation of its part kind and never `hasComponent`.
 
 The description reads the same facts back with one `Sparql` request. The query selects `?s ?p ?o` for the canonical machine, its parts, its observers and its transition records.
 
