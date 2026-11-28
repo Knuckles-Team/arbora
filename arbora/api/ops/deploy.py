@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import Field
 
@@ -48,6 +48,9 @@ from arbora.api.ops.engine_calls import engine_send, refusal_code
 from arbora.api.registry import Confirm, Effect, OpSpec
 from arbora.core.claims import claim_values
 from arbora.security.anonymous import client_scope
+
+if TYPE_CHECKING:
+    from arbora.security.elevation import ElevationView
 
 #: Engine refusal tokens that mean the question kind is not served.
 _KIND_UNSERVED = frozenset(
@@ -541,7 +544,7 @@ async def _require_destructive_approval(
             "APPROVAL_REQUIRED", {"destructive": len(diff.destructive)}
         )
     views = {v.elevation_id: v for v in await service.list_elevations()}
-    view = views.get(elevation_id)
+    view: ElevationView | None = views.get(elevation_id)
     if view is None or view.approved_at_ms is None:
         raise ManifestRefused("APPROVAL_REQUIRED", {"elevation_id": elevation_id})
     if view.status != "active" or view.remaining_ms <= 0:

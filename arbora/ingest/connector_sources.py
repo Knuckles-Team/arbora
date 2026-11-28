@@ -25,6 +25,7 @@ from scion_sdk.ingest.service import KnowledgeIngest
 from scion_sdk.ingest.source_sync import (
     KvSourceCheckpoints,
     SourceSyncError,
+    SourceSyncReport,
     SourceSyncRunner,
 )
 from scion_sdk.ingest.transport import MedullaIngestTransport
@@ -364,7 +365,9 @@ class ConnectorIngestRunner:
             checkpoints=KvSourceCheckpoints(client),
         )
         try:
-            report = await runner.sync(spec, mode=mode, job_id=item_id)
+            report: SourceSyncReport = await runner.sync(
+                spec, mode=mode, job_id=item_id
+            )
         except SourceSyncError as exc:
             # The receipt carries only the reason code; keep the cause visible
             # (tool name and exception type, never arguments or results).

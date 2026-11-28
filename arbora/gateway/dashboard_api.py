@@ -155,7 +155,9 @@ async def get_service_data(service_id: str, request: Request) -> WidgetData:
     """Fetch data for one service."""
     if not _SERVICE_ID_RE.fullmatch(service_id):
         raise HTTPException(status_code=404, detail="service not found")
-    data = await _get_aggregator(request).fetch_one(service_id, _reader(request))
+    data: WidgetData = await _get_aggregator(request).fetch_one(
+        service_id, _reader(request)
+    )
     if data.status == "error" and "not found" in (data.error or ""):
         raise HTTPException(status_code=404, detail="service not found")
     return data
