@@ -628,3 +628,19 @@ ARBORA-OPS-R021.4.8.3 is proven by `tests/api/test_execution_step_machine.py::te
 | `ARBORA-OPS-R959.10` | Test: `tests/api/test_inventory_ops.py::test_registry_lists_both_operations_with_their_scopes`. (planned, L2) |
 | `ARBORA-OPS-R959.11` | Test: `tests/api/test_inventory_ops.py::test_describe_sends_one_validated_query_and_renders`, `::test_describe_refuses_unknown_machine_and_bad_values`. (planned, L2) |
 | `ARBORA-OPS-R959.12` | Test: `tests/gateway/test_inventory_hot_path.py::test_served_build_twice_from_one_snapshot_writes_identical_records` and `::test_served_describe_matches_the_golden_file`. (planned, L2) |
+| `ARBORA-OPS-R916.1` | Test: `tests/api/test_activity_ops_served.py::test_activity_entries_carry_tool_server_outcome_and_duration` (L3). (planned) |
+| `ARBORA-OPS-R959.13` | Test: `tests/inventory/test_observations.py::test_bundle_maps_disk_load_fans_and_temperature_and_omits_missing_fields` (L1). (planned) |
+| `ARBORA-OPS-R960` | Test: `tests/api/test_observer_events_served.py::test_each_producer_appears_in_events_list` (L3). (planned) |
+| `ARBORA-OPS-R960.1` | Test: `tests/api/test_observer_events_served.py::test_events_list_pages_filters_and_passes_cursor_expired` (L3). (planned) |
+| `ARBORA-OPS-R960.2` | Test: `tests/observer/test_emit.py::test_emit_never_blocks_drops_when_full_and_drains_in_order` (L1). (planned) |
+| `ARBORA-OPS-R960.3` | Test: `tests/observer/test_producers.py::test_admission_emits_admitted_refused_and_rate_limited` (L2). (planned) |
+| `ARBORA-OPS-R960.4` | Test: `tests/observer/test_machines.py::test_release_gate_every_edge_and_every_illegal_pair` (L1). (planned) |
+| `ARBORA-OPS-R960.5` | Test: `tests/observer/test_producers.py::test_a_pipeline_status_change_emits_one_ci_gate_event` (L1). (planned) |
+| `ARBORA-OPS-R960.6` | Test: `tests/observer/test_producers.py::test_alert_intake_emits_firing_and_resolved_with_severity` (L1). (planned) |
+| `ARBORA-OPS-R960.7` | Test: `tests/observer/test_producers.py::test_security_verdicts_and_refusals_emit_security_audit` (L1). (planned) |
+| `ARBORA-OPS-R960.8` | Test: `tests/observer/test_machines.py::test_remediation_every_edge_and_every_illegal_pair` (L1). (planned) |
+| `ARBORA-OPS-R960.9` | Test: `tests/observer/test_machines.py::test_evolution_proposal_every_edge_and_every_illegal_pair` (L1). (planned) |
+| `ARBORA-OPS-R960.10` | Test: `tests/observer/test_producers.py::test_a2a_state_changes_emit_handoff_events` (L2). (planned) |
+| `ARBORA-OPS-R960.11` | Test: `tests/observer/test_producers.py::test_sandbox_spawn_and_exit_emit_started_and_finished` (L1). (planned) |
+| `ARBORA-OPS-R960.12` | Test: `tests/api/test_observer_events_served.py::test_each_producer_appears_in_events_list` (L3). (planned) |
+| `ARBORA-OPS-R961` | Test: `tests/api/test_inventory_ops.py::test_machines_list_pages_by_iri_with_lifecycle_parts_and_newest_observation` (L2). (planned) |

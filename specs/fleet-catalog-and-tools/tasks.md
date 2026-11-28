@@ -557,3 +557,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T288 [US1] ARBORA-FLEET-R024.18 Every scale WorkItem ends in a terminal state. Size: S, 1 PR, 2 hours.
 - [ ] T289 [US1] ARBORA-FLEET-R024.19 The scale execution record is an explicit state machine. Size: M, 1 PR, 3 hours.
 - [ ] T290 [US1] ARBORA-FLEET-R024.20 The scale authority execution record is an explicit state machine. Size: S, 1 PR, 2 hours.
+- [ ] T291 [US1] ARBORA-FLEET-R090 The fleet serves each connector's classes and capabilities
