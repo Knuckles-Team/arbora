@@ -1,28 +1,35 @@
 # Evolution proposal decide
 
-Seam between the engine revision review and the arbora proposal decision.
+Seam between the engine revision review write and the arbora proposal decision.
 
-Provider: medulla MEDULLA-DECISION-ENGINE-R805.10
+Provider: medulla MEDULLA-DECISION-ENGINE-R805.15
+Provider: medulla MEDULLA-DECISION-ENGINE-R805.7
 Consumer: arbora ARBORA-OPS-R962
+Consumer: arbora ARBORA-OPS-R960.9
 
 ## Wire shape
 
-- Arbora reads the proposal through `RevisionProposalList` and checks its digest.
-- Arbora asks the engine to record one `ReviewApproval` receipt for the proposal: `{ proposal_id, decision: approve | veto, digest, reviewer, reason }`. The engine returns `{ receipt_ref, stage }`.
+- `evolution.proposals.list` returns each proposal's engine stage as `state`: `draft`, `evaluated`, `published`, `champion` or `retired`. A proposal under review is in stage `evaluated`.
+- Arbora sends `DecisionLog` with the `review` arm: `RevisionReview { revision_id, decision: approve | veto, digest, reason }`. The reviewer is the verified principal.
+- The engine returns `RevisionReviewReceipt { revision_id, stage, receipt_ref }`. `approve` gives stage `published` (edge V02); `veto` gives stage `retired` (edge V06).
+- A repeat of the same request returns the stored receipt and writes nothing.
 
 ## Refusal codes
 
-- `NOT_FOUND`: the proposal is absent.
-- `PLAN_MISMATCH`: the digest differs from the one the reviewer saw.
-- `TRANSITION_REFUSED`: the proposal is not under review.
-- `SELF_APPROVAL`: the reviewer is the proposer.
-- `UNAVAILABLE`: the engine has no review write; no state changes.
+| Engine code | Arbora code | Meaning |
+|---|---|---|
+| `REVISION_NOT_FOUND` | `NOT_FOUND` | The proposal is absent |
+| `REVISION_DIGEST_MISMATCH` | `PLAN_MISMATCH` | The digest differs from the one the reviewer saw |
+| `TRANSITION_REFUSED` | `TRANSITION_REFUSED` | The proposal is not in stage `evaluated` |
+| `REVIEW_SELF_APPROVAL` | `SELF_APPROVAL` | The reviewer is the author |
+| (no review arm) | `UNAVAILABLE` | The engine cannot record reviews; no state changes |
 
 ## Authoritative types
 
-- `ReceiptKind::ReviewApproval` and `RevisionSubject` in the medulla decision crates.
+- `RevisionReview`, `RevisionReviewReceipt` and `RevisionStage` in the medulla decision crates; `ReviewApproval` in `crates/medulla-decision-policy-types/src/decision/held_out.rs`.
 - `handle_proposals_decide` in `arbora/api/ops/evolution.py`.
 
 ## Test vectors
 
+- `tests/decision/test_revision_review_served.py` in medulla.
 - `tests/api/test_evolution_proposals_decide.py`.

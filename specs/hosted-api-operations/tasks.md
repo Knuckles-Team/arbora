@@ -573,7 +573,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T759 [US1] ARBORA-OPS-R960.6 Alert intake emits alert events
 - [ ] T760 [US1] ARBORA-OPS-R960.7 Security verdicts emit security_audit events
 - [ ] T761 [US1] ARBORA-OPS-R960.8 Process remediation emits remediation events through an explicit machine
-- [ ] T762 [US1] ARBORA-OPS-R960.9 Evolution proposals emit evolution_proposal events through an explicit machine
+- [ ] T762 [US1] ARBORA-OPS-R960.9 Revision stage changes emit evolution_proposal events
 - [ ] T763 [US1] ARBORA-OPS-R960.10 A2A hand-offs emit a2a_handoff events
 - [ ] T764 [US1] ARBORA-OPS-R960.11 Sandbox processes emit sandbox events
 - [ ] T765 [US1] ARBORA-OPS-R960.12 Wiring and served proof
