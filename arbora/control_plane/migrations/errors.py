@@ -13,6 +13,7 @@ __all__ = [
     "MigrationNotFoundError",
     "MigrationPrerequisiteError",
     "MigrationReplayError",
+    "MigrationTransitionRefused",
 ]
 
 
@@ -51,3 +52,25 @@ class MigrationPrerequisiteError(MigrationDomainError):
 
 class MigrationReplayError(MigrationDomainError):
     code = "migration_replay_drift"
+
+
+class MigrationTransitionRefused(MigrationPrerequisiteError):
+    """A migration record machine refused an event that its table does not list.
+
+    The record does not change.  ``machine`` names the record type, ``from_state``
+    and ``event`` are the stored forms of the refused pair.
+    """
+
+    code = "migration_transition_refused"
+
+    def __init__(
+        self,
+        machine: str,
+        from_state: str,
+        event: str,
+        message: str | None = None,
+    ) -> None:
+        super().__init__(message or f"{self.code}: {machine} {from_state} --{event}-->")
+        self.machine = machine
+        self.from_state = from_state
+        self.event = event
