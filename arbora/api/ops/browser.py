@@ -92,17 +92,11 @@ async def handle_desktop_action(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Grant check first, then the SDK desktop port; never a local driver."""
-    from arbora.api.ops.pin_guards import refusal
-    from arbora.pin_lag.scion_sdk import require_desktop
-    from arbora.pin_lag.unavailable import PinLagUnavailable
+    from scion_sdk import desktop as sdk
 
     if context.caller.session is None:
         raise OperationRefused("UNAUTHENTICATED", {"reason": "verified session"})
     grant = await _admit_desktop_grant(context, params["grant_id"], params["target"])
-    try:
-        sdk = require_desktop()
-    except PinLagUnavailable as error:
-        raise refusal(error) from error
     provider = bound_service(
         context, "desktop_provider", reason="the desktop provider is not composed"
     )

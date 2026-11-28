@@ -253,9 +253,8 @@ def _adopt(item: Any, component: str, revision: str) -> EnvironmentDeclaration:
 def _sdk_export() -> tuple[Iterable[Any], str]:
     import importlib
 
-    from arbora.pin_lag.scion_sdk import require_environment_declarations
+    from scion_sdk import environment as module
 
-    module = require_environment_declarations()
     version = importlib.import_module("scion_sdk.version").__version__
     return module.environment_declarations(version).declarations, version
 

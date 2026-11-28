@@ -183,17 +183,11 @@ def test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp() ->
 @pytest.mark.asyncio
 @pytest.mark.spec("ARBORA-DATA-MARKET-R007.3")
 async def test_wallet_is_unavailable_until_every_binding_exists(
-    sdk: ModuleType, monkeypatch: pytest.MonkeyPatch
+    sdk: ModuleType,
 ) -> None:
     with pytest.raises(OperationRefused) as unbound:
         await ops.handle_wallet_operate(context(), confirmed(), NO_OP)
     assert unbound.value.code == "UNAVAILABLE"
-    monkeypatch.delitem(sys.modules, "scion_sdk.writeback.wallet_intent")
-    monkeypatch.setitem(sys.modules, "scion_sdk.writeback", None)
-    with pytest.raises(OperationRefused) as pinned:
-        await ops.handle_wallet_operate(context(Wallet()), confirmed(), NO_OP)
-    assert pinned.value.code == "UNAVAILABLE"
-    assert "wallet_intent" in str(pinned.value.details)
 
 
 @pytest.mark.asyncio

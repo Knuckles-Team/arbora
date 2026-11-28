@@ -208,13 +208,10 @@ def test_owner_exports_compose_without_arbora_adding_their_names() -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R010.8")
 def test_the_pinned_release_names_the_missing_owner_export() -> None:
-    from arbora.pin_lag import meristem, scion_sdk
+    from arbora.pin_lag import meristem
+    from arbora.pin_lag.unavailable import PinLagUnavailable
 
     try:
-        scion_sdk.require_environment_declarations()
-    except Exception as exc:
-        assert exc.missing == scion_sdk.ENVIRONMENT_SYMBOL  # type: ignore[attr-defined]
-    try:
         meristem.environment_declarations()
-    except Exception as exc:
-        assert "environment_declarations" in exc.missing  # type: ignore[attr-defined]
+    except PinLagUnavailable as exc:
+        assert "environment_declarations" in exc.missing

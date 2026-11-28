@@ -4,9 +4,7 @@
 ``WalletOperation`` carries the SDK's ``WalletBusinessIntent`` and takes its plan digest
 from ``scion_sdk.writeback.wallet_intent.wallet_plan_digest``, so both repositories hash the
 same bytes. Proof and confirmation metadata stay outside the business parameters: the
-projection never embeds a proof request. The SDK contract is guarded by
-``arbora.pin_lag.scion_sdk.require_wallet_intent``; a pinned release without it refuses
-``UNAVAILABLE`` naming the symbol, and arbora has no fallback hash.
+projection never embeds a proof request. Arbora has no fallback hash.
 """
 
 from __future__ import annotations
@@ -106,18 +104,17 @@ class WalletOperation:
     def from_params(
         cls, tenant_id: str, actor: str, params: Mapping[str, Any]
     ) -> WalletOperation:
-        from arbora.pin_lag.scion_sdk import require_wallet_intent
+        from scion_sdk.writeback import wallet_intent as module
 
-        module = require_wallet_intent()
         # The served params are frozen; the strict SDK model takes plain JSON values.
         return cls(
             tenant_id, actor, module.WalletBusinessIntent(**claim_values(params))
         )
 
     def plan_digest(self) -> str:
-        from arbora.pin_lag.scion_sdk import require_wallet_intent
+        from scion_sdk.writeback.wallet_intent import wallet_plan_digest
 
-        return str(require_wallet_intent().wallet_plan_digest(self.intent))
+        return str(wallet_plan_digest(self.intent))
 
     def projection(self) -> dict[str, str]:
         """The immutable projection: no proof, no signature, no confirmation."""

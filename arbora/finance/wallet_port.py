@@ -25,7 +25,6 @@ from arbora.api.domain.finance.delegation import DELEGATION_PROTOCOL
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.pin_guards import guard
 from arbora.api.ops.pin_guards import refusal as pin_refusal
-from arbora.pin_lag.scion_sdk import require_wallet_intent, require_wallet_trust
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = ["EngineWalletOperations", "FleetFinanceChangePort", "reservation_id"]
@@ -73,8 +72,7 @@ class EngineWalletOperations:
     async def _verify(
         self, projection: Mapping[str, str], proof: Any
     ) -> Mapping[str, Any]:
-        require_wallet_intent()
-        trust = require_wallet_trust()
+        from scion_sdk.writeback import wallet_trust as trust
         from scion_sdk.writeback.wallet_proof import (
             WalletProofBinding,
             WalletProofRequest,

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from types import SimpleNamespace
 from typing import Any
 
@@ -72,24 +71,6 @@ def test_composition_binds_the_wallet_authority_and_the_change_door() -> None:
         )["wallet_operations"]
         is mine
     )
-
-
-@pytest.mark.asyncio
-@pytest.mark.spec("ARBORA-DATA-MARKET-R007.3")
-async def test_verify_refuses_unavailable_on_a_pin_without_the_sdk_trust_resolver(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setitem(sys.modules, "scion_sdk.writeback.wallet_trust", None)
-    monkeypatch.setitem(
-        sys.modules, "scion_sdk.writeback.wallet_intent", SimpleNamespace(
-            WalletBusinessIntent=1, WalletConfirmation=1, WalletExecutionEnvelope=1,
-            wallet_plan_digest=1,
-        ),
-    )  # fmt: skip
-    with pytest.raises(OperationRefused) as refused:
-        await port(Engine()).verify(PROJECTION, {"signature": "x"})
-    assert refused.value.code == "UNAVAILABLE"
-    assert "wallet_trust" in str(refused.value.details)
 
 
 @pytest.mark.asyncio

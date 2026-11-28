@@ -5,7 +5,7 @@ A connector resolves a secret only under a ``CredentialAccessBinding`` the host 
 only from the exact current grant record, writes one receipt per decision, and answers the
 SDK's synchronous ``CredentialAuthorityPort.verify`` for the binding it admitted and for
 no other. The grant lives in the engine; arbora holds none. The SDK types come from
-``arbora.pin_lag.scion_sdk`` so a pinned release without them refuses ``UNAVAILABLE``.
+``scion_sdk.credentials.binding``.
 """
 
 from __future__ import annotations
@@ -17,8 +17,7 @@ from contextvars import ContextVar
 from types import MappingProxyType
 from typing import Any, Protocol
 
-from arbora.pin_lag.scion_sdk import require_credential_binding
-from arbora.pin_lag.unavailable import PinLagUnavailable
+from scion_sdk.credentials import binding as _binding_module
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +85,7 @@ class CredentialAuthority:
 
     def verify(self, binding: Any) -> str:
         """The SDK port: ``ok`` only for a binding this call's :meth:`admitted` admitted."""
-        module = require_credential_binding()
+        module = _binding_module
         admitted = _ADMITTED.get(frozenset())
         return (
             "ok" if module.binding_digest(binding) in admitted else "binding_mismatch"
@@ -112,7 +111,7 @@ class CredentialAuthority:
         vault reference, token profile and revision); the grant ledger supplies the
         grant, its scope ceiling, expiry and revocation revision.
         """
-        module = require_credential_binding()
+        module = _binding_module
         ask = {
             "tenant": tenant,
             "requesting_principal": requesting_principal,
@@ -135,8 +134,6 @@ class CredentialAuthority:
     async def _admit(self, module: Any, ask: Mapping[str, Any]) -> Any:
         try:
             reason, binding = await self._decide(module, ask)
-        except PinLagUnavailable:
-            raise
         except Exception:
             logger.warning("gateway boundary failed", exc_info=True)
             reason, binding = "authority_unavailable", None
