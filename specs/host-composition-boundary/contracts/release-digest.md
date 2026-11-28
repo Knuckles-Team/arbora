@@ -1,7 +1,9 @@
 # Release digest seam with the connector SDK and the package index
 
 Provider: scion-sdk SCION-CONNECTOR-CONTROL-R650.1.4
+Provider: medulla MEDULLA-SDLC-R002.3
 Consumer: arbora ARBORA-HOST-R037
+Consumer: arbora ARBORA-HOST-R037.1
 
 ## Wire shape
 
@@ -28,5 +30,5 @@ Arbora records each connector release as a sealed engine `Release` node `release
 
 ## Owner rows
 
-- Provider: scion-sdk SCION-CONNECTOR-CONTROL-R650.1.4.
-- Consumer: arbora ARBORA-HOST-R037.
+- Provider: scion-sdk SCION-CONNECTOR-CONTROL-R650.1.4 and medulla MEDULLA-SDLC-R002.3 (`RecordRelease`, which records a release with no source commit).
+- Consumer: arbora ARBORA-HOST-R037 and ARBORA-HOST-R037.1.
