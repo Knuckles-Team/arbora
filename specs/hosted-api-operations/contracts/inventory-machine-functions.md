@@ -9,13 +9,14 @@ The medulla row `MEDULLA-MACHINE-R007` exposes the identity, hosts-file and dige
 
 ## Wire shape
 
-Module `medulla.engine` holds six functions. The identity, hosts-file and digest functions are the subject here. Each takes and returns text. Structured values are canonical JSON.
+Module `medulla.engine` holds seven functions. The identity, key anchor, hosts-file and digest functions are the subject here. Each takes and returns text. Structured values are canonical JSON.
 
 | Function | Input | Output |
 |---|---|---|
 | `normalize_hosts_file(yaml)` | the hosts file text | `{"schema":"hosts-normalized/v1","hosts":[...]}` |
 | `machine_normalize_key(kind, raw)` | kind in `uuid`, `serial`, `bmc`, `host` | `{"kind","value"}` |
 | `machine_iri(tenant, keys_json)` | `[{"kind","value"}]` | `{"iri","tier","key"}` |
+| `machine_key_ref(kind, raw)` | same as `machine_normalize_key` | `{"iri","key"}` with the key anchor id |
 | `machine_lifecycle_derive(state, facts_json)` | stored state, six boolean facts | `{"event": name or null}` |
 | `machine_lifecycle_apply(state, event, facts_json)` | stored state, event name, facts | `{"state","edge_id"}` |
 | `canonical_digest(text)` | canonical JSON text | `sha256:<64 hex>` |
