@@ -555,6 +555,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R913` | Test: `tests/api/test_fleet_admin_ops.py::test_register_server_needs_plan_confirmation_and_hides_secret_values`, `tests/api/test_command_ops.py::test_commands_are_exactly_the_served_operations` and `tests/api/test_workflow_ops.py::test_run_returns_a_run_id_in_the_run_machine` (L2). | (planned: the named files do not exist yet)
 | `ARBORA-OPS-R914` | Test: `tests/api/test_ecosystem_widget_ops.py::test_each_widget_projects_rows_from_its_connector_call`, `tests/api/test_ecosystem_widget_ops.py::test_down_connector_gives_degraded_cached_rows` and `tests/api/test_media_transcribe.py::test_blob_ref_goes_to_transcription` (L2). |
 | `ARBORA-OPS-R844.2` | Test: `tests/test_served_operation_api.py::test_node_and_batch_writes_mask_secret_bearing_properties` (L2). |
+| `ARBORA-OPS-R007.3` | Test: `tests/api/test_require_plan.py::test_require_plan_previews_a_write_fleet_call_and_executes_once_under_the_plan` (L3; HTTP and MCP). (planned) |
 | `ARBORA-OPS-R915` | Test: `tests/api/test_presence_ops_served.py::test_presence_serves_one_snapshot_at_a_bounded_interval` (L3: HTTP and MCP). |
 | `ARBORA-OPS-R916` | Test: `tests/api/test_activity_ops_served.py::test_activity_serves_run_trace_facts_with_cursor_and_refuses_unrecorded` (L3: HTTP and MCP). |
 | `ARBORA-OPS-R022.2.12` | Test: `tests/api/test_schedule_ops.py::test_role_target_inherits_binding_budget_and_group` (planned, L1). |
@@ -593,6 +594,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R922.3` | Test: `tests/api/test_atlas_ops.py::test_runs_are_listed_read_and_cancelled_through_the_run_records` (L2) |
 | `ARBORA-OPS-R922.4` | Test: `tests/api/test_prompt_ops.py::test_active_prompt_resolves_the_session_agent_and_truncates` (planned, L2) |
 | `ARBORA-OPS-R915.1` | Test: `tests/api/test_city_presence_state_served.py::test_snapshot_is_revisioned_tenant_scoped_and_heartbeat_is_subject_bound` (L3; HTTP and MCP). |
+| `ARBORA-OPS-R915.2` | Test: `tests/api/test_city_presence_state_served.py::test_heartbeat_carries_activity_and_snapshot_marks_self` (L3; HTTP and MCP). (planned) |
 | `ARBORA-OPS-R950` | Test: `tests/api/test_knowledge_flag_ops.py::test_raise_resolve_get_list_over_http_and_mcp_with_denied_grant` (L3). |
 | `ARBORA-OPS-R951` | Test: `tests/api/test_knowledge_curation_ops.py::test_inputs_propose_status_metrics_and_contradiction_codes_pass_through` (L3). |
 | `ARBORA-OPS-R952` | Test: `tests/api/test_skills_friction_ops.py::test_report_group_transition_and_approval_grant` (L3). |
@@ -644,3 +646,4 @@ ARBORA-OPS-R021.4.8.3 is proven by `tests/api/test_execution_step_machine.py::te
 | `ARBORA-OPS-R960.11` | Test: `tests/observer/test_producers.py::test_sandbox_spawn_and_exit_emit_started_and_finished` (L1). (planned) |
 | `ARBORA-OPS-R960.12` | Test: `tests/api/test_observer_events_served.py::test_each_producer_appears_in_events_list` (L3). (planned) |
 | `ARBORA-OPS-R961` | Test: `tests/api/test_inventory_ops.py::test_machines_list_pages_by_iri_with_lifecycle_parts_and_newest_observation` (L2). (planned) |
+| `ARBORA-OPS-R962` | Test: `tests/api/test_evolution_proposals_decide.py::test_decide_previews_checks_digest_and_records_the_review` (L3; HTTP and MCP). (planned) |
