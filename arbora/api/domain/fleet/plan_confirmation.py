@@ -117,7 +117,7 @@ class PlanConfirmations:
 
     async def answer_elicitation(self, context: Any, params: Any) -> types.ElicitResult:
         """The child session's elicitation callback: confirm an armed call, else decline."""
-        current = self._armed.get(getattr(context, "session", None))
+        current: _Armed | None = self._armed.get(getattr(context, "session", None))
         if (
             current is None
             or not _asks_boolean_confirmation(params)

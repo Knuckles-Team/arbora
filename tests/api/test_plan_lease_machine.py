@@ -8,8 +8,9 @@ import pytest
 from test_invoke_contract import operation, run, setup_services
 
 from arbora.api.invoke.plan import (
+    INITIAL,
     PLAN_EDGES,
-    TERMINAL_PLAN_STATES,
+    TERMINALS,
     IllegalPlanTransition,
     PlanEvent,
     PlanState,
@@ -21,11 +22,23 @@ from arbora.api.registry import Effect
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R901")
 
+P, V = PlanState, PlanEvent
+
 
 @pytest.mark.parametrize(
     ("state", "event", "target"),
-    [(s, e, t) for (s, e), t in PLAN_EDGES.items()],
-    ids=[f"{s.value}-{e.value}-{t.value}" for (s, e), t in PLAN_EDGES.items()],
+    [
+        pytest.param(P.ISSUED, V.CONSUME, P.CONSUMED, id="issued-consume-consumed"),
+        pytest.param(P.CONSUMED, V.BEGIN, P.EXECUTING, id="consumed-begin-executing"),
+        pytest.param(P.EXECUTING, V.FINISH_OK, P.DONE, id="executing-finish_ok-done"),
+        pytest.param(
+            P.EXECUTING, V.FINISH_ERR, P.FAILED, id="executing-finish_err-failed"
+        ),
+        pytest.param(
+            P.CONSUMED, V.FINISH_ERR, P.FAILED, id="consumed-finish_err-failed"
+        ),
+        pytest.param(P.ISSUED, V.EXPIRE, P.EXPIRED, id="issued-expire-expired"),
+    ],
 )
 def test_legal_edge(state: PlanState, event: PlanEvent, target: PlanState) -> None:
     assert transition(state, event) is target
@@ -51,10 +64,10 @@ def test_every_illegal_pair_is_refused() -> None:
             state,
             event,
         )
-    assert TERMINAL_PLAN_STATES == {PlanState.DONE, PlanState.FAILED, PlanState.EXPIRED}
+    assert set(TERMINALS) == {PlanState.DONE, PlanState.FAILED, PlanState.EXPIRED}
     assert all(
         state not in {s for s, _ in PLAN_EDGES}
-        for state in TERMINAL_PLAN_STATES - {PlanState.EXPIRED}
+        for state in set(TERMINALS) - {PlanState.EXPIRED}
     )
 
 
@@ -96,3 +109,39 @@ def test_served_preview_confirm_runs_through_the_machine() -> None:
     assert plan_state(leases.rows[reference], 0) is PlanState.ISSUED
     assert run(services, plan_ref=reference).code == "OK" and len(runtime.calls) == 1
     assert plan_state(leases.rows[reference], 0) is PlanState.CONSUMED
+
+
+def test_the_table_is_exactly_the_designed_edges() -> None:
+    assert dict(PLAN_EDGES) == {
+        (P.ISSUED, V.CONSUME): P.CONSUMED,
+        (P.CONSUMED, V.BEGIN): P.EXECUTING,
+        (P.EXECUTING, V.FINISH_OK): P.DONE,
+        (P.EXECUTING, V.FINISH_ERR): P.FAILED,
+        (P.CONSUMED, V.FINISH_ERR): P.FAILED,
+        (P.ISSUED, V.EXPIRE): P.EXPIRED,
+    }
+
+
+def test_the_initial_state_the_terminals_and_reachability() -> None:
+    assert INITIAL is PlanState.ISSUED
+    sources = {state for state, _ in PLAN_EDGES}
+    # A terminal state has no exit (absorbing); every other state has one.
+    assert sources == set(PlanState) - set(TERMINALS)
+    reached = {INITIAL}
+    grew = True
+    while grew:
+        grew = False
+        for (source, _), target in PLAN_EDGES.items():
+            if source in reached and target not in reached:
+                reached.add(target)
+                grew = True
+    assert reached == set(PlanState)
+
+
+def test_the_wire_values_are_unchanged() -> None:
+    assert [s.value for s in PlanState] == [
+        "issued", "consumed", "executing", "done", "failed", "expired",
+    ]  # fmt: skip
+    assert [e.value for e in PlanEvent] == [
+        "consume", "begin", "finish_ok", "finish_err", "expire",
+    ]  # fmt: skip

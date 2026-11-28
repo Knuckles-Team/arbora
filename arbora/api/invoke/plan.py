@@ -55,7 +55,11 @@ PLAN_EDGES: Mapping[tuple[PlanState, PlanEvent], PlanState] = MappingProxyType(
         (_P.ISSUED, _V.EXPIRE): _P.EXPIRED,
     }
 )
-TERMINAL_PLAN_STATES = frozenset({_P.DONE, _P.FAILED, _P.EXPIRED})
+#: A lease is issued first; every plan reference starts here.
+INITIAL = _P.ISSUED
+#: Done, Failed and Expired are real ends: the confirmed call finished, the confirmed call
+#: failed, or the lease lapsed unused. A spent lease is never reused; a new plan is issued.
+TERMINALS = (_P.DONE, _P.FAILED, _P.EXPIRED)
 
 
 class IllegalPlanTransition(RuntimeError):
