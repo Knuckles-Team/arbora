@@ -18,6 +18,7 @@ from .errors import (
     WebUiPaginationError,
     WebUiPilotBoundaryError,
     WebUiRetentionError,
+    WebUiTransitionRefused,
 )
 from .models import (
     AccessContext,
@@ -91,6 +92,29 @@ _STANDARD_RETENTION_TRANSITIONS: Mapping[
         ("deletion_pending", "deleted"): "deleted",
     }
 )
+
+
+def _refuse_unlisted_state_change(
+    existing: WebUiEntity, entity: WebUiEntity, entity_kind: EntityKind
+) -> None:
+    """A replacement may change the state of a machine identity only along a listed edge."""
+    if not isinstance(
+        entity, (ConversationIdentity, NotificationIdentity, SupportIdentity)
+    ):
+        return
+    if existing.state == entity.state:  # type: ignore[union-attr]
+        return
+    reachable = {
+        target
+        for (source, _), target in entity.EDGES.items()
+        if source == existing.state  # type: ignore[union-attr]
+    }
+    if entity.state not in reachable:
+        raise WebUiTransitionRefused(
+            entity_kind,
+            existing.state,  # type: ignore[union-attr]
+            "replace",
+        )
 
 
 def entity_kind_for(entity: WebUiEntity) -> EntityKind:
@@ -413,6 +437,7 @@ class InMemoryWebUiRepository:
                     raise WebUiCasConflictError()
                 if entity.version != existing.version + 1:
                     raise WebUiCasConflictError()
+                _refuse_unlisted_state_change(existing, entity, entity_kind)
             self._entities[key] = entity
             if key not in self._retention:
                 self._retention[key] = self._initial_retention(

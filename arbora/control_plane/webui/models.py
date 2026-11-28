@@ -13,14 +13,25 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from typing import Annotated, Literal
+from enum import StrEnum
+from types import MappingProxyType
+from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from .errors import WebUiCasConflictError, WebUiTransitionRefused
 
 __all__ = [
     "MAX_ATTACHMENTS",
     "MAX_WIDGETS",
     "MAX_PAGE_SIZE",
+    "MAX_VERSION",
+    "ConversationEvent",
+    "ConversationState",
+    "NotificationEvent",
+    "NotificationState",
+    "SupportEvent",
+    "SupportState",
     "Digest",
     "LifecycleState",
     "OpaqueRef",
@@ -60,13 +71,14 @@ __all__ = [
 MAX_PAGE_SIZE = 100
 MAX_ATTACHMENTS = 16
 MAX_WIDGETS = 64
+MAX_VERSION = 2_147_483_647
 
 _ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9:_./-]{0,255}$")
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 type OpaqueRef = Annotated[str, Field(pattern=_ID_RE.pattern, min_length=1)]
 type Digest = Annotated[str, Field(pattern=_DIGEST_RE.pattern)]
-type Version = Annotated[int, Field(ge=1, le=2_147_483_647)]
+type Version = Annotated[int, Field(ge=1, le=MAX_VERSION)]
 type Timestamp = Annotated[int, Field(ge=0)]
 type PageSize = Annotated[int, Field(ge=1, le=MAX_PAGE_SIZE)]
 type Cursor = Annotated[str, Field(pattern=r"^cursor:(0|[1-9][0-9]{0,9})$")]
@@ -174,6 +186,17 @@ class _IdentityModel(_FrozenModel):
     def identity_digest(self) -> str:
         return canonical_digest(self)
 
+    def _successor(self, **changes: object) -> Self:
+        """The next version of this identity with ``changes`` applied and a fresh digest."""
+        if self.version >= MAX_VERSION:
+            raise WebUiCasConflictError("webui_version_exhausted")
+        data = {**self.model_dump(mode="python"), **changes}
+        data["version"] = self.version + 1
+        data["digest"] = canonical_digest(
+            {key: value for key, value in data.items() if key != "digest"}
+        )
+        return type(self)(**data)
+
 
 class AccessContext(_FrozenModel):
     """Explicit tenant/workspace/session authority for every operation."""
@@ -262,12 +285,73 @@ class SessionIdentity(_IdentityModel):
         return self
 
 
+class ConversationState(StrEnum):
+    """Lifecycle of one conversation (ARBORA-HOST-R041.2)."""
+
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class ConversationEvent(StrEnum):
+    ARCHIVE = "archive"
+    RESTORE = "restore"
+
+
+class NotificationState(StrEnum):
+    """Lifecycle of one notification (ARBORA-HOST-R041.2)."""
+
+    UNREAD = "unread"
+    READ = "read"
+
+
+class NotificationEvent(StrEnum):
+    MARK_READ = "mark_read"
+
+
+class SupportState(StrEnum):
+    """Lifecycle of one support request (ARBORA-HOST-R041.2)."""
+
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class SupportEvent(StrEnum):
+    CLOSE = "close"
+    REOPEN = "reopen"
+
+
 class ConversationIdentity(_IdentityModel):
+    """A conversation; ``transition`` is the only writer of ``state``."""
+
+    EDGES: ClassVar[
+        Mapping[tuple[ConversationState, ConversationEvent], ConversationState]
+    ] = MappingProxyType(
+        {
+            (
+                ConversationState.ACTIVE,
+                ConversationEvent.ARCHIVE,
+            ): ConversationState.ARCHIVED,
+            (
+                ConversationState.ARCHIVED,
+                ConversationEvent.RESTORE,
+            ): ConversationState.ACTIVE,
+        }
+    )
+    INITIAL: ClassVar[ConversationState] = ConversationState.ACTIVE
+    TERMINALS: ClassVar[tuple[ConversationState, ...]] = ()
+
     tenant_ref: OpaqueRef
     workspace_ref: OpaqueRef
     conversation_ref: OpaqueRef
     session_ref: OpaqueRef
-    state: Literal["active", "archived"] = "active"
+    state: ConversationState = ConversationState.ACTIVE
+
+    def transition(self, event: ConversationEvent) -> ConversationIdentity:
+        """The next version of the conversation after ``event``."""
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise WebUiTransitionRefused("conversation", self.state, event)
+        return self._successor(state=target)
 
 
 class ContentReference(_IdentityModel):
@@ -382,12 +466,27 @@ class DashboardIdentity(_IdentityModel):
 
 
 class NotificationIdentity(_IdentityModel):
+    """A notification; ``transition`` is the only writer of ``state``."""
+
+    EDGES: ClassVar[
+        Mapping[tuple[NotificationState, NotificationEvent], NotificationState]
+    ] = MappingProxyType(
+        {
+            (
+                NotificationState.UNREAD,
+                NotificationEvent.MARK_READ,
+            ): NotificationState.READ,
+        }
+    )
+    INITIAL: ClassVar[NotificationState] = NotificationState.UNREAD
+    TERMINALS: ClassVar[tuple[NotificationState, ...]] = (NotificationState.READ,)
+
     tenant_ref: OpaqueRef
     workspace_ref: OpaqueRef
     notification_ref: OpaqueRef
     recipient_ref: OpaqueRef
     content_ref: ContentReference
-    state: Literal["unread", "read"] = "unread"
+    state: NotificationState = NotificationState.UNREAD
 
     @model_validator(mode="after")
     def _content_scope_matches(self) -> NotificationIdentity:
@@ -396,6 +495,13 @@ class NotificationIdentity(_IdentityModel):
         if self.content_ref.workspace_ref != self.workspace_ref:
             raise ValueError("notification_content_workspace_drift")
         return self
+
+    def transition(self, event: NotificationEvent) -> NotificationIdentity:
+        """The next version of the notification after ``event``."""
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise WebUiTransitionRefused("notification", self.state, event)
+        return self._successor(state=target)
 
 
 class FeedbackIdentity(_IdentityModel):
@@ -420,13 +526,26 @@ class FeedbackIdentity(_IdentityModel):
 
 
 class SupportIdentity(_IdentityModel):
+    """A support request; ``transition`` is the only writer of ``state``."""
+
+    EDGES: ClassVar[Mapping[tuple[SupportState, SupportEvent], SupportState]] = (
+        MappingProxyType(
+            {
+                (SupportState.OPEN, SupportEvent.CLOSE): SupportState.CLOSED,
+                (SupportState.CLOSED, SupportEvent.REOPEN): SupportState.OPEN,
+            }
+        )
+    )
+    INITIAL: ClassVar[SupportState] = SupportState.OPEN
+    TERMINALS: ClassVar[tuple[SupportState, ...]] = ()
+
     tenant_ref: OpaqueRef
     workspace_ref: OpaqueRef
     support_ref: OpaqueRef
     requester_ref: OpaqueRef
     content_ref: ContentReference
     category: OpaqueRef
-    state: Literal["open", "closed"] = "open"
+    state: SupportState = SupportState.OPEN
 
     @model_validator(mode="after")
     def _support_scope_matches(self) -> SupportIdentity:
@@ -435,6 +554,13 @@ class SupportIdentity(_IdentityModel):
         if self.content_ref.workspace_ref != self.workspace_ref:
             raise ValueError("support_content_workspace_drift")
         return self
+
+    def transition(self, event: SupportEvent) -> SupportIdentity:
+        """The next version of the support request after ``event``."""
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise WebUiTransitionRefused("support", self.state, event)
+        return self._successor(state=target)
 
 
 class RetentionRecord(_FrozenModel):

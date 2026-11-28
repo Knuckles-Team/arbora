@@ -2197,3 +2197,166 @@ arbora:AuthorityExecutionMachine_failed-roll_back-rolled_back a owl:Class ;
     :fromState arbora:AuthorityExecutionFailed ;
     :toState arbora:AuthorityExecutionRolledBack ;
     :firedBy arbora:AuthorityExecutionMachine_Event_roll_back .
+
+# Conversation identity (ARBORA-HOST-R041.2).
+# Python: ConversationState, ConversationEvent, ConversationIdentity.EDGES in arbora/control_plane/webui/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:ConversationIdentityMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Conversation identity" ;
+    rdfs:comment "One conversation of the web UI. It is active until archived and returns to active when restored." ;
+    :initialState arbora:ConversationIdentityActive ;
+    :hasState arbora:ConversationIdentityActive ,
+        arbora:ConversationIdentityArchived .
+
+arbora:ConversationIdentityState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Conversation identity state" .
+
+arbora:ConversationIdentityTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Conversation identity transition" .
+
+arbora:ConversationIdentityEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Conversation identity event" .
+
+arbora:ConversationIdentityTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Conversation identity transition refused" ;
+    rdfs:comment "WebUiTransitionRefused, code webui_transition_refused, fields machine (conversation), from_state and event. The state does not change." .
+
+arbora:ConversationIdentityActive a owl:Class ;
+    rdfs:subClassOf arbora:ConversationIdentityState ;
+    :storedForm "active" .
+
+arbora:ConversationIdentityArchived a owl:Class ;
+    rdfs:subClassOf arbora:ConversationIdentityState ;
+    :storedForm "archived" .
+
+arbora:ConversationIdentityMachine_Event_archive a owl:Class ;
+    rdfs:subClassOf arbora:ConversationIdentityEvent ;
+    :storedForm "archive" .
+
+arbora:ConversationIdentityMachine_Event_restore a owl:Class ;
+    rdfs:subClassOf arbora:ConversationIdentityEvent ;
+    :storedForm "restore" .
+
+arbora:ConversationIdentityMachine_active-archive-archived a owl:Class ;
+    rdfs:subClassOf arbora:ConversationIdentityTransition ;
+    :fromState arbora:ConversationIdentityActive ;
+    :toState arbora:ConversationIdentityArchived ;
+    :firedBy arbora:ConversationIdentityMachine_Event_archive .
+
+arbora:ConversationIdentityMachine_archived-restore-active a owl:Class ;
+    rdfs:subClassOf arbora:ConversationIdentityTransition ;
+    :fromState arbora:ConversationIdentityArchived ;
+    :toState arbora:ConversationIdentityActive ;
+    :firedBy arbora:ConversationIdentityMachine_Event_restore .
+
+# ---------------------------------------------------------------------------
+# Notification identity (ARBORA-HOST-R041.2).
+# Python: NotificationState, NotificationEvent, NotificationIdentity.EDGES in arbora/control_plane/webui/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:NotificationIdentityMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Notification identity" ;
+    rdfs:comment "One web UI notification. It is unread until the recipient reads it; read is final." ;
+    :initialState arbora:NotificationIdentityUnread ;
+    :hasState arbora:NotificationIdentityUnread ,
+        arbora:NotificationIdentityRead .
+
+arbora:NotificationIdentityState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Notification identity state" .
+
+arbora:NotificationIdentityTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Notification identity transition" .
+
+arbora:NotificationIdentityEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Notification identity event" .
+
+arbora:NotificationIdentityTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Notification identity transition refused" ;
+    rdfs:comment "WebUiTransitionRefused, code webui_transition_refused, fields machine (notification), from_state and event. The state does not change." .
+
+arbora:NotificationIdentityUnread a owl:Class ;
+    rdfs:subClassOf arbora:NotificationIdentityState ;
+    :storedForm "unread" .
+
+arbora:NotificationIdentityRead a owl:Class ;
+    rdfs:subClassOf arbora:NotificationIdentityState, :TerminalState ;
+    :storedForm "read" .
+
+arbora:NotificationIdentityMachine_Event_mark_read a owl:Class ;
+    rdfs:subClassOf arbora:NotificationIdentityEvent ;
+    :storedForm "mark_read" .
+
+arbora:NotificationIdentityMachine_unread-mark_read-read a owl:Class ;
+    rdfs:subClassOf arbora:NotificationIdentityTransition ;
+    :fromState arbora:NotificationIdentityUnread ;
+    :toState arbora:NotificationIdentityRead ;
+    :firedBy arbora:NotificationIdentityMachine_Event_mark_read .
+
+# ---------------------------------------------------------------------------
+# Support identity (ARBORA-HOST-R041.2).
+# Python: SupportState, SupportEvent, SupportIdentity.EDGES in arbora/control_plane/webui/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:SupportIdentityMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Support identity" ;
+    rdfs:comment "One support request of the web UI. It is open until closed and returns to open when reopened." ;
+    :initialState arbora:SupportIdentityOpen ;
+    :hasState arbora:SupportIdentityOpen ,
+        arbora:SupportIdentityClosed .
+
+arbora:SupportIdentityState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Support identity state" .
+
+arbora:SupportIdentityTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Support identity transition" .
+
+arbora:SupportIdentityEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Support identity event" .
+
+arbora:SupportIdentityTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Support identity transition refused" ;
+    rdfs:comment "WebUiTransitionRefused, code webui_transition_refused, fields machine (support), from_state and event. The state does not change." .
+
+arbora:SupportIdentityOpen a owl:Class ;
+    rdfs:subClassOf arbora:SupportIdentityState ;
+    :storedForm "open" .
+
+arbora:SupportIdentityClosed a owl:Class ;
+    rdfs:subClassOf arbora:SupportIdentityState ;
+    :storedForm "closed" .
+
+arbora:SupportIdentityMachine_Event_close a owl:Class ;
+    rdfs:subClassOf arbora:SupportIdentityEvent ;
+    :storedForm "close" .
+
+arbora:SupportIdentityMachine_Event_reopen a owl:Class ;
+    rdfs:subClassOf arbora:SupportIdentityEvent ;
+    :storedForm "reopen" .
+
+arbora:SupportIdentityMachine_open-close-closed a owl:Class ;
+    rdfs:subClassOf arbora:SupportIdentityTransition ;
+    :fromState arbora:SupportIdentityOpen ;
+    :toState arbora:SupportIdentityClosed ;
+    :firedBy arbora:SupportIdentityMachine_Event_close .
+
+arbora:SupportIdentityMachine_closed-reopen-open a owl:Class ;
+    rdfs:subClassOf arbora:SupportIdentityTransition ;
+    :fromState arbora:SupportIdentityClosed ;
+    :toState arbora:SupportIdentityOpen ;
+    :firedBy arbora:SupportIdentityMachine_Event_reopen .
