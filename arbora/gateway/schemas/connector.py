@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from arbora.gateway.schemas.status import ResponseStatus
 
 
 class ConnectorRunRequest(BaseModel):
@@ -46,7 +48,7 @@ class ConnectorRunResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always success on this path.")
+    status: ResponseStatus = Field(description="Always success on this path.")
     result: ConnectorRunResult = Field(description="The connector run result.")
 
 
@@ -63,5 +65,5 @@ class ConnectorSourcesResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always success on this path.")
+    status: ResponseStatus = Field(description="Always success on this path.")
     result: ConnectorSourcesResult = Field(description="Connector type inventory.")

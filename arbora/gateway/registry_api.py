@@ -42,6 +42,7 @@ from arbora.gateway.registry_models import (
     KIND_SPECS,
     RegistryItemEnvelope,
     RegistryKindResult,
+    RegistryKindStatus,
     RegistryMultiKindPage,
     RegistryPage,
     _keys_of,
@@ -1120,7 +1121,7 @@ def _iter_toggleable_items(
     in ``_TOGGLE_KEY_BUILDERS``."""
     for kind, result in kinds_map.items():
         builder = _TOGGLE_KEY_BUILDERS.get(kind)
-        if builder is None or result.status != "ok":
+        if builder is None or result.status != RegistryKindStatus.OK:
             continue
         for item in result.items:
             if "enabled" in item:
@@ -1225,7 +1226,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                 "registry %s unavailable (multi-kind): %s", kind, exc, exc_info=True
             )
             return kind, RegistryKindResult(
-                status="unavailable", reason="catalog_unavailable"
+                status=RegistryKindStatus.UNAVAILABLE, reason="catalog_unavailable"
             )
 
         next_cursor = _next_page_cursor(
@@ -1244,7 +1245,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                 "registry %s response shape unavailable (multi-kind): %s", kind, exc
             )
             return kind, RegistryKindResult(
-                status="unavailable", reason="catalog_unavailable"
+                status=RegistryKindStatus.UNAVAILABLE, reason="catalog_unavailable"
             )
         return kind, RegistryKindResult(
             items=[item.model_dump() for item in items],

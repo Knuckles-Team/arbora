@@ -13,6 +13,7 @@ from pydantic import TypeAdapter, ValidationError
 from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
+    BrowserCallStatus,
     BrowserChannelBinding,
     CatalogRegistrationReceipt,
 )
@@ -99,7 +100,7 @@ class BrowserControlMixinState:
         return BrowserCallReceipt(
             call_id=active.call_id,
             lease_id=active.request.lease_id,
-            status=status,
+            status=BrowserCallStatus(status),
             effect=effect,
             result=result,
             result_digest=result_digest,

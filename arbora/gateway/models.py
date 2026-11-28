@@ -42,6 +42,16 @@ class ServiceCategory(StrEnum):
     CUSTOM = "Custom"
 
 
+class WidgetStatus(StrEnum):
+    """How a widget's service answered: fine, failed, unreachable or unknown."""
+
+    OK = "ok"
+    ERROR = "error"
+    DEGRADED = "degraded"
+    UNREACHABLE = "unreachable"
+    UNKNOWN = "unknown"
+
+
 class WidgetData(BaseModel):
     """Data returned from a widget's fetch_data() method.
 
@@ -52,8 +62,9 @@ class WidgetData(BaseModel):
         default_factory=dict,
         description="Key-value pairs of metric data, keyed by WidgetField.key",
     )
-    status: str = Field(
-        default="ok", description="Service status: ok, error, unreachable, unknown"
+    status: WidgetStatus = Field(
+        default=WidgetStatus.OK,
+        description="Service status: ok, degraded, error, unreachable, unknown",
     )
     error: str | None = Field(
         default=None, description="Error message if status is not ok"

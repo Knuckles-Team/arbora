@@ -12,6 +12,7 @@ import pytest
 from arbora.mcp_server.composition import (
     EngineEndpoint,
     EngineProbe,
+    EngineState,
     probe_engine,
 )
 
@@ -58,7 +59,7 @@ def test_live_fake_engine_is_running_and_dead_socket_is_absent(
     listener: EngineEndpoint, tmp_path: Any
 ) -> None:
     assert probe_engine(listener, 1.0, health=_healthy) == EngineProbe(
-        "running", "3.3.3"
+        EngineState.RUNNING, "3.3.3"
     )
     # An engine that answers with a refusal is still running.
     assert probe_engine(listener, 1.0, health=_refusing).state == "running"
@@ -66,7 +67,9 @@ def test_live_fake_engine_is_running_and_dead_socket_is_absent(
     assert probe_engine(listener, 0.3, health=_silent).state == "absent"
 
     dead_unix = EngineEndpoint("unix", str(tmp_path / "dead.sock"))
-    assert probe_engine(dead_unix, 0.5, health=_healthy) == EngineProbe("absent")
+    assert probe_engine(dead_unix, 0.5, health=_healthy) == EngineProbe(
+        EngineState.ABSENT
+    )
     free = socket.socket()
     free.bind(("127.0.0.1", 0))
     port = free.getsockname()[1]

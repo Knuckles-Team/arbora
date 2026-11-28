@@ -189,15 +189,22 @@ class DiagnosticEntry:
         }
 
 
+class ReportStatus(StrEnum):
+    """Whether a diagnostic report covers every allowlisted entry."""
+
+    COMPLETE = "complete"
+    INCOMPLETE = "incomplete"
+
+
 @dataclass(frozen=True, slots=True)
 class DiagnosticReport:
     """Bounded, serializable, value-free diagnostics."""
 
-    status: str
+    status: ReportStatus
     entries: tuple[DiagnosticEntry, ...]
 
     def __post_init__(self) -> None:
-        if self.status not in {"complete", "incomplete"}:
+        if self.status not in set(ReportStatus):
             raise DiagnosticInputError("allowlist-invalid")
         if len(self.entries) > MAX_ENTRIES:
             raise DiagnosticInputError("allowlist-too-large")
@@ -314,7 +321,7 @@ def diagnose(
         )
 
     return DiagnosticReport(
-        status="incomplete" if incomplete else "complete",
+        status=ReportStatus.INCOMPLETE if incomplete else ReportStatus.COMPLETE,
         entries=tuple(entries),
     )
 

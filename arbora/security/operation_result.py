@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -31,12 +32,20 @@ class OperationError(ProtocolModel):
     detail_ref: Annotated[str, Field(min_length=1)] | None
 
 
+class OperationStatus(StrEnum):
+    """How a served operation ended."""
+
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    REDIRECTED = "redirected"
+
+
 class OperationResult(ProtocolModel):
     """The success, failure or redirect envelope of one served operation."""
 
     schema_version: Literal["1"]
     operation_id: Annotated[str, Field(min_length=1)]
-    status: Literal["succeeded", "failed", "redirected"]
+    status: Annotated[OperationStatus, Field(strict=False)]
     result_kind: Annotated[str, Field(min_length=1)] | None
     result_ref: Annotated[str, Field(min_length=1)] | None
     error: OperationError | None

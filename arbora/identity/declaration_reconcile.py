@@ -17,6 +17,7 @@ import json
 import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
 from urllib.parse import quote
 
@@ -492,18 +493,29 @@ class _Walk:
             )
 
 
+class DeclaredState(StrEnum):
+    """Where a declared client set stands against the identity provider."""
+
+    CONVERGED = "converged"
+    PLANNED = "planned"
+    DRIFT = "drift"
+    DEGRADED = "degraded"
+
+
 @dataclass(frozen=True, slots=True)
 class DeclaredOutcome:
     """The result of a declared reconcile."""
 
-    state: str
+    state: DeclaredState
     changed: tuple[str, ...]
     violations: tuple[str, ...]
     code: str | None = None
 
     @property
     def exit_code(self) -> int:
-        return 0 if self.state in ("converged", "planned") else 1
+        return (
+            0 if self.state in (DeclaredState.CONVERGED, DeclaredState.PLANNED) else 1
+        )
 
 
 def reconcile(
@@ -520,15 +532,15 @@ def reconcile(
         first = _Walk(decl, admin, sink, apply=mode == "apply").run()
         if mode == "plan":
             return DeclaredOutcome(
-                "planned", tuple(first.changes), tuple(first.violations)
+                DeclaredState.PLANNED, tuple(first.changes), tuple(first.violations)
             )
         if mode == "check":
-            state = "converged" if first.converged else "drift"
+            state = DeclaredState.CONVERGED if first.converged else DeclaredState.DRIFT
             return DeclaredOutcome(state, tuple(first.changes), tuple(first.violations))
         verify = _Walk(decl, admin, None, apply=False).run()
     except ContractFailure as failure:
-        return DeclaredOutcome("degraded", (), failure.items, failure.code)
-    state = "converged" if verify.converged else "degraded"
+        return DeclaredOutcome(DeclaredState.DEGRADED, (), failure.items, failure.code)
+    state = DeclaredState.CONVERGED if verify.converged else DeclaredState.DEGRADED
     code = None if verify.converged else "client_drift"
     return DeclaredOutcome(
         state, tuple(first.changes), tuple(first.violations + verify.violations), code
@@ -591,7 +603,7 @@ def reconcile_file(
         admin = factory(decl.contract_config())
         sink = sink_factory(decl) if mode == "apply" else None
     except ContractFailure as failure:
-        return DeclaredOutcome("degraded", (), failure.items, failure.code)
+        return DeclaredOutcome(DeclaredState.DEGRADED, (), failure.items, failure.code)
     return reconcile(decl, admin, sink, mode=mode)
 
 

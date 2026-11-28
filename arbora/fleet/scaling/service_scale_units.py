@@ -17,6 +17,7 @@ import json
 import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Annotated, Literal
 
@@ -840,13 +841,22 @@ class ScaleUnitContract(ProtocolModel):
         object.__setattr__(self, "contract_digest", expected_digest)
 
 
+class EvidenceStatus(StrEnum):
+    """Whether one piece of scale evidence was accepted, absent, out of date or blocking."""
+
+    ACCEPTED = "accepted"
+    MISSING = "missing"
+    STALE = "stale"
+    BLOCKED = "blocked"
+
+
 class DecisionEvidence(ProtocolModel):
     """Opaque bounded evidence attached to a scale decision."""
 
     kind: EvidenceKind
     ref: Annotated[str, Field(min_length=1, max_length=MAX_REF_LENGTH)]
     digest: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
-    status: Literal["accepted", "missing", "stale", "blocked"]
+    status: Annotated[EvidenceStatus, Field(strict=False)]
     code: Annotated[str, Field(min_length=1, max_length=64)]
 
     @field_validator("ref")

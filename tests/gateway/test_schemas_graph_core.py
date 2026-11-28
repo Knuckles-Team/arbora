@@ -14,6 +14,8 @@ from pydantic import BaseModel, ValidationError
 
 from arbora.api.evidence import EvidenceBundle
 from arbora.gateway.schemas import graph_core as schemas
+from arbora.gateway.schemas.graph_core import HookStatus
+from arbora.gateway.schemas.status import ResponseStatus
 
 # ── every BaseModel this module defines (used by the blanket description
 #    sweep below) — collected by introspection so a new model added later is
@@ -73,7 +75,7 @@ def test_graph_query_federated_rejects_unknown_field() -> None:
 
 def test_evidence_bundle_envelope_accepts_a_real_bundle() -> None:
     bundle = EvidenceBundle(answer_candidate="42 nodes matched.")
-    env = schemas.EvidenceBundleEnvelope(status="success", result=bundle)
+    env = schemas.EvidenceBundleEnvelope(status=ResponseStatus.SUCCESS, result=bundle)
     assert env.result.answer_candidate == "42 nodes matched."
 
 
@@ -165,7 +167,9 @@ def test_graph_configure_request_rejects_unknown_field() -> None:
 
 
 def test_graph_configure_response_permissive_result() -> None:
-    resp = schemas.GraphConfigureResponse(status="success", result={"anything": True})
+    resp = schemas.GraphConfigureResponse(
+        status=ResponseStatus.SUCCESS, result={"anything": True}
+    )
     assert resp.result == {"anything": True}
 
 
@@ -187,7 +191,9 @@ def test_graph_configure_secret_request_allows_unknown_field() -> None:
 
 
 def test_set_secret_result_never_carries_the_value() -> None:
-    result = schemas.SetSecretResult(status="success", action="set_secret", stored=True)
+    result = schemas.SetSecretResult(
+        status=ResponseStatus.SUCCESS, action="set_secret", stored=True
+    )
     assert "config_value" not in type(result).model_fields
     assert set(type(result).model_fields) == {"status", "action", "stored"}
 
@@ -209,7 +215,7 @@ def test_graph_configure_vault_sync_request_valid() -> None:
 
 def test_vault_sync_result_never_carries_raw_values() -> None:
     result = schemas.VaultSyncResult(
-        status="success",
+        status=ResponseStatus.SUCCESS,
         action="vault_sync",
         service="my-service",
         refs={"API_TOKEN": "vault://my-service/API_TOKEN"},
@@ -233,7 +239,7 @@ def test_hook_doctor_entry_valid() -> None:
     entry = schemas.HookDoctorEntry(
         name="claude-code",
         path="/home/user/.claude.json",
-        status="healthy",
+        status=HookStatus.HEALTHY,
         size_bytes=128,
     )
     assert entry.status == "healthy"
@@ -342,7 +348,7 @@ def test_create_goal_request_allows_unknown_field() -> None:
 
 def test_create_goal_response_valid() -> None:
     resp = schemas.CreateGoalResponse(
-        status="success",
+        status=ResponseStatus.SUCCESS,
         goal_id="g1",
         session_id="s1",
         objective="ship it",
@@ -375,7 +381,7 @@ def test_list_goals_response_valid() -> None:
 
 def test_cancel_goal_response_valid() -> None:
     resp = schemas.CancelGoalResponse(
-        status="success", message="Goal cancelled successfully."
+        status=ResponseStatus.SUCCESS, message="Goal cancelled successfully."
     )
     assert resp.message
 

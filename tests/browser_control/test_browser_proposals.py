@@ -14,6 +14,7 @@ from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
     ControlProposalResponseMessage,
     ControlResultMessage,
+    ControlResultStatus,
 )
 from arbora.browser_control.browser_control_runtime import (
     dispatch_browser_control,
@@ -133,7 +134,9 @@ async def test_read_executes_only_after_human_acceptance(
             assert _leases(engine) and engine.browser_control_state.claim_count == 1
             await connection.receive(
                 ControlResultMessage(
-                    call_id=call.call_id, status="succeeded", result={"ok": True}
+                    call_id=call.call_id,
+                    status=ControlResultStatus.SUCCEEDED,
+                    result={"ok": True},
                 )
             )
             receipt = await asyncio.wait_for(task, 2)
@@ -190,7 +193,9 @@ async def test_mutation_requires_separate_exact_confirmation(
         )
         await connection.receive(
             ControlResultMessage(
-                call_id=call.call_id, status="succeeded", result={"ok": True}
+                call_id=call.call_id,
+                status=ControlResultStatus.SUCCEEDED,
+                result={"ok": True},
             )
         )
         assert (await asyncio.wait_for(task, 2)).status == "succeeded"
@@ -293,7 +298,9 @@ async def test_caller_cancellation_during_cleanup_finishes_lease_revocation(
         assert call.type == "control.call"
         await connection.receive(
             ControlResultMessage(
-                call_id=call.call_id, status="succeeded", result={"ok": True}
+                call_id=call.call_id,
+                status=ControlResultStatus.SUCCEEDED,
+                result={"ok": True},
             )
         )
         await asyncio.wait_for(entered.wait(), 2)
@@ -503,7 +510,9 @@ async def test_expired_authority_during_cleanup_does_not_join_own_parent(
         assert call.type == "control.call"
         await connection.receive(
             ControlResultMessage(
-                call_id=call.call_id, status="succeeded", result={"ok": True}
+                call_id=call.call_id,
+                status=ControlResultStatus.SUCCEEDED,
+                result={"ok": True},
             )
         )
         with pytest.raises(asyncio.CancelledError):

@@ -23,7 +23,11 @@ from typing import Any, Protocol
 from scion_sdk.privacy import sanitize_for_persistence
 
 from arbora.security.actor_context import ActorContext, current_actor
-from arbora.security.operation_result import OperationError, OperationResult
+from arbora.security.operation_result import (
+    OperationError,
+    OperationResult,
+    OperationStatus,
+)
 
 _DEFAULT_LOGGER = logging.getLogger(__name__)
 
@@ -591,7 +595,7 @@ def public_error_payload(
     payload = OperationResult(
         schema_version="1",
         operation_id=f"operation:{uuid.uuid4().hex}",
-        status="failed",
+        status=OperationStatus.FAILED,
         result_kind=None,
         result_ref=None,
         error=OperationError(

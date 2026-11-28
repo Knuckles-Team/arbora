@@ -22,7 +22,12 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from arbora.gateway.config import ConfigManager
-from arbora.gateway.models import DashboardLayout, ServiceConfig, WidgetData
+from arbora.gateway.models import (
+    DashboardLayout,
+    ServiceConfig,
+    WidgetData,
+    WidgetStatus,
+)
 from arbora.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
@@ -43,7 +48,7 @@ def widget_data(reply: Mapping[str, Any]) -> WidgetData:
     degraded = bool(reply.get("degraded"))
     return WidgetData(
         fields=fields,
-        status="degraded" if degraded else "ok",
+        status=WidgetStatus.DEGRADED if degraded else WidgetStatus.OK,
         raw={"source": reply.get("source"), "fetched_at": reply.get("fetched_at")},
     )
 
@@ -72,7 +77,7 @@ class Aggregator:
             None,
         )
         if svc is None:
-            return WidgetData(status="error", error="service not found")
+            return WidgetData(status=WidgetStatus.ERROR, error="service not found")
         return await self._fetch_one(svc, read)
 
     @staticmethod
@@ -83,7 +88,7 @@ class Aggregator:
             logger.warning("gateway boundary failed", exc_info=True)
             failure = public_error_payload(exc, logger=logger)["error"]
             return WidgetData(
-                status="error",
+                status=WidgetStatus.ERROR,
                 error=failure["code"],
                 raw={
                     "code": failure["code"],
@@ -94,7 +99,7 @@ class Aggregator:
     async def health_check(self, read: WidgetReader) -> dict[str, bool]:
         """A service is healthy when its widget reads without degrading."""
         results = await self.fetch_all(read)
-        return {sid: data.status == "ok" for sid, data in results.items()}
+        return {sid: data.status == WidgetStatus.OK for sid, data in results.items()}
 
     def get_layout(self) -> DashboardLayout:
         """The current dashboard layout."""

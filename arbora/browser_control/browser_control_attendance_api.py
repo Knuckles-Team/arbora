@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseStatus
 from arbora.api.domain.browser_control.browser_control_common import (
     DIGEST,
     RECENT_AUTH_GRANT_SECONDS,
@@ -84,7 +84,7 @@ class AttendedArmReceipt(BaseModel):
     attended_arm_expires_at: float
     catalog_digest: str
     tool_scope_digest: str
-    status: Literal["active", "revoked", "expired"] = "active"
+    status: BrowserLeaseStatus = BrowserLeaseStatus.ACTIVE
 
     @field_validator("attended_arm_ref")
     @classmethod

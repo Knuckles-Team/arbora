@@ -25,6 +25,7 @@ from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
     ControlProposalResponseMessage,
     ControlResultMessage,
+    ControlResultStatus,
 )
 from arbora.browser_control.browser_control_port import BrowserControlConnection
 from arbora.browser_control.browser_control_registration import (
@@ -252,7 +253,7 @@ class BrowserChannelMixin(BrowserControlMixinState):
         self, state: _ChannelState, message: ControlResultMessage
     ) -> None:
         active = await revalidate_active_message(self, state, message.call_id)
-        if message.status == "succeeded":
+        if message.status == ControlResultStatus.SUCCEEDED:
             await self._sync_runner(
                 lambda: _validate_json_schema(
                     active.descriptor.output_schema, message.result

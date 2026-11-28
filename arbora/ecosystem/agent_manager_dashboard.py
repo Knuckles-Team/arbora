@@ -20,6 +20,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -40,13 +41,22 @@ class _CypherQueryEngine(Protocol):
     def query_cypher(self, query: str) -> list[dict[str, Any]]: ...
 
 
+class ComponentHealth(StrEnum):
+    """How one agent-manager component is doing: fine, worth a look, broken, or unused."""
+
+    OK = "ok"
+    WARNING = "warning"
+    ERROR = "error"
+    STALE = "stale"
+
+
 @dataclass
 class ComponentStatus:
     """Status of a single ecosystem component."""
 
     category: str  # hooks, skills, plugins, permissions, agents_md
     name: str
-    status: str = "ok"  # ok, warning, error, stale
+    status: ComponentHealth = ComponentHealth.OK
     detail: str = ""
     usage_count: int = 0
     last_used: str = ""
@@ -161,14 +171,18 @@ class AgentManagerDashboard:
 
         # Calculate health score
         total = len(report.components) or 1
-        ok = sum(1 for c in report.components if c.status == "ok")
+        ok = sum(1 for c in report.components if c.status == ComponentHealth.OK)
         report.health_score = ok / total
 
         report.summary = {
             "total": total,
             "ok": ok,
-            "warnings": sum(1 for c in report.components if c.status == "warning"),
-            "errors": sum(1 for c in report.components if c.status == "error"),
+            "warnings": sum(
+                1 for c in report.components if c.status == ComponentHealth.WARNING
+            ),
+            "errors": sum(
+                1 for c in report.components if c.status == ComponentHealth.ERROR
+            ),
         }
 
         logger.info(
@@ -186,7 +200,7 @@ class AgentManagerDashboard:
 
         if agents_md.is_file():
             age = (time.time() - agents_md.stat().st_mtime) / 86400
-            status = "ok" if age < 90 else "stale"
+            status = ComponentHealth.OK if age < 90 else ComponentHealth.STALE
             items.append(
                 ComponentStatus(
                     category="agents_md",
@@ -200,7 +214,7 @@ class AgentManagerDashboard:
                 ComponentStatus(
                     category="agents_md",
                     name="AGENTS.md",
-                    status="error",
+                    status=ComponentHealth.ERROR,
                     detail="File not found",
                 )
             )
@@ -211,7 +225,9 @@ class AgentManagerDashboard:
             ComponentStatus(
                 category="agents_md",
                 name="CODEBASE.md",
-                status="ok" if codebase_md.is_file() else "warning",
+                status=ComponentHealth.OK
+                if codebase_md.is_file()
+                else ComponentHealth.WARNING,
                 detail="Present" if codebase_md.is_file() else "Not generated yet",
             )
         )
@@ -230,7 +246,7 @@ class AgentManagerDashboard:
                         ComponentStatus(
                             category="hooks",
                             name=hook.name,
-                            status="ok",
+                            status=ComponentHealth.OK,
                         )
                     )
         else:
@@ -238,7 +254,7 @@ class AgentManagerDashboard:
                 ComponentStatus(
                     category="hooks",
                     name="hooks_directory",
-                    status="warning",
+                    status=ComponentHealth.WARNING,
                     detail="No hooks directory found",
                 )
             )
@@ -254,7 +270,7 @@ class AgentManagerDashboard:
         return ComponentStatus(
             category="plugins",
             name=plugin_dir.name,
-            status="ok" if manifest else "warning",
+            status=ComponentHealth.OK if manifest else ComponentHealth.WARNING,
             detail="Valid manifest" if manifest else "Missing manifest",
         )
 
@@ -278,7 +294,7 @@ class AgentManagerDashboard:
                     ComponentStatus(
                         category="permissions",
                         name="permissions.json",
-                        status="ok",
+                        status=ComponentHealth.OK,
                         detail=f"{deny_count} deny rules",
                     )
                 )
@@ -287,7 +303,7 @@ class AgentManagerDashboard:
                     ComponentStatus(
                         category="permissions",
                         name="permissions.json",
-                        status="error",
+                        status=ComponentHealth.ERROR,
                         detail="Invalid JSON",
                     )
                 )
@@ -296,7 +312,7 @@ class AgentManagerDashboard:
                 ComponentStatus(
                     category="permissions",
                     name="permissions.json",
-                    status="warning",
+                    status=ComponentHealth.WARNING,
                     detail="No permission policy configured",
                 )
             )
@@ -322,7 +338,9 @@ class AgentManagerDashboard:
                     ComponentStatus(
                         category="skills",
                         name=name,
-                        status="ok" if uses > 0 else "stale",
+                        status=ComponentHealth.OK
+                        if uses > 0
+                        else ComponentHealth.STALE,
                         usage_count=uses,
                     )
                 )
@@ -342,7 +360,7 @@ class AgentManagerDashboard:
                     ComponentStatus(
                         category="proposals",
                         name="pending_updates",
-                        status="warning",
+                        status=ComponentHealth.WARNING,
                         detail=f"{len(files)} pending AGENTS.md proposals to review",
                     )
                 )

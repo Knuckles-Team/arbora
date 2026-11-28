@@ -19,6 +19,7 @@ from arbora.fleet.scaling.service_scale_units import (
     DecisionEvidence,
     DecisionReason,
     EvidenceKind,
+    EvidenceStatus,
     LoadSafetyObservation,
     QuotaBinding,
     QuotaObservation,
@@ -39,7 +40,9 @@ def _profile_evidence(
     status: Literal["accepted", "missing", "stale", "blocked"],
     code: str,
 ) -> DecisionEvidence:
-    return DecisionEvidence(kind=kind, ref=ref, digest=digest, status=status, code=code)
+    return DecisionEvidence(
+        kind=kind, ref=ref, digest=digest, status=EvidenceStatus(status), code=code
+    )
 
 
 def _fresh(observed_at: datetime, expires_at: datetime, now: datetime) -> bool:

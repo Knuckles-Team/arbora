@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 
 from arbora.core.settings import RuntimeConfig
 from arbora.gateway import dashboard_api
-from arbora.gateway.models import DashboardLayout, WidgetData
+from arbora.gateway.models import DashboardLayout, WidgetData, WidgetStatus
 from arbora.gateway.state import GatewayState
 from arbora.observability.state import build_health_state
 
@@ -95,7 +95,7 @@ class _FakeAggregator:
 
     @staticmethod
     def _widget(service_id: str) -> WidgetData:
-        return WidgetData(fields={"id": service_id}, status="ok")
+        return WidgetData(fields={"id": service_id}, status=WidgetStatus.OK)
 
 
 @pytest.fixture

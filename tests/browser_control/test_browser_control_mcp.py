@@ -8,7 +8,10 @@ from typing import Any
 
 import pytest
 
-from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseReceipt
+from arbora.api.domain.browser_control.browser_control_api import (
+    BrowserLeaseReceipt,
+    BrowserLeaseStatus,
+)
 from arbora.browser_control import mcp as browser_control_mcp
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig
@@ -44,7 +47,7 @@ async def test_browser_control_registers_one_mcp_rest_workflow_dispatch(
             registration_generation=1,
             expires_at=100.0,
             hard_expires_at=200.0,
-            status="active",
+            status=BrowserLeaseStatus.ACTIVE,
         )
 
     monkeypatch.setattr(browser_control_mcp, "dispatch_browser_control", dispatch)

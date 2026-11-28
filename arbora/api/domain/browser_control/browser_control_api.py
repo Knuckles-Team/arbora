@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
@@ -157,6 +158,14 @@ class RevokeLeaseRequest(BaseModel):
     reason: _MachineCode = Field(min_length=1, max_length=64)
 
 
+class BrowserLeaseStatus(StrEnum):
+    """Whether a browser control lease is live, revoked or timed out."""
+
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
 class BrowserLeaseReceipt(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -166,7 +175,7 @@ class BrowserLeaseReceipt(BaseModel):
     registration_generation: int
     expires_at: float
     hard_expires_at: float
-    status: Literal["active", "revoked", "expired"]
+    status: BrowserLeaseStatus
 
 
 class CatalogRegistrationReceipt(BaseModel):
@@ -216,20 +225,24 @@ class ReconcileCallRequest(BaseModel):
     call_id: _Identifier
 
 
+class BrowserCallStatus(StrEnum):
+    """Where one browser control call ended, or that it is still waiting."""
+
+    PENDING_CONFIRMATION = "pending_confirmation"
+    DISPATCHED = "dispatched"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
+    DENIED = "denied"
+
+
 class BrowserCallReceipt(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     call_id: str
     lease_id: str
-    status: Literal[
-        "pending_confirmation",
-        "dispatched",
-        "succeeded",
-        "failed",
-        "cancelled",
-        "unknown",
-        "denied",
-    ]
+    status: BrowserCallStatus
     effect: CancellationEffect
     result: Any | None = None
     result_digest: str | None = None
