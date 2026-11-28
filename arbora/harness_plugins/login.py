@@ -57,6 +57,11 @@ class CredentialEvent(StrEnum):
 
 
 S, E = CredentialState, CredentialEvent
+#: A sign-in starts here; a stored credential is already past it (``Credential.state``
+#: defaults to ``AUTHORIZED``, the state a credential is saved in).
+INITIAL = S.UNAUTHENTICATED
+#: No state is final: an expired or revoked credential recovers through a new sign-in.
+TERMINALS: tuple[CredentialState, ...] = ()
 CREDENTIAL_EDGES: Mapping[tuple[CredentialState, CredentialEvent], CredentialState] = (
     MappingProxyType(
         {
@@ -75,11 +80,14 @@ CREDENTIAL_EDGES: Mapping[tuple[CredentialState, CredentialEvent], CredentialSta
 
 
 class IllegalCredentialTransition(RuntimeError):
+    """An event the credential state does not accept; the state does not change."""
+
     code = "CREDENTIAL_TRANSITION_ILLEGAL"
+    machine = "harness_credential"
 
     def __init__(self, state: CredentialState, event: CredentialEvent) -> None:
         super().__init__(f"{self.code}: {state} --{event}-->")
-        self.state = state
+        self.from_state = state
         self.event = event
 
 
@@ -304,6 +312,8 @@ def renew(
 
 __all__ = [
     "CREDENTIAL_EDGES",
+    "INITIAL",
+    "TERMINALS",
     "Credential",
     "CredentialEvent",
     "CredentialState",
