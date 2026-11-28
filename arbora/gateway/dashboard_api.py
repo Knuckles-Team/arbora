@@ -35,7 +35,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from arbora.gateway.aggregator import WIDGET_READ_OP, Aggregator, WidgetReader
 from arbora.gateway.config import ConfigManager
-from arbora.gateway.models import DashboardLayout, WidgetData
+from arbora.gateway.models import DashboardLayout, WidgetData, WidgetStatus
 from arbora.gateway.route_marks import build_router, route
 from arbora.gateway.state import GatewayState, gateway_of
 from arbora.security.error_surface import public_error_payload
@@ -158,7 +158,7 @@ async def get_service_data(service_id: str, request: Request) -> WidgetData:
     data: WidgetData = await _get_aggregator(request).fetch_one(
         service_id, _reader(request)
     )
-    if data.status == "error" and "not found" in (data.error or ""):
+    if data.status == WidgetStatus.ERROR and "not found" in (data.error or ""):
         raise HTTPException(status_code=404, detail="service not found")
     return data
 

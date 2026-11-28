@@ -22,6 +22,7 @@ catalogs use the typed Medulla-backed enhanced catalog owned by Arbora.
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -34,6 +35,7 @@ from arbora.gateway.schemas.connector import (
     ConnectorSourcesResponse,
     ConnectorSourcesResult,
 )
+from arbora.gateway.schemas.status import ResponseStatus
 
 __all__ = [
     # graph_query / graph_query/federated
@@ -96,7 +98,7 @@ class EvidenceBundleEnvelope(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(
+    status: ResponseStatus = Field(
         description="Always 'success' on this path; failures return a "
         "different, non-2xx error body (see `_external_error_response`) "
         "and never reach this envelope shape."
@@ -378,7 +380,7 @@ class GraphConfigureResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     result: dict[str, Any] | str = Field(
         description="Action-dependent payload; free-form dict for nearly "
         "every action, occasionally a bare string."
@@ -427,7 +429,7 @@ class SetSecretResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     action: Literal["set_secret"] = Field(description="Echoes the action performed.")
     stored: bool = Field(description="Whether the secret was written. Never the value.")
 
@@ -439,7 +441,7 @@ class GraphConfigureSecretResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     result: SetSecretResult = Field(
         description="Confirmation only — no secret material."
     )
@@ -490,7 +492,7 @@ class VaultSyncResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     action: Literal["vault_sync"] = Field(description="Echoes the action performed.")
     service: str = Field(description="The service name this sync ran against.")
     refs: dict[str, str] = Field(
@@ -517,10 +519,20 @@ class GraphConfigureVaultSyncResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     result: VaultSyncResult = Field(
         description="References + key names only — no secret material."
     )
+
+
+class HookStatus(StrEnum):
+    """What the doctor found for one agent surface's meristem hook."""
+
+    HEALTHY = "healthy"
+    STALE = "stale"
+    NOT_INSTALLED = "not_installed"
+    INTEGRATED = "integrated"
+    N_A = "n/a"
 
 
 class HookDoctorEntry(BaseModel):
@@ -535,7 +547,7 @@ class HookDoctorEntry(BaseModel):
         description="Filesystem path to that surface's hook config, or null "
         "when the surface has no on-disk config (e.g. an integrated surface)."
     )
-    status: Literal["healthy", "stale", "not_installed", "integrated", "n/a"] = Field(
+    status: HookStatus = Field(
         description="'healthy' (contains 'meristem'), 'stale' (config "
         "exists but doesn't reference meristem), 'not_installed' (no "
         "file yet), 'integrated' (agent-terminal-ui, no separate config "
@@ -559,7 +571,7 @@ class GraphConfigureDoctorResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     result: dict[str, HookDoctorEntry] = Field(
         description="Agent-surface id -> hook health entry."
     )
@@ -667,7 +679,7 @@ class CreateGoalResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     goal_id: str = Field(description="The newly created goal's id.")
     session_id: str = Field(description="The newly created durable session's id.")
     objective: str = Field(description="The parsed objective (echoed back).")
@@ -706,7 +718,7 @@ class CancelGoalResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success"] = Field(description="Always 'success' on this path.")
+    status: ResponseStatus = Field(description="Always 'success' on this path.")
     message: str = Field(description="Human-readable confirmation.")
 
 

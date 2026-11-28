@@ -10,7 +10,10 @@ from typing import Any
 
 import pytest
 
-from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseReceipt
+from arbora.api.domain.browser_control.browser_control_api import (
+    BrowserLeaseReceipt,
+    BrowserLeaseStatus,
+)
 from arbora.browser_control.browser_control_runtime import (
     dispatch_browser_control,
 )
@@ -38,7 +41,7 @@ class _Service:
             registration_generation=1,
             expires_at=100.0,
             hard_expires_at=200.0,
-            status="active",
+            status=BrowserLeaseStatus.ACTIVE,
         )
 
 

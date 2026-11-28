@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 from contextlib import AbstractContextManager, nullcontext
+from enum import StrEnum
 from typing import Literal, cast
 
 from fastapi import APIRouter, HTTPException, Request
@@ -35,6 +36,13 @@ from arbora.gateway.state import GatewayState, gateway_of
 CatalogEntryKind = Literal["tool", "skill", "workflow"]
 
 
+class CatalogServerStatus(StrEnum):
+    """Whether a catalog server has a live registration."""
+
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+
+
 class CatalogServer(BaseModel):
     """Browser projection of one verified live server registration."""
 
@@ -43,7 +51,7 @@ class CatalogServer(BaseModel):
     server_id: str
     name: str
     url: str
-    status: Literal["available", "unavailable"]
+    status: CatalogServerStatus
     tool_count: int
     error: str | None = None
 
@@ -119,7 +127,11 @@ def _project_fleet_server(
         ),
         name=server.component.server_name,
         url="" if registration is None else registration.url,
-        status="unavailable" if registration is None else "available",
+        status=(
+            CatalogServerStatus.UNAVAILABLE
+            if registration is None
+            else CatalogServerStatus.AVAILABLE
+        ),
         tool_count=sum(item.entry.kind == "tool" for item in provided),
         error="live registration unavailable" if registration is None else None,
     )

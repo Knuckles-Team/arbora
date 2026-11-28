@@ -15,6 +15,7 @@ import subprocess  # nosec B404 - the host starts one fixed-argv worker
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
 
 from arbora.fleet.health import FleetHealthSnapshot, _dependency, _with_dependency
@@ -43,9 +44,16 @@ class IngestWorkerUnit:
     argv: tuple[str, ...]
 
 
+class IngestWorkerState(StrEnum):
+    """Whether the ingest worker answered its health probe."""
+
+    HEALTHY = "healthy"
+    UNHEALTHY = "unhealthy"
+
+
 @dataclass(frozen=True)
 class IngestWorkerHealth:
-    state: str  # "healthy" or "unhealthy"
+    state: IngestWorkerState
     reason: str | None = None
     metrics: Mapping[str, Any] = field(default_factory=dict)
 
@@ -77,16 +85,20 @@ def with_ingest_worker_health(
     """Add the worker's health to a fleet snapshot and return it with the metrics."""
     checked = time.time() if now is None else float(now)
     if not running():
-        health = IngestWorkerHealth("unhealthy", "worker_stopped")
+        health = IngestWorkerHealth(IngestWorkerState.UNHEALTHY, "worker_stopped")
     else:
         try:
-            health = IngestWorkerHealth("healthy", None, dict(read_metrics()))
+            health = IngestWorkerHealth(
+                IngestWorkerState.HEALTHY, None, dict(read_metrics())
+            )
         except Exception:
             logging.getLogger(__name__).debug(
                 "an unreachable read is a state, not a crash", exc_info=True
             )
-            health = IngestWorkerHealth("unhealthy", "metrics_unavailable")
-    if health.state == "healthy":
+            health = IngestWorkerHealth(
+                IngestWorkerState.UNHEALTHY, "metrics_unavailable"
+            )
+    if health.state == IngestWorkerState.HEALTHY:
         dependency = _dependency("healthy", checked, checked).model_copy(
             update={"metrics": dict(health.metrics)}
         )

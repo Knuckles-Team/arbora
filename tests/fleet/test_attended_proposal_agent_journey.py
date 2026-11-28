@@ -30,6 +30,7 @@ from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
     ControlResultMessage,
+    ControlResultStatus,
 )
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
 from arbora.core.agent_names import preloaded_agent_tools
@@ -232,7 +233,9 @@ async def _human_accepts(
     call = await _message(sent, "control.call", run)
     await connection.receive(
         ControlResultMessage(
-            call_id=call.call_id, status="succeeded", result={"ok": True}
+            call_id=call.call_id,
+            status=ControlResultStatus.SUCCEEDED,
+            result={"ok": True},
         )
     )
     assert (await asyncio.wait_for(run, 15)).output == "proposal finished"

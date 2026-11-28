@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Literal, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -105,12 +106,18 @@ class RegistrySkill(_RegistryModel):
 RegistryItem = TypeVar("RegistryItem", bound=BaseModel)
 
 
+class RegistryOk(StrEnum):
+    """The one status of a registry envelope that read its catalog."""
+
+    OK = "ok"
+
+
 class RegistryPage[RegistryItem: BaseModel](BaseModel):
     """Typed, bounded page envelope shared by every registry collection."""
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["ok"] = "ok"
+    status: RegistryOk = RegistryOk.OK
     kind: str
     items: list[RegistryItem]
     count: int = Field(ge=0)
@@ -118,8 +125,15 @@ class RegistryPage[RegistryItem: BaseModel](BaseModel):
 
 
 class RegistryItemEnvelope[RegistryItem: BaseModel](BaseModel):
-    status: Literal["ok"] = "ok"
+    status: RegistryOk = RegistryOk.OK
     item: RegistryItem
+
+
+class RegistryKindStatus(StrEnum):
+    """Whether one kind's catalog read succeeded or is unavailable."""
+
+    OK = "ok"
+    UNAVAILABLE = "unavailable"
 
 
 class RegistryKindResult(BaseModel):
@@ -135,7 +149,7 @@ class RegistryKindResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["ok", "unavailable"] = "ok"
+    status: RegistryKindStatus = RegistryKindStatus.OK
     items: list[dict[str, Any]] = Field(default_factory=list)
     count: int = Field(default=0, ge=0)
     next_cursor: str | None = None
@@ -156,7 +170,7 @@ class RegistryMultiKindPage(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["ok"] = "ok"
+    status: RegistryOk = RegistryOk.OK
     kinds: dict[str, RegistryKindResult]
 
 

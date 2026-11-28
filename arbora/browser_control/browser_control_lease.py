@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, cast
+from typing import Any
 
 from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserLeaseReceipt,
+    BrowserLeaseStatus,
     CancelCallRequest,
     IssueLeaseRequest,
     RenewLeaseRequest,
@@ -74,7 +75,7 @@ class BrowserLeaseMixin(BrowserControlMixinState):
             registration_generation=channel.refs.registration_generation,
             expires_at=expires_at,
             hard_expires_at=hard_expires_at,
-            status="active",
+            status=BrowserLeaseStatus.ACTIVE,
         )
 
     async def renew_lease(self, request: RenewLeaseRequest) -> BrowserLeaseReceipt:
@@ -115,7 +116,7 @@ class BrowserLeaseMixin(BrowserControlMixinState):
             registration_generation=channel.refs.registration_generation,
             expires_at=float(current["expires_at"]),
             hard_expires_at=float(current["hard_expires_at"]),
-            status=cast(Literal["active", "revoked", "expired"], status),
+            status=BrowserLeaseStatus(status),
         )
 
     async def _verify_registration(self, channel: _ChannelState) -> None:

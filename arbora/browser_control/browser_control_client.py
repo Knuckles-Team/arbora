@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -65,10 +66,17 @@ class ControlProposalResponseMessage(_WireMessage):
     accepted: bool = Field(strict=True)
 
 
+class ControlResultStatus(StrEnum):
+    """Whether the browser reports a control call succeeded or failed."""
+
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
 class ControlResultMessage(_WireMessage):
     type: Literal["control.result"] = "control.result"
     call_id: _Identifier
-    status: Literal["succeeded", "failed"]
+    status: ControlResultStatus
     result: Any | None = None
     error_code: _ResultError | None = None
 
@@ -76,7 +84,7 @@ class ControlResultMessage(_WireMessage):
     def _bounded_result(self) -> ControlResultMessage:
         bounded_json(self.model_dump(mode="json"))
         bounded_json(self.result, limit=1_500)
-        if (self.status == "failed") != (self.error_code is not None):
+        if (self.status == ControlResultStatus.FAILED) != (self.error_code is not None):
             raise ValueError("failed results require one safe error_code")
         return self
 

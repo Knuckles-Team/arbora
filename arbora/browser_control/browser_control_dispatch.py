@@ -14,7 +14,10 @@ from arbora.api.domain.browser_control.browser_control_common import (
     CancellationEffect,
     MutationClass,
 )
-from arbora.browser_control.browser_control_client import ControlResultMessage
+from arbora.browser_control.browser_control_client import (
+    ControlResultMessage,
+    ControlResultStatus,
+)
 from arbora.browser_control.browser_control_durability import submit_call_fence
 from arbora.browser_control.browser_control_server import ControlCallMessage
 from arbora.browser_control.browser_control_state import (
@@ -250,7 +253,7 @@ class BrowserDispatchMixin(BrowserControlMixinState):
     async def _finalize_result(
         self, active: _ActiveCall, message: ControlResultMessage
     ) -> BrowserCallReceipt:
-        if message.status == "succeeded":
+        if message.status == ControlResultStatus.SUCCEEDED:
             return await self._finalize(
                 active,
                 status="succeeded",

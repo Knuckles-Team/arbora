@@ -10,6 +10,7 @@ import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet import loop_worker as lw
+from arbora.fleet.loop_worker import TickState
 from arbora.pin_lag import medulla as pin_lag
 
 CLAIMED = {
@@ -75,7 +76,7 @@ def worker(engine: Engine, body: Body) -> lw.LoopWorker:
 def test_a_claimed_run_task_runs_the_body_renews_and_acknowledges() -> None:
     engine, body = Engine(), Body(lw.LoopBodyResult("Succeeded", "done"), beats=2)
     tick = asyncio.run(worker(engine, body).run_once())
-    assert tick == lw.WorkerTick("ran", "task-1", "loop-9", "Succeeded")
+    assert tick == lw.WorkerTick(TickState.RAN, "task-1", "loop-9", "Succeeded")
     assert body.runs == [lw.LoopRun("loop-9", "task-1", 2, "d" * 8)]
     assert engine.methods() == [
         "WorkerRegister",

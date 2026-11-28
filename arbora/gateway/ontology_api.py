@@ -25,13 +25,14 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from arbora.gateway.route_marks import build_router, plain_routes, route
+from arbora.gateway.schemas.status import ResponseStatus
 from arbora.gateway.state import gateway_of
 
 
 class OntologyEnvelope(BaseModel):
     """Uniform response envelope for the granular ontology reads."""
 
-    status: str = Field(default="success")
+    status: ResponseStatus = Field(default=ResponseStatus.SUCCESS)
     result: Any = Field(default=None, description="Tool result payload.")
 
 

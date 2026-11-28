@@ -15,7 +15,10 @@ from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal
 from arbora.api.invoke import invoke
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.registry import Surface
-from arbora.browser_control.browser_control_client import ControlResultMessage
+from arbora.browser_control.browser_control_client import (
+    ControlResultMessage,
+    ControlResultStatus,
+)
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig
@@ -213,7 +216,9 @@ async def test_served_proposal_replay_and_cancellation_do_not_redispatch(
                 await _wait_for_messages(sent, 2)
                 await connection.receive(
                     ControlResultMessage(
-                        call_id=sent[1].call_id, status="succeeded", result={"ok": True}
+                        call_id=sent[1].call_id,
+                        status=ControlResultStatus.SUCCEEDED,
+                        result={"ok": True},
                     )
                 )
                 result = await task
@@ -272,7 +277,9 @@ async def test_completed_browser_replay_requires_same_live_run_and_session(
             await _wait_for_messages(sent, 2)
             await connection.receive(
                 ControlResultMessage(
-                    call_id=sent[1].call_id, status="succeeded", result={"ok": True}
+                    call_id=sent[1].call_id,
+                    status=ControlResultStatus.SUCCEEDED,
+                    result={"ok": True},
                 )
             )
             assert isinstance(await pending, OpResult)

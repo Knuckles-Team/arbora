@@ -21,6 +21,7 @@ import logging
 import threading
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from arbora.api.invoke.pipeline import OperationRefused
@@ -77,11 +78,19 @@ class LoopBodyResult:
     detail: str = ""
 
 
+class TickState(StrEnum):
+    """What one worker tick did: nothing, refused the task, or ran it."""
+
+    IDLE = "idle"
+    REFUSED = "refused"
+    RAN = "ran"
+
+
 @dataclass(frozen=True, slots=True)
 class WorkerTick:
     """The outcome of one tick: ``idle`` or the task, its loop and what was acknowledged."""
 
-    state: Literal["idle", "refused", "ran"]
+    state: TickState
     task_id: str = ""
     loop_id: str = ""
     outcome: str = ""
@@ -179,7 +188,7 @@ class LoopWorker:
         await self._register()
         grant = await self._grant()
         if grant is None:
-            return WorkerTick("refused")
+            return WorkerTick(TickState.REFUSED)
         claimed = decode(
             await self._send(
                 "TaskQueueClaim",
@@ -191,16 +200,16 @@ class LoopWorker:
             )
         )
         if not isinstance(claimed, Mapping):
-            return WorkerTick("idle")
+            return WorkerTick(TickState.IDLE)
         task_id = str(claimed["task_id"])
         if claimed.get("queue") != LOOP_RUN_QUEUE:
             # Placement is the engine's: a task of another queue goes back untouched.
             await self._ack(task_id, "Retry", "not a loop run task")
-            return WorkerTick("ran", task_id, "", "Retry")
+            return WorkerTick(TickState.RAN, task_id, "", "Retry")
         loop_id = str(claimed["payload_ref"])
         result = await self._execute(claimed, task_id, loop_id)
         await self._ack(task_id, result.outcome, result.detail)
-        return WorkerTick("ran", task_id, loop_id, result.outcome)
+        return WorkerTick(TickState.RAN, task_id, loop_id, result.outcome)
 
     async def _execute(
         self, claimed: Mapping[str, Any], task_id: str, loop_id: str
@@ -254,7 +263,7 @@ class LoopWorkerRunner:
         self._wait = wait or self._stop.wait
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
-        self.last = WorkerTick("idle")
+        self.last = WorkerTick(TickState.IDLE)
 
     async def tick(self) -> WorkerTick:
         try:
@@ -267,7 +276,9 @@ class LoopWorkerRunner:
         import asyncio
 
         while not self._stop.is_set():
-            if asyncio.run(self.tick()).state != "ran" and self._wait(self._interval_s):
+            if asyncio.run(self.tick()).state != TickState.RAN and self._wait(
+                self._interval_s
+            ):
                 return
 
     def start(self) -> bool:

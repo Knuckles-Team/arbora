@@ -18,6 +18,7 @@ import subprocess  # nosec B404 - the one place that starts the local engine
 import threading
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from enum import StrEnum
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal
@@ -108,11 +109,18 @@ def parse_engine_endpoint(text: Any) -> EngineEndpoint:
     return EngineEndpoint("tcp", f"{host}:{int(port)}")
 
 
+class EngineState(StrEnum):
+    """Whether an engine answered its health probe at the endpoint."""
+
+    RUNNING = "running"
+    ABSENT = "absent"
+
+
 @dataclasses.dataclass(frozen=True)
 class EngineProbe:
     """What a probe found: ``running`` (the engine answered) or ``absent``."""
 
-    state: Literal["running", "absent"]
+    state: EngineState
     #: The engine version from its ``Health`` reply, when it gave one.
     version: str | None = None
 
@@ -168,7 +176,7 @@ def probe_engine(
     """
     timeout = _DEFAULT_PROBE_TIMEOUT_S if timeout_s is None else float(timeout_s)
     if not _reachable(endpoint, timeout):
-        return EngineProbe("absent")
+        return EngineProbe(EngineState.ABSENT)
     reader = health or _engine_health
 
     def ask() -> Mapping[str, Any]:
@@ -178,12 +186,12 @@ def probe_engine(
         try:
             reply = worker.submit(carry_errors(ask)).result()
         except (TimeoutError, OSError):
-            return EngineProbe("absent")
+            return EngineProbe(EngineState.ABSENT)
         except Exception:  # an engine refusal is still an answer
             logger.debug("engine answered the probe with a refusal", exc_info=True)
-            return EngineProbe("running")
+            return EngineProbe(EngineState.RUNNING)
     version = reply.get("version") if isinstance(reply, Mapping) else None
-    return EngineProbe("running", str(version) if version else None)
+    return EngineProbe(EngineState.RUNNING, str(version) if version else None)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -469,7 +477,7 @@ def _wait_until_running(
                 "ENGINE_START_TIMEOUT",
                 f"the engine exited with status {process.returncode} while starting",
             )
-        if probe_engine(endpoint, config.probe_timeout_s).state == "running":
+        if probe_engine(endpoint, config.probe_timeout_s).state == EngineState.RUNNING:
             return
         time.sleep(0.2)
     raise EngineRefusal(
@@ -508,7 +516,10 @@ def ensure_local_engine(
         fd = _take_client_lock(endpoint)
         attachment = _Attachment(endpoint, config, fd)
         try:
-            if probe_engine(endpoint, config.probe_timeout_s).state != "running":
+            if (
+                probe_engine(endpoint, config.probe_timeout_s).state
+                != EngineState.RUNNING
+            ):
                 with engine_lock.engine_spawn_guard(endpoint.address) as sole:
                     if (
                         probe_engine(endpoint, config.probe_timeout_s).state
@@ -576,7 +587,7 @@ def attach_reused_engine(
 
     digest = hashlib.sha256(endpoint.address.encode()).hexdigest()[:16]
     probe = probe_engine(endpoint, probe_timeout_s)
-    if probe.state != "running":
+    if probe.state != EngineState.RUNNING:
         raise EngineRefusal(
             "REUSE_UNREACHABLE", f"the reused engine {digest} does not answer"
         )

@@ -39,6 +39,7 @@ from arbora.browser_control.browser_control_client import (
     ControlCancelledMessage,
     ControlConfirmMessage,
     ControlResultMessage,
+    ControlResultStatus,
 )
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 from arbora.browser_control.browser_control_registration import (
@@ -490,7 +491,9 @@ async def test_read_call_is_audited_and_claimed_before_one_dispatch(
         assert engine.browser_control_state.claim_count == 1
         await connection.receive(
             ControlResultMessage(
-                call_id=sent[0].call_id, status="succeeded", result={"ok": True}
+                call_id=sent[0].call_id,
+                status=ControlResultStatus.SUCCEEDED,
+                result={"ok": True},
             )
         )
         receipt = await task
@@ -631,7 +634,9 @@ async def test_mutation_waits_for_durable_exact_confirmation(
         )
         await connection.receive(
             ControlResultMessage(
-                call_id=call.call_id, status="succeeded", result={"ok": True}
+                call_id=call.call_id,
+                status=ControlResultStatus.SUCCEEDED,
+                result={"ok": True},
             )
         )
         assert (await task).status == "succeeded"
@@ -712,7 +717,7 @@ async def test_terminal_audit_failure_schedules_durable_reconciliation(
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -998,7 +1003,9 @@ async def test_langfuse_status_is_truthful(
         await _wait_for_messages(sent, 1)
         await connection.receive(
             ControlResultMessage(
-                call_id=sent[0].call_id, status="succeeded", result={"ok": True}
+                call_id=sent[0].call_id,
+                status=ControlResultStatus.SUCCEEDED,
+                result={"ok": True},
             )
         )
         receipt = await task
@@ -1111,7 +1118,7 @@ async def test_every_caller_action_rejects_actor_drift(session: GraphSession) ->
         await connection.receive(
             ControlResultMessage(
                 call_id=call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -1150,7 +1157,7 @@ async def test_browser_event_revalidates_live_generation(session: GraphSession) 
         document["registration_generation"] = 2
         result = ControlResultMessage(
             call_id=sent[0].call_id,
-            status="succeeded",
+            status=ControlResultStatus.SUCCEEDED,
             result={"ok": True},
         )
         with pytest.raises(PermissionError, match="stale"):
@@ -1374,7 +1381,7 @@ async def test_duplicate_delivery_never_dispatches_twice(session: GraphSession) 
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -1418,7 +1425,7 @@ async def test_unknown_cancel_accepts_late_result_and_reconciles(
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -1590,14 +1597,14 @@ def test_canonical_json_rejects_cross_runtime_ambiguous_values(value: Any) -> No
 def test_result_error_code_matches_browser_wire_machine_code() -> None:
     accepted = ControlResultMessage(
         call_id="browsercall_0123456789abcdef0123456789abcdef",
-        status="failed",
+        status=ControlResultStatus.FAILED,
         error_code="browser-execution_failed",
     )
     assert accepted.error_code == "browser-execution_failed"
     with pytest.raises(ValueError):
         ControlResultMessage(
             call_id="browsercall_0123456789abcdef0123456789abcdef",
-            status="failed",
+            status=ControlResultStatus.FAILED,
             error_code="browser.execution.failed",
         )
 
@@ -1629,7 +1636,7 @@ async def test_claim_lifetime_is_capped_to_remaining_authority(
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -1682,7 +1689,7 @@ async def test_cached_reconcile_revalidates_live_session(session: GraphSession) 
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -1748,7 +1755,7 @@ async def test_durable_replay_recovers_terminal_result_digest(
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
@@ -1786,7 +1793,7 @@ async def test_successful_null_result_has_durable_content_digest(
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result=None,
             )
         )
@@ -1823,7 +1830,7 @@ async def test_replay_rejects_changed_work_item_envelope(
         await connection.receive(
             ControlResultMessage(
                 call_id=sent[0].call_id,
-                status="succeeded",
+                status=ControlResultStatus.SUCCEEDED,
                 result={"ok": True},
             )
         )
