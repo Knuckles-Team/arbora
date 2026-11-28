@@ -562,3 +562,19 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T748 [US1] ARBORA-OPS-R959.10 Wiring and refusal codes.
 - [ ] T749 [US1] ARBORA-OPS-R959.11 Served operation `inventory.describe`.
 - [ ] T750 [US1] ARBORA-OPS-R959.12 Hot-path proofs: determinism and description.
+- [ ] T751 [US1] ARBORA-OPS-R916.1 Activity entries carry the tool call
+- [ ] T752 [US1] ARBORA-OPS-R959.13 The build writes machine pressure observations
+- [ ] T753 [US1] ARBORA-OPS-R960 Observer events are one served stream (rollup)
+- [ ] T754 [US1] ARBORA-OPS-R960.1 Served operation `events.list`
+- [ ] T755 [US1] ARBORA-OPS-R960.2 One emit path with a bounded queue
+- [ ] T756 [US1] ARBORA-OPS-R960.3 Admission emits admission events
+- [ ] T757 [US1] ARBORA-OPS-R960.4 Release gates emit release_gate events through an explicit machine
+- [ ] T758 [US1] ARBORA-OPS-R960.5 Pipeline runs emit ci_gate events
+- [ ] T759 [US1] ARBORA-OPS-R960.6 Alert intake emits alert events
+- [ ] T760 [US1] ARBORA-OPS-R960.7 Security verdicts emit security_audit events
+- [ ] T761 [US1] ARBORA-OPS-R960.8 Process remediation emits remediation events through an explicit machine
+- [ ] T762 [US1] ARBORA-OPS-R960.9 Evolution proposals emit evolution_proposal events through an explicit machine
+- [ ] T763 [US1] ARBORA-OPS-R960.10 A2A hand-offs emit a2a_handoff events
+- [ ] T764 [US1] ARBORA-OPS-R960.11 Sandbox processes emit sandbox events
+- [ ] T765 [US1] ARBORA-OPS-R960.12 Wiring and served proof
+- [ ] T766 [US1] ARBORA-OPS-R961 Served operation `inventory.machines.list`

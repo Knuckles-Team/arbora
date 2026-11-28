@@ -1306,3 +1306,7 @@ Decisions. Arbora forwards RDF bodies as text with their media type, because a p
 - `ARBORA-OPS-R959.4` consumes the hardware tool of `CONN-TUNNEL-MANAGER-INVENTORY-R008.2`. Contract: `contracts/inventory-probe-system.md`.
 - `ARBORA-OPS-R959.4` consumes the inventory tool of `CONN-FAN-MANAGER-R006.2`. Contract: `contracts/inventory-probe-management.md`.
 - `ARBORA-OPS-R959.4` consumes the membership actions of `CONN-CONTAINER-MANAGER-MCP-R025.2`. Contract: `contracts/inventory-probe-membership.md`.
+- `ARBORA-OPS-R960.1`, `ARBORA-OPS-R960.2` and `ARBORA-OPS-R960.12` use the observer log of `MEDULLA-IDENTITY-R023.16` and read the engine events of `MEDULLA-FEDERATED-QUERY-R745` and `MEDULLA-DECISION-ENGINE-R902`. Contract: `contracts/observer-events.md`.
+- `ARBORA-OPS-R916` and `ARBORA-OPS-R916.1` read the statement of `MEDULLA-ORCH-VOCAB-R818`. Contract: `contracts/tool-call-page.md`.
+- `ARBORA-OPS-R959.13` writes the observations of `MEDULLA-MACHINE-R010`. Contract: `contracts/machine-observations.md`.
+- `ARBORA-OPS-R915.1` reads and writes the city state of `MEDULLA-WORLD-VIEW-R004`. Contract: `contracts/city-state.md`.
