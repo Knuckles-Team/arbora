@@ -9,7 +9,7 @@ import pytest
 
 from arbora.api.invoke.plan import (
     PLAN_EDGES,
-    TERMINAL_PLAN_STATES,
+    TERMINALS,
     PlanEvent,
     PlanState,
 )
@@ -59,7 +59,7 @@ def test_classes_roll_up_to_the_core_classes(store: ox.Store) -> None:
     for state in PlanState:
         assert _rolls_up(store, states[state.value], "State")
         assert _rolls_up(store, states[state.value], "TerminalState") is (
-            state in TERMINAL_PLAN_STATES
+            state in TERMINALS
         )
     events = _by_form(store, "arbora:PlanEvent")
     assert set(events) == {event.value for event in PlanEvent}
