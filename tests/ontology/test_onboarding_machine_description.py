@@ -24,6 +24,6 @@ def test_classes_roll_up_to_the_core_classes() -> None:
         edges={
             (s.value, e.value, t.value) for (s, e, _, _), t in ONBOARDING_EDGES.items()
         },
-        guards={"AttemptsLeft": "attempts_left", "LeaseLive": "lease_live"},
+        guards={"AttemptsLeft": "attempts_left", "OnboardingLeaseLive": "lease_live"},
         initial=OnboardingState.IDLE.value,
     )
