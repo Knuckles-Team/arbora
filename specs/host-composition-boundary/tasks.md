@@ -199,3 +199,4 @@
 - [ ] T199 [US1] ARBORA-HOST-R037.1 Onboarding records the release the connector serves. Size: M, 1 PR, 3 hours.
 - [ ] T200 [US1] ARBORA-HOST-R037.2 A release that does not match the index is not recorded. Size: S, 1 PR, 1 hour.
 - [ ] T201 [US1] ARBORA-HOST-R037.3 Every connector launch is verified at one gate and fails closed. Size: M, 1 PR, 4 hours.
+- [ ] T202 [US1] ARBORA-HOST-R041.1 The migration records are explicit state machines. Size: M, 1 PR, 4 hours.

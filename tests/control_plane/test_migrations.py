@@ -22,8 +22,10 @@ from arbora.control_plane.migrations import (
     MigrationPlan,
     MigrationRollback,
     MigrationStage,
+    MigrationState,
     PrerequisiteGate,
     ProjectionCheckpoint,
+    RetirementState,
     SourceFileSnapshot,
     SourceSnapshot,
     WriteCutoverFence,
@@ -198,7 +200,7 @@ def _prepare_fenced() -> tuple[
         gate=_gate(
             snapshot,
             gate_ref="gate:read",
-            stage="stage_3_cohort_read_cutover",
+            stage=MigrationStage.COHORT_READ_CUTOVER,
         ),
         expected_plan_version=plan.version,
     )
@@ -219,7 +221,7 @@ def _prepare_fenced() -> tuple[
         gate=_gate(
             snapshot,
             gate_ref="gate:write",
-            stage="stage_4_write_cutover",
+            stage=MigrationStage.WRITE_CUTOVER,
         ),
         expected_plan_version=plan.version,
     )
@@ -244,7 +246,7 @@ def test_staged_authority_reaches_checkpoint_and_replays_without_delta() -> None
     gate = _gate(
         snapshot,
         gate_ref="gate:checkpoint",
-        stage="stage_5_projection_checkpoint",
+        stage=MigrationStage.PROJECTION_CHECKPOINT,
     )
     plan = authority.checkpoint_projection(
         plan.plan_ref,
@@ -252,7 +254,7 @@ def test_staged_authority_reaches_checkpoint_and_replays_without_delta() -> None
         gate=gate,
         expected_plan_version=plan.version,
     )
-    assert plan.state == "checkpointed"
+    assert plan.state == MigrationState.CHECKPOINTED
     assert (
         authority.checkpoint_projection(
             plan.plan_ref,
@@ -274,7 +276,7 @@ def test_staged_authority_reaches_checkpoint_and_replays_without_delta() -> None
         consumer_inventory_digest=_digest("consumer-inventory-empty"),
         facade_inventory_digest=_digest("facade-inventory-empty"),
         gate_ref="gate:retire",
-        state="retired",
+        state=RetirementState.RETIRED,
         version=1,
         digest=_digest("retirement-one"),
     )
@@ -284,11 +286,11 @@ def test_staged_authority_reaches_checkpoint_and_replays_without_delta() -> None
         gate=_gate(
             snapshot,
             gate_ref="gate:retire",
-            stage="legacy_retirement",
+            stage=MigrationStage.LEGACY_RETIREMENT,
         ),
         expected_plan_version=plan.version,
     )
-    assert plan.state == "retired"
+    assert plan.state == MigrationState.RETIRED
 
 
 def test_backfill_never_silently_approves_and_revision_delta_is_one() -> None:
@@ -361,7 +363,7 @@ def test_cutover_fails_closed_on_gate_or_cas_and_rollback_is_explicit() -> None:
     blocked_gate = PrerequisiteGate(
         gate_ref="gate:blocked",
         migration_ref=plan.migration_ref,
-        stage="stage_5_projection_checkpoint",
+        stage=MigrationStage.PROJECTION_CHECKPOINT,
         source_snapshot_digest=snapshot.snapshot_digest,
         checks=(blocked_check,),
         decision="blocked",
@@ -391,7 +393,7 @@ def test_cutover_fails_closed_on_gate_or_cas_and_rollback_is_explicit() -> None:
     valid_gate = _gate(
         snapshot,
         gate_ref="gate:checkpoint",
-        stage="stage_5_projection_checkpoint",
+        stage=MigrationStage.PROJECTION_CHECKPOINT,
     )
     bound_checkpoint = ProjectionCheckpoint(
         checkpoint_ref="checkpoint:one",
@@ -417,8 +419,8 @@ def test_cutover_fails_closed_on_gate_or_cas_and_rollback_is_explicit() -> None:
     rollback = MigrationRollback(
         rollback_ref="rollback:one",
         migration_ref=plan.migration_ref,
-        from_stage="stage_4_write_cutover",
-        to_stage="stage_3_cohort_read_cutover",
+        from_stage=MigrationStage.WRITE_CUTOVER,
+        to_stage=MigrationStage.COHORT_READ_CUTOVER,
         source_snapshot_digest=snapshot.snapshot_digest,
         reason_ref="reason:verification-failed",
         restored_authority_ref="authority:legacy",
@@ -433,7 +435,7 @@ def test_cutover_fails_closed_on_gate_or_cas_and_rollback_is_explicit() -> None:
         rollback,
         expected_plan_version=plan.version,
     )
-    assert rolled_back.state == "rolled_back"
+    assert rolled_back.state == MigrationState.ROLLED_BACK
 
 
 def test_inventory_and_retirement_proofs_reject_drift() -> None:
@@ -458,7 +460,7 @@ def test_inventory_and_retirement_proofs_reject_drift() -> None:
             consumer_inventory_digest=_digest("consumer-inventory"),
             facade_inventory_digest=_digest("facade-inventory"),
             gate_ref="gate:retire",
-            state="retired",
+            state=RetirementState.RETIRED,
             version=1,
             digest=_digest("unsafe-retirement"),
         )

@@ -11,9 +11,13 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
-from typing import Annotated, Literal
+from enum import StrEnum
+from types import MappingProxyType
+from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from .errors import MigrationCasConflictError, MigrationTransitionRefused
 
 __all__ = [
     "MAX_COHORTS",
@@ -23,13 +27,17 @@ __all__ = [
     "BackfillBatch",
     "BackfillObservation",
     "CanonicalRecord",
+    "MAX_VERSION",
     "CohortReadCutover",
     "Count",
+    "CutoverEvent",
+    "CutoverState",
     "Digest",
     "GateCheck",
     "InventoryState",
     "InventoryItem",
     "LegacyRetirement",
+    "MigrationEvent",
     "MigrationInventory",
     "MigrationPlan",
     "MigrationRollback",
@@ -38,6 +46,8 @@ __all__ = [
     "OpaqueRef",
     "PrerequisiteGate",
     "ProjectionCheckpoint",
+    "RetirementEvent",
+    "RetirementState",
     "ShadowDelta",
     "ShadowReconciliation",
     "SourceDisposition",
@@ -53,37 +63,85 @@ __all__ = [
 MAX_SOURCE_FILES = 4_096
 MAX_EVIDENCE_ITEMS = 10_000
 MAX_COHORTS = 256
+MAX_VERSION = 2_147_483_647
 
 _REF_RE = r"^[A-Za-z][A-Za-z0-9:_./-]{0,255}$"
 _DIGEST_RE = r"^sha256:[0-9a-f]{64}$"
 
 type OpaqueRef = Annotated[str, Field(pattern=_REF_RE, min_length=1)]
 type Digest = Annotated[str, Field(pattern=_DIGEST_RE)]
-type Version = Annotated[int, Field(ge=1, le=2_147_483_647)]
+type Version = Annotated[int, Field(ge=1, le=MAX_VERSION)]
 type Count = Annotated[int, Field(ge=0, le=2_147_483_647)]
 type Timestamp = Annotated[int, Field(ge=0)]
 
-type MigrationStage = Literal[
-    "stage_0_inventory_freeze",
-    "stage_1_read_only_backfill",
-    "stage_2_shadow_reconciliation",
-    "stage_3_cohort_read_cutover",
-    "stage_4_write_cutover",
-    "stage_5_projection_checkpoint",
-    "legacy_retirement",
-    "rollback",
-]
-type MigrationState = Literal[
-    "planned",
-    "inventory_frozen",
-    "backfill_observing",
-    "shadow_reconciled",
-    "read_cutover",
-    "write_fenced",
-    "checkpointed",
-    "retired",
-    "rolled_back",
-]
+
+class MigrationStage(StrEnum):
+    """The stage a migration plan sits in; derived from its state."""
+
+    INVENTORY_FREEZE = "stage_0_inventory_freeze"
+    READ_ONLY_BACKFILL = "stage_1_read_only_backfill"
+    SHADOW_RECONCILIATION = "stage_2_shadow_reconciliation"
+    COHORT_READ_CUTOVER = "stage_3_cohort_read_cutover"
+    WRITE_CUTOVER = "stage_4_write_cutover"
+    PROJECTION_CHECKPOINT = "stage_5_projection_checkpoint"
+    LEGACY_RETIREMENT = "legacy_retirement"
+    ROLLBACK = "rollback"
+
+
+class MigrationState(StrEnum):
+    """The lifecycle state of a migration plan (ARBORA-HOST-R041.1)."""
+
+    PLANNED = "planned"
+    INVENTORY_FROZEN = "inventory_frozen"
+    BACKFILL_OBSERVING = "backfill_observing"
+    SHADOW_RECONCILED = "shadow_reconciled"
+    READ_CUTOVER = "read_cutover"
+    WRITE_FENCED = "write_fenced"
+    CHECKPOINTED = "checkpointed"
+    RETIRED = "retired"
+    ROLLED_BACK = "rolled_back"
+
+
+class MigrationEvent(StrEnum):
+    """What moves a migration plan from one state to the next."""
+
+    FREEZE_INVENTORY = "freeze_inventory"
+    RECORD_BACKFILL = "record_backfill"
+    RECONCILE_CLEAN = "reconcile_clean"
+    CUTOVER_READS = "cutover_reads"
+    FENCE_WRITES = "fence_writes"
+    CHECKPOINT = "checkpoint"
+    RETIRE = "retire"
+    ROLLBACK = "rollback"
+
+
+_PS, _PE, _PG = MigrationState, MigrationEvent, MigrationStage
+
+
+class CutoverState(StrEnum):
+    """Lifecycle of a cohort read cutover and of a write cutover fence."""
+
+    ACTIVE = "active"
+    ROLLED_BACK = "rolled_back"
+
+
+class CutoverEvent(StrEnum):
+    ROLLBACK = "rollback"
+
+
+class RetirementState(StrEnum):
+    """Lifecycle of a legacy retirement proof."""
+
+    READY = "ready"
+    RETIRED = "retired"
+    ROLLED_BACK = "rolled_back"
+
+
+class RetirementEvent(StrEnum):
+    RETIRE = "retire"
+    ROLLBACK = "rollback"
+
+
 type SourceDisposition = Literal["accepted", "rejected", "malformed"]
 type ApprovalState = Literal["unreviewed", "approved", "rejected"]
 type InventoryState = Literal[
@@ -163,6 +221,17 @@ class _VersionedModel(_FrozenModel):
     @property
     def identity_digest(self) -> str:
         return canonical_digest(self)
+
+    def _successor(self, **changes: object) -> Self:
+        """The next version of this record with ``changes`` applied and a fresh digest."""
+        if self.version >= MAX_VERSION:
+            raise MigrationCasConflictError("migration_version_exhausted")
+        data = {**self.model_dump(mode="python"), **changes}
+        data["version"] = self.version + 1
+        data["digest"] = canonical_digest(
+            {key: value for key, value in data.items() if key != "digest"}
+        )
+        return type(self)(**data)
 
 
 class SourceFileSnapshot(_VersionedModel):
@@ -245,15 +314,70 @@ class SourceSnapshot(_VersionedModel):
 
 
 class MigrationPlan(_VersionedModel):
-    """The only mutable migration authority; each transition is a new version."""
+    """The only mutable migration authority; each transition is a new version.
+
+    ``state`` is the explicit machine of ARBORA-HOST-R041.1; ``stage`` follows
+    from it.  ``transition`` is the only function that moves either field.
+    """
+
+    EDGES: ClassVar[Mapping[tuple[MigrationState, MigrationEvent], MigrationState]] = (
+        MappingProxyType(
+            {
+                (_PS.PLANNED, _PE.FREEZE_INVENTORY): _PS.INVENTORY_FROZEN,
+                (_PS.INVENTORY_FROZEN, _PE.RECORD_BACKFILL): _PS.BACKFILL_OBSERVING,
+                (_PS.BACKFILL_OBSERVING, _PE.RECORD_BACKFILL): _PS.BACKFILL_OBSERVING,
+                (_PS.BACKFILL_OBSERVING, _PE.RECONCILE_CLEAN): _PS.SHADOW_RECONCILED,
+                (_PS.SHADOW_RECONCILED, _PE.CUTOVER_READS): _PS.READ_CUTOVER,
+                (_PS.READ_CUTOVER, _PE.CUTOVER_READS): _PS.READ_CUTOVER,
+                (_PS.READ_CUTOVER, _PE.FENCE_WRITES): _PS.WRITE_FENCED,
+                (_PS.WRITE_FENCED, _PE.CHECKPOINT): _PS.CHECKPOINTED,
+                (_PS.CHECKPOINTED, _PE.RETIRE): _PS.RETIRED,
+                (_PS.PLANNED, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.INVENTORY_FROZEN, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.BACKFILL_OBSERVING, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.SHADOW_RECONCILED, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.READ_CUTOVER, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.WRITE_FENCED, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.CHECKPOINTED, _PE.ROLLBACK): _PS.ROLLED_BACK,
+                (_PS.ROLLED_BACK, _PE.ROLLBACK): _PS.ROLLED_BACK,
+            }
+        )
+    )
+    INITIAL: ClassVar[MigrationState] = MigrationState.PLANNED
+    TERMINALS: ClassVar[tuple[MigrationState, ...]] = (MigrationState.RETIRED,)
+    STAGE_OF: ClassVar[Mapping[MigrationState, MigrationStage]] = MappingProxyType(
+        {
+            _PS.PLANNED: _PG.INVENTORY_FREEZE,
+            _PS.INVENTORY_FROZEN: _PG.INVENTORY_FREEZE,
+            _PS.BACKFILL_OBSERVING: _PG.READ_ONLY_BACKFILL,
+            _PS.SHADOW_RECONCILED: _PG.SHADOW_RECONCILIATION,
+            _PS.READ_CUTOVER: _PG.COHORT_READ_CUTOVER,
+            _PS.WRITE_FENCED: _PG.WRITE_CUTOVER,
+            _PS.CHECKPOINTED: _PG.PROJECTION_CHECKPOINT,
+            _PS.RETIRED: _PG.LEGACY_RETIREMENT,
+            _PS.ROLLED_BACK: _PG.ROLLBACK,
+        }
+    )
+    REFUSAL_CODES: ClassVar[Mapping[MigrationEvent, str]] = MappingProxyType(
+        {
+            _PE.FREEZE_INVENTORY: "inventory_freeze_stage_invalid",
+            _PE.RECORD_BACKFILL: "backfill_stage_invalid",
+            _PE.RECONCILE_CLEAN: "shadow_stage_invalid",
+            _PE.CUTOVER_READS: "read_cutover_stage_invalid",
+            _PE.FENCE_WRITES: "write_cutover_stage_invalid",
+            _PE.CHECKPOINT: "projection_checkpoint_stage_invalid",
+            _PE.RETIRE: "legacy_retirement_stage_invalid",
+            _PE.ROLLBACK: "retired_migration_not_rollbackable",
+        }
+    )
 
     migration_ref: OpaqueRef
     plan_ref: OpaqueRef
     source_snapshot_ref: OpaqueRef
     source_snapshot_digest: Digest
     target_authority_ref: OpaqueRef
-    stage: MigrationStage = "stage_0_inventory_freeze"
-    state: MigrationState = "planned"
+    state: MigrationState = MigrationState.PLANNED
+    stage: MigrationStage = MigrationStage.INVENTORY_FREEZE
     inventory_ref: OpaqueRef | None = None
     reconciliation_ref: OpaqueRef | None = None
     cohort_refs: tuple[OpaqueRef, ...] = Field(default=(), max_length=MAX_COHORTS)
@@ -263,22 +387,36 @@ class MigrationPlan(_VersionedModel):
 
     @model_validator(mode="after")
     def _stage_state_is_consistent(self) -> MigrationPlan:
-        expected = {
-            "planned": "stage_0_inventory_freeze",
-            "inventory_frozen": "stage_0_inventory_freeze",
-            "backfill_observing": "stage_1_read_only_backfill",
-            "shadow_reconciled": "stage_2_shadow_reconciliation",
-            "read_cutover": "stage_3_cohort_read_cutover",
-            "write_fenced": "stage_4_write_cutover",
-            "checkpointed": "stage_5_projection_checkpoint",
-            "retired": "legacy_retirement",
-            "rolled_back": "rollback",
-        }
-        if self.stage != expected[self.state]:
+        if self.stage != self.STAGE_OF[self.state]:
             raise ValueError("migration_stage_state_mismatch")
         if len(self.cohort_refs) != len(set(self.cohort_refs)):
             raise ValueError("migration_cohort_duplicate")
         return self
+
+    def transition(
+        self,
+        event: MigrationEvent,
+        *,
+        expected_version: int | None,
+        **updates: object,
+    ) -> MigrationPlan:
+        """The next version of the plan after ``event``; the only writer of the state.
+
+        Raises ``MigrationTransitionRefused`` for an event the table does not
+        list from the current state, and ``MigrationCasConflictError`` when
+        ``expected_version`` is not the current version.
+        """
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise MigrationTransitionRefused(
+                "migration_plan",
+                self.state,
+                event,
+                self.REFUSAL_CODES[event],
+            )
+        if expected_version is None or expected_version != self.version:
+            raise MigrationCasConflictError()
+        return self._successor(state=target, stage=self.STAGE_OF[target], **updates)
 
     @classmethod
     def initial(
@@ -566,17 +704,40 @@ class PrerequisiteGate(_VersionedModel):
 class CohortReadCutover(_VersionedModel):
     """One cohort-scoped registry read cutover, never a fleet-wide flip."""
 
+    EDGES: ClassVar[Mapping[tuple[CutoverState, CutoverEvent], CutoverState]] = (
+        MappingProxyType(
+            {(CutoverState.ACTIVE, CutoverEvent.ROLLBACK): CutoverState.ROLLED_BACK}
+        )
+    )
+    INITIAL: ClassVar[CutoverState] = CutoverState.ACTIVE
+    TERMINALS: ClassVar[tuple[CutoverState, ...]] = (CutoverState.ROLLED_BACK,)
+
     cutover_ref: OpaqueRef
     migration_ref: OpaqueRef
     cohort_ref: OpaqueRef
     registry_ref: OpaqueRef
     source_snapshot_digest: Digest
     gate_ref: OpaqueRef
-    state: Literal["active", "rolled_back"] = "active"
+    state: CutoverState = CutoverState.ACTIVE
+
+    def transition(self, event: CutoverEvent) -> CohortReadCutover:
+        """The next version of the cutover after ``event``; the only writer of the state."""
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise MigrationTransitionRefused("cohort_read_cutover", self.state, event)
+        return self._successor(state=target)
 
 
 class WriteCutoverFence(_VersionedModel):
     """Single-authority write fence with legacy writes explicitly denied."""
+
+    EDGES: ClassVar[Mapping[tuple[CutoverState, CutoverEvent], CutoverState]] = (
+        MappingProxyType(
+            {(CutoverState.ACTIVE, CutoverEvent.ROLLBACK): CutoverState.ROLLED_BACK}
+        )
+    )
+    INITIAL: ClassVar[CutoverState] = CutoverState.ACTIVE
+    TERMINALS: ClassVar[tuple[CutoverState, ...]] = (CutoverState.ROLLED_BACK,)
 
     fence_ref: OpaqueRef
     migration_ref: OpaqueRef
@@ -590,13 +751,20 @@ class WriteCutoverFence(_VersionedModel):
     gate_ref: OpaqueRef
     single_authority: Literal[True] = True
     legacy_writes_denied: Literal[True] = True
-    state: Literal["active", "rolled_back"] = "active"
+    state: CutoverState = CutoverState.ACTIVE
 
     @model_validator(mode="after")
     def _cohorts_are_unique(self) -> WriteCutoverFence:
         if len(self.cohort_refs) != len(set(self.cohort_refs)):
             raise ValueError("write_fence_cohort_duplicate")
         return self
+
+    def transition(self, event: CutoverEvent) -> WriteCutoverFence:
+        """The next version of the fence after ``event``; the only writer of the state."""
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise MigrationTransitionRefused("write_cutover_fence", self.state, event)
+        return self._successor(state=target)
 
 
 class ProjectionCheckpoint(_VersionedModel):
@@ -616,6 +784,23 @@ class ProjectionCheckpoint(_VersionedModel):
 class LegacyRetirement(_VersionedModel):
     """Retirement proof for temporary compatibility paths and old consumers."""
 
+    EDGES: ClassVar[
+        Mapping[tuple[RetirementState, RetirementEvent], RetirementState]
+    ] = MappingProxyType(
+        {
+            (RetirementState.READY, RetirementEvent.RETIRE): RetirementState.RETIRED,
+            (
+                RetirementState.READY,
+                RetirementEvent.ROLLBACK,
+            ): RetirementState.ROLLED_BACK,
+        }
+    )
+    INITIAL: ClassVar[RetirementState] = RetirementState.READY
+    TERMINALS: ClassVar[tuple[RetirementState, ...]] = (
+        RetirementState.RETIRED,
+        RetirementState.ROLLED_BACK,
+    )
+
     retirement_ref: OpaqueRef
     migration_ref: OpaqueRef
     source_snapshot_digest: Digest
@@ -626,15 +811,22 @@ class LegacyRetirement(_VersionedModel):
     consumer_inventory_digest: Digest
     facade_inventory_digest: Digest
     gate_ref: OpaqueRef
-    state: Literal["ready", "retired", "rolled_back"]
+    state: RetirementState
 
     @model_validator(mode="after")
     def _retirement_is_proven(self) -> LegacyRetirement:
-        if self.state == "retired" and (
+        if self.state == RetirementState.RETIRED and (
             self.remaining_consumers != 0 or self.remaining_facades != 0
         ):
             raise ValueError("legacy_retirement_with_remaining_consumers")
         return self
+
+    def transition(self, event: RetirementEvent) -> LegacyRetirement:
+        """The next version of the proof after ``event``; the only writer of the state."""
+        target = self.EDGES.get((self.state, event))
+        if target is None:
+            raise MigrationTransitionRefused("legacy_retirement", self.state, event)
+        return self._successor(state=target)
 
 
 class MigrationRollback(_VersionedModel):

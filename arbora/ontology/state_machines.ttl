@@ -1478,3 +1478,369 @@ arbora:FleetOnboardingMachine_failed-authority_live-backoff a owl:Class ;
     :toState arbora:OnboardingBackoff ;
     :firedBy arbora:FleetOnboardingMachine_Event_authority_live ;
     :guardedBy arbora:LeaseLive .
+
+# ---------------------------------------------------------------------------
+# Migration plan (ARBORA-HOST-R041.1).
+# Python: MigrationState, MigrationEvent, MigrationPlan.EDGES in arbora/control_plane/migrations/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:MigrationPlanMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Migration plan" ;
+    rdfs:comment "The staged cutover of one migration. Each transition is a new plan version; the stage follows from the state. A rollback is allowed from every state except retired, which is final." ;
+    :initialState arbora:MigrationPlanPlanned ;
+    :hasState arbora:MigrationPlanPlanned ,
+        arbora:MigrationPlanInventoryFrozen ,
+        arbora:MigrationPlanBackfillObserving ,
+        arbora:MigrationPlanShadowReconciled ,
+        arbora:MigrationPlanReadCutover ,
+        arbora:MigrationPlanWriteFenced ,
+        arbora:MigrationPlanCheckpointed ,
+        arbora:MigrationPlanRetired ,
+        arbora:MigrationPlanRolledBack .
+
+arbora:MigrationPlanState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Migration plan state" .
+
+arbora:MigrationPlanTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Migration plan transition" .
+
+arbora:MigrationPlanEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Migration plan event" .
+
+arbora:MigrationPlanTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Migration plan transition refused" ;
+    rdfs:comment "MigrationTransitionRefused, code migration_transition_refused, fields machine (migration_plan), from_state and event. The state does not change." .
+
+arbora:MigrationPlanPlanned a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "planned" .
+
+arbora:MigrationPlanInventoryFrozen a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "inventory_frozen" .
+
+arbora:MigrationPlanBackfillObserving a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "backfill_observing" .
+
+arbora:MigrationPlanShadowReconciled a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "shadow_reconciled" .
+
+arbora:MigrationPlanReadCutover a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "read_cutover" .
+
+arbora:MigrationPlanWriteFenced a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "write_fenced" .
+
+arbora:MigrationPlanCheckpointed a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "checkpointed" .
+
+arbora:MigrationPlanRetired a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState, :TerminalState ;
+    :storedForm "retired" .
+
+arbora:MigrationPlanRolledBack a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanState ;
+    :storedForm "rolled_back" .
+
+arbora:MigrationPlanMachine_Event_freeze_inventory a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "freeze_inventory" .
+
+arbora:MigrationPlanMachine_Event_record_backfill a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "record_backfill" .
+
+arbora:MigrationPlanMachine_Event_reconcile_clean a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "reconcile_clean" .
+
+arbora:MigrationPlanMachine_Event_cutover_reads a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "cutover_reads" .
+
+arbora:MigrationPlanMachine_Event_fence_writes a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "fence_writes" .
+
+arbora:MigrationPlanMachine_Event_checkpoint a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "checkpoint" .
+
+arbora:MigrationPlanMachine_Event_retire a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "retire" .
+
+arbora:MigrationPlanMachine_Event_rollback a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanEvent ;
+    :storedForm "rollback" .
+
+arbora:MigrationPlanMachine_planned-freeze_inventory-inventory_frozen a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanPlanned ;
+    :toState arbora:MigrationPlanInventoryFrozen ;
+    :firedBy arbora:MigrationPlanMachine_Event_freeze_inventory .
+
+arbora:MigrationPlanMachine_inventory_frozen-record_backfill-backfill_observing a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanInventoryFrozen ;
+    :toState arbora:MigrationPlanBackfillObserving ;
+    :firedBy arbora:MigrationPlanMachine_Event_record_backfill .
+
+arbora:MigrationPlanMachine_backfill_observing-record_backfill-backfill_observing a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanBackfillObserving ;
+    :toState arbora:MigrationPlanBackfillObserving ;
+    :firedBy arbora:MigrationPlanMachine_Event_record_backfill .
+
+arbora:MigrationPlanMachine_backfill_observing-reconcile_clean-shadow_reconciled a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanBackfillObserving ;
+    :toState arbora:MigrationPlanShadowReconciled ;
+    :firedBy arbora:MigrationPlanMachine_Event_reconcile_clean .
+
+arbora:MigrationPlanMachine_shadow_reconciled-cutover_reads-read_cutover a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanShadowReconciled ;
+    :toState arbora:MigrationPlanReadCutover ;
+    :firedBy arbora:MigrationPlanMachine_Event_cutover_reads .
+
+arbora:MigrationPlanMachine_read_cutover-cutover_reads-read_cutover a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanReadCutover ;
+    :toState arbora:MigrationPlanReadCutover ;
+    :firedBy arbora:MigrationPlanMachine_Event_cutover_reads .
+
+arbora:MigrationPlanMachine_read_cutover-fence_writes-write_fenced a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanReadCutover ;
+    :toState arbora:MigrationPlanWriteFenced ;
+    :firedBy arbora:MigrationPlanMachine_Event_fence_writes .
+
+arbora:MigrationPlanMachine_write_fenced-checkpoint-checkpointed a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanWriteFenced ;
+    :toState arbora:MigrationPlanCheckpointed ;
+    :firedBy arbora:MigrationPlanMachine_Event_checkpoint .
+
+arbora:MigrationPlanMachine_checkpointed-retire-retired a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanCheckpointed ;
+    :toState arbora:MigrationPlanRetired ;
+    :firedBy arbora:MigrationPlanMachine_Event_retire .
+
+arbora:MigrationPlanMachine_planned-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanPlanned ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_inventory_frozen-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanInventoryFrozen ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_backfill_observing-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanBackfillObserving ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_shadow_reconciled-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanShadowReconciled ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_read_cutover-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanReadCutover ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_write_fenced-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanWriteFenced ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_checkpointed-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanCheckpointed ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+arbora:MigrationPlanMachine_rolled_back-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:MigrationPlanTransition ;
+    :fromState arbora:MigrationPlanRolledBack ;
+    :toState arbora:MigrationPlanRolledBack ;
+    :firedBy arbora:MigrationPlanMachine_Event_rollback .
+
+# ---------------------------------------------------------------------------
+# Cohort read cutover (ARBORA-HOST-R041.1).
+# Python: CutoverState, CutoverEvent, CohortReadCutover.EDGES in arbora/control_plane/migrations/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:CohortReadCutoverMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Cohort read cutover" ;
+    rdfs:comment "One cohort-scoped registry read cutover. It is active until its migration rolls back." ;
+    :initialState arbora:CohortReadCutoverActive ;
+    :hasState arbora:CohortReadCutoverActive ,
+        arbora:CohortReadCutoverRolledBack .
+
+arbora:CohortReadCutoverState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Cohort read cutover state" .
+
+arbora:CohortReadCutoverTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Cohort read cutover transition" .
+
+arbora:CohortReadCutoverEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Cohort read cutover event" .
+
+arbora:CohortReadCutoverTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Cohort read cutover transition refused" ;
+    rdfs:comment "MigrationTransitionRefused, code migration_transition_refused, fields machine (cohort_read_cutover), from_state and event. The state does not change." .
+
+arbora:CohortReadCutoverActive a owl:Class ;
+    rdfs:subClassOf arbora:CohortReadCutoverState ;
+    :storedForm "active" .
+
+arbora:CohortReadCutoverRolledBack a owl:Class ;
+    rdfs:subClassOf arbora:CohortReadCutoverState, :TerminalState ;
+    :storedForm "rolled_back" .
+
+arbora:CohortReadCutoverMachine_Event_rollback a owl:Class ;
+    rdfs:subClassOf arbora:CohortReadCutoverEvent ;
+    :storedForm "rollback" .
+
+arbora:CohortReadCutoverMachine_active-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:CohortReadCutoverTransition ;
+    :fromState arbora:CohortReadCutoverActive ;
+    :toState arbora:CohortReadCutoverRolledBack ;
+    :firedBy arbora:CohortReadCutoverMachine_Event_rollback .
+
+# ---------------------------------------------------------------------------
+# Write cutover fence (ARBORA-HOST-R041.1).
+# Python: CutoverState, CutoverEvent, WriteCutoverFence.EDGES in arbora/control_plane/migrations/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:WriteCutoverFenceMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Write cutover fence" ;
+    rdfs:comment "The single-authority write fence of one migration. It is active until its migration rolls back." ;
+    :initialState arbora:WriteCutoverFenceActive ;
+    :hasState arbora:WriteCutoverFenceActive ,
+        arbora:WriteCutoverFenceRolledBack .
+
+arbora:WriteCutoverFenceState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Write cutover fence state" .
+
+arbora:WriteCutoverFenceTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Write cutover fence transition" .
+
+arbora:WriteCutoverFenceEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Write cutover fence event" .
+
+arbora:WriteCutoverFenceTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Write cutover fence transition refused" ;
+    rdfs:comment "MigrationTransitionRefused, code migration_transition_refused, fields machine (write_cutover_fence), from_state and event. The state does not change." .
+
+arbora:WriteCutoverFenceActive a owl:Class ;
+    rdfs:subClassOf arbora:WriteCutoverFenceState ;
+    :storedForm "active" .
+
+arbora:WriteCutoverFenceRolledBack a owl:Class ;
+    rdfs:subClassOf arbora:WriteCutoverFenceState, :TerminalState ;
+    :storedForm "rolled_back" .
+
+arbora:WriteCutoverFenceMachine_Event_rollback a owl:Class ;
+    rdfs:subClassOf arbora:WriteCutoverFenceEvent ;
+    :storedForm "rollback" .
+
+arbora:WriteCutoverFenceMachine_active-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:WriteCutoverFenceTransition ;
+    :fromState arbora:WriteCutoverFenceActive ;
+    :toState arbora:WriteCutoverFenceRolledBack ;
+    :firedBy arbora:WriteCutoverFenceMachine_Event_rollback .
+
+# ---------------------------------------------------------------------------
+# Legacy retirement (ARBORA-HOST-R041.1).
+# Python: RetirementState, RetirementEvent, LegacyRetirement.EDGES in arbora/control_plane/migrations/models.py.
+# ---------------------------------------------------------------------------
+
+arbora:LegacyRetirementMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Legacy retirement" ;
+    rdfs:comment "The proof that temporary compatibility paths are gone. A ready proof retires only with zero remaining consumers and facades, or rolls back." ;
+    :initialState arbora:LegacyRetirementReady ;
+    :hasState arbora:LegacyRetirementReady ,
+        arbora:LegacyRetirementRetired ,
+        arbora:LegacyRetirementRolledBack .
+
+arbora:LegacyRetirementState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Legacy retirement state" .
+
+arbora:LegacyRetirementTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Legacy retirement transition" .
+
+arbora:LegacyRetirementEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Legacy retirement event" .
+
+arbora:LegacyRetirementTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Legacy retirement transition refused" ;
+    rdfs:comment "MigrationTransitionRefused, code migration_transition_refused, fields machine (legacy_retirement), from_state and event. The state does not change." .
+
+arbora:LegacyRetirementReady a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementState ;
+    :storedForm "ready" .
+
+arbora:LegacyRetirementRetired a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementState, :TerminalState ;
+    :storedForm "retired" .
+
+arbora:LegacyRetirementRolledBack a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementState, :TerminalState ;
+    :storedForm "rolled_back" .
+
+arbora:LegacyRetirementMachine_Event_retire a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementEvent ;
+    :storedForm "retire" .
+
+arbora:LegacyRetirementMachine_Event_rollback a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementEvent ;
+    :storedForm "rollback" .
+
+arbora:LegacyRetirementMachine_ready-retire-retired a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementTransition ;
+    :fromState arbora:LegacyRetirementReady ;
+    :toState arbora:LegacyRetirementRetired ;
+    :firedBy arbora:LegacyRetirementMachine_Event_retire .
+
+arbora:LegacyRetirementMachine_ready-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:LegacyRetirementTransition ;
+    :fromState arbora:LegacyRetirementReady ;
+    :toState arbora:LegacyRetirementRolledBack ;
+    :firedBy arbora:LegacyRetirementMachine_Event_rollback .

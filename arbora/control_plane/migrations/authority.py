@@ -19,12 +19,17 @@ from .models import (
     BackfillObservation,
     CanonicalRecord,
     CohortReadCutover,
+    CutoverEvent,
+    CutoverState,
     LegacyRetirement,
+    MigrationEvent,
     MigrationInventory,
     MigrationPlan,
     MigrationRollback,
+    MigrationState,
     PrerequisiteGate,
     ProjectionCheckpoint,
+    RetirementState,
     ShadowDelta,
     ShadowReconciliation,
     SourceSnapshot,
@@ -33,9 +38,6 @@ from .models import (
 )
 
 __all__ = ["InMemoryMigrationAuthority"]
-
-
-_MAX_VERSION = 2_147_483_647
 
 
 def _digest_for(data: Mapping[str, object]) -> str:
@@ -70,26 +72,6 @@ class InMemoryMigrationAuthority:
     def _cas_version(actual: int, expected: int | None) -> None:
         if expected is None or expected != actual:
             raise MigrationCasConflictError()
-
-    @staticmethod
-    def _next_plan(
-        plan: MigrationPlan,
-        *,
-        expected_version: int,
-        state: str,
-        stage: str,
-        **updates: object,
-    ) -> MigrationPlan:
-        InMemoryMigrationAuthority._cas_version(plan.version, expected_version)
-        if plan.version >= _MAX_VERSION:
-            raise MigrationCasConflictError("migration_version_exhausted")
-        data = plan.model_dump(mode="python")
-        data.update(updates)
-        data["state"] = state
-        data["stage"] = stage
-        data["version"] = plan.version + 1
-        data["digest"] = _digest_for(data)
-        return MigrationPlan(**data)
 
     @staticmethod
     def _same_or_conflict(
@@ -158,7 +140,7 @@ class InMemoryMigrationAuthority:
     ) -> MigrationPlan:
         """Create a planned migration only against a registered source snapshot."""
 
-        if plan.version != 1 or plan.state != "planned":
+        if plan.version != 1 or plan.state != MigrationPlan.INITIAL:
             raise MigrationConflictError("migration_plan_not_initial")
         if plan.source_snapshot_ref != snapshot.snapshot_ref:
             raise MigrationConflictError("migration_plan_snapshot_ref_mismatch")
@@ -236,13 +218,9 @@ class InMemoryMigrationAuthority:
                 if plan.inventory_ref == inventory.inventory_ref:
                     return plan
                 raise MigrationReplayError("inventory_reference_replay_drift")
-            if plan.state != "planned":
-                raise MigrationPrerequisiteError("inventory_freeze_stage_invalid")
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.FREEZE_INVENTORY,
                 expected_version=expected_plan_version,
-                state="inventory_frozen",
-                stage="stage_0_inventory_freeze",
                 inventory_ref=inventory.inventory_ref,
             )
             self._inventories[inventory.inventory_ref] = inventory
@@ -307,16 +285,9 @@ class InMemoryMigrationAuthority:
             )
             if same is not None:
                 return plan
-            if plan.state not in {"inventory_frozen", "backfill_observing"}:
-                raise MigrationPrerequisiteError("backfill_stage_invalid")
-            next_state = (
-                "backfill_observing" if plan.state == "inventory_frozen" else plan.state
-            )
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.RECORD_BACKFILL,
                 expected_version=expected_plan_version,
-                state=next_state,
-                stage="stage_1_read_only_backfill",
             )
             self._backfills[batch.batch_ref] = batch
             self._plans[plan.plan_ref] = updated
@@ -550,12 +521,13 @@ class InMemoryMigrationAuthority:
             if existing == candidate:
                 return existing
             raise MigrationReplayError("shadow_reconciliation_replay_drift")
-        if candidate.state == "clean" and plan.state == "backfill_observing":
-            updated = self._next_plan(
-                plan,
+        if (
+            candidate.state == "clean"
+            and plan.state == MigrationState.BACKFILL_OBSERVING
+        ):
+            updated = plan.transition(
+                MigrationEvent.RECONCILE_CLEAN,
                 expected_version=expected_plan_version,
-                state="shadow_reconciled",
-                stage="stage_2_shadow_reconciliation",
                 reconciliation_ref=candidate.reconciliation_ref,
             )
             self._plans[plan.plan_ref] = updated
@@ -579,7 +551,10 @@ class InMemoryMigrationAuthority:
         with self._lock:
             plan = self._plan(plan_ref)
             snapshot = self._snapshot(plan.source_snapshot_ref, source_snapshot_digest)
-            if plan.state not in {"backfill_observing", "shadow_reconciled"}:
+            if plan.state not in {
+                MigrationState.BACKFILL_OBSERVING,
+                MigrationState.SHADOW_RECONCILED,
+            }:
                 raise MigrationPrerequisiteError("shadow_stage_invalid")
             source_map, target_map = self._build_shadow_record_maps(
                 source_records, target_records
@@ -663,14 +638,10 @@ class InMemoryMigrationAuthority:
             )
             if same is not None:
                 return plan
-            if plan.state not in {"shadow_reconciled", "read_cutover"}:
-                raise MigrationPrerequisiteError("read_cutover_stage_invalid")
             cohort_refs = tuple(sorted(set(plan.cohort_refs) | {cutover.cohort_ref}))
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.CUTOVER_READS,
                 expected_version=expected_plan_version,
-                state="read_cutover",
-                stage="stage_3_cohort_read_cutover",
                 cohort_refs=cohort_refs,
             )
             self._read_cutovers[cutover.cutover_ref] = cutover
@@ -707,13 +678,9 @@ class InMemoryMigrationAuthority:
             same = self._same_or_conflict(existing, fence, identity="write_fence")
             if same is not None:
                 return plan
-            if plan.state != "read_cutover":
-                raise MigrationPrerequisiteError("write_cutover_stage_invalid")
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.FENCE_WRITES,
                 expected_version=expected_plan_version,
-                state="write_fenced",
-                stage="stage_4_write_cutover",
                 write_fence_ref=fence.fence_ref,
             )
             self._write_fences[fence.fence_ref] = fence
@@ -753,16 +720,17 @@ class InMemoryMigrationAuthority:
             )
             if same is not None:
                 return plan
-            if plan.state != "write_fenced" or plan.write_fence_ref is None:
+            if (
+                plan.state != MigrationState.WRITE_FENCED
+                or plan.write_fence_ref is None
+            ):
                 raise MigrationPrerequisiteError("projection_checkpoint_stage_invalid")
             fence = self._write_fences.get(plan.write_fence_ref)
-            if fence is None or fence.state != "active":
+            if fence is None or fence.state != CutoverState.ACTIVE:
                 raise MigrationPrerequisiteError("active_write_fence_missing")
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.CHECKPOINT,
                 expected_version=expected_plan_version,
-                state="checkpointed",
-                stage="stage_5_projection_checkpoint",
                 checkpoint_ref=checkpoint.checkpoint_ref,
             )
             self._checkpoints[checkpoint.checkpoint_ref] = checkpoint
@@ -788,7 +756,7 @@ class InMemoryMigrationAuthority:
             or retirement.write_fence_ref != plan.write_fence_ref
             or retirement.checkpoint_ref != plan.checkpoint_ref
             or retirement.gate_ref != gate.gate_ref
-            or retirement.state != "retired"
+            or retirement.state != RetirementState.RETIRED
             or retirement.remaining_consumers != 0
             or retirement.remaining_facades != 0
         )
@@ -821,13 +789,9 @@ class InMemoryMigrationAuthority:
             )
             if same is not None:
                 return plan
-            if plan.state != "checkpointed":
-                raise MigrationPrerequisiteError("legacy_retirement_stage_invalid")
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.RETIRE,
                 expected_version=expected_plan_version,
-                state="retired",
-                stage="legacy_retirement",
                 retirement_ref=retirement.retirement_ref,
             )
             self._retirements[retirement.retirement_ref] = retirement
@@ -846,20 +810,26 @@ class InMemoryMigrationAuthority:
     ) -> WriteCutoverFence | None:
         """Build the rolled-back ``WriteCutoverFence`` record when the plan has
         an active fence."""
-        if plan.state not in {"write_fenced", "checkpointed"}:
+        if plan.state not in {
+            MigrationState.WRITE_FENCED,
+            MigrationState.CHECKPOINTED,
+        }:
             return None
         if rollback.fence_ref != plan.write_fence_ref:
             raise MigrationConflictError("rollback_fence_binding_invalid")
         fence = self._write_fences.get(plan.write_fence_ref or "")
         if fence is None:
             raise MigrationPrerequisiteError("rollback_fence_missing")
-        if fence.version >= _MAX_VERSION:
-            raise MigrationCasConflictError("migration_version_exhausted")
-        fence_data = fence.model_dump(mode="python")
-        fence_data["state"] = "rolled_back"
-        fence_data["version"] = fence.version + 1
-        fence_data["digest"] = _digest_for(fence_data)
-        return WriteCutoverFence(**fence_data)
+        return fence.transition(CutoverEvent.ROLLBACK)
+
+    def _roll_back_read_cutovers(self, plan: MigrationPlan) -> None:
+        """Roll back every active cohort read cutover the rolled-back plan owns."""
+        for ref, cutover in tuple(self._read_cutovers.items()):
+            if (
+                cutover.migration_ref == plan.migration_ref
+                and cutover.state == CutoverState.ACTIVE
+            ):
+                self._read_cutovers[ref] = cutover.transition(CutoverEvent.ROLLBACK)
 
     @staticmethod
     def _applied_rollback(rollback: MigrationRollback) -> MigrationRollback:
@@ -883,8 +853,6 @@ class InMemoryMigrationAuthority:
 
         with self._lock:
             plan = self._plan(plan_ref)
-            if plan.state == "retired":
-                raise MigrationPrerequisiteError("retired_migration_not_rollbackable")
             if (
                 rollback.migration_ref != plan.migration_ref
                 or rollback.source_snapshot_digest != plan.source_snapshot_digest
@@ -898,14 +866,13 @@ class InMemoryMigrationAuthority:
                 raise MigrationReplayError("rollback_replay_drift")
             rolled_back_fence = self._rolled_back_fence_for(plan, rollback)
             rollback = self._applied_rollback(rollback)
-            updated = self._next_plan(
-                plan,
+            updated = plan.transition(
+                MigrationEvent.ROLLBACK,
                 expected_version=expected_plan_version,
-                state="rolled_back",
-                stage="rollback",
             )
             if rolled_back_fence is not None:
                 self._write_fences[rolled_back_fence.fence_ref] = rolled_back_fence
+            self._roll_back_read_cutovers(plan)
             self._rollbacks[rollback.rollback_ref] = rollback
             self._plans[plan.plan_ref] = updated
             return updated
