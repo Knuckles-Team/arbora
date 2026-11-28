@@ -39,6 +39,7 @@ from tests.fleet.test_fleet_onboarding import (
     _head_digest,
     _onboarding,
     _run_in_session,
+    eg,  # noqa: F401
 )
 
 DISTRIBUTION = "fakeconn-mcp"
