@@ -38,6 +38,7 @@ from arbora.fleet.onboarding_machine import (
     OnboardingState,
     transition,
 )
+from arbora.fleet.release_record import ReleaseRecorder
 from arbora.fleet.smoke_sweep import FleetSmokeService
 from arbora.security.error_surface import carry_errors
 
@@ -587,6 +588,7 @@ def start_fleet_onboarding(
             virtual_catalog=virtual_catalog,
             definition_admission=ports.definition_admission,
             config=multiplexer.fleet.config,
+            release_recorder=ReleaseRecorder(),
         ),
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,

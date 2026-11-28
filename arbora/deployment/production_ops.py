@@ -485,6 +485,7 @@ async def _onboard_fleet(
         configured_fleet_endpoints,
         self_served_connectors,
     )
+    from arbora.fleet.release_record import ReleaseRecorder
     from arbora.fleet.virtual_catalog import VirtualCatalog
 
     profile = load_sandbox_profile() if sandbox else None
@@ -501,6 +502,7 @@ async def _onboard_fleet(
                 declarations=Declarations(),
                 action_policies=ActionPolicies(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
+                release_recorder=ReleaseRecorder(),
             ),
             endpoints,
             served_url=served_url,
