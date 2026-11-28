@@ -189,17 +189,33 @@ _S = intake_lease.IntakeLeaseState
 _E = intake_lease.IntakeLeaseEvent
 
 
-def _edge_id(edge: tuple[Any, Any, Any]) -> str:
-    return f"{edge[0].value}-{edge[1].value}-{edge[2].value}"
-
-
-_LEGAL = [(s, e, t) for (s, e), t in intake_lease._LEASE_TRANSITIONS.items()]
+# The edges the design names, written out independently of the table under test.
+_EXPECTED_EDGES = [
+    pytest.param(_S.HELD, _E.HEARTBEAT_OK, _S.HELD, id="held-heartbeat_ok-held"),
+    pytest.param(
+        _S.HELD, _E.HEARTBEAT_ERR, _S.SUSPECT, id="held-heartbeat_err-suspect"
+    ),
+    pytest.param(_S.SUSPECT, _E.HEARTBEAT_OK, _S.HELD, id="suspect-heartbeat_ok-held"),
+    pytest.param(
+        _S.SUSPECT, _E.HEARTBEAT_ERR, _S.SUSPECT, id="suspect-heartbeat_err-suspect"
+    ),
+    pytest.param(_S.HELD, _E.FENCE_REFUSED, _S.LOST, id="held-fence_refused-lost"),
+    pytest.param(
+        _S.SUSPECT, _E.FENCE_REFUSED, _S.LOST, id="suspect-fence_refused-lost"
+    ),
+    pytest.param(_S.HELD, _E.TTL_LAPSED, _S.LOST, id="held-ttl_lapsed-lost"),
+    pytest.param(_S.SUSPECT, _E.TTL_LAPSED, _S.LOST, id="suspect-ttl_lapsed-lost"),
+    pytest.param(_S.LOST, _E.REACQUIRED, _S.HELD, id="lost-reacquired-held"),
+    pytest.param(_S.HELD, _E.RELEASE, _S.RELEASED, id="held-release-released"),
+    pytest.param(_S.SUSPECT, _E.RELEASE, _S.RELEASED, id="suspect-release-released"),
+    pytest.param(_S.LOST, _E.RELEASE, _S.RELEASED, id="lost-release-released"),
+]
+_LEGAL = [tuple(p.values) for p in _EXPECTED_EDGES]
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R800.1003")
-@pytest.mark.parametrize("edge", _LEGAL, ids=[_edge_id(e) for e in _LEGAL])
-def test_legal_edge(edge):
-    source, event, target = edge
+@pytest.mark.parametrize(("source", "event", "target"), _EXPECTED_EDGES)
+def test_legal_edge(source, event, target):
     lease = _lease("telegram")
     lease.state = source
     assert intake_lease.transition(lease, event) is target
@@ -207,8 +223,33 @@ def test_legal_edge(edge):
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R800.1003")
+def test_the_table_is_exactly_the_designed_edges():
+    assert dict(intake_lease._LEASE_TRANSITIONS) == {(s, e): t for s, e, t in _LEGAL}
+    assert len(_LEGAL) == 12
+
+
+@pytest.mark.spec("ARBORA-MESSAGING-R800.1003")
+def test_initial_state_terminals_and_reachability():
+    assert intake_lease.INITIAL is _S.HELD
+    assert _lease("telegram").state is intake_lease.INITIAL
+    assert intake_lease.TERMINALS == (_S.RELEASED,)
+    sources = {s for s, _ in intake_lease._LEASE_TRANSITIONS}
+    # Released is absorbing; every other state has an exit.
+    assert sources == set(_S) - set(intake_lease.TERMINALS)
+    reached = {intake_lease.INITIAL}
+    grew = True
+    while grew:
+        grew = False
+        for (source, _), target in intake_lease._LEASE_TRANSITIONS.items():
+            if source in reached and target not in reached:
+                reached.add(target)
+                grew = True
+    assert reached == set(_S)
+
+
+@pytest.mark.spec("ARBORA-MESSAGING-R800.1003")
 def test_every_illegal_pair_is_refused():
-    legal = {(s, e) for s, e, _ in _LEGAL}
+    legal = set(intake_lease._LEASE_TRANSITIONS)
     illegal = [(s, e) for s in _S for e in _E if (s, e) not in legal]
     assert len(legal) == 12 and len(illegal) == 12
     for source, event in illegal:
@@ -226,6 +267,15 @@ def test_every_illegal_pair_is_refused():
     with pytest.raises(intake_lease.IllegalIntakeLeaseTransition):
         intake_lease.transition(lease, _E.HEARTBEAT_ERR, within_ttl=False)
     assert lease.state is _S.SUSPECT
+
+
+@pytest.mark.spec("ARBORA-MESSAGING-R800.1003")
+def test_the_wire_values_are_unchanged():
+    assert [s.value for s in _S] == ["held", "suspect", "lost", "released"]
+    assert [e.value for e in _E] == [
+        "heartbeat_ok", "heartbeat_err", "fence_refused",
+        "ttl_lapsed", "reacquired", "release",
+    ]  # fmt: skip
 
 
 class _Scripted(FakeWorkItems):
