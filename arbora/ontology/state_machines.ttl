@@ -1344,9 +1344,9 @@ arbora:NoAttemptsLeft a owl:Class ;
     rdfs:label "NoAttemptsLeft" ;
     :storedForm "no_attempts_left" .
 
-arbora:LeaseLive a owl:Class ;
+arbora:OnboardingLeaseLive a owl:Class ;
     rdfs:subClassOf :TransitionGuard ;
-    rdfs:label "LeaseLive" ;
+    rdfs:label "OnboardingLeaseLive" ;
     :storedForm "lease_live" .
 
 arbora:OnboardingTransitionRefused a owl:Class ;
@@ -1477,7 +1477,7 @@ arbora:FleetOnboardingMachine_failed-authority_live-backoff a owl:Class ;
     :fromState arbora:OnboardingFailed ;
     :toState arbora:OnboardingBackoff ;
     :firedBy arbora:FleetOnboardingMachine_Event_authority_live ;
-    :guardedBy arbora:LeaseLive .
+    :guardedBy arbora:OnboardingLeaseLive .
 
 # ---------------------------------------------------------------------------
 # Migration plan (ARBORA-HOST-R041.1).

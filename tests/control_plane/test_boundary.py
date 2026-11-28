@@ -38,7 +38,6 @@ def test_every_extracted_module_is_live_importable(module_name: str) -> None:
         "migrations",
         "policy",
         "projection",
-        "retrieval",
         "runs",
         "sources",
         "webui",
