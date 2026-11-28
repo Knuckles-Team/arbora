@@ -302,7 +302,7 @@ def status_command(args: argparse.Namespace) -> int:
     config = inst.load_config()
     rows = {}
     for harness in args.harness or profile_ids():
-        record = config.installs.get(harness)
+        record: inst.InstallRecord | None = config.installs.get(harness)
         if record is None:
             rows[harness] = {"state": inst.InstallState.ABSENT.value}
             continue
@@ -328,7 +328,7 @@ def status_command(args: argparse.Namespace) -> int:
 
 def remove_command(args: argparse.Namespace) -> int:
     config = inst.load_config()
-    record = config.installs.get(args.harness)
+    record: inst.InstallRecord | None = config.installs.get(args.harness)
     if record is None or record.state is inst.InstallState.REMOVED:
         print(json.dumps({"harness": args.harness, "state": "absent"}))
         return 0
@@ -389,7 +389,7 @@ def statusline_command(args: argparse.Namespace) -> int:
     except ValueError:
         pass
     config = inst.load_config()
-    record = config.installs.get(args.harness)
+    record: inst.InstallRecord | None = config.installs.get(args.harness)
     credential = TokenStore().load(args.harness)
     install_state = record.state.value if record else "absent"
     cred_state = credential.state.value if credential else "door sign-in"
