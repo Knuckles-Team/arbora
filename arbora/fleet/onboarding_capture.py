@@ -230,3 +230,25 @@ async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> A
             connector=endpoint.name,
             kinds=_capture_kinds(),
         )
+
+
+async def read_served_release(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
+    """The release evidence a live fleet server serves at ``connector://release``.
+
+    ``None`` when the server serves none (a connector run from a source checkout).
+    A body that is not valid evidence raises ``ReleaseDigestError``.
+    """
+
+    from scion_sdk.manifest.release_digest import read_release_evidence
+    from scion_sdk.ports.session import TransportEndpoint
+    from scion_sdk.transports.mcp import McpTransport
+
+    uri = "connector://release"
+    transport_endpoint = TransportEndpoint(
+        url=endpoint.url, timeout_seconds=CAPTURE_TIMEOUT_S, auth=auth
+    )
+    async with McpTransport().session(transport_endpoint) as session:
+        served = {str(getattr(r, "uri", "")) for r in await session.list_resources()}
+        if uri not in served:
+            return None
+        return read_release_evidence(await session.read_resource(uri))

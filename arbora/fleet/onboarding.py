@@ -39,6 +39,7 @@ from arbora.fleet.onboarding_capture import (
     _child_auth,
     _remember_declaration,
     capture_server_pack,
+    read_served_release,
     self_served_connectors,
 )
 from arbora.fleet.surfaces import pack_surface_report
@@ -176,6 +177,11 @@ class FleetOnboarding:
     definition_admission: Any = None
     #: The host's configuration view (the service credential is read through it).
     config: RuntimeConfig = field(default_factory=RuntimeConfig)
+    #: Records each onboarded connector version's release from the package index
+    #: (ARBORA-HOST-R037); ``None`` records nothing.
+    release_recorder: Any = None
+    #: Replaces :func:`read_served_release`, for example in tests.
+    release_reader: Any = None
 
     @property
     def tenant_client(self) -> Any:
@@ -205,6 +211,51 @@ class FleetOnboarding:
                 renew_margin_ms=RENEW_MARGIN_MS,
                 now_ms=now_ms,
             )
+
+    async def _send_release(self, request: dict[str, Any]) -> Any:
+        """Send one ``RecordRelease`` as the process authority, in the connector's graph."""
+        from medulla import EngineResponseError
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops.engine_calls import refusal_code
+        from arbora.fleet.release_record import ReleaseRecordRefused
+        from arbora.semantic_provisioning import bind_session_graph
+
+        graph = str(self.session.graph)
+        with bind_session_graph(graph):
+            try:
+                return await send_by_id(
+                    self.tenant_client, "RecordRelease", {"release": request}, graph
+                )
+            except EngineResponseError as exc:
+                raise ReleaseRecordRefused(refusal_code(exc.code, exc.detail)) from exc
+
+    async def _record_release(self, endpoint: FleetEndpoint, *, auth: Any) -> None:
+        """Record the release the connector serves; a failure never fails onboarding.
+
+        A release that cannot be recorded stays unrecorded and the runner refuses
+        that connector with ``RELEASE_PIN_MISSING``; the next pass tries again.
+        """
+        recorder = self.release_recorder
+        if recorder is None:
+            return
+        report = self.surfaces[endpoint.name]
+        try:
+            with onboarding_step("ReleaseRecord"):
+                served = await (self.release_reader or read_served_release)(
+                    endpoint, auth=auth
+                )
+                if served is None:
+                    report["release"] = {"state": "unreported"}
+                    return
+                report["release"] = dict(
+                    await recorder.record(served, self._send_release)
+                )
+        except Exception as exc:  # reported, never fatal
+            logger.warning(
+                "%s: release record failed: %s", endpoint.name, exc, exc_info=True
+            )
+            report["release"] = {"state": "not_recorded", "code": type(exc).__name__}
 
     def _record_contract(self, connector: str, pack: Any) -> None:
         """Digest the captured pack and report which resource keys moved.
@@ -466,6 +517,7 @@ class FleetOnboarding:
         self.surfaces[endpoint.name] = pack_surface_report(pack)
         self._record_contract(endpoint.name, pack)
         self._check_contract(endpoint.name, pack)
+        await self._record_release(endpoint, auth=auth)
         if trigger is not None:
             self.surfaces[endpoint.name]["trigger"] = {
                 "reason": trigger.reason,

@@ -321,6 +321,8 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R036` | `arbora/agent_runs.py::AgentRunPort` | Planned, not yet written |
 | `ARBORA-HOST-R036` | `tests/test_run_receipt_commit.py::test_terminal_commit_carries_run_trace_nodes` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `tests/test_connector_runner_composition.py::test_release_verification_has_no_lock_setting`, `tests/test_connector_runner_composition.py::test_the_verified_client_reaches_the_sdk_for_release_pins` |
+| `ARBORA-HOST-R037.1` | `tests/fleet/test_release_record.py::test_onboarding_records_the_release_from_the_index_and_the_runner_accepts`, `tests/fleet/test_release_record.py::test_a_tampered_install_or_an_unrecorded_version_refuses` |
+| `ARBORA-HOST-R037.2` | `tests/fleet/test_release_record.py::test_a_wheel_that_differs_from_the_index_digest_is_not_recorded`, `tests/fleet/test_release_record.py::test_an_unreachable_index_or_a_taken_version_is_reported_not_raised` |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (planned) | Package units form a layered, acyclic import graph. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | The coupling policy's layer table in `pyproject.toml` names every unit once and nothing else. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_scan_reports_each_rule_with_its_location` | The scanner reports an upward import, a private reach, an unlayered unit and a cycle with their location, and passes a downward import. |

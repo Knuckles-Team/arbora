@@ -161,7 +161,7 @@
 - [ ] T161 ARBORA-HOST-R034 Specialist package install is transactional per provider root and registers catalog nodes.
 - [ ] T162 ARBORA-HOST-R035 Host registers the harness cycle providers and drives one tick per completed run.
 - [ ] T163 ARBORA-HOST-R036 Attach run receipt nodes to the terminal commit.
-- [ ] T164 ARBORA-HOST-R037 Connector runner verifies connector releases against the engine's release record.
+- [ ] T164 ARBORA-HOST-R037 Arbora records each connector release from the package index, and the connector runner verifies connectors against that record.
 - [ ] T165 ARBORA-HOST-R007.2.24 Make the doctor check the `meristem` distribution.
 - [ ] T166 [US1] ARBORA-HOST-R038 Package units form a layered, acyclic import graph.
 - [ ] T167 [US1] ARBORA-HOST-R039 Runtime state is created at the composition root.
@@ -196,3 +196,5 @@
 - [ ] T196 [US1] ARBORA-HOST-R040.3 HTTP client and proxy builders use the collapsed functions. Size: S, 1 PR, 3 hours.
 - [ ] T197 [US1] ARBORA-HOST-R040.4 Fresh-install boot proof. Size: S, 1 PR, 2 hours.
 - [ ] T198 [US1] ARBORA-HOST-R041 The shared state-machine census runs in staged mode. Size: S, 1 PR, 1 h
+- [ ] T199 [US1] ARBORA-HOST-R037.1 Onboarding records the release the connector serves. Size: M, 1 PR, 3 hours.
+- [ ] T200 [US1] ARBORA-HOST-R037.2 A release that does not match the index is not recorded. Size: S, 1 PR, 1 hour.
