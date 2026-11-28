@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from graphlib import TopologicalSorter
 from types import MappingProxyType
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import Field, model_validator
 
@@ -20,18 +21,64 @@ MAX_GRAPH_EVENTS = 1000
 MAX_GRAPH_NODES = 5000
 MAX_GRAPH_EDGES = 20000
 PartialReason = Literal["node_bound", "edge_bound", "depth_bound", "child_unavailable"]
-StepStatus = Literal[
-    "unobserved", "running", "completed", "failed", "cancelled", "blocked"
-]
+
+
+class StepStatus(StrEnum):
+    """The observed lifecycle of one declared plan step (ARBORA-OPS-R021.4.8.3)."""
+
+    UNOBSERVED = "unobserved"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    BLOCKED = "blocked"
+
+
+class StepEvent(StrEnum):
+    """The run events that carry a step's lifecycle evidence."""
+
+    TASK_STARTED = "task_started"
+    TASK_COMPLETED = "task_completed"
+    TASK_FAILED = "task_failed"
+    TASK_CANCELLED = "task_cancelled"
+    TASK_BLOCKED = "task_blocked"
+
+
+_SS, _SE = StepStatus, StepEvent
 TASK_STATES: Mapping[str, StepStatus] = MappingProxyType(
     {
-        "task_started": "running",
-        "task_completed": "completed",
-        "task_failed": "failed",
-        "task_cancelled": "cancelled",
-        "task_blocked": "blocked",
+        _SE.TASK_STARTED: _SS.RUNNING,
+        _SE.TASK_COMPLETED: _SS.COMPLETED,
+        _SE.TASK_FAILED: _SS.FAILED,
+        _SE.TASK_CANCELLED: _SS.CANCELLED,
+        _SE.TASK_BLOCKED: _SS.BLOCKED,
     }
 )
+
+
+class StepTransitionRefused(ValueError):
+    """An evidence event the step machine does not list from the step's status.
+
+    The step does not change. ``from_state`` and ``event`` are the stored forms.
+    """
+
+    code = "STEP_TRANSITION_ILLEGAL"
+    machine = "execution_step"
+
+    def __init__(self, from_state: StepStatus, event: StepEvent) -> None:
+        # An unobserved step ended without a start is "missing start evidence".
+        unstarted = from_state is StepStatus.UNOBSERVED and event in {
+            StepEvent.TASK_COMPLETED,
+            StepEvent.TASK_FAILED,
+            StepEvent.TASK_CANCELLED,
+        }
+        super().__init__(
+            "missing start evidence"
+            if unstarted
+            else "conflicting lifecycle transition"
+        )
+        self.from_state = from_state
+        self.event = event
 
 
 class ExecutionGraphParams(RunReadParams):
@@ -44,11 +91,39 @@ class StepEvidence(Params):
 
 
 class ExecutionStep(Params):
+    """One declared plan step; ``transition`` is the only writer of ``status``."""
+
+    EDGES: ClassVar[Mapping[tuple[StepStatus, StepEvent], StepStatus]] = (
+        MappingProxyType(
+            {
+                (_SS.UNOBSERVED, _SE.TASK_STARTED): _SS.RUNNING,
+                (_SS.UNOBSERVED, _SE.TASK_BLOCKED): _SS.BLOCKED,
+                (_SS.RUNNING, _SE.TASK_COMPLETED): _SS.COMPLETED,
+                (_SS.RUNNING, _SE.TASK_FAILED): _SS.FAILED,
+                (_SS.RUNNING, _SE.TASK_CANCELLED): _SS.CANCELLED,
+            }
+        )
+    )
+    INITIAL: ClassVar[StepStatus] = StepStatus.UNOBSERVED
+    TERMINALS: ClassVar[tuple[StepStatus, ...]] = (
+        StepStatus.COMPLETED,
+        StepStatus.FAILED,
+        StepStatus.CANCELLED,
+        StepStatus.BLOCKED,
+    )
+
     key: str = Field(min_length=1, max_length=16384)
     kind: Literal["plan_step"] = "plan_step"
     task_id: str = Field(min_length=1, max_length=512)
-    status: StepStatus = "unobserved"
+    status: StepStatus = StepStatus.UNOBSERVED
     evidence: StepEvidence | None = None
+
+    def transition(self, event: StepEvent) -> None:
+        """Move the step along ``event``; an edge outside ``EDGES`` raises."""
+        target = self.EDGES.get((self.status, event))
+        if target is None:
+            raise StepTransitionRefused(self.status, event)
+        self.status = target
 
 
 class ExecutionChildRun(Params):
@@ -371,20 +446,8 @@ def _apply_evidence(
     ):
         raise ValueError("conflicting lifecycle binding")
     node = nodes[task_id]
-    _validate_transition(node.status, kind)
-    node.status = TASK_STATES[kind]
+    node.transition(StepEvent(kind))
     node.evidence = StepEvidence(event_id=event["event_id"], sequence=event["sequence"])
-
-
-def _validate_transition(status: StepStatus, kind: str) -> None:
-    if status != "unobserved" and (
-        status != "running" or kind in {"task_started", "task_blocked"}
-    ):
-        raise ValueError("conflicting lifecycle transition")
-    if kind in {"task_completed", "task_failed", "task_cancelled"} and (
-        status != "running"
-    ):
-        raise ValueError("missing start evidence")
 
 
 @dataclass(frozen=True, slots=True)

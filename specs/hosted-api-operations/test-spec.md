@@ -613,3 +613,5 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R924` | Test: `tests/api/test_discover_guided_served.py::test_served_discover_sends_equal_seeded_requests_over_http_and_mcp` (served, HTTP and MCP; the generated op is `eg.ingestion.Discover`, a service-only operation) |
 | `ARBORA-OPS-R924.1` | Test: `tests/api/test_discover_guided_served.py::test_older_contract_refuses_unavailable_and_codes_pass_through` (planned, L3) |
 | `ARBORA-OPS-R924.2` | Test: `tests/api/test_discover_guided_served.py::test_served_discover_sends_equal_seeded_requests_over_http_and_mcp` (served, HTTP and MCP; the generated op is `eg.ingestion.Discover`, a service-only operation) |
+
+ARBORA-OPS-R021.4.8.3 is proven by `tests/api/test_execution_step_machine.py::test_step_legal_edge_succeeds`, `::test_step_every_illegal_pair_is_refused_and_the_status_is_unchanged` and `::test_only_the_step_transition_writes_the_status_field` (L1).
