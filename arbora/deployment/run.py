@@ -1,10 +1,10 @@
 """``arbora deploy run``: the deploy as an explicit state machine (ARBORA-DEPLOY-R602.5).
 
 ``DeployRun`` has eleven states and fourteen events; the legal edges are the
-table :data:`LEGAL`, and any other pair is refused with
+table :data:`EDGES`, and any other pair is refused with
 ``DEPLOY_TRANSITION_ILLEGAL`` naming the state and the event. The state and the
 events already applied are persisted in ``deploy-run.json`` in the work
-directory, written only by :meth:`DeployRun.apply`; a re-run resumes from the
+directory, written only by :meth:`DeployRun.transition`; a re-run resumes from the
 stored state and a completed step is not repeated. A step holds no logic of its
 own: each event is a table row of the commands it runs, which are the
 subcommands of ``arbora deploy`` and ``kubectl`` calls on the rendered files.
@@ -61,58 +61,75 @@ class DeployEvent(Enum):
     ABORT = "Abort"
 
 
-TERMINAL = frozenset(
-    {DeployState.VERIFIED, DeployState.ROLLED_BACK, DeployState.FAILED}
-)
 S, E = DeployState, DeployEvent
 
-#: The forward chain in step order. The steps that leave the stage unchanged
-#: (FirstStart, Onboard, Enrol, Ingest) are edges from a state to itself.
-FORWARD: tuple[tuple[DeployState, DeployEvent, DeployState], ...] = (
-    (S.PLANNED, E.PREFLIGHT, S.PREFLIGHT_PASSED),
-    (S.PREFLIGHT_PASSED, E.BACKUP, S.BACKED_UP),
-    (S.BACKED_UP, E.CONFIG, S.CONFIGURED),
-    (S.CONFIGURED, E.BUILD, S.BUILT),
-    (S.BUILT, E.APPLY, S.APPLIED),
-    (S.APPLIED, E.CUTOVER, S.CUT_OVER),
-    (S.CUT_OVER, E.FIRST_START, S.CUT_OVER),
-    (S.CUT_OVER, E.SERVE, S.SERVING),
-    (S.SERVING, E.ONBOARD, S.SERVING),
-    (S.SERVING, E.ENROL, S.SERVING),
-    (S.SERVING, E.INGEST, S.SERVING),
-    (S.SERVING, E.VERIFY, S.VERIFIED),
-)
-ROLLBACK_FROM = (S.APPLIED, S.CUT_OVER, S.SERVING)
+#: The state a new run starts in.
+INITIAL = S.PLANNED
+#: Verified (the chain finished), RolledBack (the rollback finished) and Failed (a step
+#: aborted) are the three ends of a run. A failed run is not retried in place: the operator
+#: starts a new work directory, so no edge leaves Failed.
+TERMINALS = (S.VERIFIED, S.ROLLED_BACK, S.FAILED)
 
-#: Every legal (state, event) pair and the state it leads to.
-LEGAL: Mapping[tuple[DeployState, DeployEvent], DeployState] = MappingProxyType(
+#: Every legal (state, event) pair and the state it leads to. The forward chain runs in
+#: step order; the steps that leave the stage unchanged (FirstStart, Onboard, Enrol, Ingest)
+#: are edges from a state to itself; Rollback leaves Applied, CutOver and Serving; Abort
+#: leaves every state that is not terminal.
+EDGES: Mapping[tuple[DeployState, DeployEvent], DeployState] = MappingProxyType(
     {
-        **{(state, event): target for state, event, target in FORWARD},
-        **{(state, E.ROLLBACK): S.ROLLED_BACK for state in ROLLBACK_FROM},
-        **{
-            (state, E.ABORT): S.FAILED for state in DeployState if state not in TERMINAL
-        },
+        (S.PLANNED, E.PREFLIGHT): S.PREFLIGHT_PASSED,
+        (S.PREFLIGHT_PASSED, E.BACKUP): S.BACKED_UP,
+        (S.BACKED_UP, E.CONFIG): S.CONFIGURED,
+        (S.CONFIGURED, E.BUILD): S.BUILT,
+        (S.BUILT, E.APPLY): S.APPLIED,
+        (S.APPLIED, E.CUTOVER): S.CUT_OVER,
+        (S.CUT_OVER, E.FIRST_START): S.CUT_OVER,
+        (S.CUT_OVER, E.SERVE): S.SERVING,
+        (S.SERVING, E.ONBOARD): S.SERVING,
+        (S.SERVING, E.ENROL): S.SERVING,
+        (S.SERVING, E.INGEST): S.SERVING,
+        (S.SERVING, E.VERIFY): S.VERIFIED,
+        (S.APPLIED, E.ROLLBACK): S.ROLLED_BACK,
+        (S.CUT_OVER, E.ROLLBACK): S.ROLLED_BACK,
+        (S.SERVING, E.ROLLBACK): S.ROLLED_BACK,
+        (S.PLANNED, E.ABORT): S.FAILED,
+        (S.PREFLIGHT_PASSED, E.ABORT): S.FAILED,
+        (S.BACKED_UP, E.ABORT): S.FAILED,
+        (S.CONFIGURED, E.ABORT): S.FAILED,
+        (S.BUILT, E.ABORT): S.FAILED,
+        (S.APPLIED, E.ABORT): S.FAILED,
+        (S.CUT_OVER, E.ABORT): S.FAILED,
+        (S.SERVING, E.ABORT): S.FAILED,
     }
 )
-CHAIN = tuple(event for _, event, _ in FORWARD)
+#: The forward steps in the order a run takes them.
+CHAIN = (
+    E.PREFLIGHT,
+    E.BACKUP,
+    E.CONFIG,
+    E.BUILD,
+    E.APPLY,
+    E.CUTOVER,
+    E.FIRST_START,
+    E.SERVE,
+    E.ONBOARD,
+    E.ENROL,
+    E.INGEST,
+    E.VERIFY,
+)
 
 
 class TransitionIllegal(ValueError):
-    """An event the state does not accept."""
+    """An event the state does not accept; the state does not change."""
+
+    machine = "deploy_run"
 
     def __init__(self, state: DeployState, event: DeployEvent) -> None:
         self.code = TRANSITION_ILLEGAL
+        self.from_state = state
+        self.event = event
         super().__init__(
             f"{TRANSITION_ILLEGAL}: state {state.value} does not accept event {event.value}"
         )
-
-
-def next_state(state: DeployState, event: DeployEvent) -> DeployState:
-    """The state ``event`` leads to from ``state``, or :class:`TransitionIllegal`."""
-    try:
-        return LEGAL[(state, event)]
-    except KeyError:
-        raise TransitionIllegal(state, event) from None
 
 
 # -- the step table ----------------------------------------------------------
@@ -227,7 +244,7 @@ class DeployRun:
     """One deploy in a work directory; the only writer of ``deploy-run.json``."""
 
     workdir: Path
-    state: DeployState = DeployState.PLANNED
+    state: DeployState = INITIAL
     completed: list[DeployEvent] = field(default_factory=list)
 
     @classmethod
@@ -242,9 +259,16 @@ class DeployRun:
             [DeployEvent(e) for e in stored["completed"]],
         )
 
-    def apply(self, event: DeployEvent) -> DeployState:
-        """Take ``event`` from the current state and persist the result."""
-        target = next_state(self.state, event)
+    def transition(self, event: DeployEvent) -> DeployState:
+        """Take ``event`` from the current state and persist the result.
+
+        The only writer of ``state``; an event the state does not accept raises
+        :class:`TransitionIllegal` and writes nothing.
+        """
+        try:
+            target = EDGES[(self.state, event)]
+        except KeyError:
+            raise TransitionIllegal(self.state, event) from None
         self.state = target
         if event not in (E.ABORT, E.ROLLBACK):
             self.completed.append(event)
@@ -282,20 +306,20 @@ def execute(
     plan: Sequence[DeployEvent] = (E.ROLLBACK,) if rollback else CHAIN
     skipping = start is not None
     for event in plan:
-        if run.state in TERMINAL:
+        if run.state in TERMINALS:
             break
         if skipping and event is not start:
             continue
         skipping = False
         if run.done(event):
             continue
-        if (run.state, event) not in LEGAL:
+        if (run.state, event) not in EDGES:
             raise TransitionIllegal(run.state, event)
         for command in steps[event](context):
             if runner(command) != 0:
-                run.apply(E.ABORT)
+                run.transition(E.ABORT)
                 return run.state
-        run.apply(event)
+        run.transition(event)
     return run.state
 
 

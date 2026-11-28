@@ -2360,3 +2360,280 @@ arbora:SupportIdentityMachine_closed-reopen-open a owl:Class ;
     :fromState arbora:SupportIdentityClosed ;
     :toState arbora:SupportIdentityOpen ;
     :firedBy arbora:SupportIdentityMachine_Event_reopen .
+
+# ---------------------------------------------------------------------------
+# Deploy run (ARBORA-DEPLOY-R602.5).
+# Python: DeployState, DeployEvent, EDGES in arbora/deployment/run.py.
+# ---------------------------------------------------------------------------
+
+arbora:DeployRunMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Deploy run" ;
+    rdfs:comment "The explicit deploy sequence of arbora deploy run. A run walks the forward chain from Planned to Verified; Rollback leaves Applied, CutOver or Serving for RolledBack; Abort leaves any non-terminal state for Failed. Verified, RolledBack and Failed are the three ends of a run." ;
+    :initialState arbora:DeployRunPlanned ;
+    :hasState arbora:DeployRunPlanned ,
+        arbora:DeployRunPreflightPassed ,
+        arbora:DeployRunBackedUp ,
+        arbora:DeployRunConfigured ,
+        arbora:DeployRunBuilt ,
+        arbora:DeployRunApplied ,
+        arbora:DeployRunCutOver ,
+        arbora:DeployRunServing ,
+        arbora:DeployRunVerified ,
+        arbora:DeployRunRolledBack ,
+        arbora:DeployRunFailed .
+
+arbora:DeployRunState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Deploy run state" .
+
+arbora:DeployRunTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Deploy run transition" .
+
+arbora:DeployRunEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Deploy run event" .
+
+arbora:DeployRunTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Deploy run transition refused" ;
+    rdfs:comment "TransitionIllegal, code DEPLOY_TRANSITION_ILLEGAL, fields machine (deploy_run), from_state and event. The deploy state does not change and nothing is written." .
+
+arbora:DeployRunPlanned a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "Planned" .
+
+arbora:DeployRunPreflightPassed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "PreflightPassed" .
+
+arbora:DeployRunBackedUp a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "BackedUp" .
+
+arbora:DeployRunConfigured a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "Configured" .
+
+arbora:DeployRunBuilt a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "Built" .
+
+arbora:DeployRunApplied a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "Applied" .
+
+arbora:DeployRunCutOver a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "CutOver" .
+
+arbora:DeployRunServing a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState ;
+    :storedForm "Serving" .
+
+arbora:DeployRunVerified a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState, :TerminalState ;
+    :storedForm "Verified" .
+
+arbora:DeployRunRolledBack a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState, :TerminalState ;
+    :storedForm "RolledBack" .
+
+arbora:DeployRunFailed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunState, :TerminalState ;
+    :storedForm "Failed" .
+
+arbora:DeployRunMachine_Event_preflight a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Preflight" .
+
+arbora:DeployRunMachine_Event_backup a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Backup" .
+
+arbora:DeployRunMachine_Event_config a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Config" .
+
+arbora:DeployRunMachine_Event_build a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Build" .
+
+arbora:DeployRunMachine_Event_apply a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Apply" .
+
+arbora:DeployRunMachine_Event_cutover a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Cutover" .
+
+arbora:DeployRunMachine_Event_first_start a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "FirstStart" .
+
+arbora:DeployRunMachine_Event_serve a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Serve" .
+
+arbora:DeployRunMachine_Event_onboard a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Onboard" .
+
+arbora:DeployRunMachine_Event_enrol a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Enrol" .
+
+arbora:DeployRunMachine_Event_ingest a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Ingest" .
+
+arbora:DeployRunMachine_Event_verify a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Verify" .
+
+arbora:DeployRunMachine_Event_rollback a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Rollback" .
+
+arbora:DeployRunMachine_Event_abort a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunEvent ;
+    :storedForm "Abort" .
+
+arbora:DeployRunMachine_planned-preflight-preflight_passed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunPlanned ;
+    :toState arbora:DeployRunPreflightPassed ;
+    :firedBy arbora:DeployRunMachine_Event_preflight .
+
+arbora:DeployRunMachine_preflight_passed-backup-backed_up a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunPreflightPassed ;
+    :toState arbora:DeployRunBackedUp ;
+    :firedBy arbora:DeployRunMachine_Event_backup .
+
+arbora:DeployRunMachine_backed_up-config-configured a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunBackedUp ;
+    :toState arbora:DeployRunConfigured ;
+    :firedBy arbora:DeployRunMachine_Event_config .
+
+arbora:DeployRunMachine_configured-build-built a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunConfigured ;
+    :toState arbora:DeployRunBuilt ;
+    :firedBy arbora:DeployRunMachine_Event_build .
+
+arbora:DeployRunMachine_built-apply-applied a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunBuilt ;
+    :toState arbora:DeployRunApplied ;
+    :firedBy arbora:DeployRunMachine_Event_apply .
+
+arbora:DeployRunMachine_applied-cutover-cut_over a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunApplied ;
+    :toState arbora:DeployRunCutOver ;
+    :firedBy arbora:DeployRunMachine_Event_cutover .
+
+arbora:DeployRunMachine_cut_over-first_start-cut_over a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunCutOver ;
+    :toState arbora:DeployRunCutOver ;
+    :firedBy arbora:DeployRunMachine_Event_first_start .
+
+arbora:DeployRunMachine_cut_over-serve-serving a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunCutOver ;
+    :toState arbora:DeployRunServing ;
+    :firedBy arbora:DeployRunMachine_Event_serve .
+
+arbora:DeployRunMachine_serving-onboard-serving a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunServing ;
+    :toState arbora:DeployRunServing ;
+    :firedBy arbora:DeployRunMachine_Event_onboard .
+
+arbora:DeployRunMachine_serving-enrol-serving a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunServing ;
+    :toState arbora:DeployRunServing ;
+    :firedBy arbora:DeployRunMachine_Event_enrol .
+
+arbora:DeployRunMachine_serving-ingest-serving a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunServing ;
+    :toState arbora:DeployRunServing ;
+    :firedBy arbora:DeployRunMachine_Event_ingest .
+
+arbora:DeployRunMachine_serving-verify-verified a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunServing ;
+    :toState arbora:DeployRunVerified ;
+    :firedBy arbora:DeployRunMachine_Event_verify .
+
+arbora:DeployRunMachine_applied-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunApplied ;
+    :toState arbora:DeployRunRolledBack ;
+    :firedBy arbora:DeployRunMachine_Event_rollback .
+
+arbora:DeployRunMachine_cut_over-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunCutOver ;
+    :toState arbora:DeployRunRolledBack ;
+    :firedBy arbora:DeployRunMachine_Event_rollback .
+
+arbora:DeployRunMachine_serving-rollback-rolled_back a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunServing ;
+    :toState arbora:DeployRunRolledBack ;
+    :firedBy arbora:DeployRunMachine_Event_rollback .
+
+arbora:DeployRunMachine_planned-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunPlanned ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_preflight_passed-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunPreflightPassed ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_backed_up-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunBackedUp ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_configured-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunConfigured ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_built-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunBuilt ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_applied-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunApplied ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_cut_over-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunCutOver ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
+
+arbora:DeployRunMachine_serving-abort-failed a owl:Class ;
+    rdfs:subClassOf arbora:DeployRunTransition ;
+    :fromState arbora:DeployRunServing ;
+    :toState arbora:DeployRunFailed ;
+    :firedBy arbora:DeployRunMachine_Event_abort .
