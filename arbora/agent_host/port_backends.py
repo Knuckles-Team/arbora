@@ -20,10 +20,13 @@ from collections import OrderedDict
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from arbora.api.domain.agent_host.host_port_adapters import RunCall
 from arbora.api.domain.agent_host.port_services import LeaseReader, SandboxProcessTable
+
+if TYPE_CHECKING:
+    from arbora.a2a.grant_store import GrantView
 
 _STATUS_OF_STATE: Mapping[str, str] = MappingProxyType(
     {
@@ -144,7 +147,7 @@ class RunConfirmExchange:
         digest = hashlib.sha256(f"{kind}\0{body}".encode()).hexdigest()
         tenant = str(owner.session.tenant)
         grant_id = grant_id_for(owner.task_id, digest)
-        view = await self._chain.grants.get(tenant, grant_id)
+        view: GrantView | None = await self._chain.grants.get(tenant, grant_id)
         if view is None:
             await emit_input_required(
                 self._chain,
