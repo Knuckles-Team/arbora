@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+from enum import StrEnum
+from typing import Any, Protocol
 
 from arbora.api.invoke.steps import RequestCaller
 from arbora.core.claims import params_digest
@@ -73,12 +74,21 @@ def run_event_caller(caller: RequestCaller) -> RequestCaller:
     return replace(caller, request_id=run_request_id(caller))
 
 
+class ReservationState(StrEnum):
+    """What a durable effect reservation granted: a claim, a replay, or a refusal."""
+
+    ACQUIRED = "acquired"
+    PENDING = "pending"
+    COMPLETED = "completed"
+    CONFLICT = "conflict"
+
+
 @dataclass(frozen=True, slots=True)
 class EffectReservation:
     """Durable atomic claim; only acquired may dispatch. No local fallback."""
 
     reference: str
-    state: Literal["acquired", "pending", "completed", "conflict"]
+    state: ReservationState
     outcome: OpResult | OpError | None = None
 
 

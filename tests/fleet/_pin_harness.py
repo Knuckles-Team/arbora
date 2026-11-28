@@ -13,7 +13,7 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from arbora.api.invoke import InvokeServices, VerifiedCaller
-from arbora.api.invoke.audit import EffectReservation
+from arbora.api.invoke.audit import EffectReservation, ReservationState
 from arbora.api.ops.fleet import handle_fleet_operation, operations
 from arbora.api.policy import PolicyGate
 from arbora.api.registry import Registry, Surface
@@ -185,7 +185,9 @@ async def harness(
         audit_write=AsyncMock(),
         effects=SimpleNamespace(
             reserve=AsyncMock(
-                return_value=EffectReservation("reservation:one", "acquired")
+                return_value=EffectReservation(
+                    "reservation:one", ReservationState("acquired")
+                )
             ),
             complete=AsyncMock(),
         ),

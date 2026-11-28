@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any
 
 from arbora.api.domain.agent_host.host_port_adapters import RunCall
 from arbora.api.domain.agent_host.port_services import LeaseReader, SandboxProcessTable
+from arbora.core.lease_status import LeaseStatus
 
 if TYPE_CHECKING:
     from arbora.a2a.grant_store import GrantView
@@ -159,7 +160,7 @@ class RunConfirmExchange:
                 plan=self._plan_for(owner, kind, digest),
             )
             return {"verdict": "deny", "refusal_code": "confirm_pending"}
-        if view.status == "consumed":
+        if view.status == LeaseStatus.CONSUMED:
             return {"verdict": "admit", "ref": grant_id}
         return {"verdict": "deny", "refusal_code": f"confirm_{view.status}"}
 

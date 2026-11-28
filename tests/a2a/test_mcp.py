@@ -9,7 +9,7 @@ import pytest
 
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.service import A2AService
-from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskState, A2ATaskStatus
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.key_cache import JwksCache
@@ -43,7 +43,7 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
     task = A2ATask(
         id="a2a-" + "1" * 64,
         context_id="a2a-context-" + "2" * 64,
-        status=A2ATaskStatus(state="working"),
+        status=A2ATaskStatus(state=A2ATaskState("working")),
     )
 
     class Authority:

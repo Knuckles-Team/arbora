@@ -28,7 +28,7 @@ from arbora.a2a.held_output import (
     with_held_output,
 )
 from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
-from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskState, A2ATaskStatus
 from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_application import _Engine
@@ -101,7 +101,7 @@ def _read_task(authority: WorkItemA2AAuthority) -> A2ATask:
     return A2ATask(
         id=TASK,
         context_id="a2a-context-" + "0" * 64,
-        status=A2ATaskStatus(state="completed"),
+        status=A2ATaskStatus(state=A2ATaskState("completed")),
         artifacts=artifacts,
         metadata=metadata,
     )
@@ -174,7 +174,7 @@ def test_encode_is_the_exact_bytes_the_gate_digests(pinned_config: None) -> None
     task = A2ATask(
         id=TASK,
         context_id="a2a-context-" + "0" * 64,
-        status=A2ATaskStatus(state="completed"),
+        status=A2ATaskStatus(state=A2ATaskState("completed")),
         artifacts=[reply_artifact(TASK, OUTPUT)],
     )
     assert config.encode(OUTPUT) == reply_bytes(TASK, OUTPUT)

@@ -40,6 +40,7 @@ from arbora.api.domain.ingest.service import (
     IngestPackRecord,
     IngestSourceInventory,
     IngestSourceRecord,
+    IngestSourceState,
     IngestSubmissionKind,
     IngestSubmissionReceipt,
     IngestSyncReceipt,
@@ -264,7 +265,11 @@ class ConnectorIngestRunner:
         return IngestSourceRecord(
             source_id=f"{server}/{spec.source_id}",
             tenant=tenant,
-            state="error" if state.state == "failed" else "active",
+            state=(
+                IngestSourceState.ERROR
+                if state.state == "failed"
+                else IngestSourceState.ACTIVE
+            ),
             connector=declaration.connector,
             record_type=spec.record_type,
             incremental=spec.incremental,
@@ -457,12 +462,14 @@ class ConnectorIngestRunner:
                 await self._record(tenant, server, declaration, spec)
                 for spec in declaration.sources
             ]
-            failed = any(record.state == "error" for record in records)
+            failed = any(record.state == IngestSourceState.ERROR for record in records)
             packs.append(
                 IngestPackRecord(
                     pack_id=server,
                     tenant=tenant,
-                    state="error" if failed else "active",
+                    state=(
+                        IngestSourceState.ERROR if failed else IngestSourceState.ACTIVE
+                    ),
                 )
             )
         return IngestPackInventory(packs=tuple(packs))

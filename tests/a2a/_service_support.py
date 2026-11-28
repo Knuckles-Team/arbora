@@ -8,7 +8,12 @@ from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.service import A2AService
-from arbora.api.domain.a2a.models import A2ARouteDecision, A2ATask, A2ATaskStatus
+from arbora.api.domain.a2a.models import (
+    A2ARouteDecision,
+    A2ATask,
+    A2ATaskState,
+    A2ATaskStatus,
+)
 from tests.a2a.test_application import Authenticator
 
 HEADERS = {"Authorization": "Bearer verified", "Idempotency-Key": "send-key"}
@@ -39,7 +44,7 @@ class RecordingAuthority:
         return A2ATask(
             id="a2a-" + "1" * 64,
             context_id="a2a-context-" + "2" * 64,
-            status=A2ATaskStatus(state="submitted"),
+            status=A2ATaskStatus(state=A2ATaskState("submitted")),
         )
 
 

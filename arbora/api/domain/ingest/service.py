@@ -14,6 +14,7 @@ surface the invoke pipeline serves.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict
@@ -22,7 +23,14 @@ from arbora.api.invoke.pipeline import OperationRefused
 
 IngestSyncMode = Literal["full", "incremental"]
 IngestJobStatus = Literal["queued", "running", "completed", "failed"]
-IngestSourceState = Literal["active", "paused", "error"]
+
+
+class IngestSourceState(StrEnum):
+    """Whether an ingestion source or pack is syncing, held, or failing."""
+
+    ACTIVE = "active"
+    PAUSED = "paused"
+    ERROR = "error"
 
 
 class IngestSyncReceipt(BaseModel):

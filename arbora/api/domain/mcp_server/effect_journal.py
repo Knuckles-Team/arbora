@@ -26,7 +26,7 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from arbora.api.invoke.audit import EffectReservation
+from arbora.api.invoke.audit import EffectReservation, ReservationState
 from arbora.security.anonymous import client_scope
 from arbora.security.operation_result import OpError, OpResult
 
@@ -181,7 +181,7 @@ class EgEffectJournal:
             }
         )
         if not answer.get("claimed"):
-            return EffectReservation(item_id, "pending")
+            return EffectReservation(item_id, ReservationState.PENDING)
         reference = json.dumps(
             {
                 "tenant": tenant,
@@ -192,7 +192,7 @@ class EgEffectJournal:
             },
             sort_keys=True,
         )
-        return EffectReservation(reference, "acquired")
+        return EffectReservation(reference, ReservationState.ACQUIRED)
 
     async def _existing(
         self, client: Any, tenant: str, item_id: str, binding: str
@@ -200,12 +200,12 @@ class EgEffectJournal:
         item = await client.work_items.get(tenant=tenant, work_item_id=item_id)
         metadata = (item or {}).get("metadata") or {}
         if not item or metadata.get("binding") != binding:
-            return EffectReservation(item_id, "conflict")
+            return EffectReservation(item_id, ReservationState.CONFLICT)
         if str(item.get("status")) in _TERMINAL:
             outcome = _decode_outcome(metadata.get("outcome"))
             if outcome is not None:
-                return EffectReservation(item_id, "completed", outcome)
-        return EffectReservation(item_id, "pending")
+                return EffectReservation(item_id, ReservationState.COMPLETED, outcome)
+        return EffectReservation(item_id, ReservationState.PENDING)
 
     async def complete(self, reference: str, outcome: OpResult | OpError) -> None:
         fence = json.loads(reference)

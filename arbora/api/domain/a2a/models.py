@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import binascii
 import builtins
+from enum import StrEnum
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import (
@@ -30,6 +31,7 @@ __all__ = [
     "A2AOperationInvokeParams",
     "A2APlanConfirmParams",
     "A2ARouteDecision",
+    "A2AReplyAvailability",
     "A2AReplyUnavailable",
     "A2ASkill",
     "A2AStreamingAuthority",
@@ -323,15 +325,16 @@ def parse_confirmation(raw: Any) -> A2APlanConfirmParams:
         raise
 
 
-A2ATaskState = Literal[
-    "submitted",
-    "working",
-    "input-required",
-    "completed",
-    "canceled",
-    "failed",
-    "rejected",
-]
+class A2ATaskState(StrEnum):
+    """The A2A protocol's task states, as the wire spells them."""
+
+    SUBMITTED = "submitted"
+    WORKING = "working"
+    INPUT_REQUIRED = "input-required"
+    COMPLETED = "completed"
+    CANCELED = "canceled"
+    FAILED = "failed"
+    REJECTED = "rejected"
 
 
 class A2AArtifact(WireModel):
@@ -342,10 +345,16 @@ class A2AArtifact(WireModel):
     parts: list[A2ATextPart] = Field(min_length=1, max_length=32)
 
 
+class A2AReplyAvailability(StrEnum):
+    """The one availability an absent reply artifact states."""
+
+    UNAVAILABLE = "unavailable"
+
+
 class A2AReplyUnavailable(WireModel):
     """A completed task can have an explicitly unavailable reply artifact."""
 
-    status: Literal["unavailable"] = "unavailable"
+    status: A2AReplyAvailability = A2AReplyAvailability.UNAVAILABLE
     reason: Literal[
         "payload_too_large", "payload_serialization_failed", "reply_too_large"
     ]

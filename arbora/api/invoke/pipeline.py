@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from arbora.api.domain.fleet.admission_models import AdmissionRefused
 from arbora.api.errors import EngineRefusal, FleetRefusal
 from arbora.api.invoke.agent_ref import bind_agent_ref
-from arbora.api.invoke.audit import EffectReservation
+from arbora.api.invoke.audit import EffectReservation, ReservationState
 from arbora.api.invoke.audit_evidence import result_evidence
 from arbora.api.invoke.autonomy import require_autonomy_clearance
 from arbora.api.invoke.executor import (
@@ -717,8 +717,14 @@ async def _unacquired(
         reservation.state,
         call.caller.request_id,
     )
-    code = "INDETERMINATE" if reservation.state == "pending" else "INVALID_ARGUMENT"
-    if reservation.state == "conflict" and await _plan_binding_changed(call):
+    code = (
+        "INDETERMINATE"
+        if reservation.state == ReservationState.PENDING
+        else "INVALID_ARGUMENT"
+    )
+    if reservation.state == ReservationState.CONFLICT and await _plan_binding_changed(
+        call
+    ):
         code = "PLAN_MISMATCH"
     return OpError(code, {"audit_ref": audit_ref})
 
@@ -756,11 +762,11 @@ async def _reserve_authorized_call(call: _Call) -> Reserved | OpResult | OpError
     reservation = await _reserve_effect(call)
     if isinstance(reservation, OpError):
         return reservation
-    if reservation.state == "completed" and isinstance(
+    if reservation.state == ReservationState.COMPLETED and isinstance(
         reservation.outcome, (OpResult, OpError)
     ):
         return await _replay_completed(call, audit_ref, reservation.outcome)
-    if reservation.state != "acquired":
+    if reservation.state != ReservationState.ACQUIRED:
         return await _unacquired(call, audit_ref, reservation)
     return audit_ref, reservation
 

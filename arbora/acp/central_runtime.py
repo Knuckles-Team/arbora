@@ -15,7 +15,7 @@ import acp
 from pydantic_ai.messages import PartStartEvent, TextPart
 
 from arbora.agent_runs import native_stream_scope
-from arbora.api.domain.a2a.models import A2ATask
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskState
 from arbora.api.invoke import OpError, invoke
 from arbora.api.registry import Surface
 from arbora.security.session import use_session
@@ -32,7 +32,7 @@ def _committed_answer(result: Any, receipt: Any) -> str:
         raise RuntimeError("Central ACP task identity unavailable")
     if value.metadata.get("arbora", {}).get("runId") != receipt.run_id:
         raise RuntimeError("Central ACP run identity unavailable")
-    if value.status.state != "completed":
+    if value.status.state != A2ATaskState.COMPLETED:
         raise acp.RequestError(
             -32001,
             "Central task is not complete",

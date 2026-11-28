@@ -18,7 +18,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict
 
 from arbora.api.invoke import InvokeServices, invoke
-from arbora.api.invoke.audit import EffectReservation
+from arbora.api.invoke.audit import EffectReservation, ReservationState
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.mcp.resolve import IntentResolver
 from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
@@ -150,14 +150,14 @@ class _FixtureJournal:
     async def reserve(self, key: str, binding: Any) -> EffectReservation:
         if key in self.rows:
             return self.rows[key][1]
-        self.rows[key] = (binding, EffectReservation(key, "acquired"))
+        self.rows[key] = (binding, EffectReservation(key, ReservationState("acquired")))
         return self.rows[key][1]
 
     async def complete(self, reference: str, outcome: Any) -> None:
         binding, _ = self.rows[reference]
         self.rows[reference] = (
             binding,
-            EffectReservation(reference, "completed", outcome),
+            EffectReservation(reference, ReservationState("completed"), outcome),
         )
 
 

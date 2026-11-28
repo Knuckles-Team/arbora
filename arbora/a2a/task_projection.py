@@ -19,20 +19,21 @@ from arbora.api.domain.a2a.models import (
     A2ATaskState,
     A2ATaskStatus,
 )
+from arbora.core.work_item_status import WorkItemStatus
 
 logger = logging.getLogger(__name__)
 
 
 _STATE_MAP: Mapping[str, A2ATaskState] = MappingProxyType(
     {
-        "submitted": "submitted",
-        "ready": "submitted",
-        "leased": "working",
-        "running": "working",
-        "succeeded": "completed",
-        "failed": "failed",
-        "cancelled": "canceled",
-        "dead_letter": "failed",
+        WorkItemStatus.SUBMITTED: A2ATaskState.SUBMITTED,
+        WorkItemStatus.READY: A2ATaskState.SUBMITTED,
+        WorkItemStatus.LEASED: A2ATaskState.WORKING,
+        WorkItemStatus.RUNNING: A2ATaskState.WORKING,
+        WorkItemStatus.SUCCEEDED: A2ATaskState.COMPLETED,
+        WorkItemStatus.FAILED: A2ATaskState.FAILED,
+        WorkItemStatus.CANCELLED: A2ATaskState.CANCELED,
+        WorkItemStatus.DEAD_LETTER: A2ATaskState.FAILED,
     }
 )
 
@@ -107,7 +108,7 @@ class TaskProjection:
         from .event_log import terminal_state
 
         state = (
-            "failed"
+            A2ATaskState.FAILED
             if terminal_state(item) == "failed" and raw_state == "cancelled"
             else _STATE_MAP.get(raw_state)
         )

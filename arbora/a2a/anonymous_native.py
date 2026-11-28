@@ -17,6 +17,8 @@ from medulla.generated.coordination import (
     send_get_run_work_item,
 )
 
+from arbora.core.work_item_status import WorkItemStatus
+
 from .anonymous import (
     AnonymousCaller,
     AnonymousNativeReadPort,
@@ -142,7 +144,7 @@ class EgAnonymousTaskReadPort(AnonymousNativeReadPort):
             run_id=admission["run_id"],
             tenant=context["tenant_id"],
             owner_ref=owner_ref,
-            status=item["status"],
+            status=WorkItemStatus(item["status"]),
             authority_mode="none",
             context_id=admission["metadata"]["a2a_context_id"],
         )

@@ -20,6 +20,7 @@ import threading
 import time
 from collections.abc import AsyncIterator, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
+from enum import StrEnum
 from typing import Any, Final, Literal, Protocol
 
 from arbora.api.domain.fleet.mcp_resource_reconciliation import (
@@ -106,6 +107,14 @@ class ComponentPin:
     definition_digest: str
 
 
+class ComponentLifecycle(StrEnum):
+    """Whether a catalog component entry is current (the engine's library lifecycle)."""
+
+    PUBLISHED = "published"
+    RETIRED = "retired"
+    WITHDRAWN = "withdrawn"
+
+
 @dataclass(frozen=True, slots=True)
 class ComponentRecord:
     """Normalized current AgentComponent entry needed by fleet consumers."""
@@ -119,7 +128,7 @@ class ComponentRecord:
     entry_revision: int
     definition_digest: str
     content_digest: str
-    lifecycle: str
+    lifecycle: ComponentLifecycle
     provenance_server: ComponentPin | None
     #: A tool's MCP behaviour hints as the engine records them in its tool
     #: facts (``readOnlyHint`` and so on); ``None`` for other kinds
@@ -239,7 +248,14 @@ class FleetCatalog:
     generation: CatalogGeneration | None = None
 
 
-ReplicaState = Literal["converged", "converging", "degraded"]
+class ReplicaState(StrEnum):
+    """How far one replica's catalog generation is from the engine's."""
+
+    CONVERGED = "converged"
+    CONVERGING = "converging"
+    DEGRADED = "degraded"
+
+
 #: The reason a replica reports once it has been behind the engine too long.
 CATALOG_GENERATION_BEHIND: Final = "catalog_generation_behind"
 CONVERGENCE_TIMEOUT_KEY: Final = "ARBORA_REPLICA_CONVERGENCE_TIMEOUT_S"
@@ -294,7 +310,7 @@ def generation_payload(status: GenerationStatus) -> dict[str, Any]:
     active = status.active
     return {
         "replica": status.replica,
-        "state": status.state,
+        "state": status.state.value,
         "reason": status.reason,
         "generation": None
         if active is None
@@ -478,14 +494,18 @@ class FleetCatalogReader:
         if not behind:
             self._behind_since = None
             return GenerationStatus(
-                self._replica, "converged", None, active, page.registry_revision
+                self._replica,
+                ReplicaState.CONVERGED,
+                None,
+                active,
+                page.registry_revision,
             )
         if self._behind_since is None:
             self._behind_since = now
         lagging = now - self._behind_since > convergence_timeout_s()
         return GenerationStatus(
             self._replica,
-            "degraded" if lagging else "converging",
+            ReplicaState.DEGRADED if lagging else ReplicaState.CONVERGING,
             CATALOG_GENERATION_BEHIND if lagging else None,
             active,
             page.registry_revision,
@@ -895,7 +915,7 @@ class FleetCatalogReader:
             (
                 entry.tenant_id == context.tenant_id,
                 entry.kind in kinds,
-                entry.lifecycle == "published",
+                entry.lifecycle == ComponentLifecycle.PUBLISHED,
                 entry.entry_revision >= 1,
                 bool(entry.component_id),
                 bool(entry.server_name),

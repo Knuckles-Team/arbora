@@ -16,7 +16,7 @@ from arbora.a2a.tool_task_card import (
     sign_attestation,
     verify_attestation,
 )
-from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskState, A2ATaskStatus
 from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_application import Authenticator, Authority, Router
 
@@ -44,7 +44,7 @@ class Admitter:
         task = A2ATask(
             id="a2a-" + "3" * 64,
             context_id="a2a-context-" + "4" * 64,
-            status=A2ATaskStatus(state="submitted"),
+            status=A2ATaskStatus(state=A2ATaskState("submitted")),
         )
         return task, RECORD, DIGEST
 

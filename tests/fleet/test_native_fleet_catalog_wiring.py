@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from arbora.api.domain.fleet.catalog_reader import (
     CatalogServer,
     ComponentContent,
+    ComponentLifecycle,
     ComponentRecord,
     FleetCatalog,
     ReadContext,
@@ -48,7 +49,7 @@ def _server(name: str, url: str, body: dict[str, object]) -> CatalogServer:
         entry_revision=1,
         definition_digest=_digest(name),
         content_digest=_digest(encoded.decode()),
-        lifecycle="published",
+        lifecycle=ComponentLifecycle("published"),
         provenance_server=None,
     )
     receipt = ReadReceipt(

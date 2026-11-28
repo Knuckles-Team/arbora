@@ -17,6 +17,7 @@ from arbora.api.domain.ingest.service import (
     IngestPackRecord,
     IngestSourceInventory,
     IngestSourceRecord,
+    IngestSourceState,
     IngestSyncMode,
     IngestSyncReceipt,
 )
@@ -73,7 +74,9 @@ class _FakeRunner:
         self.list_calls.append(tenant)
         return IngestSourceInventory(
             sources=(
-                IngestSourceRecord(source_id="src-1", tenant=tenant, state="active"),
+                IngestSourceRecord(
+                    source_id="src-1", tenant=tenant, state=IngestSourceState("active")
+                ),
             )
         )
 
@@ -81,14 +84,20 @@ class _FakeRunner:
         self, *, tenant: str, source_id: str, caller: object = None
     ) -> IngestSourceRecord:
         self.status_calls.append((tenant, source_id))
-        return IngestSourceRecord(source_id=source_id, tenant=tenant, state="active")
+        return IngestSourceRecord(
+            source_id=source_id, tenant=tenant, state=IngestSourceState("active")
+        )
 
     async def list_packs(
         self, *, tenant: str, caller: object = None
     ) -> IngestPackInventory:
         self.pack_calls.append(tenant)
         return IngestPackInventory(
-            packs=(IngestPackRecord(pack_id="pack-1", tenant=tenant, state="active"),)
+            packs=(
+                IngestPackRecord(
+                    pack_id="pack-1", tenant=tenant, state=IngestSourceState("active")
+                ),
+            )
         )
 
     async def get_job_status(self, *, tenant: str, job_id: str) -> IngestJobRecord:
