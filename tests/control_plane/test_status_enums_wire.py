@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from enum import StrEnum
 
 import pytest
 
@@ -95,7 +96,9 @@ from arbora.control_plane.webui.models import IdentityState, TenantIdentity
         (RecordStatus, ["active", "retired"]),
     ],
 )
-def test_enum_texts_are_the_old_literal_texts(enum: type, texts: list[str]) -> None:
+def test_enum_texts_are_the_old_literal_texts(
+    enum: type[StrEnum], texts: list[str]
+) -> None:
     assert [member.value for member in enum] == texts
 
 
