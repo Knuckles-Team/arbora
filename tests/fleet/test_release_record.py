@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import dataclasses
 import hashlib
 import json
@@ -22,7 +23,6 @@ import pytest
 from medulla import EngineResponseError
 from scion_sdk.manifest.release_digest import (
     ReleaseDigestError,
-    ReleaseEvidence,
     installed_release_evidence,
     wheel_release_evidence,
 )
@@ -194,24 +194,56 @@ async def served_session(distribution: str) -> Any:
     return Session()
 
 
-async def served_evidence(_endpoint: FleetEndpoint, *, auth: Any) -> ReleaseEvidence:
+@contextlib.asynccontextmanager
+async def served_release_session(_endpoint: FleetEndpoint, *, auth: Any) -> Any:
+    """The session onboarding opens to the connector: it serves the installed wheel's release."""
     del auth
-    return installed_release_evidence(DISTRIBUTION)
+    yield await served_session(DISTRIBUTION)
 
 
-def onboard(eg: Any, index: Any, recorder: ReleaseRecorder | None = None) -> Any:
-    """One whole onboarding pass of an already-imported pack, which records the release."""
+class SpyRecorder:
+    """Keeps what the recorder reported, which the refusal alone does not carry."""
+
+    def __init__(self, inner: ReleaseRecorder) -> None:
+        self.inner = inner
+        self.reports: list[Any] = []
+
+    async def record(self, served: Any, send: Any) -> Any:
+        report = await self.inner.record(served, send)
+        self.reports.append(report)
+        return report
+
+
+def onboard(eg: Any, index: Any) -> Any:
+    """One whole onboarding pass of an already-imported pack, which records the release.
+
+    Returns what the recorder reported; a connector the gate refuses raises.
+    """
     digest = asyncio.run(_head_digest(ALPHA, _HEAD_CATALOG))
     eg.heads["alpha-mcp"] = (_HEAD_CATALOG, digest)
+    spy = SpyRecorder(ReleaseRecorder(PackageIndex(index.url)))
     onboarding = dataclasses.replace(
-        _onboarding(eg),
-        release_recorder=recorder or ReleaseRecorder(PackageIndex(index.url)),
-        release_reader=served_evidence,
+        _onboarding(eg), release_recorder=spy, release_session=served_release_session
     )
     _run_in_session(onboarding.onboard(ALPHA, auth=None))
-    return onboarding.surfaces[ALPHA.name]["release"]
+    return spy.reports[-1]
 
 
+def refused(eg: Any, index: Any) -> tuple[Any, str]:
+    """The recording and the typed refusal of a pass whose release cannot be admitted."""
+    digest = asyncio.run(_head_digest(ALPHA, _HEAD_CATALOG))
+    eg.heads["alpha-mcp"] = (_HEAD_CATALOG, digest)
+    spy = SpyRecorder(ReleaseRecorder(PackageIndex(index.url)))
+    onboarding = dataclasses.replace(
+        _onboarding(eg), release_recorder=spy, release_session=served_release_session
+    )
+    with pytest.raises(ReleaseVerificationError) as refusal:
+        _run_in_session(onboarding.onboard(ALPHA, auth=None))
+    assert onboarding.surfaces[ALPHA.name]["onboarding_state"] == "release_refused"
+    return spy.reports[-1], refusal.value.code
+
+
+@pytest.mark.real_release_gate
 @pytest.mark.spec("ARBORA-HOST-R037.1")
 def test_onboarding_records_the_release_from_the_index_and_the_runner_accepts(
     eg: Any,
@@ -246,6 +278,7 @@ def test_onboarding_records_the_release_from_the_index_and_the_runner_accepts(
     _run_in_session(verify_release(session, "alpha", pins))
 
 
+@pytest.mark.real_release_gate
 @pytest.mark.spec("ARBORA-HOST-R037.1")
 def test_a_tampered_install_or_an_unrecorded_version_refuses(
     eg: Any,
@@ -273,6 +306,7 @@ def test_a_tampered_install_or_an_unrecorded_version_refuses(
     assert _run_in_session(verdict()) == "RELEASE_DIGEST_UNREPORTED"
 
 
+@pytest.mark.real_release_gate
 @pytest.mark.spec("ARBORA-HOST-R037.2")
 def test_a_wheel_that_differs_from_the_index_digest_is_not_recorded(
     eg: Any,
@@ -283,8 +317,9 @@ def test_a_wheel_that_differs_from_the_index_digest_is_not_recorded(
     install(wheel, tmp_path / "site", monkeypatch)
     nodes = engine_records(eg)
     with serving(FakeIndex(wheel, index_wheel_digest="0" * 64)) as index:
-        report = onboard(eg, index)
+        report, code = refused(eg, index)
 
+    assert code == "RELEASE_PIN_MISSING"  # the gate stops the pass
     assert report == {"state": "not_recorded", "code": "RELEASE_INDEX_DIGEST_MISMATCH"}
     assert not nodes and not [c for c in eg.calls if c[0] == "RecordRelease"]
     pins = MedullaReleasePins(eg, GRAPH)
@@ -293,6 +328,7 @@ def test_a_wheel_that_differs_from_the_index_digest_is_not_recorded(
         _run_in_session(verify_release(session, "alpha", pins))
 
 
+@pytest.mark.real_release_gate
 @pytest.mark.spec("ARBORA-HOST-R037.2")
 def test_an_unreachable_index_or_a_taken_version_is_reported_not_raised(
     eg: Any,
@@ -307,8 +343,9 @@ def test_an_unreachable_index_or_a_taken_version_is_reported_not_raised(
         "release_record": '{"another": "record"}',
     }
     with serving(FakeIndex(wheel)) as index:
-        taken = onboard(eg, index)
-        down = onboard(eg, SimpleNamespace(url="http://127.0.0.1:9/pypi"))
+        taken, taken_code = refused(eg, index)
+        down, down_code = refused(eg, SimpleNamespace(url="http://127.0.0.1:9/pypi"))
 
+    assert taken_code == down_code == "RELEASE_PIN_MISSING"
     assert taken == {"state": "not_recorded", "code": "RELEASE_VERSION_TAKEN"}
     assert down == {"state": "not_recorded", "code": "RELEASE_INDEX_UNAVAILABLE"}

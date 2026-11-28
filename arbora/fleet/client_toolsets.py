@@ -144,6 +144,15 @@ class _HostToolClient:
         return list(await self._client.read_resource(uri))
 
 
+async def _admit_launched(target: Any, client: Any) -> None:
+    """Pass the one release gate, unless ``target`` is an in-process server (not a launched connector)."""
+    if isinstance(target, str | dict):
+        from arbora.fleet.release_gate import admit_release
+
+        # Before any tool call (ARBORA-HOST-R037.3).
+        await admit_release(client, "toolset")
+
+
 @contextlib.asynccontextmanager
 async def open_tool_client(
     target: Any, *, config: RuntimeConfig, timeout: float | None = None
@@ -161,6 +170,8 @@ async def open_tool_client(
 
         auth = coerce_httpx2_auth(_service_auth(config))
     async with Client(target, timeout=timeout, auth=auth) as client:
+        # release-gate: covered by arbora.fleet.client_toolsets._admit_launched
+        await _admit_launched(target, client)
         yield _HostToolClient(client)
 
 

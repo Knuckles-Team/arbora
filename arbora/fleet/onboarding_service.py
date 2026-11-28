@@ -38,6 +38,7 @@ from arbora.fleet.onboarding_machine import (
     OnboardingState,
     transition,
 )
+from arbora.fleet.release_gate import install_release_gate
 from arbora.fleet.release_record import ReleaseRecorder
 from arbora.fleet.smoke_sweep import FleetSmokeService
 from arbora.security.error_surface import carry_errors
@@ -602,4 +603,6 @@ def start_fleet_onboarding(
     setter = getattr(multiplexer, "set_handshake_listener", None)
     if setter is not None:
         setter(onboarder.notify)
+    # Every child launch and attach passes the one release gate (ARBORA-HOST-R037.3).
+    install_release_gate(service.onboarding.release_gate)
     return service.start()

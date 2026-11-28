@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
-from collections.abc import Collection
+from collections.abc import AsyncIterator, Collection
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -221,6 +222,7 @@ async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> A
     from scion_sdk.ports.session import TransportEndpoint
     from scion_sdk.transports.mcp import McpTransport
 
+    # release-gate: covered by arbora.fleet.onboarding.FleetOnboarding._onboard_pass
     transport_endpoint = TransportEndpoint(
         url=endpoint.url, timeout_seconds=CAPTURE_TIMEOUT_S, auth=auth
     )
@@ -232,23 +234,23 @@ async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> A
         )
 
 
-async def read_served_release(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
-    """The release evidence a live fleet server serves at ``connector://release``.
+@contextlib.asynccontextmanager
+async def open_release_session(
+    endpoint: FleetEndpoint, *, auth: Any = None
+) -> AsyncIterator[Any]:
+    """One live session to a fleet server, over which its release is verified.
 
-    ``None`` when the server serves none (a connector run from a source checkout).
-    A body that is not valid evidence raises ``ReleaseDigestError``.
+    The release gate reads ``connector://release`` through this session before
+    the pack is captured (ARBORA-HOST-R037.3).
     """
 
-    from scion_sdk.manifest.release_digest import read_release_evidence
+    # release-gate: covered by arbora.fleet.onboarding.FleetOnboarding._admit_release
+
     from scion_sdk.ports.session import TransportEndpoint
     from scion_sdk.transports.mcp import McpTransport
 
-    uri = "connector://release"
     transport_endpoint = TransportEndpoint(
         url=endpoint.url, timeout_seconds=CAPTURE_TIMEOUT_S, auth=auth
     )
     async with McpTransport().session(transport_endpoint) as session:
-        served = {str(getattr(r, "uri", "")) for r in await session.list_resources()}
-        if uri not in served:
-            return None
-        return read_release_evidence(await session.read_resource(uri))
+        yield session

@@ -1302,6 +1302,8 @@ class MCPMultiplexer:
             },
             "total_children": len(self.children),
             "total_tools": len(self.aggregated_tools),
+            # Children the release gate refused, with the typed refusal code.
+            "release_refusals": dict(sorted(self.transport.release_refusals.items())),
             "unadmitted_servers": self._unadmitted_servers(),
             "fleet_onboarding": self._fleet_onboarding,
         }

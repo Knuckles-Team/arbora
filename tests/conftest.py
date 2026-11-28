@@ -114,3 +114,33 @@ def _isolated_host_port_registrations() -> object:
     yield
     for module, name, value in saved:
         setattr(module, name, value)
+
+
+@pytest.fixture(autouse=True)
+def _admitting_release_gate(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[None]:
+    """Tests of other rows launch connectors against a gate that admits every release.
+
+    ``real_release_gate`` keeps the real gate so the row's own tests drive record
+    and verify through a recorded engine (ARBORA-HOST-R037.3).
+    """
+    if request.node.get_closest_marker("real_release_gate") is not None:
+        yield
+        return
+    from arbora.fleet import release_gate
+    from arbora.fleet.onboarding import FleetOnboarding
+
+    class _Admits:
+        async def admit(self, session: object, connector: str) -> dict[str, object]:
+            return {"state": "unreported", "verified": True}
+
+    async def admit_all(self: object, endpoint: object, *, auth: object) -> dict:
+        return {"state": "unreported", "verified": True}
+
+    monkeypatch.setattr(FleetOnboarding, "_admit_release", admit_all)
+    release_gate.install_release_gate(_Admits)
+    try:
+        yield
+    finally:
+        release_gate.install_release_gate(None)
