@@ -270,7 +270,7 @@ def install_command(args: argparse.Namespace) -> int:
         return 2
     digest, tree = build(args.harness, args, config)
     previous = config.installs.get(args.harness)
-    state = previous.state if previous else inst.InstallState.ABSENT
+    state = previous.state if previous else inst.INITIAL
     if state in (inst.InstallState.ABSENT, inst.InstallState.REMOVED):
         state = inst.transition(state, inst.InstallEvent.GENERATE)
     elif state is inst.InstallState.INSTALLED:

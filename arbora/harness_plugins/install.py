@@ -46,6 +46,10 @@ class InstallEvent(StrEnum):
 
 
 _S, _E = InstallState, InstallEvent
+#: A harness with no record starts here.
+INITIAL = _S.ABSENT
+#: No state is final: a removed plugin can be generated again.
+TERMINALS: tuple[InstallState, ...] = ()
 INSTALL_EDGES: Mapping[tuple[InstallState, InstallEvent], InstallState] = (
     MappingProxyType(
         {
@@ -62,11 +66,14 @@ INSTALL_EDGES: Mapping[tuple[InstallState, InstallEvent], InstallState] = (
 
 
 class IllegalInstallTransition(RuntimeError):
+    """An event the install state does not accept; the state does not change."""
+
     code = "INSTALL_TRANSITION_ILLEGAL"
+    machine = "plugin_install"
 
     def __init__(self, state: InstallState, event: InstallEvent) -> None:
         super().__init__(f"{self.code}: {state} --{event}-->")
-        self.state = state
+        self.from_state = state
         self.event = event
 
 
@@ -309,7 +316,9 @@ def unplace(record: InstallRecord, run: Runner) -> None:
 
 
 __all__ = [
+    "INITIAL",
     "INSTALL_EDGES",
+    "TERMINALS",
     "DuplicateDoor",
     "IllegalInstallTransition",
     "InstallEvent",
