@@ -124,6 +124,10 @@ class IntakeLeaseEvent(enum.Enum):
 
 _S = IntakeLeaseState
 _E = IntakeLeaseEvent
+#: A lease starts held: it exists only once the engine granted the claim.
+INITIAL = _S.HELD
+#: A released lease is handed back for good; a later acquire builds a new ``IntakeLease``.
+TERMINALS = (_S.RELEASED,)
 #: The 12 legal edges. Every other (state, event) pair is refused.
 _LEASE_TRANSITIONS: Mapping[
     tuple[IntakeLeaseState, IntakeLeaseEvent], IntakeLeaseState
@@ -172,7 +176,7 @@ class IntakeLease:
     item_id: str
     claim: dict[str, Any]
     lease_ttl_s: float
-    state: IntakeLeaseState = IntakeLeaseState.HELD
+    state: IntakeLeaseState = INITIAL
     last_good_s: float = dataclasses.field(default_factory=lambda: _clock())
 
 
