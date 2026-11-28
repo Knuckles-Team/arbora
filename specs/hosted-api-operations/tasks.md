@@ -578,3 +578,6 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T764 [US1] ARBORA-OPS-R960.11 Sandbox processes emit sandbox events
 - [ ] T765 [US1] ARBORA-OPS-R960.12 Wiring and served proof
 - [ ] T766 [US1] ARBORA-OPS-R961 Served operation `inventory.machines.list`
+- [ ] T767 [US1] ARBORA-OPS-R007.3 A caller may require a plan on any write
+- [ ] T768 [US1] ARBORA-OPS-R915.2 The heartbeat carries the avatar's activity, and the snapshot marks the caller
+- [ ] T769 [US1] ARBORA-OPS-R962 Served operation `evolution.proposals.decide`
