@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterable
+from enum import StrEnum
 from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
@@ -56,7 +57,15 @@ type PathText = Annotated[
 ]
 
 IdentityKind = Literal["user", "service", "agent"]
-RecordStatus = Literal["active", "retired"]
+
+
+class RecordStatus(StrEnum):
+    """Whether an immutable record is live or retired."""
+
+    ACTIVE = "active"
+    RETIRED = "retired"
+
+
 TargetKind = Literal["upstream", "route", "config", "feature"]
 ReleaseOperation = Literal["activate", "rollback"]
 SubjectKind = Literal["tenant", "principal", "client"]
@@ -271,7 +280,7 @@ class LifecycleState(ProtocolModel):
     """Retention metadata attached to every immutable record."""
 
     lifecycle_version: Literal["lifecycle.v1"]
-    status: RecordStatus
+    status: Annotated[RecordStatus, Field(strict=False)]
     retention_policy_ref: OpaqueRef
 
     @model_validator(mode="after")

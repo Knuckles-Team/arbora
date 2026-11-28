@@ -17,6 +17,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from arbora.control_plane.foundation.models import RecordStatus
+
 __all__ = [
     "ABSOLUTE_MAX_COST_MICROS",
     "ABSOLUTE_MAX_DEPTH",
@@ -212,7 +214,7 @@ class PolicyVersion(_FrozenModel):
     approval: ApprovalRequirement = Field(default_factory=ApprovalRequirement)
     summary: str = "immutable policy version"
     constitution_ref: OpaqueRef | None = None
-    state: Literal["active", "retired"] = "active"
+    state: Annotated[RecordStatus, Field(strict=False)] = RecordStatus.ACTIVE
 
     @field_validator("summary")
     @classmethod

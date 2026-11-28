@@ -17,6 +17,7 @@ import json
 import math
 import re
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from typing import Annotated, Literal, cast
 
 from pydantic import Field, StrictBool, StrictInt, field_validator, model_validator
@@ -758,6 +759,14 @@ class SloObjective(ProtocolModel):
         return self
 
 
+class SloRollupStatus(StrEnum):
+    """Whether an SLO window met its objective, breached it, or lacked data."""
+
+    MET = "met"
+    BREACHED = "breached"
+    INSUFFICIENT_DATA = "insufficient_data"
+
+
 class SloWindowRollup(ProtocolModel):
     """Bounded SLO window summary with no raw spans or logs."""
 
@@ -780,7 +789,7 @@ class SloWindowRollup(ProtocolModel):
     source_fact_digests: Annotated[
         tuple[str, ...], Field(max_length=MAX_FACT_IDS_PER_AGGREGATE)
     ] = ()
-    status: Literal["met", "breached", "insufficient_data"]
+    status: Annotated[SloRollupStatus, Field(strict=False)]
 
     @field_validator("tenant_id", "objective_id")
     @classmethod
@@ -801,11 +810,17 @@ class SloWindowRollup(ProtocolModel):
         if self.good_events > self.total_events or self.bad_events > self.total_events:
             raise ValueError("SLO good/bad events cannot exceed total events")
         if self.total_events == 0:
-            if self.status != "insufficient_data" or self.measured_micros is not None:
+            if (
+                self.status != SloRollupStatus.INSUFFICIENT_DATA
+                or self.measured_micros is not None
+            ):
                 raise ValueError(
                     "empty SLO rollup must be explicitly insufficient_data"
                 )
-        elif self.status == "insufficient_data" or self.measured_micros is None:
+        elif (
+            self.status == SloRollupStatus.INSUFFICIENT_DATA
+            or self.measured_micros is None
+        ):
             raise ValueError("populated SLO rollup requires a bounded measurement")
 
     @model_validator(mode="after")
@@ -992,6 +1007,14 @@ class SampleRef(ProtocolModel):
         return _ensure_digest(value, field_name="source_digest")
 
 
+class ReconciliationStatus(StrEnum):
+    """The outcome of reconciling a sample manifest against what was observed."""
+
+    COMPLETE = "complete"
+    GAP = "gap"
+    DRIFT = "drift"
+
+
 class ReconciliationReport(ProtocolModel):
     """Deterministic gap/drift result for a bounded sample manifest."""
 
@@ -1011,7 +1034,7 @@ class ReconciliationReport(ProtocolModel):
     duplicate_fact_ids: Annotated[
         tuple[str, ...], Field(max_length=MAX_RECONCILIATION_ITEMS)
     ] = ()
-    status: Literal["complete", "gap", "drift"]
+    status: Annotated[ReconciliationStatus, Field(strict=False)]
 
     @field_validator("duplicate_fact_ids")
     @classmethod
@@ -1063,11 +1086,11 @@ class ReconciliationReport(ProtocolModel):
 
     def _check_status_shape(self) -> None:
         """Status/content consistency invariants for ``validate_report``."""
-        if self.status == "complete":
+        if self.status == ReconciliationStatus.COMPLETE:
             self._check_complete_shape()
-        elif self.status == "gap":
+        elif self.status == ReconciliationStatus.GAP:
             self._check_gap_shape()
-        elif self.status == "drift":
+        elif self.status == ReconciliationStatus.DRIFT:
             self._check_drift_shape()
 
     @model_validator(mode="after")
@@ -1094,11 +1117,19 @@ class ReconciliationReport(ProtocolModel):
         return self
 
 
+class LateEventStatus(StrEnum):
+    """What an event arriving relative to a watermark was admitted as."""
+
+    ACCEPTED = "accepted"
+    CORRECTION_REQUIRED = "correction_required"
+    REJECTED = "rejected"
+
+
 class LateEventDecision(ProtocolModel):
     """Explicit admission result for an event relative to a watermark."""
 
     fact_id: Annotated[str, Field(min_length=1, max_length=80)]
-    status: Literal["accepted", "correction_required", "rejected"]
+    status: Annotated[LateEventStatus, Field(strict=False)]
     reason: Literal[
         "on_time", "within_lateness", "outside_lateness", "correction_window_expired"
     ]

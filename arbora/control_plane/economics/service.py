@@ -13,6 +13,12 @@ from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
+from arbora.control_plane.economics.models import (
+    LateEventStatus,
+    ReconciliationStatus,
+    SloRollupStatus,
+)
+
 from .models import (
     AllocationRef,
     EconomicsContractError,
@@ -64,7 +70,7 @@ def decide_late_event(
     if watermark is None:
         return LateEventDecision(
             fact_id=fact.fact_id,
-            status="accepted",
+            status=LateEventStatus.ACCEPTED,
             reason="on_time",
             watermark_at=fact.occurred_at,
         )
@@ -74,7 +80,7 @@ def decide_late_event(
     if age_seconds <= 0:
         return LateEventDecision(
             fact_id=fact.fact_id,
-            status="accepted",
+            status=LateEventStatus.ACCEPTED,
             reason="on_time",
             watermark_at=watermark.watermark_at,
         )
@@ -82,13 +88,13 @@ def decide_late_event(
         if policy.late_event_mode == "correction":
             return LateEventDecision(
                 fact_id=fact.fact_id,
-                status="correction_required",
+                status=LateEventStatus.CORRECTION_REQUIRED,
                 reason="within_lateness",
                 watermark_at=watermark.watermark_at,
             )
         return LateEventDecision(
             fact_id=fact.fact_id,
-            status="rejected",
+            status=LateEventStatus.REJECTED,
             reason="within_lateness",
             watermark_at=watermark.watermark_at,
         )
@@ -98,13 +104,13 @@ def decide_late_event(
     ):
         return LateEventDecision(
             fact_id=fact.fact_id,
-            status="correction_required",
+            status=LateEventStatus.CORRECTION_REQUIRED,
             reason="outside_lateness",
             watermark_at=watermark.watermark_at,
         )
     return LateEventDecision(
         fact_id=fact.fact_id,
-        status="rejected",
+        status=LateEventStatus.REJECTED,
         reason="correction_window_expired",
         watermark_at=watermark.watermark_at,
     )
@@ -301,12 +307,12 @@ def _resolve_slo_measurement(
     total_events: int,
     bad_events: int,
     measured_micros: int | None,
-) -> tuple[int | None, Literal["met", "breached", "insufficient_data"]]:
+) -> tuple[int | None, SloRollupStatus]:
     """``(measured_micros, status)`` per the objective's SLI accounting rule."""
     if total_events == 0:
         if measured_micros is not None:
             raise ValueError("missing SLO measurements cannot be represented as zero")
-        return None, "insufficient_data"
+        return None, SloRollupStatus.INSUFFICIENT_DATA
     if objective.sli == "availability":
         measured_micros = (good_events * 1_000_000) // total_events
     elif objective.sli == "error_rate":
@@ -322,7 +328,7 @@ def _resolve_slo_measurement(
         if objective.comparison == "gte"
         else measured_micros <= objective.target_micros
     )
-    return measured_micros, ("met" if met else "breached")
+    return measured_micros, (SloRollupStatus.MET if met else SloRollupStatus.BREACHED)
 
 
 def _validated_slo_digests(source_fact_digests: Iterable[str]) -> tuple[str, ...]:
@@ -481,12 +487,12 @@ def reconcile_samples(
         observed_refs,
     )
 
-    status: Literal["complete", "gap", "drift"] = (
-        "gap"
+    status = (
+        ReconciliationStatus.GAP
         if missing
-        else "drift"
+        else ReconciliationStatus.DRIFT
         if unexpected or duplicate_samples or duplicate_fact_ids
-        else "complete"
+        else ReconciliationStatus.COMPLETE
     )
     return ReconciliationReport(
         expected_count=len(expected_items),

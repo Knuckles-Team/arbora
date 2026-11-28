@@ -12,7 +12,8 @@ import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Literal
+from enum import StrEnum
+from typing import Annotated, Literal
 
 from pydantic import Field, StrictBool
 
@@ -28,6 +29,7 @@ from .models import (
     ObservationPromotion,
     ObservationPromotionPolicy,
     OutboxEnvelope,
+    OutcomeStatus,
     ProjectionCheckpoint,
     ProjectionOutcome,
     ProjectionScope,
@@ -58,6 +60,17 @@ __all__ = [
 ]
 
 
+class BatchStatus(StrEnum):
+    """What one aggregate page of projection ended as."""
+
+    COMPLETE = "complete"
+    APPLIED = "applied"
+    REPLAYED = "replayed"
+    BLOCKED = "blocked"
+    FAILED = "failed"
+    DRIFT = "drift"
+
+
 class ProjectionBatchResult(ProtocolModel):
     """Bounded result for one aggregate keyset page."""
 
@@ -65,7 +78,7 @@ class ProjectionBatchResult(ProtocolModel):
         "control-plane-projection-batch.v1"
     )
     scope: ProjectionScope
-    status: Literal["complete", "applied", "replayed", "blocked", "failed", "drift"]
+    status: Annotated[BatchStatus, Field(strict=False)]
     outcomes: tuple[ProjectionOutcome, ...] = Field(
         default=(), max_length=MAX_BATCH_SIZE
     )
@@ -188,18 +201,25 @@ class ProjectionService:
     @staticmethod
     def _status(
         outcomes: tuple[ProjectionOutcome, ...],
-    ) -> Literal["complete", "applied", "replayed", "blocked", "failed", "drift"]:
+    ) -> BatchStatus:
         if not outcomes:
-            return "complete"
+            return BatchStatus.COMPLETE
         if any(
-            item.status in {"gap", "conflict", "rejected", "drift"} for item in outcomes
+            item.status
+            in {
+                OutcomeStatus.GAP,
+                OutcomeStatus.CONFLICT,
+                OutcomeStatus.REJECTED,
+                OutcomeStatus.DRIFT,
+            }
+            for item in outcomes
         ):
-            return "drift"
-        if any(item.status == "failed" for item in outcomes):
-            return "failed"
-        if all(item.status == "replayed" for item in outcomes):
-            return "replayed"
-        return "applied"
+            return BatchStatus.DRIFT
+        if any(item.status == OutcomeStatus.FAILED for item in outcomes):
+            return BatchStatus.FAILED
+        if all(item.status == OutcomeStatus.REPLAYED for item in outcomes):
+            return BatchStatus.REPLAYED
+        return BatchStatus.APPLIED
 
     def _record_drift(
         self,
@@ -228,16 +248,7 @@ class ProjectionService:
 
     @staticmethod
     def _outcome(
-        status: Literal[
-            "applied",
-            "replayed",
-            "rejected",
-            "gap",
-            "conflict",
-            "failed",
-            "drift",
-            "cleaned",
-        ],
+        status: OutcomeStatus,
         event: OutboxEnvelope,
         reason_code: str | None = None,
     ) -> ProjectionOutcome:
@@ -267,9 +278,9 @@ class ProjectionService:
         )
         return ProjectionBatchResult(
             scope=scope,
-            status="failed"
+            status=BatchStatus.FAILED
             if reason_code in {"graph_apply_failed", "rebuild_failed"}
-            else "drift",
+            else BatchStatus.DRIFT,
             checkpoint=checkpoint,
         )
 
@@ -401,7 +412,7 @@ class ProjectionService:
             event.aggregate_type != scope.aggregate_type
             or event.aggregate_id != scope.aggregate_id
         ):
-            outcome = self._outcome("rejected", event, "scope_mismatch")
+            outcome = self._outcome(OutcomeStatus.REJECTED, event, "scope_mismatch")
             self._record_drift(
                 reason_code="scope_mismatch",
                 scope=scope,
@@ -428,11 +439,11 @@ class ProjectionService:
                 and event.event_id == current.last_event_id
                 and event.event_digest == current.last_event_digest
             ):
-                outcome = self._outcome("replayed", event)
+                outcome = self._outcome(OutcomeStatus.REPLAYED, event)
                 return _EventStep(
                     outcome=outcome, stop=False, current=current, persisted=persisted
                 )
-            outcome = self._outcome("conflict", event, "out_of_order_event")
+            outcome = self._outcome(OutcomeStatus.CONFLICT, event, "out_of_order_event")
             self._record_drift(
                 reason_code="identity_conflict",
                 scope=scope,
@@ -447,7 +458,7 @@ class ProjectionService:
 
         expected_sequence = current.last_sequence + 1
         if event.sequence != expected_sequence:
-            outcome = self._outcome("gap", event, "sequence_gap")
+            outcome = self._outcome(OutcomeStatus.GAP, event, "sequence_gap")
             self._record_drift(
                 reason_code="sequence_gap",
                 scope=scope,
@@ -484,7 +495,7 @@ class ProjectionService:
             )
             self._checkpoints.save_checkpoint(scope, persisted, next_checkpoint)
         except CheckpointConflict:
-            outcome = self._outcome("drift", event, "checkpoint_conflict")
+            outcome = self._outcome(OutcomeStatus.DRIFT, event, "checkpoint_conflict")
             self._record_drift(
                 reason_code="checkpoint_conflict",
                 scope=scope,
@@ -496,7 +507,7 @@ class ProjectionService:
             )
         except Exception:  # injected graph port: recorded as drift, step stops
             logger.warning("projection graph apply failed", exc_info=True)
-            outcome = self._outcome("failed", event, "graph_apply_failed")
+            outcome = self._outcome(OutcomeStatus.FAILED, event, "graph_apply_failed")
             self._record_drift(
                 reason_code="graph_apply_failed",
                 scope=scope,
@@ -507,7 +518,7 @@ class ProjectionService:
                 outcome=outcome, stop=True, current=current, persisted=persisted
             )
 
-        outcome = self._outcome("applied", event)
+        outcome = self._outcome(OutcomeStatus.APPLIED, event)
         return _EventStep(
             outcome=outcome,
             stop=False,
@@ -653,7 +664,7 @@ class ProjectionService:
                 sequence=event.sequence,
                 event=event,
             )
-            return self._outcome("rejected", event, "tombstone_not_durable")
+            return self._outcome(OutcomeStatus.REJECTED, event, "tombstone_not_durable")
         try:
             self._graph.cleanup_tombstone(event, fence_token)
         except Exception:  # injected graph port: recorded as drift
@@ -664,8 +675,10 @@ class ProjectionService:
                 sequence=event.sequence,
                 event=event,
             )
-            return self._outcome("failed", event, "tombstone_cleanup_failed")
-        return self._outcome("cleaned", event)
+            return self._outcome(
+                OutcomeStatus.FAILED, event, "tombstone_cleanup_failed"
+            )
+        return self._outcome(OutcomeStatus.CLEANED, event)
 
 
 def _validate_promotion_policy(
