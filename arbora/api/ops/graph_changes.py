@@ -12,7 +12,8 @@ silent gap. Arbora keeps no cursor, no event and no snapshot.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Literal
+from enum import StrEnum
+from typing import Any
 
 from pydantic import Field, ValidationError
 
@@ -67,8 +68,15 @@ class GraphChangesResult(_common.Params):
     value: dict[str, Any]
 
 
+class GraphRecoverState(StrEnum):
+    """Whether a change feed continues from its cursor or must recover from a snapshot."""
+
+    CONTINUE = "continue"
+    RECOVER = "recover"
+
+
 class GraphRecoverResult(_common.Params):
-    state: Literal["continue", "recover"]
+    state: GraphRecoverState
     cursor: str
     snapshot: GraphSnapshotRecovery | None = None
 
@@ -91,7 +99,11 @@ async def handle_graph_snapshot_recover(
             if refused.code not in RECOVERY_CODES:
                 raise
         else:
-            return {"state": "continue", "cursor": cursor, "snapshot": None}
+            return {
+                "state": GraphRecoverState.CONTINUE,
+                "cursor": cursor,
+                "snapshot": None,
+            }
     answer = await engine_send(context, "OpenGraphSnapshot", {})
     try:
         snapshot = GraphSnapshotRecovery.model_validate(answer)

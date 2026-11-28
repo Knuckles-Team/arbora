@@ -68,7 +68,7 @@ def test_models_validate_fields_and_closed_change_set() -> None:
         "clause_digest": E,
         "state": "active",
     }
-    policy.PolicyEntity(**entity)
+    policy.PolicyEntity.model_validate(entity)
     for bad in (
         {**entity, "state": "paused"},
         {**entity, "version_digest": "ABC"},

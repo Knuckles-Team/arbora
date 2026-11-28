@@ -547,7 +547,9 @@ async def _require_destructive_approval(
     view: ElevationView | None = views.get(elevation_id)
     if view is None or view.approved_at_ms is None:
         raise ManifestRefused("APPROVAL_REQUIRED", {"elevation_id": elevation_id})
-    if view.status != "active" or view.remaining_ms <= 0:
+    from arbora.security.elevation import ElevationStatus
+
+    if view.status != ElevationStatus.ACTIVE or view.remaining_ms <= 0:
         raise ManifestRefused("APPROVAL_EXPIRED", {"elevation_id": elevation_id})
     if view.justification != f"deploy-destructive:{diff.destructive_digest}":
         raise ManifestRefused("APPROVAL_MISMATCH", {"elevation_id": elevation_id})

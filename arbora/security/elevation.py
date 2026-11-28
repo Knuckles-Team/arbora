@@ -121,6 +121,15 @@ class ElevationRevocation(_Body):
     elevation_id: str = Field(min_length=1, max_length=128)
 
 
+class ElevationStatus(StrEnum):
+    """The engine's elevation states: waiting for approval, granting, or ended."""
+
+    REQUESTED = "requested"
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
 class ElevationView(BaseModel):
     """One elevation as EG reports it, plus the time left for a countdown."""
 
@@ -128,7 +137,7 @@ class ElevationView(BaseModel):
 
     elevation_id: str
     grantee: str
-    status: str
+    status: ElevationStatus
     scopes: list[ElevationScope]
     span_ms: int
     justification: str
@@ -147,7 +156,9 @@ class ElevationView(BaseModel):
     ) -> ElevationView:
         """``own`` marks the caller's own request, which it can never approve."""
         expires = lease.get("hard_expires_at_ms")
-        active = lease.get("status") == "active" and isinstance(expires, int)
+        active = lease.get("status") == ElevationStatus.ACTIVE and isinstance(
+            expires, int
+        )
         remaining = max(0, expires - now_ms) if active and expires else 0
         own = bool(caller) and lease.get("grantee") == caller
         return cls.model_validate({**lease, "remaining_ms": remaining, "own": own})
