@@ -641,7 +641,7 @@ ARBORA-OPS-R021.4.8.3 is proven by `tests/api/test_execution_step_machine.py::te
 | `ARBORA-OPS-R960.6` | Test: `tests/observer/test_producers.py::test_alert_intake_emits_firing_and_resolved_with_severity` (L1). (planned) |
 | `ARBORA-OPS-R960.7` | Test: `tests/observer/test_producers.py::test_security_verdicts_and_refusals_emit_security_audit` (L1). (planned) |
 | `ARBORA-OPS-R960.8` | Test: `tests/observer/test_machines.py::test_remediation_every_edge_and_every_illegal_pair` (L1). (planned) |
-| `ARBORA-OPS-R960.9` | Test: `tests/observer/test_machines.py::test_evolution_proposal_every_edge_and_every_illegal_pair` (L1). (planned) |
+| `ARBORA-OPS-R960.9` | Test: `tests/observer/test_producers.py::test_proposal_stage_changes_emit_engine_stages` (L1). (planned) |
 | `ARBORA-OPS-R960.10` | Test: `tests/observer/test_producers.py::test_a2a_state_changes_emit_handoff_events` (L2). (planned) |
 | `ARBORA-OPS-R960.11` | Test: `tests/observer/test_producers.py::test_sandbox_spawn_and_exit_emit_started_and_finished` (L1). (planned) |
 | `ARBORA-OPS-R960.12` | Test: `tests/api/test_observer_events_served.py::test_each_producer_appears_in_events_list` (L3). (planned) |

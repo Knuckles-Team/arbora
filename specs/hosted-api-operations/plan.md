@@ -1310,4 +1310,4 @@ Decisions. Arbora forwards RDF bodies as text with their media type, because a p
 - `ARBORA-OPS-R916` and `ARBORA-OPS-R916.1` read the statement of `MEDULLA-ORCH-VOCAB-R818`. Contract: `contracts/tool-call-page.md`.
 - `ARBORA-OPS-R959.13` writes the observations of `MEDULLA-MACHINE-R010`. Contract: `contracts/machine-observations.md`.
 - `ARBORA-OPS-R915.1` and `ARBORA-OPS-R915.2` read and write the city state of `MEDULLA-WORLD-VIEW-R004`. Contract: `contracts/city-state.md`.
-- `ARBORA-OPS-R962` records a review receipt through the revision review of `MEDULLA-DECISION-ENGINE-R805.10`. Contract: `contracts/evolution-proposal-decide.md`.
+- `ARBORA-OPS-R962` records a review receipt through the revision review write of `MEDULLA-DECISION-ENGINE-R805.15`. Contract: `contracts/evolution-proposal-decide.md`.
