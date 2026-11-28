@@ -548,3 +548,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
 - [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.
 - [ ] T736 ARBORA-OPS-R022.2.13 A worker runs the loop body after the run-now receipt.
+- [ ] T737 ARBORA-OPS-R021.4.8.3 The execution step status is an explicit state machine.

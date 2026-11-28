@@ -1844,3 +1844,111 @@ arbora:LegacyRetirementMachine_ready-rollback-rolled_back a owl:Class ;
     :fromState arbora:LegacyRetirementReady ;
     :toState arbora:LegacyRetirementRolledBack ;
     :firedBy arbora:LegacyRetirementMachine_Event_rollback .
+
+# ---------------------------------------------------------------------------
+# Execution step (ARBORA-OPS-R021.4.8.3).
+# Python: StepStatus, StepEvent, ExecutionStep.EDGES in arbora/api/ops/run_graph.py.
+# ---------------------------------------------------------------------------
+
+arbora:ExecutionStepMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Execution step" ;
+    rdfs:comment "The observed lifecycle of one declared plan step in an execution graph. Only ordered run evidence advances it: a step starts or is blocked from unobserved, and a started step completes, fails or is cancelled." ;
+    :initialState arbora:ExecutionStepUnobserved ;
+    :hasState arbora:ExecutionStepUnobserved ,
+        arbora:ExecutionStepRunning ,
+        arbora:ExecutionStepCompleted ,
+        arbora:ExecutionStepFailed ,
+        arbora:ExecutionStepCancelled ,
+        arbora:ExecutionStepBlocked .
+
+arbora:ExecutionStepState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Execution step state" .
+
+arbora:ExecutionStepTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Execution step transition" .
+
+arbora:ExecutionStepEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Execution step event" .
+
+arbora:ExecutionStepTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Execution step transition refused" ;
+    rdfs:comment "StepTransitionRefused, code STEP_TRANSITION_ILLEGAL, fields machine (execution_step), from_state and event. The state does not change." .
+
+arbora:ExecutionStepUnobserved a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepState ;
+    :storedForm "unobserved" .
+
+arbora:ExecutionStepRunning a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepState ;
+    :storedForm "running" .
+
+arbora:ExecutionStepCompleted a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepState, :TerminalState ;
+    :storedForm "completed" .
+
+arbora:ExecutionStepFailed a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepState, :TerminalState ;
+    :storedForm "failed" .
+
+arbora:ExecutionStepCancelled a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepState, :TerminalState ;
+    :storedForm "cancelled" .
+
+arbora:ExecutionStepBlocked a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepState, :TerminalState ;
+    :storedForm "blocked" .
+
+arbora:ExecutionStepMachine_Event_task_started a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepEvent ;
+    :storedForm "task_started" .
+
+arbora:ExecutionStepMachine_Event_task_completed a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepEvent ;
+    :storedForm "task_completed" .
+
+arbora:ExecutionStepMachine_Event_task_failed a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepEvent ;
+    :storedForm "task_failed" .
+
+arbora:ExecutionStepMachine_Event_task_cancelled a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepEvent ;
+    :storedForm "task_cancelled" .
+
+arbora:ExecutionStepMachine_Event_task_blocked a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepEvent ;
+    :storedForm "task_blocked" .
+
+arbora:ExecutionStepMachine_unobserved-task_started-running a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepTransition ;
+    :fromState arbora:ExecutionStepUnobserved ;
+    :toState arbora:ExecutionStepRunning ;
+    :firedBy arbora:ExecutionStepMachine_Event_task_started .
+
+arbora:ExecutionStepMachine_unobserved-task_blocked-blocked a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepTransition ;
+    :fromState arbora:ExecutionStepUnobserved ;
+    :toState arbora:ExecutionStepBlocked ;
+    :firedBy arbora:ExecutionStepMachine_Event_task_blocked .
+
+arbora:ExecutionStepMachine_running-task_completed-completed a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepTransition ;
+    :fromState arbora:ExecutionStepRunning ;
+    :toState arbora:ExecutionStepCompleted ;
+    :firedBy arbora:ExecutionStepMachine_Event_task_completed .
+
+arbora:ExecutionStepMachine_running-task_failed-failed a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepTransition ;
+    :fromState arbora:ExecutionStepRunning ;
+    :toState arbora:ExecutionStepFailed ;
+    :firedBy arbora:ExecutionStepMachine_Event_task_failed .
+
+arbora:ExecutionStepMachine_running-task_cancelled-cancelled a owl:Class ;
+    rdfs:subClassOf arbora:ExecutionStepTransition ;
+    :fromState arbora:ExecutionStepRunning ;
+    :toState arbora:ExecutionStepCancelled ;
+    :firedBy arbora:ExecutionStepMachine_Event_task_cancelled .
