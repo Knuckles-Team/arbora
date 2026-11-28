@@ -1170,6 +1170,61 @@ Pre-untangled design for these rows, one line per answer.
 
 Order. R904 and R907 first (the memory and link routes need only the existing masking row, extended by the node-write child R844.2), then R906, R909, R910, then R908, R911, R912, R913 and R914. Each row is one to four PRs of one handler module each.
 
+### Inventory build and description (ARBORA-OPS-R959)
+
+Pre-untangled design for the rollup `ARBORA-OPS-R959`.
+
+1. **Owner.** Arbora owns the two served operations and the collection through `fleet.call`. Medulla owns the vocabulary, identity, lifecycle and hosts-file functions. Each connector owns one probe tool.
+2. **Cohesion.** Collection, record building and ingest change together and live in `arbora/inventory/`. The two operation specs live in `arbora/api/ops/inventory.py` with the other composite operations.
+3. **Dependency direction.** `arbora/api/ops/inventory.py` imports `arbora/inventory/`. `arbora/inventory/` imports `medulla.engine` and the SDK. Nothing in `arbora/inventory/` imports an operation module.
+4. **Interface depth.** The public surface is `build_records`, `collect_bundle`, `verify_bundle`, `InventoryIngestWriter` and `render_machine_markdown`. The new shared abstraction is `FleetCaller` in `arbora/api/ops/_common.py`. Its two call sites are `arbora/api/ops/research.py` and `arbora/api/ops/inventory.py`.
+5. **Special cases.** An unreachable host and a missing probe use one typed refusal path each. A replay uses the same `build_records` as a live run.
+6. **State.** Arbora holds no state. The lifecycle state is read from the bundle and set only by `lifecycle_step`, which calls the engine machine.
+7. **Environment.** None. The hosts file is a request parameter. Connector names are constants of `probes.py`.
+
+Data flow of `inventory.build`:
+
+```text
+hosts_yaml --> normalize_hosts_file --> collect_bundle (fleet.call x3 kinds) --> InventoryBundle
+InventoryBundle (or replay) --> verify_bundle --> build_records --> InventoryRecordSet
+InventoryRecordSet --> InventoryIngestWriter --> KnowledgeIngest.submit --> SourceIngest (tenant graph)
+```
+
+Determinism rules: the hosts file normalizes to sorted data. The bundle sorts its probes. The record set sorts entities and relationships. Lists sort and drop duplicates. A timestamp enters only through `collected_at` and appears only in `observedAt`. Canonical JSON has sorted keys and integers only. Two builds from one hosts file and one bundle produce one `records_digest`.
+
+Failure modes: a refusal happens before any write. The ingest is one reconcile batch, so a failed batch changes nothing.
+
+Format of the description (golden file `tests/fixtures/inventory/golden/describe-alpha.md`, new):
+
+```markdown
+# alpha
+
+| Field | Value |
+|---|---|
+| Machine | `urn:machine:uuid:d1c2987bf12e8996acbc7828e5d417f9` |
+| Lifecycle | active |
+| Identity | uuid: `123e4567-e89b-12d3-a456-426614174000` |
+| Roles | compute |
+| Groups | rack-a |
+| Addresses | 192.0.2.10 |
+| Management address | 192.0.2.110 |
+| Operating system | Example OS 1.0 (kernel 6.0.0) |
+| Architecture | x86_64 |
+| Memory | 64.0 GiB |
+
+## Processors
+
+| Socket | Model | Cores | Threads |
+|---|---|---|---|
+| 0 | Example CPU | 8 | 16 |
+
+## Memory modules
+
+None recorded.
+```
+
+The golden file continues with the remaining sections in the order of `ARBORA-OPS-R959.9`.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.
@@ -1245,3 +1300,9 @@ Path of R924: `load_eg_bindings` (`arbora/api/registry/eg_binding.py:342`) gener
 Reuse inventory. R857.3 reuses `negotiate`, `answer` and `_refusal`. R923 reuses the read-op pattern of `arbora/api/ops/retrieval.py` and the effect journal. No new store or policy table exists in Arbora.
 
 Decisions. Arbora forwards RDF bodies as text with their media type, because a parser in the door would be a second owner of the format rules. A bundle moves by reference through blob chunks, because a bundle may reach 4 GiB and a JSON body cannot carry it.
+- `ARBORA-OPS-R959.2` consumes the pure functions of `MEDULLA-MACHINE-R007`. Contract: `contracts/inventory-machine-functions.md`.
+- `ARBORA-OPS-R959.5` consumes the lifecycle functions of `MEDULLA-MACHINE-R007`. Contract: `contracts/inventory-lifecycle.md`.
+- `ARBORA-OPS-R959.7` uses the ingest path of `MEDULLA-MACHINE-R006.4`. Contract: `contracts/inventory-record-ingest.md`.
+- `ARBORA-OPS-R959.4` consumes the hardware tool of `CONN-TUNNEL-MANAGER-INVENTORY-R008.2`. Contract: `contracts/inventory-probe-system.md`.
+- `ARBORA-OPS-R959.4` consumes the inventory tool of `CONN-FAN-MANAGER-R006.2`. Contract: `contracts/inventory-probe-management.md`.
+- `ARBORA-OPS-R959.4` consumes the membership actions of `CONN-CONTAINER-MANAGER-MCP-R025.2`. Contract: `contracts/inventory-probe-membership.md`.

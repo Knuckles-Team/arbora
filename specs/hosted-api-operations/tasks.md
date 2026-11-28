@@ -549,3 +549,16 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.
 - [ ] T736 ARBORA-OPS-R022.2.13 A worker runs the loop body after the run-now receipt.
 - [ ] T737 ARBORA-OPS-R021.4.8.3 The execution step status is an explicit state machine.
+- [ ] T738 [US1] ARBORA-OPS-R959 Deterministic inventory build and description (rollup).
+- [ ] T739 [US1] ARBORA-OPS-R959.1 One fleet caller for composite operations.
+- [ ] T740 [US1] ARBORA-OPS-R959.2 Pure record builder.
+- [ ] T741 [US1] ARBORA-OPS-R959.3 Probe snapshot bundle.
+- [ ] T742 [US1] ARBORA-OPS-R959.4 Probe collection through `fleet.call`.
+- [ ] T743 [US1] ARBORA-OPS-R959.5 Lifecycle evidence and step.
+- [ ] T744 [US1] ARBORA-OPS-R959.6 Served operation `inventory.build`.
+- [ ] T745 [US1] ARBORA-OPS-R959.7 Ingest through `SourceIngest` and the `inventory-records` declaration.
+- [ ] T746 [US1] ARBORA-OPS-R959.8 Offline command `arbora-inventory`.
+- [ ] T747 [US1] ARBORA-OPS-R959.9 Pure Markdown description.
+- [ ] T748 [US1] ARBORA-OPS-R959.10 Wiring and refusal codes.
+- [ ] T749 [US1] ARBORA-OPS-R959.11 Served operation `inventory.describe`.
+- [ ] T750 [US1] ARBORA-OPS-R959.12 Hot-path proofs: determinism and description.

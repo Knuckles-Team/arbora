@@ -9,3 +9,9 @@ Run the focused proofs from a clean checkout after `uv sync --extra test`.
 5. Ingest operations: `uv run pytest tests/api/test_ingest_ops.py tests/ingest/test_connector_sources.py`.
 
 Scenario for the served host: start `arbora` with the HTTP transport, call `find` for an operation with the typed client in `arbora.client`, then call it with a bearer token. `tests/api/test_client_http.py` runs that scenario in process against a loopback engine.
+
+## Inventory build and description
+
+Run the served proof: `pytest tests/gateway/test_inventory_hot_path.py`. It builds twice from one snapshot and compares the record digests. It then renders one description and compares it with the golden file.
+
+Run the offline replay: `arbora-inventory build --hosts hosts.yml --tenant demo --replay snapshot.json --records-out records.json`. The command opens no socket.
