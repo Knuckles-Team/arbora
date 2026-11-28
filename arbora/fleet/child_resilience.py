@@ -68,6 +68,16 @@ import anyio
 
 from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.core.settings import RuntimeConfig
+from arbora.fleet.child_machines import (
+    BREAKER_INITIAL,
+    CHILD_INITIAL,
+    BreakerEvent,
+    BreakerState,
+    ChildEvent,
+    ChildState,
+    breaker_transition,
+    child_transition,
+)
 from arbora.fleet.protocol_compat import mcp_protocol_error
 from arbora.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,
@@ -93,7 +103,9 @@ MCPError: type[BaseException] = mcp_protocol_error()
 
 logger = logging.getLogger("mcp_multiplexer.child")
 
-_BREAKER_STATE_VALUES = MappingProxyType({"closed": 0.0, "half_open": 1.0, "open": 2.0})
+_BREAKER_STATE_VALUES = MappingProxyType(
+    {BreakerState.CLOSED: 0.0, BreakerState.HALF_OPEN: 1.0, BreakerState.OPEN: 2.0}
+)
 
 
 class _CircuitBreaker:
@@ -108,13 +120,13 @@ class _CircuitBreaker:
         self.cooldown = float(cooldown)
         self._lock = threading.Lock()
         self._failures = 0
-        self._state = "closed"
+        self._state: BreakerState = BREAKER_INITIAL
         self._opened_at = 0.0
         self._probe_in_flight = False
         self._export_state()
 
     @property
-    def state(self) -> str:
+    def state(self) -> BreakerState:
         return self._state
 
     @property
@@ -127,23 +139,25 @@ class _CircuitBreaker:
     def _export_state(self) -> None:
         logger.debug("child breaker state changed: %s", self._state)
 
-    def _set_state(self, state: str) -> None:
-        if state == self._state:
+    def _fire(self, event: BreakerEvent) -> None:
+        """Apply ``event``; the only writer of the breaker state."""
+        target = breaker_transition(self._state, event)
+        if target == self._state:
             return
-        self._state = state
+        self._state = target
         self._export_state()
 
     def before_call(self) -> None:
         if not self.enabled:
             return
         with self._lock:
-            if self._state == "closed":
+            if self._state is BreakerState.CLOSED:
                 return
-            if self._state == "open":
+            if self._state is BreakerState.OPEN:
                 remaining = self._opened_at + self.cooldown - time.monotonic()
                 if remaining > 0:
                     raise self.error_cls(f"{self.subject} circuit is open")
-                self._set_state("half_open")
+                self._fire(BreakerEvent.PROBE)
                 self._probe_in_flight = True
                 return
             if self._probe_in_flight:
@@ -156,7 +170,7 @@ class _CircuitBreaker:
         with self._lock:
             self._failures = 0
             self._probe_in_flight = False
-            self._set_state("closed")
+            self._fire(BreakerEvent.RECOVER)
 
     def record_failure(self) -> None:
         if not self.enabled:
@@ -167,7 +181,7 @@ class _CircuitBreaker:
             self._probe_in_flight = False
             if was_probe or self._failures >= self.threshold:
                 self._opened_at = time.monotonic()
-                self._set_state("open")
+                self._fire(BreakerEvent.TRIP)
 
 
 # Transport-level failures that indicate a dead child (stdio process exit,
@@ -511,7 +525,7 @@ class ChildRuntime:
         # Lifecycle (restart-on-crash supervisor)
         self._connect = connect
         self._on_generation = on_generation
-        self.state = "starting"
+        self.state: ChildState = CHILD_INITIAL
         self.restart_count = 0
         self._restart_times: deque[float] = deque()
         self._ready = asyncio.Event()
@@ -549,7 +563,7 @@ class ChildRuntime:
         no auto-restart, matching the pre-hardening behaviour)."""
         self._sessions = list(sessions)
         self._generation += 1
-        self.state = "up"
+        self._fire(ChildEvent.CONNECT)
         self._ready.set()
 
     @property
@@ -657,7 +671,7 @@ class ChildRuntime:
             self._sessions = list(sessions)
             self._generation += 1
             self._generation_started_at = time.monotonic()
-            self._set_state("up")
+            self._fire(ChildEvent.CONNECT)
             self.breaker.record_success()
             self._stop_generation = asyncio.Event()
             if first is not None:
@@ -688,7 +702,7 @@ class ChildRuntime:
         """
         if first is None or first.done():
             return False
-        self._set_state("failed")
+        self._fire(ChildEvent.FAIL)
         first.set_exception(exc)
         return True
 
@@ -704,7 +718,7 @@ class ChildRuntime:
         """Return the next backoff/delay, or ``None`` when restart is exhausted."""
         if self._recycle_requested:
             self._recycle_requested = False
-            self._set_state("restarting")
+            self._fire(ChildEvent.DISCONNECT)
             return backoff, 0.0
         now = time.monotonic()
         self._restart_times.append(now)
@@ -713,7 +727,7 @@ class ChildRuntime:
         ):
             self._restart_times.popleft()
         if self.max_restarts <= 0 or len(self._restart_times) > self.max_restarts:
-            self._set_state("failed")
+            self._fire(ChildEvent.FAIL)
             logger.error(
                 "Child server '%s' exceeded %d restarts in %.0fs — marking failed "
                 "(calls now fail fast). Restart the multiplexer or fix the child "
@@ -729,7 +743,7 @@ class ChildRuntime:
             *_JITTER_RANGE
         )
         next_backoff = min(backoff * 2, self.restart_backoff_cap)
-        self._set_state("restarting")
+        self._fire(ChildEvent.DISCONNECT)
         logger.warning(
             "Restarting child server '%s' in %.2fs (restart #%d)",
             self.name,
@@ -738,10 +752,18 @@ class ChildRuntime:
         )
         return next_backoff, delay
 
-    def _set_state(self, state: str) -> None:
-        if state != self.state:
-            logger.info("Child server '%s': %s -> %s", self.name, self.state, state)
-        self.state = state
+    def _fire(self, event: ChildEvent) -> None:
+        """Apply ``event``; the only writer of the child state.
+
+        A closed runtime ignores every event but its own close: a supervisor
+        that was mid-connect when the owner shut it down must not revive it.
+        """
+        if self.state is ChildState.CLOSED:
+            return
+        target = child_transition(self.state, event)
+        if target != self.state:
+            logger.info("Child server '%s': %s -> %s", self.name, self.state, target)
+        self.state = target
 
     async def _notify_generation(self, tools: list[Any]) -> None:
         """Refresh owner metadata after a successful non-initial generation.
@@ -775,14 +797,14 @@ class ChildRuntime:
 
     def request_restart(self, reason: str = "") -> None:
         """Tear down the current generation and reconnect (supervised only)."""
-        if self._closed or self._supervisor is None or self.state != "up":
+        if self._closed or self._supervisor is None or self.state is not ChildState.UP:
             return
         logger.warning(
             "Child server '%s' transport failure%s — recycling connection",
             self.name,
             f" ({reason})" if reason else "",
         )
-        self._set_state("restarting")
+        self._fire(ChildEvent.DISCONNECT)
         self._ready.clear()
         if self._stop_generation is not None:
             self._stop_generation.set()
@@ -812,13 +834,13 @@ class ChildRuntime:
         reconnects immediately without counting it toward the restart budget or
         applying backoff, so a child can recycle every token window indefinitely
         without being parked as ``failed``."""
-        if self._closed or self._supervisor is None or self.state != "up":
+        if self._closed or self._supervisor is None or self.state is not ChildState.UP:
             return
         logger.info(
             "Child server '%s' recycling session before token expiry", self.name
         )
         self._recycle_requested = True
-        self._set_state("restarting")
+        self._fire(ChildEvent.DISCONNECT)
         self._ready.clear()
         if self._stop_generation is not None:
             self._stop_generation.set()
@@ -829,7 +851,7 @@ class ChildRuntime:
 
     async def _await_ready(self) -> None:
         """Gate calls on child availability with a brief recovery wait."""
-        if self.state == "failed":
+        if self.state is ChildState.FAILED:
             raise self._unavailable(
                 "failed",
                 f"Child server '{self.name}' is marked FAILED after "
@@ -847,7 +869,7 @@ class ChildRuntime:
                 f"#{self.restart_count}); still unavailable after waiting "
                 f"{wait}s. Retry shortly.",
             ) from None
-        if self.state == "failed":
+        if self.state is ChildState.FAILED:
             raise self._unavailable(
                 "failed",
                 f"Child server '{self.name}' is marked FAILED after "
@@ -867,7 +889,7 @@ class ChildRuntime:
             self._supervisor = None
         self._sessions = []
         self._task_generation_secret = None
-        self._set_state("closed")
+        self._fire(ChildEvent.CLOSE)
 
     # ------------------------------------------------------------------
     # Bounded-concurrency slot management
@@ -965,7 +987,7 @@ class ChildRuntime:
         if (
             self.session_max_age is None
             or self._supervisor is None
-            or self.state != "up"
+            or self.state is not ChildState.UP
             or self._generation_started_at <= 0.0
         ):
             return
@@ -1199,7 +1221,7 @@ class ChildRuntime:
 
     def _settle_preflight_probe(self, probe_claimed: bool) -> None:
         """Reopen an unresolved probe without replaying the refused operation."""
-        if probe_claimed and self.breaker.state == "half_open":
+        if probe_claimed and self.breaker.state is BreakerState.HALF_OPEN:
             self.breaker.record_failure()
 
     def _tool_call_deadline(self) -> float | None:
@@ -1325,7 +1347,7 @@ class ChildRuntime:
         except _BreakerOpenSignal:
             self._record("short_circuited")
             raise MCPChildCircuitOpenError(self.name, "circuit_open") from None
-        return self.breaker.state == "half_open"
+        return self.breaker.state is BreakerState.HALF_OPEN
 
     async def _prepare_request(
         self,

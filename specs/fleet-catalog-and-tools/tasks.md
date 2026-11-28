@@ -558,3 +558,5 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T289 [US1] ARBORA-FLEET-R024.19 The scale execution record is an explicit state machine. Size: M, 1 PR, 3 hours.
 - [ ] T290 [US1] ARBORA-FLEET-R024.20 The scale authority execution record is an explicit state machine. Size: S, 1 PR, 2 hours.
 - [ ] T291 [US1] ARBORA-FLEET-R090 The fleet serves each connector's classes and capabilities
+- [ ] T292 [US1] ARBORA-FLEET-R091 A multiplexer child connection is an explicit state machine. Size: M, 1 PR, 3 hours.
+- [ ] T293 [US1] ARBORA-FLEET-R091.1 The child transport circuit breaker is an explicit state machine. Size: S, 1 PR, 2 hours.
