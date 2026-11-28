@@ -19,11 +19,15 @@ from typing import Any
 from arbora import work_items
 from arbora.api.domain.fleet.scale_records import (
     MAX_LEASE_TTL_S,
+    RESULT_EVENTS,
+    SETTLED_STATES,
     BreakGlassAudit,
     BreakGlassAuthorization,
     ControllerLease,
     ScaleActuationResult,
+    ScaleExecutionEvent,
     ScaleExecutionRecord,
+    ScaleExecutionState,
     ScaleIntentConflict,
     ScaleIntentRecord,
     ScaleIntentState,
@@ -46,16 +50,6 @@ KIND = "scale_intent"
 REVISION_KIND = "scale_intent_revision"
 STATE_KEY = "scale"
 _CAS_ATTEMPTS = 3
-
-#: States from which a started execution is not started again.
-_SETTLED = frozenset(
-    {
-        ScaleIntentState.SIMULATED.value,
-        ScaleIntentState.SUCCEEDED.value,
-        ScaleIntentState.OBSERVED.value,
-        ScaleIntentState.VERIFIED.value,
-    }
-)
 
 
 def _item_id(kind: str, key: str) -> str:
@@ -275,9 +269,9 @@ class WorkItemScaleIntentLedger:
         item = await self._item(intent)
         state = self._check_lease(item, intent, execution, lease, now)
         current = _execution(state)
-        if current.state in _SETTLED:
+        if current.state in SETTLED_STATES:
             return current
-        if current.state == ScaleIntentState.FAILED.value:
+        if current.state == ScaleExecutionState.FAILED.value:
             if current.result is None or not current.result.retryable:
                 raise ScaleIntentConflict(
                     "non-retryable execution cannot be started again"
@@ -293,13 +287,11 @@ class WorkItemScaleIntentLedger:
             )
         except Exception as refused:
             raise ScaleLeaseLost("the engine refused the effect marker") from refused
-        updated = current.model_copy(
-            update={
-                "state": ScaleIntentState.STARTED.value,
-                "attempt": lease.attempt,
-                "lease": lease,
-                "updated_at": aware_utc(now, "now"),
-            }
+        updated = current.transition(
+            ScaleExecutionEvent.START,
+            attempt=lease.attempt,
+            lease=lease,
+            updated_at=aware_utc(now, "now"),
         )
         fresh = await self._read(KIND, intent.execution_key) or item
         await self._write_under_lease(
@@ -327,17 +319,15 @@ class WorkItemScaleIntentLedger:
         if MemoryScaleIntentLedger._is_result_replay(current, lease, result):
             return current
         simulated = result.state == ScaleIntentState.SIMULATED.value
-        updated = current.model_copy(
-            update={
-                "state": result.state,
-                "dry_run": simulated,
-                "actuator_called": not simulated,
-                "scaled": result.scaled,
-                "result_attempt": lease.attempt,
-                "lease": lease,
-                "result": result,
-                "updated_at": aware_utc(now, "now"),
-            }
+        updated = current.transition(
+            RESULT_EVENTS[result.state],
+            dry_run=simulated,
+            actuator_called=not simulated,
+            scaled=result.scaled,
+            result_attempt=lease.attempt,
+            lease=lease,
+            result=result,
+            updated_at=aware_utc(now, "now"),
         )
         await self._write_under_lease(
             item, {**state, "execution": updated.model_dump(mode="json")}, lease
@@ -442,12 +432,10 @@ class WorkItemScaleIntentLedger:
             raise ScaleObservationConflict(
                 "observation does not match the durable actuator result"
             )
-        verified = current.model_copy(
-            update={
-                "state": ScaleIntentState.VERIFIED.value,
-                "observation_id": observation.observation_id,
-                "updated_at": aware_utc(now, "now"),
-            }
+        verified = current.transition(
+            ScaleExecutionEvent.VERIFY,
+            observation_id=observation.observation_id,
+            updated_at=aware_utc(now, "now"),
         )
         return {
             **state,

@@ -43,12 +43,16 @@ from pydantic import (
 from arbora.api.domain.fleet.scale_records import (
     MAX_DETAIL_LENGTH,
     MAX_LEASE_TTL_S,
+    RESULT_EVENTS,
+    SETTLED_STATES,
     BreakGlassAudit,
     BreakGlassAuthorization,
     ControllerLease,
     ScaleActuationRequest,
     ScaleActuationResult,
+    ScaleExecutionEvent,
     ScaleExecutionRecord,
+    ScaleExecutionState,
     ScaleIntentConflict,
     ScaleIntentRecord,
     ScaleIntentState,
@@ -283,7 +287,7 @@ class MemoryScaleIntentLedger:
                 intent_revision=intent.intent_revision,
                 execution_key=intent.execution_key,
                 target=intent.target,
-                state=ScaleIntentState.PERSISTED,
+                state=ScaleExecutionRecord.INITIAL,
                 attempt=0,
                 dry_run=False,
                 actuator_called=False,
@@ -311,7 +315,7 @@ class MemoryScaleIntentLedger:
         if current is None or current.expires_at <= now:
             return False, None
         is_retryable_failed = (
-            current_execution.state == ScaleIntentState.FAILED.value
+            current_execution.state == ScaleExecutionState.FAILED.value
             and current_execution.result is not None
             and current_execution.result.retryable
         )
@@ -374,27 +378,20 @@ class MemoryScaleIntentLedger:
         with self._lock:
             self._check_lease(intent, execution, lease, now)
             current = self._executions[intent.execution_key]
-            if current.state in {
-                ScaleIntentState.SIMULATED.value,
-                ScaleIntentState.SUCCEEDED.value,
-                ScaleIntentState.OBSERVED.value,
-                ScaleIntentState.VERIFIED.value,
-            }:
+            if current.state in SETTLED_STATES:
                 return current
-            if current.state == ScaleIntentState.FAILED.value:
+            if current.state == ScaleExecutionState.FAILED.value:
                 if current.result is None or not current.result.retryable:
                     raise ScaleIntentConflict(
                         "non-retryable execution cannot be started again"
                     )
                 if lease.attempt <= current.attempt:
                     raise ScaleLeaseLost("retry must use a newer controller lease")
-            updated = current.model_copy(
-                update={
-                    "state": ScaleIntentState.STARTED.value,
-                    "attempt": lease.attempt,
-                    "lease": lease,
-                    "updated_at": aware_utc(now, "now"),
-                }
+            updated = current.transition(
+                ScaleExecutionEvent.START,
+                attempt=lease.attempt,
+                lease=lease,
+                updated_at=aware_utc(now, "now"),
             )
             self._executions[intent.execution_key] = updated
             self.events.append("execution:started")
@@ -416,7 +413,7 @@ class MemoryScaleIntentLedger:
             current.result.retryable
             and current.result_attempt is not None
             and lease.attempt > current.result_attempt
-            and current.state == ScaleIntentState.STARTED.value
+            and current.state == ScaleExecutionState.STARTED.value
         )
         if not same_result and not retry_attempt:
             raise ScaleIntentConflict("execution key returned a different result")
@@ -444,17 +441,15 @@ class MemoryScaleIntentLedger:
             if self._is_result_replay(current, lease, result):
                 return current
             state = result.state
-            updated = current.model_copy(
-                update={
-                    "state": state,
-                    "dry_run": state == ScaleIntentState.SIMULATED.value,
-                    "actuator_called": state != ScaleIntentState.SIMULATED.value,
-                    "scaled": result.scaled,
-                    "result_attempt": lease.attempt,
-                    "lease": lease,
-                    "result": result,
-                    "updated_at": aware_utc(now, "now"),
-                }
+            updated = current.transition(
+                RESULT_EVENTS[state],
+                dry_run=state == ScaleIntentState.SIMULATED.value,
+                actuator_called=state != ScaleIntentState.SIMULATED.value,
+                scaled=result.scaled,
+                result_attempt=lease.attempt,
+                lease=lease,
+                result=result,
+                updated_at=aware_utc(now, "now"),
             )
             self._executions[intent.execution_key] = updated
             self.events.append(f"execution:result:{state}")
@@ -532,12 +527,10 @@ class MemoryScaleIntentLedger:
                     "observation does not match the durable actuator result"
                 )
             self._observations[intent.execution_key] = observation
-            self._executions[intent.execution_key] = current_execution.model_copy(
-                update={
-                    "state": ScaleIntentState.VERIFIED.value,
-                    "observation_id": observation.observation_id,
-                    "updated_at": aware_utc(now, "now"),
-                }
+            self._executions[intent.execution_key] = current_execution.transition(
+                ScaleExecutionEvent.VERIFY,
+                observation_id=observation.observation_id,
+                updated_at=aware_utc(now, "now"),
             )
             self.events.append("observation:verified")
             return observation
@@ -642,7 +635,7 @@ class ScaleIntentReconciler:
     ) -> None:
         if not dry_run:
             return
-        if execution.state == ScaleIntentState.VERIFIED.value:
+        if execution.state == ScaleExecutionState.VERIFIED.value:
             existing = await self._existing_observation(intent.execution_key)
             if (
                 existing is None
@@ -652,8 +645,8 @@ class ScaleIntentReconciler:
                     "dry-run cannot reuse an execution that may have scaled"
                 )
         elif execution.state not in {
-            ScaleIntentState.PERSISTED.value,
-            ScaleIntentState.SIMULATED.value,
+            ScaleExecutionState.PERSISTED.value,
+            ScaleExecutionState.SIMULATED.value,
         }:
             raise ScaleIntentConflict(
                 "dry-run cannot reuse a live or retrying execution key"
@@ -662,10 +655,7 @@ class ScaleIntentReconciler:
     async def _replay_verified_or_observed(
         self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord
     ) -> ScaleReconcileResult | None:
-        if execution.state not in {
-            ScaleIntentState.OBSERVED.value,
-            ScaleIntentState.VERIFIED.value,
-        }:
+        if execution.state != ScaleExecutionState.VERIFIED.value:
             return None
         observation = await self._existing_observation(intent.execution_key)
         if observation is None:
@@ -703,8 +693,8 @@ class ScaleIntentReconciler:
         if (
             execution.state
             not in {
-                ScaleIntentState.SIMULATED.value,
-                ScaleIntentState.SUCCEEDED.value,
+                ScaleExecutionState.SIMULATED.value,
+                ScaleExecutionState.SUCCEEDED.value,
             }
             or execution.result is None
         ):
@@ -735,7 +725,10 @@ class ScaleIntentReconciler:
     ) -> ScaleReconcileResult | None:
         """A durable non-retryable result (or an exhausted retry budget) is
         terminal even if the process died before writing its observation."""
-        if execution.state != ScaleIntentState.FAILED.value or execution.result is None:
+        if (
+            execution.state != ScaleExecutionState.FAILED.value
+            or execution.result is None
+        ):
             return None
         if (
             execution.result.retryable
@@ -764,7 +757,7 @@ class ScaleIntentReconciler:
         intent: ScaleIntentRecord, execution: ScaleExecutionRecord
     ) -> None:
         if (
-            execution.state == ScaleIntentState.STARTED.value
+            execution.state == ScaleExecutionState.STARTED.value
             and execution.result is None
             and execution.attempt >= intent.retry_policy.max_attempts
         ):
@@ -1004,11 +997,8 @@ class ScaleIntentReconciler:
     ) -> ScaleExecutionRecord:
         """Reflect the durable observation transition in the returned view."""
 
-        return execution.model_copy(
-            update={
-                "state": ScaleIntentState.VERIFIED.value,
-                "observation_id": observation.observation_id,
-            }
+        return execution.transition(
+            ScaleExecutionEvent.VERIFY, observation_id=observation.observation_id
         )
 
     async def _observe_result(
