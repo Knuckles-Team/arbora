@@ -19,6 +19,7 @@ from arbora.api.domain.a2a.models import (
     A2AMessage,
     A2ARouteDecision,
     A2ATask,
+    A2ATaskState,
     A2ATextPart,
 )
 from arbora.core.a2a_errors import A2AIdempotencyConflict
@@ -629,7 +630,7 @@ class WorkItemA2AAuthority:
                         self._authorized_item, task_id, "kg:write"
                     )
                     if (
-                        cancelled.status.state != "canceled"
+                        cancelled.status.state != A2ATaskState.CANCELED
                         or not isinstance(readback, dict)
                         or readback.get("status") != "cancelled"
                     ):

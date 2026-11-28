@@ -31,7 +31,7 @@ from arbora.api.domain.fleet.catalog_machine import (
     autoscaling_ready,
     convergence_ready,
 )
-from arbora.api.domain.fleet.catalog_reader import generation_payload
+from arbora.api.domain.fleet.catalog_reader import ReplicaState, generation_payload
 
 if TYPE_CHECKING:
     from arbora.api.domain.fleet.catalog_reader import GenerationStatus
@@ -622,9 +622,9 @@ def with_catalog_generation(
     now = time.time()
     diagnostics = (status.reason,) if status.reason else ()
     dependency = _dependency(
-        "degraded" if status.state == "degraded" else "healthy",
+        "degraded" if status.state == ReplicaState.DEGRADED else "healthy",
         now,
-        None if status.state == "degraded" else now,
+        None if status.state == ReplicaState.DEGRADED else now,
         diagnostics,
     )
     return _with_dependency(

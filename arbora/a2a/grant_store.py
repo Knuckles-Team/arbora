@@ -20,6 +20,7 @@ from types import MappingProxyType
 from typing import Any
 
 from arbora.api.invoke.plan import PLAN_TTL_MS, PlanBinding
+from arbora.core.lease_status import LeaseStatus
 
 from .approval import PendingCallBinding
 
@@ -58,7 +59,7 @@ class GrantView:
     """One grant as the engine holds it."""
 
     grant_id: str
-    status: str
+    status: LeaseStatus
     revision: int
     binding: PendingCallBinding
 
@@ -68,11 +69,11 @@ class GrantView:
         )
 
 
-_STATUS_REFUSAL = MappingProxyType(
+_STATUS_REFUSAL: Mapping[str, GrantRefusal] = MappingProxyType(
     {
-        "consumed": GrantRefusal.REPLAYED,
-        "revoked": GrantRefusal.REVOKED,
-        "expired": GrantRefusal.EXPIRED,
+        LeaseStatus.CONSUMED: GrantRefusal.REPLAYED,
+        LeaseStatus.REVOKED: GrantRefusal.REVOKED,
+        LeaseStatus.EXPIRED: GrantRefusal.EXPIRED,
     }
 )
 
@@ -175,7 +176,7 @@ class HumanGrantStore:
         view = await self.get(tenant, grant_id)
         if view is None:
             raise GrantError(GrantRefusal.EXPIRED)
-        if view.status != "active":
+        if view.status != LeaseStatus.ACTIVE:
             raise GrantError(_STATUS_REFUSAL[view.status])
         if view.binding.expires_at_ms <= self._clock_ms():
             raise GrantError(GrantRefusal.EXPIRED)
@@ -219,7 +220,7 @@ class HumanGrantStore:
             binding = PendingCallBinding.model_validate(grant)
             return GrantView(
                 binding.grant_id,
-                str(lease["status"]),
+                LeaseStatus(lease["status"]),
                 int(lease["revision"]),
                 binding,
             )

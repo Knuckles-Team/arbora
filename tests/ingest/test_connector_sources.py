@@ -17,7 +17,7 @@ import pytest
 from pydantic import ValidationError
 
 from arbora.api.domain.ingest import service
-from arbora.api.domain.ingest.service import IngestSourceRecord
+from arbora.api.domain.ingest.service import IngestSourceRecord, IngestSourceState
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.ingest.connector_sources import (
     SOURCE_SYNC_KIND,
@@ -190,7 +190,11 @@ def _context(runner: Any, key: str | None = "idem-1") -> Any:
 @pytest.mark.spec("ARBORA-OPS-R020.6.1")
 def test_source_record_shape() -> None:
     record = IngestSourceRecord(
-        source_id="fixture/items", tenant="t", state="active", connector="c", records=2
+        source_id="fixture/items",
+        tenant="t",
+        state=IngestSourceState("active"),
+        connector="c",
+        records=2,
     )
     assert record.model_dump(exclude_none=True)["records"] == 2
     with pytest.raises(ValidationError):

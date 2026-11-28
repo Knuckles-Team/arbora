@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
+from arbora.api.invoke.audit import ReservationState
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.fleet_loader import attach_fleet_loader
 from arbora.fleet.gateway_ops import ConfirmingTools
@@ -210,7 +211,9 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
         external_effect_operations=frozenset({"fleet.call"}),
         effects=SimpleNamespace(
             reserve=AsyncMock(
-                return_value=EffectReservation("fixture:reservation", "acquired")
+                return_value=EffectReservation(
+                    "fixture:reservation", ReservationState("acquired")
+                )
             ),
             complete=AsyncMock(),
         ),

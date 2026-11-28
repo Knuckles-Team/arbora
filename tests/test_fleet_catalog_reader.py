@@ -15,6 +15,7 @@ from arbora.api.domain.fleet.catalog_reader import (
     FLEET_COMPONENT_KINDS,
     SERVER_QUERY_SOURCE,
     ComponentContent,
+    ComponentLifecycle,
     ComponentPage,
     ComponentPin,
     ComponentRecord,
@@ -96,7 +97,7 @@ SERVER_COMPONENT = ComponentRecord(
     entry_revision=3,
     definition_digest=SERVER_DEFINITION_DIGEST,
     content_digest=SERVER_CONTENT_DIGEST,
-    lifecycle="published",
+    lifecycle=ComponentLifecycle("published"),
     provenance_server=None,
 )
 SERVER_PIN = ComponentPin(
@@ -114,7 +115,7 @@ TOOL_COMPONENT = ComponentRecord(
     entry_revision=7,
     definition_digest=TOOL_DEFINITION_DIGEST,
     content_digest=TOOL_CONTENT_DIGEST,
-    lifecycle="published",
+    lifecycle=ComponentLifecycle("published"),
     provenance_server=SERVER_PIN,
 )
 

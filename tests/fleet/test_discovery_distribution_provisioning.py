@@ -13,6 +13,7 @@ from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.work_items import WorkItemView
 from arbora.control_plane.policy.models import canonical_digest
 from arbora.core.settings import RuntimeConfig
+from arbora.core.work_item_status import WorkItemStatus
 from arbora.fleet.provision_flow import (
     EVIDENCE_KIND,
     REFUSALS,
@@ -45,7 +46,7 @@ VIEW = WorkItemView(
     tenant="tenant:one",
     created_by="person:one",
     queue=None,
-    state="open",
+    state=WorkItemStatus("open"),
     metadata={},
 )
 SKILL = SkillRef("skill-a", "1.2.0", DIGEST, "s" * 64, ("web.search",))

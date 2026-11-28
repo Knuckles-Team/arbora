@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -51,8 +52,15 @@ class _Scope(_Record):
     ]
 
 
+class _EventStatus(StrEnum):
+    """The one status of a readable terminal event."""
+
+    AVAILABLE = "available"
+
+
 class _Event(_Record):
-    status: Literal["available"]
+    # Strict models take an enum only as an instance; the engine sends the text.
+    status: _EventStatus = Field(strict=False)
     tenant: Text
     scope: _Scope
     batch_id: Text

@@ -30,6 +30,7 @@ from arbora.api.domain.fleet.catalog_reader import (
     SERVER_QUERY_SOURCE,
     ComponentContent,
     ComponentKind,
+    ComponentLifecycle,
     ComponentPage,
     ComponentPin,
     ComponentRecord,
@@ -278,7 +279,7 @@ class GeneratedFleetCatalogPort:
             entry_revision=entry.entry_revision,
             definition_digest=entry.definition_digest,
             content_digest=entry.content_digest,
-            lifecycle=entry.lifecycle.value,
+            lifecycle=ComponentLifecycle(entry.lifecycle.value),
             provenance_server=pin,
             tool_hints=_tool_hints(getattr(entry, "facts", None)),
         )

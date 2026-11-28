@@ -14,6 +14,7 @@ from arbora.api.domain.a2a.models import (
     A2AArtifact,
     A2ARouteDecision,
     A2ATask,
+    A2ATaskState,
     A2ATaskStatus,
 )
 from arbora.core.a2a_errors import A2AIdempotencyConflict
@@ -42,7 +43,7 @@ class Authority:
         self.task = A2ATask(
             id="a2a-" + "1" * 64,
             context_id="a2a-context-" + "2" * 64,
-            status=A2ATaskStatus(state="submitted"),
+            status=A2ATaskStatus(state=A2ATaskState("submitted")),
         )
 
     async def dispatch(self, **kwargs: Any) -> A2ATask:
@@ -56,7 +57,9 @@ class Authority:
         return [self.task], "next"
 
     async def cancel(self, task_id: str) -> A2ATask:
-        return self.task.model_copy(update={"status": A2ATaskStatus(state="canceled")})
+        return self.task.model_copy(
+            update={"status": A2ATaskStatus(state=A2ATaskState("canceled"))}
+        )
 
 
 def _app() -> tuple[Any, Authenticator, Authority]:

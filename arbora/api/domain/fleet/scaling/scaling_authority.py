@@ -700,6 +700,17 @@ class AuthorityExecutionTransitionRefused(ValueError):
         self.event = event
 
 
+class ObservedStatus(StrEnum):
+    """What an execution was observed to have reached."""
+
+    CONVERGED = "converged"
+    PENDING = "pending"
+    FAILED = "failed"
+    OFFLINE = "offline"
+    DRAINING = "draining"
+    ROLLED_BACK = "rolled_back"
+
+
 class ObservedOutcome(_ContractModel):
     """Observed convergence/failure after an execution, written once."""
 
@@ -710,14 +721,7 @@ class ObservedOutcome(_ContractModel):
     execution_revision: StrictInt = Field(ge=1)
     observed_revision: StrictInt = Field(ge=1)
     observed_replicas: StrictInt = Field(ge=0)
-    status: Literal[
-        "converged",
-        "pending",
-        "failed",
-        "offline",
-        "draining",
-        "rolled_back",
-    ]
+    status: ObservedStatus
     observed_by: str
     failure_domain_id: str
     lease_fence: LeaseFence
@@ -746,7 +750,7 @@ class ObservedOutcome(_ContractModel):
 
     @model_validator(mode="after")
     def validate_rollback(self) -> ObservedOutcome:
-        if self.status == "rolled_back" and not self.rollback_required:
+        if self.status == ObservedStatus.ROLLED_BACK and not self.rollback_required:
             raise ValueError(
                 "rolled_back outcome must retain rollback_required evidence"
             )

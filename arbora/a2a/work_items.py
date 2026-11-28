@@ -16,6 +16,8 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.core.work_item_status import WorkItemStatus
+
 __all__ = [
     "WorkItemView",
     "parse_work_item_view",
@@ -40,13 +42,21 @@ class WorkItemView:
     tenant: str
     created_by: str
     queue: str | None
-    state: str | None
+    state: WorkItemStatus | None
     metadata: Mapping[str, Any]
 
 
 def _missing_or_blank(record: Mapping[str, Any], field_name: str) -> bool:
     value = record.get(field_name)
     return not isinstance(value, str) or not value.strip()
+
+
+def _known_state(value: object) -> WorkItemStatus | None:
+    """The engine's status of a record, or ``None`` when it is absent or not one."""
+    try:
+        return WorkItemStatus(value) if isinstance(value, str) else None
+    except ValueError:
+        return None
 
 
 def work_item_view(record: Mapping[str, Any]) -> WorkItemView:
@@ -71,7 +81,7 @@ def work_item_view(record: Mapping[str, Any]) -> WorkItemView:
         tenant=record["tenant"],
         created_by=record["created_by"],
         queue=queue if isinstance(queue, str) else None,
-        state=state if isinstance(state, str) else None,
+        state=_known_state(state),
         metadata=dict(metadata) if isinstance(metadata, Mapping) else {},
     )
 

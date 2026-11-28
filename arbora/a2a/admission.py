@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from enum import StrEnum
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import ConfigDict, Field, StrictStr, field_validator, model_validator
@@ -21,6 +22,7 @@ from arbora.api.domain.a2a.models import A2AContextBudget, WireModel
 
 __all__ = [
     "ModelProfilePreference",
+    "ModelProfileAvailability",
     "ModelProfileRefusalReason",
     "ModelProfileUnavailable",
     "ModelProfileDecision",
@@ -321,10 +323,16 @@ class ModelProfilePreference(WireModel):
         return value
 
 
+class ModelProfileAvailability(StrEnum):
+    """The one availability a closed profile refusal states."""
+
+    UNAVAILABLE = "unavailable"
+
+
 class ModelProfileUnavailable(WireModel):
     """Closed refusal without profile data, credentials or fabricated receipts."""
 
-    status: Literal["unavailable"] = "unavailable"
+    status: ModelProfileAvailability = ModelProfileAvailability.UNAVAILABLE
     reason: ModelProfileRefusalReason = "AUTHORITY_UNAVAILABLE"
 
 

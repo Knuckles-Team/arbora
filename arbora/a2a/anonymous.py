@@ -24,6 +24,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATask
+from arbora.core.work_item_status import WorkItemStatus
 
 from .authority import WorkItemA2AAuthority
 from .service import A2AService
@@ -98,7 +99,7 @@ class AnonymousTaskStatus:
     run_id: str
     tenant: str
     owner_ref: str
-    status: str
+    status: WorkItemStatus
     authority_mode: str
     context_id: str
 
@@ -108,12 +109,13 @@ class AnonymousTaskStatus:
             self.run_id,
             self.tenant,
             self.owner_ref,
-            self.status,
             self.authority_mode,
             self.context_id,
         ):
             if type(value) is not str or not value or len(value) > 256:
                 raise ValueError("Invalid native anonymous evidence")
+        if type(self.status) not in (str, WorkItemStatus) or not self.status:
+            raise ValueError("Invalid native anonymous evidence")
         WorkItemA2AAuthority._work_item_id(self.run_id)
         from arbora.api.domain.a2a.models import A2ATaskStatus
 

@@ -16,6 +16,7 @@ from arbora.a2a.work_items import (
     parse_work_item_view,
     work_item_view,
 )
+from arbora.core.work_item_status import WorkItemStatus
 
 _RECORD = {
     "work_item_id": "workitem:orchestrator:a2a-deadbeef",
@@ -37,7 +38,7 @@ def test_projects_a_real_record_into_a_typed_view() -> None:
         tenant="t1",
         created_by="actor-ref-1",
         queue="orchestrator_task",
-        state="running",
+        state=WorkItemStatus("running"),
         metadata={"a2a_schema": "arbora-a2a-unary-v1"},
     )
 

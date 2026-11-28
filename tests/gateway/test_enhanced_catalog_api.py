@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from arbora.api.domain.fleet.catalog_reader import (
     CatalogComponent,
     ComponentContent,
+    ComponentLifecycle,
     ComponentPin,
     ComponentRecord,
     FleetCatalog,
@@ -67,7 +68,7 @@ def _entry(
         entry_revision=2,
         definition_digest=_digest(component_id + ":definition"),
         content_digest=_digest(component_id + ":content"),
-        lifecycle="published",
+        lifecycle=ComponentLifecycle("published"),
         provenance_server=(
             None
             if server is None

@@ -16,6 +16,7 @@ import binascii
 import hashlib
 import json
 from collections.abc import Mapping
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Annotated, Any, Literal
 
@@ -42,8 +43,16 @@ class _Closed(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class FreshnessState(StrEnum):
+    """How current a provider's record is, as the provider reported it."""
+
+    FRESH = "fresh"
+    STALE = "stale"
+    UNKNOWN = "unknown"
+
+
 class Freshness(_Closed):
-    state: Literal["fresh", "stale", "unknown"]
+    state: FreshnessState
     age_seconds: int | None = Field(ge=0)
 
 

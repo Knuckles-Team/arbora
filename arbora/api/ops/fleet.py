@@ -27,6 +27,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.domain.fleet.approval_meta import ApprovalRefused, checked_approval_ref
+from arbora.api.domain.fleet.catalog_reader import ReplicaState
 from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
 from arbora.api.registry import (
     AuditClass,
@@ -154,7 +155,7 @@ class ReplicaGeneration(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     replica: str
-    state: str
+    state: ReplicaState
     reason: str | None = None
     generation: dict[str, Any] | None = None
     engine_generation: int
